@@ -3,7 +3,7 @@ from datetime import date
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-engine = create_engine(os.getenv("DATABASE_URL"), pool_pre_ping=True)
+engine = create_engine(os.getenv("DATABASE_URL"), pool_pre_ping=True,pool_size=5,max_overflow=10,pool_recycle=300)
 DB = sessionmaker(bind=engine)
 
 def db(): return DB()
