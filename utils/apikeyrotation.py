@@ -9,3 +9,8 @@ def rotate_key():
     key = keys[idx % len(keys)]
     idx+=1
     return key
+
+def get_key():
+    global idx
+    key = keys[idx % len(keys)]
+    return key
