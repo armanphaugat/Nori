@@ -47,3 +47,46 @@ def get_uploads(guild_id):
 def get_analytics(guild_id):
     with DB() as s:
         return s.execute(text("SELECT * FROM analytics WHERE server_id = :id ORDER BY day DESC"), {"id": guild_id}).mappings().all()
+    
+def update_faiss_k(guild_id,k):
+    with DB() as s:
+        result=s.execute(text("UPDATE servers SET faiss_k= :k WHERE serverId= :guild_id"),{"k":k,"guild_id":guild_id})
+        s.commit()
+        return result.rowcount
+    
+def update_bm25_k(guild_id,k):
+    with DB() as s:
+        result=s.execute(text("UPDATE servers SET bm25_k= :k WHERE server_id= :guild_id"),{"k":k,"guild_id":guild_id})
+        s.commit()
+        return result.rowcount
+
+def update_temperature(guild_id,k):
+    with DB() as s:
+        result=s.execute(text("UPDATE servers SET temperature= :k WHERE server_id= :guild_id"),{"k":k,"guild_id":guild_id})
+        s.commit()
+        return result.rowcount
+
+def update_chunk_size(guild_id,k):
+    with DB() as s:
+        result=s.execute(text("UPDATE servers SET chunk_size= :k WHERE server_id= :guild_id"),{"k":k,"guild_id":guild_id})
+        s.commit()
+        return result.rowcount
+
+def update_chunk_overlap(guild_id,k):
+    with DB() as s:
+        result=s.execute(text("UPDATE servers SET chunk_overlap= :k WHERE server_id= :guild_id"),{"k":k,"guild_id":guild_id})
+        s.commit()
+        return result.rowcount
+    
+def insert_system_prompt(guild_id, system_prompt):
+    with DB() as s:
+        s.execute(text("INSERT INTO servers (server_id, system_prompt) VALUES (:guild_id, :system_prompt)"),{"guild_id": guild_id, "system_prompt": system_prompt})
+        s.commit()
+
+def update_system_prompt(guild_id, system_prompt):
+    with DB() as s:
+        s.execute(
+            text("UPDATE servers SET system_prompt = :system_prompt WHERE server_id = :guild_id"),
+            {"system_prompt": system_prompt, "guild_id": guild_id}
+        )
+        s.commit()
