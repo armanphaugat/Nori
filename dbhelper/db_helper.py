@@ -96,3 +96,21 @@ def update_max_tokens(guild_id, k):
         result = s.execute(text("UPDATE servers SET max_tokens = :k WHERE server_id = :guild_id"), {"k": k, "guild_id": guild_id})
         s.commit()
         return result.rowcount
+    
+def set_channel(guild_id, channel_id):
+    with DB() as s:
+        s.execute(text("""
+            INSERT INTO channels (server_id, channel_id)
+            VALUES (:guild_id, :channel_id)
+            ON CONFLICT DO NOTHING
+        """), {"guild_id": guild_id, "channel_id": channel_id})
+        s.commit()
+
+def remove_channel(guild_id, channel_id):
+    with DB() as s:
+        s.execute(text("DELETE FROM channels WHERE server_id = :guild_id AND channel_id = :channel_id"),{"guild_id": guild_id, "channel_id": channel_id})
+        s.commit()
+
+def get_channels(guild_id):
+    with DB() as s:
+        return s.execute(text("SELECT channel_id FROM channels WHERE server_id = :guild_id"),{"guild_id": guild_id}).mappings().all()
