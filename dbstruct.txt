@@ -67,3 +67,10 @@ DROP TRIGGER IF EXISTS trg_servers_updated ON servers;
 CREATE TRIGGER trg_servers_updated
     BEFORE UPDATE ON servers
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TABLE IF NOT EXISTS channels (
+    id          SERIAL PRIMARY KEY,
+    server_id   TEXT NOT NULL,
+    channel_id  TEXT NOT NULL UNIQUE,
+    added_at    TIMESTAMP DEFAULT NOW()
+);
