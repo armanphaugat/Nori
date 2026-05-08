@@ -3,11 +3,12 @@ import discord
 from dotenv import load_dotenv
 from discord.ext import commands
 from discord.ext.commands import cooldown,BucketType
+from dbhelper import get_channels
 import sys
 from io import BytesIO
 import re
 import asyncio
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "python"))
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__))))
 
 from ingest import webscraper, split_texts, create_vectorstore, read_pdf
 from query import answer_query
@@ -58,4 +59,21 @@ async def help(ctx):
     )
     embed.set_footer(text="Ask command is limited to 4 queries per minute")
     await ctx.send(embed=embed)
+
+@bot.event
+async def on_message(message):
+    if message.author.bot:
+        return
+    channels=get_channels(str(message.guild.id))
+    result_channel=[]
+    for c in channels:
+        result_channel.append(c["channel_id"])
+    if str(message.channel.id) in result_channel:
+        async with message.channel.typing():
+            loop=asyncio.get_running_loop()
+            answer = await loop.run_in_executor(None, answer_query, message.content, message.guild.id)
+            await message.reply(answer)
+        return 
+    await bot.process_commands(message)
+
 bot.run(DISCORD_BOT_KEY)
