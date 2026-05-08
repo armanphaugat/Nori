@@ -3,12 +3,12 @@ import discord
 from dotenv import load_dotenv
 from discord.ext import commands
 from discord.ext.commands import cooldown,BucketType
-from dbhelper import get_channels
+from dbhelper import get_channels,get_mod_channel
 import sys
 from io import BytesIO
 import re
 import asyncio
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__))))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__))))
 
 from ingest import webscraper, split_texts, create_vectorstore, read_pdf
 from query import answer_query
@@ -38,6 +38,14 @@ async def ask(ctx, *, question: str = None):
         async with ctx.typing():
             loop = asyncio.get_running_loop()
             answer = await loop.run_in_executor(None, answer_query, question, ctx.guild.id)
+            if answer is None:
+                await ctx.send("I couldn't find an answer to your question.")
+                mod_channel_row=get_mod_channel(str(ctx.guild.id))
+                if mod_channel_row:
+                    mod_channel = bot.get_channel(int(mod_channel_row["channel_id"]))
+                    if mod_channel:               
+                        await mod_channel.send(f"{ctx.author.mention} (**{ctx.author}**) asked: {question}")
+                return
             await ctx.send(answer)
             
     except Exception as e:
@@ -53,7 +61,7 @@ async def help(ctx):
     )
 
     embed.add_field(
-        name="❓ `!ask <question>`",
+        name="❓ `-ask <question>`",
         value="Ask a question to the bot\n`!ask What is Python?`",
         inline=False
     )
@@ -72,6 +80,14 @@ async def on_message(message):
         async with message.channel.typing():
             loop=asyncio.get_running_loop()
             answer = await loop.run_in_executor(None, answer_query, message.content, message.guild.id)
+            if answer is None:
+                await message.channel.send("I couldn't find an answer to your question.")
+                mod_channel_row=get_mod_channel(str(message.guild.id))
+                if mod_channel_row:
+                    mod_channel = bot.get_channel(int(mod_channel_row["channel_id"]))
+                    if mod_channel:               
+                        await mod_channel.send(f"{message.author.mention} (**{message.author}**) asked: {message.content}")
+                return
             await message.reply(answer)
         return 
     await bot.process_commands(message)

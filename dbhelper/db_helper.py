@@ -114,3 +114,34 @@ def remove_channel(guild_id, channel_id):
 def get_channels(guild_id):
     with DB() as s:
         return s.execute(text("SELECT channel_id FROM channels WHERE server_id = :guild_id"),{"guild_id": guild_id}).mappings().all()
+    
+def set_channel(guild_id, channel_id, type="qa"):
+    with DB() as s:
+        s.execute(text("""
+            INSERT INTO channels (server_id, channel_id, type)
+            VALUES (:guild_id, :channel_id, :type)
+            ON CONFLICT DO NOTHING
+        """), {"guild_id": guild_id, "channel_id": channel_id, "type": type})
+        s.commit()
+
+
+def get_mod_channel(guild_id):
+    with DB() as s:
+        return s.execute(text("SELECT channel_id FROM channels WHERE server_id = :guild_id AND type = 'mod'"),
+            {"guild_id": guild_id}).mappings().first()
+    
+def get_all_servers():
+    with DB() as s:
+        return s.execute(text("SELECT * FROM servers ORDER BY added_at DESC")).mappings().all()
+
+def get_all_uploads():
+    with DB() as s:
+        return s.execute(text("SELECT * FROM uploads ORDER BY uploaded_at DESC")).mappings().all()
+
+def get_all_analytics():
+    with DB() as s:
+        return s.execute(text("SELECT * FROM analytics ORDER BY day DESC")).mappings().all()
+
+def get_all_channels():
+    with DB() as s:
+        return s.execute(text("SELECT * FROM channels ORDER BY added_at DESC")).mappings().all()
