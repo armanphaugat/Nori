@@ -50,7 +50,7 @@ def get_analytics(guild_id):
     
 def update_faiss_k(guild_id,k):
     with DB() as s:
-        result=s.execute(text("UPDATE servers SET faiss_k= :k WHERE serverId= :guild_id"),{"k":k,"guild_id":guild_id})
+        result=s.execute(text("UPDATE servers SET faiss_k= :k WHERE server_id= :guild_id"),{"k":k,"guild_id":guild_id})
         s.commit()
         return result.rowcount
     
@@ -90,3 +90,9 @@ def update_system_prompt(guild_id, system_prompt):
             {"system_prompt": system_prompt, "guild_id": guild_id}
         )
         s.commit()
+
+def update_max_tokens(guild_id, k):
+    with DB() as s:
+        result = s.execute(text("UPDATE servers SET max_tokens = :k WHERE server_id = :guild_id"), {"k": k, "guild_id": guild_id})
+        s.commit()
+        return result.rowcount

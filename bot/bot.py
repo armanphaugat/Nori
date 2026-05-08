@@ -2,6 +2,7 @@ import os
 import discord
 from dotenv import load_dotenv
 from discord.ext import commands
+from discord.ext.commands import cooldown,BucketType
 import sys
 from io import BytesIO
 import re
@@ -26,78 +27,35 @@ async def on_ready():
     print(f"📊 Connected to {len(bot.guilds)} server(s)")
 
 @bot.command()
-@commands.has_permissions(manage_messages=True)
-async def upload(ctx):
-    """Upload PDFs and/or URLs to the knowledge base"""
-    try:
-        pdf_files = []
-        links = []
-        if ctx.message.attachments:
-            for attachment in ctx.message.attachments:
-                if attachment.filename.lower().endswith(".pdf"):
-                    pdf_files.append(attachment)
-        links = re.findall(url_pattern, ctx.message.content)
-        if not pdf_files and not links:
-            await ctx.send("❌ No PDFs or URLs found. Please attach PDFs or include URLs in your message.")
-            return
-        processing_msg = await ctx.send("⏳ Processing your content...")
-        texts = []
-        for link in links:
-            try:
-                scraped_text = webscraper(link)
-                texts.extend(scraped_text)
-            except Exception as e:
-                await ctx.send(f"⚠️ Error scraping {link}: {str(e)}")
-        for pdf in pdf_files:
-            try:
-                file_bytes = await pdf.read()
-                pdf_text = read_pdf(BytesIO(file_bytes))
-                texts.append(pdf_text)
-            except Exception as e:
-                await ctx.send(f"⚠️ Error reading {pdf.filename}: {str(e)}")
-        if not texts:
-            await processing_msg.edit(content="❌ No valid content extracted from the provided sources.")
-            return
-        chunked_text = split_texts(texts)
-        created_vector = create_vectorstore(chunked_text, ctx.guild.id)
-        if created_vector:
-            await processing_msg.edit(content=f"✅ Successfully uploaded! Processed {len(chunked_text)} chunks from {len(links)} URL(s) and {len(pdf_files)} PDF(s).")
-        else:
-            await processing_msg.edit(content="❌ Upload failed. Please try again.")
-    except Exception as e:
-        await ctx.send(f"❌ An error occurred: {str(e)}")
-        print(f"Error in upload command: {e}")
-@bot.command()
+@cooldown(4, 60, BucketType.user)
 async def ask(ctx, *, question: str = None):
     try:
         if not question:
-            await ctx.send("❌ Please provide a question after `-ask`")
+            await ctx.send("No Question Provided")
             return
-        thinking_msg = await ctx.send("🤔 Thinking...")
-        loop = asyncio.get_running_loop()
-        answer = await loop.run_in_executor(None, answer_query, question, ctx.guild.id)
-        await thinking_msg.edit(content=answer)
+        
+        async with ctx.typing():
+            loop = asyncio.get_running_loop()
+            answer = await loop.run_in_executor(None, answer_query, question, ctx.guild.id)
+            await ctx.send(answer)
+            
     except Exception as e:
         await ctx.send(f"❌ An error occurred: {str(e)}")
         print(f"Error in ask command: {e}")
 
 @bot.command()
 async def help(ctx):
-    help_text = """
-**📚 RAG Bot Commands**
+    embed = discord.Embed(
+        title="📚 Bot Help",
+        description="Here are all the available commands:",
+        color=discord.Color.blurple()
+    )
 
-`-upload [URLs] [PDF attachments]`
-Upload content to the knowledge base. You can include URLs in your message and/or attach PDF files.
-
-`-ask <question>`
-Ask a question based on the uploaded content.
-
-`-help`
-Show this help message.
-
-**Example:**
-`-upload https://example.com` (with PDF attached)
-`-ask What is the main topic discussed?`
-    """
-    await ctx.send(help_text)
+    embed.add_field(
+        name="❓ `!ask <question>`",
+        value="Ask a question to the bot\n`!ask What is Python?`",
+        inline=False
+    )
+    embed.set_footer(text="Ask command is limited to 4 queries per minute")
+    await ctx.send(embed=embed)
 bot.run(DISCORD_BOT_KEY)
