@@ -14,11 +14,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "python"))
-from ingest import webscraper, split_texts, create_vectorstore, read_pdf
-from query import answer_query
-from sub_urls import get_sub_urls
-from contacts.xlsx_contacts import ingest_contacts_to_vectorstore
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+from python.ingest import webscraper, split_texts, create_vectorstore, read_pdf
+from python.query import answer_query
+from python.sub_urls import get_sub_urls
+from python.contacts.xlsx_contacts import ingest_contacts_to_vectorstore
+from dbhelper.db_helper import *
 url_pattern = r"(https?://[^\s]+)"
 
 @app.get("/sub-urls")
@@ -163,3 +164,38 @@ async def upload_contacts_api(
     except Exception as e:
         print(f"[upload_contacts] Error: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to ingest contacts: {e}")
+    
+@app.post("/add-sever")
+async def add_server_endpoint(guild_id:str =Form(...),name:str=Form(...)):
+    if guild_id is None:
+        raise HTTPException(status_code=400,detail="Guild Id is Required")
+    if name is None:
+        raise HTTPException(status_code=400,detail="Name is Required")
+    try:
+        add_server(guild_id,name)
+        return {
+            "status":  "success",
+            "message": "Server Added SuccessFully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to Add Server {e}")
+@app.patch("/update-faiss-k")
+async def update_faiss(guild_id:str =Form(...),k:int=Form(...)):
+    if guild_id is None:
+        raise HTTPException(status_code=400,detail="Guild Id is Required")
+    if k<=0:
+        raise HTTPException(status_code=400,detail="K value must be Greater Than Zero")
+    try:
+        result=update_faiss_k(guild_id,k)
+        if result==1:
+            return {
+                "status":  "success",
+                "message": "Server Added SuccessFully"
+            }
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail="Server not found or no update was made"
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to Update Faiss-K {e}")
