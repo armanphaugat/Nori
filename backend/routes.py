@@ -190,7 +190,7 @@ async def update_faiss(guild_id:str =Form(...),k:int=Form(...)):
         if result==1:
             return {
                 "status":  "success",
-                "message": "Server Added SuccessFully"
+                "message": "Faiss-k Updated SuccessFully"
             }
         else:
             raise HTTPException(
@@ -199,3 +199,66 @@ async def update_faiss(guild_id:str =Form(...),k:int=Form(...)):
             )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to Update Faiss-K {e}")
+    
+@app.patch("/update-bm25-k")
+async def update_bm25(guild_id:str =Form(...),k:int=Form(...)):
+    if guild_id is None:
+        raise HTTPException(status_code=400,detail="Guild Id is Required")
+    if k<=0:
+        raise HTTPException(status_code=400,detail="K value must be Greater Than Zero")
+    try:
+        result=update_bm25_k(guild_id,k)
+        if result==1:
+            return {
+                "status":  "success",
+                "message": "Bm25-k Updated SuccessFully"
+            }
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail="Server not found or no update was made"
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to Update Bm25-K {e}")
+
+@app.patch("/update-temperature")
+async def update_temp(guild_id:str =Form(...),k:int=Form(...)):
+    if guild_id is None:
+        raise HTTPException(status_code=400,detail="Guild Id is Required")
+    if k<0 and k>1:
+        raise HTTPException(status_code=400,detail="K value must be Between 0 & 1")
+    try:
+        result=update_temperature(guild_id,k)
+        if result==1:
+            return {
+                "status":  "success",
+                "message": "Temp Updated SuccessFully"
+            }
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail="Server not found or no update was made"
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to Temperature {e}")
+
+@app.patch("/update-chunk-size")
+async def update_chunk(guild_id:str =Form(...),k:int=Form(...)):
+    if guild_id is None:
+        raise HTTPException(status_code=400,detail="Guild Id is Required")
+    if k<=0 and k>=1000:
+        raise HTTPException(status_code=400,detail="K value must be Between 1 & 1000")
+    try:
+        result=update_chunk_size(guild_id,k)
+        if result==1:
+            return {
+                "status":  "success",
+                "message": "Chunk Updated SuccessFully"
+            }
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail="Server not found or no update was made"
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to Udpate Chunk Size {e}")
