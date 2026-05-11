@@ -253,7 +253,7 @@ async def update_chunk(guild_id:str =Form(...),k:int=Form(...)):
         if result==1:
             return {
                 "status":  "success",
-                "message": "Chunk Updated SuccessFully"
+                "message": "Chunk Size Updated SuccessFully"
             }
         else:
             raise HTTPException(
@@ -262,3 +262,60 @@ async def update_chunk(guild_id:str =Form(...),k:int=Form(...)):
             )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to Udpate Chunk Size {e}")
+    
+@app.patch("/update-chunk-overlap")
+async def update_chunk_over(guild_id:str =Form(...),k:int=Form(...)):
+    if guild_id is None:
+        raise HTTPException(status_code=400,detail="Guild Id is Required")
+    if k<100 and k>1000:
+        raise HTTPException(status_code=400,detail="K value must be Between 100 & 1000")
+    try:
+        result=update_chunk_overlap(guild_id,k)
+        if result==1:
+            return {
+                "status":  "success",
+                "message": "Chunk  OverLap Updated SuccessFully"
+            }
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail="Server not found or no update was made"
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to Udpate Chunk Overlap {e}")
+    
+@app.put("/insert-system-prompt")
+async def insert_prompt(guild_id:str =Form(...),text:str=Form(...)):
+    try:
+        insert_system_prompt(guild_id,text)
+        return {
+            "status":"sucess",
+            "message":"System Prompt Inserted SuccessFully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to Insert The System Prompt{e}")
+
+@app.put("/update-system-prompt")
+async def update_prompt(guild_id:str =Form(...),text:str=Form(...)):
+    try:
+        update_system_prompt(guild_id,text)
+        return {
+            "status":"sucess",
+            "message":"System Prompt Updated SuccessFully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to Update The System Prompt{e}")
+    
+@app.patch("/update-max-token")
+async def update_token(guild_id:str =Form(...),k:int=Form(...)):
+    try:
+        result=update_max_tokens(guild_id,k)
+        if result==1:
+            return {
+            "status":"sucess",
+            "message":"System Prompt Updated SuccessFully"
+            }
+        else:
+            raise HTTPException(status_code=400, detail=f"Failed to Update The Max Token")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to Update The Max Token{e}")
