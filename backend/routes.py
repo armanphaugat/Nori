@@ -319,3 +319,68 @@ async def update_token(guild_id:str =Form(...),k:int=Form(...)):
             raise HTTPException(status_code=400, detail=f"Failed to Update The Max Token")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to Update The Max Token{e}")
+    
+@app.put("/add-channel")
+async def add_channel(guild_id:str =Form(...),channel_id:List=Form(...)):#in which bot respond automatically
+    try:
+        for channel in channel_id:
+            set_channel(guild_id,channel)
+        return {
+            "status":"sucess",
+            "message":"Channel Inserted SuccessFully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to Insert The Channel{e}")
+
+@app.delete("/delete-channel")
+async def del_channel(guild_id:str =Form(...),channel_id:str=Form(...)):
+    try:
+        remove_channel(guild_id,channel_id)
+        return {
+            "status":"sucess",
+            "message":"Channel Deleted SuccessFully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to Delete The Channel{e}")
+    
+@app.put("/add-mod-channel")
+async def add_mod_channel(guild_id:str =Form(...),channel_id:str=Form(...)):
+    try:
+        insert_mod_channel(guild_id,channel_id)
+        return {
+            "status":"sucess",
+            "message":"Mod Channel Added SuccessFully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to Add Mod Channel{e}")
+    
+@app.get("/get-all-uploads")
+async def get_all_upload(guild_id:str =Form(...)):
+    try:
+        result=get_all_upload(guild_id)
+        if result is None:
+            raise HTTPException(status_code=500, detail=f"Failed to get All Uploads")
+        else:
+            return {
+                "status":"sucess",
+                "message":"Mod Channel Added SuccessFully"
+            }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to Add Mod Channel{e}")
+    
+@app.get("/analytics-summary")
+async def get_analytics_summary_endpoint(guild_id: str = Form(...)):
+    if not guild_id.strip():
+        raise HTTPException(status_code=400, detail="'guild_id' is required.")
+    try:
+        summary = get_analytics_summary(guild_id)
+        if not summary:
+            raise HTTPException(status_code=404, detail="No analytics found for this server.")
+        return {
+            "status": "success",
+            "data": summary
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch analytics summary: {e}")

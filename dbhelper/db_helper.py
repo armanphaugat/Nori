@@ -115,33 +115,111 @@ def get_channels(guild_id):
     with DB() as s:
         return s.execute(text("SELECT channel_id FROM channels WHERE server_id = :guild_id"),{"guild_id": guild_id}).mappings().all()
     
-def set_channel(guild_id, channel_id, type="qa"):
+def set_channel(guild_id, channel_id,):
     with DB() as s:
         s.execute(text("""
-            INSERT INTO channels (server_id, channel_id, type)
-            VALUES (:guild_id, :channel_id, :type)
+            INSERT INTO channels (server_id, channel_id)
+            VALUES (:guild_id, :channel_id)
             ON CONFLICT DO NOTHING
-        """), {"guild_id": guild_id, "channel_id": channel_id, "type": type})
+        """), {"guild_id": guild_id, "channel_id": channel_id})
         s.commit()
 
 
 def get_mod_channel(guild_id):
     with DB() as s:
-        return s.execute(text("SELECT channel_id FROM channels WHERE server_id = :guild_id AND type = 'mod'"),
-            {"guild_id": guild_id}).mappings().first()
-    
+        return s.execute(
+            text("SELECT mod_channel FROM servers WHERE server_id = :guild_id"),
+            {"guild_id": guild_id}
+        ).mappings().first()
+
+def insert_mod_channel(guild_id, channel_id):
+    with DB() as s:
+        s.execute(
+            text("""
+                UPDATE servers
+                SET mod_channel = :channel_id, updated_at = NOW()
+                WHERE server_id = :guild_id
+            """),
+            {"guild_id": guild_id, "channel_id": channel_id}
+        )
+        s.commit()
+
 def get_all_servers():
     with DB() as s:
         return s.execute(text("SELECT * FROM servers ORDER BY added_at DESC")).mappings().all()
 
-def get_all_uploads():
+def get_all_uploads(guild_id):
     with DB() as s:
-        return s.execute(text("SELECT * FROM uploads ORDER BY uploaded_at DESC")).mappings().all()
+        return s.execute(text("SELECT * FROM uploads WHERE server_id= :guild_id ORDER BY uploaded_at DESC"),{"guild_id":guild_id}).mappings().all()
 
-def get_all_analytics():
+def get_analytics(guild_id, limit: int = 30, offset: int = 0):
     with DB() as s:
-        return s.execute(text("SELECT * FROM analytics ORDER BY day DESC")).mappings().all()
+        return s.execute(
+            text("""
+                SELECT 
+                    day,
+                    total_questions,
+                    answered,
+                    failed,
+                    no_kb,
+                    avg_latency_ms,
+                    unique_users,
+                    total_uploads,
+                    chunks_added,
+                    top_topic
+                FROM analytics
+                WHERE server_id = :guild_id
+                ORDER BY day DESC
+                LIMIT :limit OFFSET :offset
+            """),
+            {"guild_id": guild_id, "limit": limit, "offset": offset}
+        ).mappings().all()
+
+
+def get_analytics_summary(guild_id):
+    with DB() as s:
+        return s.execute(
+            text("""
+                SELECT
+                    COUNT(*)                  AS total_days,
+                    SUM(total_questions)      AS total_questions,
+                    SUM(answered)             AS answered,
+                    SUM(failed)               AS failed,
+                    SUM(no_kb)                AS no_kb,
+                    ROUND(AVG(avg_latency_ms)::numeric, 2) AS avg_latency_ms,
+                    SUM(unique_users)         AS unique_users,
+                    SUM(total_uploads)        AS total_uploads,
+                    SUM(chunks_added)         AS chunks_added
+                FROM analytics
+                WHERE server_id = :guild_id
+            """),
+            {"guild_id": guild_id}
+        ).mappings().first()
 
 def get_all_channels():
     with DB() as s:
         return s.execute(text("SELECT * FROM channels ORDER BY added_at DESC")).mappings().all()
+    
+def reset_server_settings(guild_id):
+    with DB() as s:
+        s.execute(text("""
+            UPDATE servers SET
+                prefix        = '!',
+                max_tokens    = 512,
+                temperature   = 0.7,
+                chunk_size    = 500,
+                chunk_overlap = 100,
+                faiss_k       = 5,
+                bm25_k        = 5,
+                updated_at    = NOW()
+            WHERE server_id = :id
+        """), {"id": guild_id})
+        s.commit()
+
+def remove_mod_channel(guild_id):
+    with DB() as s:
+        s.execute(
+            text("UPDATE servers SET mod_channel = NULL, updated_at = NOW() WHERE server_id = :id"),
+            {"id": guild_id}
+        )
+        s.commit()
