@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, Request, HTTPException, UploadFile, File, Form,Query
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 from io import BytesIO
@@ -165,7 +165,7 @@ async def upload_contacts_api(
         print(f"[upload_contacts] Error: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to ingest contacts: {e}")
     
-@app.post("/add-sever")
+@app.post("/add-server")
 async def add_server_endpoint(guild_id:str =Form(...),name:str=Form(...)):
     if guild_id is None:
         raise HTTPException(status_code=400,detail="Guild Id is Required")
@@ -225,7 +225,7 @@ async def update_bm25(guild_id:str =Form(...),k:int=Form(...)):
 async def update_temp(guild_id:str =Form(...),k:int=Form(...)):
     if guild_id is None:
         raise HTTPException(status_code=400,detail="Guild Id is Required")
-    if k<0 and k>1:
+    if k<0 or k>1:
         raise HTTPException(status_code=400,detail="K value must be Between 0 & 1")
     try:
         result=update_temperature(guild_id,k)
@@ -246,7 +246,7 @@ async def update_temp(guild_id:str =Form(...),k:int=Form(...)):
 async def update_chunk(guild_id:str =Form(...),k:int=Form(...)):
     if guild_id is None:
         raise HTTPException(status_code=400,detail="Guild Id is Required")
-    if k<=0 and k>=1000:
+    if k<=0 or k>=1000:
         raise HTTPException(status_code=400,detail="K value must be Between 1 & 1000")
     try:
         result=update_chunk_size(guild_id,k)
@@ -267,7 +267,7 @@ async def update_chunk(guild_id:str =Form(...),k:int=Form(...)):
 async def update_chunk_over(guild_id:str =Form(...),k:int=Form(...)):
     if guild_id is None:
         raise HTTPException(status_code=400,detail="Guild Id is Required")
-    if k<100 and k>1000:
+    if k<100 or k>1000:
         raise HTTPException(status_code=400,detail="K value must be Between 100 & 1000")
     try:
         result=update_chunk_overlap(guild_id,k)
@@ -355,9 +355,9 @@ async def add_mod_channel(guild_id:str =Form(...),channel_id:str=Form(...)):
         raise HTTPException(status_code=500, detail=f"Failed to Add Mod Channel{e}")
     
 @app.get("/get-all-uploads")
-async def get_all_upload(guild_id:str =Form(...)):
+async def get_all_upload(guild_id:str =Query(...)):
     try:
-        result=get_all_upload(guild_id)
+        result=get_all_uploads(guild_id)
         if result is None:
             raise HTTPException(status_code=500, detail=f"Failed to get All Uploads")
         else:
@@ -369,7 +369,7 @@ async def get_all_upload(guild_id:str =Form(...)):
         raise HTTPException(status_code=500, detail=f"Failed to Add Mod Channel{e}")
     
 @app.get("/analytics-summary")
-async def get_analytics_summary_endpoint(guild_id: str = Form(...)):
+async def get_analytics_summary_endpoint(guild_id: str = Query(...)):
     if not guild_id.strip():
         raise HTTPException(status_code=400, detail="'guild_id' is required.")
     try:

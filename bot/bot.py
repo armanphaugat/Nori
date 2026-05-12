@@ -75,7 +75,7 @@ async def on_message(message):
     channels=get_channels(str(message.guild.id))
     result_channel=[]
     for c in channels:
-        result_channel.append(c["channel_id"])
+        result_channel.append(c["mod_channel"])
     if str(message.channel.id) in result_channel:
         async with message.channel.typing():
             loop=asyncio.get_running_loop()
@@ -84,7 +84,7 @@ async def on_message(message):
                 await message.channel.send("I couldn't find an answer to your question.")
                 mod_channel_row=get_mod_channel(str(message.guild.id))
                 if mod_channel_row:
-                    mod_channel = bot.get_channel(int(mod_channel_row["channel_id"]))
+                    mod_channel = bot.get_channel(int(mod_channel_row["mod_channel"]))
                     if mod_channel:               
                         await mod_channel.send(f"{message.author.mention} (**{message.author}**) asked: {message.content}")
                 return
