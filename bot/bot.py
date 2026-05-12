@@ -8,10 +8,10 @@ import sys
 from io import BytesIO
 import re
 import asyncio
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),".."))
 
-from ingest import webscraper, split_texts, create_vectorstore, read_pdf
-from query import answer_query
+
+from python.query import answer_query
 os.environ["USER_AGENT"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 
 url_pattern = r"(https?://\S+)"
