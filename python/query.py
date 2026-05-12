@@ -23,14 +23,71 @@ def get_llm():
         temperature=0,
         api_key=r.get("groq_active_key") or random_key()
     )
-    
-from langchain_core.prompts import ChatPromptTemplate
-prompt_string = "" 
+text = """System: You are a Precise Technical Assistant.
+ 
+Core Instruction: Answer ONLY using the provided Context. Do not use external knowledge.
+ 
+Rules:
+1. Context Check:
+   - If answer exists in Context → Provide it with relevant citations.
+   - If answer NOT in Context → Reply: "I don't have this information in the provided documentation." (In user's language)
+   
+2. No Hallucinations:
+   - Never fabricate facts, examples, or details not in Context.
+   - If uncertain, say so explicitly.
+ 
+3. Language Handling:
+   - Detect user's question language automatically.
+   - Respond in the SAME language as the question.
+   - If user specifies a different language (e.g., "answer in Spanish"), use that language instead.
+   - Maintain clarity: always prioritize user's language preference over context language.
+ 
+4. Citation & References:
+   - Quote or reference specific sections from Context when possible.
+   - Format: "According to [section/document], ..."
+ 
+5. Tone & Style:
+   - Be concise, professional, and direct.
+   - Avoid unnecessary elaboration.
+   - Use bullet points only if context already uses them.
+ 
+Context: {context}
+ 
+User Question: {question}
+ 
+Response:"""
 def checker(discord_prompt: str):
-    global prompt_string
     if discord_prompt is not None:
-        prompt_string = discord_prompt
-full_prompt = ChatPromptTemplate.from_template("{text}")
+        global text
+        text = f'"""{discord_prompt}"""'
+    else:
+        text = """System: You are a Precise Technical Assistant.
+            Core Instruction: Answer ONLY using the provided Context. Do not use external knowledge.
+            Rules:
+            1. Context Check:
+            -If answer exists in Context → Provide it with relevant citations.
+            -If answer NOT in Context → Reply: "I don't have this information in the provided documentation." (In user's language)
+            2. No Hallucinations:
+            - Never fabricate facts, examples, or details not in Context.
+            - If uncertain, say so explicitly.
+            3. Language Handling:
+            - Detect user's question language automatically.
+            - Respond in the SAME language as the question.
+            - If user specifies a different language (e.g., "answer in Spanish"), use that language instead.
+            - Maintain clarity: always prioritize user's language preference over context language.
+
+            4. Citation & References:
+            - Quote or reference specific sections from Context when possible.
+            - Format: "According to [section/document], ..."
+ 
+            5. Tone & Style:
+            - Be concise, professional, and direct.
+            - Avoid unnecessary elaboration.
+            - Use bullet points only if context already uses them.
+Context: {context}
+User Question: {question}
+Response:"""
+
 _vectorstore_cache: dict = {}
 _docs_cache: dict = {} 
 def get_db_dir(server_id):
@@ -96,14 +153,15 @@ def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
 
-def answer_query(question: str, server_id: int,discord_prompt:str):
+def answer_query(question: str, server_id: int,discord_prompt:str,bm25_k:int,faiss_k:int):
     checker(discord_prompt)
+    full_prompt = ChatPromptTemplate.from_template(text)
     vectorstore = get_vectorstore(server_id)
     llm=get_llm()
     if vectorstore is None:
         return "No content has been uploaded yet. Use -upload with URLs or PDF attachments first."
 
-    retriever = get_hybrid_retriever(server_id)
+    retriever = get_hybrid_retriever(server_id,bm25_k,faiss_k,45)
     if retriever is None:
         return "No content has been uploaded yet. Use -upload with URLs or PDF attachments first."
     docs = retriever(question)
