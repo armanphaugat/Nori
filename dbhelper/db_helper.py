@@ -2,7 +2,8 @@ import os
 from datetime import date
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-
+from typing import Optional
+import datetime
 engine = create_engine(os.getenv("DATABASE_URL"), pool_pre_ping=True,pool_size=5,max_overflow=10,pool_recycle=300)
 DB = sessionmaker(bind=engine)
 
@@ -496,3 +497,4 @@ def remove_guild_admin(
             "discord_id": discord_id,
         })
         s.commit()
+

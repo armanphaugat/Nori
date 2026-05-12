@@ -187,12 +187,7 @@ async def discord_callback(
     _set_refresh_cookie(redirect, raw_refresh)
     return redirect
  
- 
-# ---------------------------------------------------------------------------
-# POST /auth/refresh
-# Client calls this (cookie sent automatically) when access token expires.
-# Returns a new access token and rotates the refresh token.
-# ---------------------------------------------------------------------------
+
 @auth_router.post("/refresh")
 async def refresh_tokens(
     response: Response,
@@ -200,35 +195,25 @@ async def refresh_tokens(
 ) -> dict:
     if not rt:
         raise HTTPException(status_code=401, detail="No refresh token")
- 
     token_hash = _hash_token(rt)
     session = get_session_by_hash(token_hash)
- 
     if not session:
         raise HTTPException(status_code=401, detail="Refresh token not found")
     if session["revoked"]:
         raise HTTPException(status_code=401, detail="Refresh token revoked")
     if session["expires_at"] < datetime.now(timezone.utc):
         raise HTTPException(status_code=401, detail="Refresh token expired")
- 
-    # Rotate: revoke old session, create new one
     revoke_session(session["id"])
- 
     new_raw_refresh = secrets.token_urlsafe(32)
     create_session(
         discord_id=session["discord_id"],
         refresh_token_hash=_hash_token(new_raw_refresh),
         expires_at=datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
     )
- 
-    # Re-fetch guilds from DB or embed what we stored; here we re-use session's guild list.
-    # For simplicity fetch from admin_users guilds stored at last login.
-    # (Alternatively re-call Discord API with the stored discord_access_token)
     user = get_admin_user(session["discord_id"])
- 
     access_token = _make_access_token(
         session["discord_id"],
-        user.get("cached_guild_ids", []),     # store guild list in admin_users if needed
+        user.get("cached_guild_ids", []),
     )
  
     _set_refresh_cookie(response, new_raw_refresh)
