@@ -1,18 +1,39 @@
-from fastapi import HTTPException, Query
+from typing import List
 
-from dbhelper.db_helper import get_analytics_summary
+from fastapi import Form, HTTPException
+
+from dbhelper.db_helper import insert_mod_channel, remove_channel, set_channel
 
 
-async def handle_get_analytics_summary(guild_id: str = Query(...)) -> dict:
-    if not guild_id.strip():
-        raise HTTPException(status_code=400, detail="'guild_id' is required")
-
+async def handle_add_channel(
+    guild_id:   str  = Form(...),
+    channel_id: List = Form(...),
+) -> dict:
     try:
-        summary = get_analytics_summary(guild_id)
-        if not summary:
-            raise HTTPException(status_code=404, detail="No analytics found for this server")
-        return {"status": "success", "data": summary}
-    except HTTPException:
-        raise
+        for channel in channel_id:
+            set_channel(guild_id, channel)
+        return {"status": "success", "message": "Channel(s) added successfully"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch analytics summary: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to add channel: {e}")
+
+
+async def handle_delete_channel(
+    guild_id:   str = Form(...),
+    channel_id: str = Form(...),
+) -> dict:
+    try:
+        remove_channel(guild_id, channel_id)
+        return {"status": "success", "message": "Channel deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete channel: {e}")
+
+
+async def handle_add_mod_channel(
+    guild_id:   str = Form(...),
+    channel_id: str = Form(...),
+) -> dict:
+    try:
+        insert_mod_channel(guild_id, channel_id)
+        return {"status": "success", "message": "Mod channel added successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to add mod channel: {e}")

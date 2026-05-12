@@ -1,12 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.routers.auth_router    import auth_router
-from backend.routers.server_router  import server_router
-from backend.routers.upload_router  import upload_router
-from backend.routers.query_router   import query_router
-from backend.routers.channel_router import channel_router
-from backend.routers.analytics_router import analytics_router
+from backend.routers.auth_router    import *
+from backend.routers.server_router  import *
+from backend.routers.upload_router  import *
+from backend.routers.query_router   import *
+from backend.routers.channel_router import *
+from backend.routers.analytics_router import *
 
 app = FastAPI(title="Q-ARAG API", version="1.0.0")
 

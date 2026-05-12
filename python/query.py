@@ -10,7 +10,6 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_groq import ChatGroq
-from langchain_google_genai import ChatGoogleGenerativeAI 
 import redis as r
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),".."))

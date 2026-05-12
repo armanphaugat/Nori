@@ -3,10 +3,10 @@ import os
 import pandas as pd
 from pathlib import Path
 from io import BytesIO
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "python"))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
-from ingest import webscraper, split_texts, create_vectorstore, read_pdf
-from query import answer_query
+from python.ingest import *
+from python.query import *
 CONTACTS_DIR = Path(__file__).parent / "contacts"
 
 

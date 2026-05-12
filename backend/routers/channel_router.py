@@ -1,11 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from backend.middleware.auth import verify_access_token
-from backend.controllers.channel_controller import (
-    handle_add_channel,
-    handle_delete_channel,
-    handle_add_mod_channel,
-)
+from backend.controllers.channel_controller import *
 
 channel_router = APIRouter()
 
