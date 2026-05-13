@@ -30,13 +30,7 @@ DISCORD_REDIRECT_URI        = os.environ["DISCORD_REDIRECT_URI"]
 DISCORD_OAUTH_URL           = os.environ["DISCORD_OAUTH_URL"]
 DISCORD_TOKEN_URL           = os.environ["DISCORD_TOKEN_URL"]
 
-# In-memory CSRF state store (replace with Redis for multi-process deployments)
 _pending_states: set[str] = set()
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 def _hash_token(raw: str) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
@@ -101,9 +95,6 @@ def _verify_and_consume_state(state: str) -> None:
     _pending_states.discard(state)
 
 
-# ---------------------------------------------------------------------------
-# Handlers
-# ---------------------------------------------------------------------------
 
 async def handle_discord_login() -> RedirectResponse:
     state  = _generate_state()
@@ -189,9 +180,7 @@ async def handle_refresh_tokens(
         raise HTTPException(status_code=401, detail="Refresh token revoked")
     if session["expires_at"] < datetime.now(timezone.utc):
         raise HTTPException(status_code=401, detail="Refresh token expired")
-
     revoke_session(session["id"])
-
     new_raw_refresh = secrets.token_urlsafe(32)
     create_session(
         discord_id=session["discord_id"],

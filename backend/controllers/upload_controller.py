@@ -16,11 +16,6 @@ from dbhelper.db_helper import get_all_uploads
 URL_PATTERN     = r"(https?://[^\s]+)"
 MAX_FILE_SIZE   = 10 * 1024 * 1024   # 10 MB
 
-
-# ---------------------------------------------------------------------------
-# Handlers
-# ---------------------------------------------------------------------------
-
 async def handle_get_sub_urls(url: str = Query(...)) -> dict:
     url = url.strip()
     if not url:

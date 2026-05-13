@@ -219,10 +219,7 @@ async def refresh_tokens(
     _set_refresh_cookie(response, new_raw_refresh)
     return {"access_token": access_token, "token_type": "bearer"}
  
- 
-# ---------------------------------------------------------------------------
-# POST /auth/logout
-# ---------------------------------------------------------------------------
+
 @auth_router.post("/logout")
 async def logout(
     response: Response,
@@ -254,7 +251,6 @@ async def get_me(user: dict = Depends(verify_access_token)) -> dict:
 @auth_router.get("/sessions")
 async def list_sessions(user: dict = Depends(verify_access_token)) -> dict:
     sessions = get_user_sessions(user["discord_id"])
-    # Never return token hashes to the client
     safe = [
         {
             "id": str(s["id"]),

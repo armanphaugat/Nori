@@ -18,14 +18,9 @@ MIN_CHUNK_OVERLAP = 100
 
 
 def _require_server_updated(result: int, label: str) -> None:
-    """Raise 404 if the DB update matched no rows."""
     if result != 1:
         raise HTTPException(status_code=404, detail=f"Server not found or {label} not updated")
 
-
-# ---------------------------------------------------------------------------
-# Handlers
-# ---------------------------------------------------------------------------
 
 async def handle_add_server(
     guild_id: str = Form(...),
