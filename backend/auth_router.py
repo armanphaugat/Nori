@@ -9,7 +9,7 @@ import httpx
 import jwt
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
-from backend.middleware import JWT_ALGORITHM, JWT_SECRET, verify_access_token
+from backend.middleware.auth import JWT_ALGORITHM, JWT_SECRET, verify_access_token
 from dbhelper.db_helper import *
 auth_router=APIRouter()
 
@@ -49,23 +49,8 @@ def _set_refresh_cookie(response:Response,token:str):
 def _clear_refresh_cookie(response:Response,token:str):
     response.delete_cookie(
         key=REFRESH_COOKIE_NAME,
-        path="/auth",httponly=True,samesite=True,samesite="strict"
+        path="/auth",httponly=True,samesite="strict"
     )
-
-async def discord_api_get(path: str, access_token: str) -> dict:
-    """Call a Discord API endpoint with the user's access token."""
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(
-            f"{DISCORD_API}{path}",
-            headers={"Authorization": f"Bearer {access_token}"},
-            timeout=10,
-        )
-    if resp.status_code != 200:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Discord API error on {path}: {resp.status_code}",
-        )
-    return resp.json()
 
 async def _discord_api_get(path: str, access_token: str) -> dict:
     """Call a Discord API endpoint with the user's access token."""
