@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from backend.middleware.auth import verify_access_token,require_guild_admin
+from backend.middleware.auth import *
 from backend.controllers.upload_controller import *
 
 upload_router = APIRouter()
