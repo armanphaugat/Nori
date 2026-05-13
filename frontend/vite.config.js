@@ -1,19 +1,21 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
-
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(),tailwindcss()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   server: {
+    port: 3000,
     proxy: {
-      '/api/anthropic': {
-        target: 'https://api.anthropic.com',
+      '/api': {
+        target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/anthropic/, ''),
-        headers: {
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
+        rewrite: (p) => p.replace(/^\/api/, ''),
       },
     },
   },

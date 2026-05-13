@@ -12,9 +12,10 @@ from python.ingest import create_vectorstore, read_pdf, split_texts, webscraper
 from python.sub_urls import get_sub_urls
 from python.contacts.xlsx_contacts import ingest_contacts_to_vectorstore
 from dbhelper.db_helper import get_all_uploads
+from backend.middleware.auth import *
 
 URL_PATTERN     = r"(https?://[^\s]+)"
-MAX_FILE_SIZE   = 10 * 1024 * 1024   # 10 MB
+MAX_FILE_SIZE   = 10 * 1024 * 1024
 
 async def handle_get_sub_urls(url: str = Query(...)) -> dict:
     url = url.strip()
@@ -36,6 +37,7 @@ async def handle_upload(
     guild_id: str                        = Form(...),
     files:    Optional[List[UploadFile]] = File(None),
     urls:     Optional[str]              = Form(None),
+    user:     dict                       = Depends(require_guild_admin),
 ) -> dict:
     guild_id = guild_id.strip()
     if not guild_id:
@@ -99,10 +101,7 @@ async def handle_upload(
     }
 
 
-async def handle_upload_contacts(
-    guild_id: str        = Form(...),
-    file:     UploadFile = File(...),
-) -> dict:
+async def handle_upload_contacts(guild_id: str        = Form(...),file:     UploadFile = File(...),user: dict = Depends(require_guild_admin),) -> dict:
     guild_id = guild_id.strip()
     if not guild_id:
         raise HTTPException(status_code=400, detail="'guild_id' is required")
@@ -139,7 +138,7 @@ async def handle_upload_contacts(
         raise HTTPException(status_code=500, detail=f"Failed to ingest contacts: {e}")
 
 
-async def handle_get_all_uploads(guild_id: str = Query(...)) -> dict:
+async def handle_get_all_uploads(guild_id: str = Query(...),user:dict = Depends(require_guild_admin_query),) -> dict:
     try:
         result = get_all_uploads(guild_id)
         if result is None:
