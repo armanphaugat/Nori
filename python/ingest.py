@@ -24,6 +24,7 @@ TAGS = [
 ]
 
 def webscraper(url):
+    #try to add more modules which can help in webscrapping if webbaseloader is not working(least)
     try:
         loader = WebBaseLoader(
             url,
@@ -32,7 +33,6 @@ def webscraper(url):
         docs = loader.load()
         cleaned = []
         for doc in docs:
-            # ✅ Always return plain strings never tuples
             if not isinstance(doc.page_content, str):
                 continue
             lines = doc.page_content.splitlines()
@@ -45,7 +45,7 @@ def webscraper(url):
     except Exception as e:
         print(f"❌ Scraper error for {url}: {e}")
         return []
-
+ 
 def read_pdf(file):
     text = ""
     if isinstance(file, BytesIO):
@@ -102,7 +102,8 @@ def read_pdf(file):
         raise ValueError("No text extracted — PDF might be a scanned image")
 
     return text
-
+#add for word files
+#add for ocr
 def split_texts(texts):
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=500,

@@ -1,7 +1,7 @@
 import os
 
 import jwt
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, Request, status,Form
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from dbhelper.db_helper import get_guild_admin
@@ -36,7 +36,7 @@ async def verify_access_token(
 
 
 async def require_guild_admin(
-    guild_id: str,
+    guild_id: str=Form(...),
     user: dict = Depends(verify_access_token),
 ) -> dict:
     row = get_guild_admin(guild_id, user["discord_id"])

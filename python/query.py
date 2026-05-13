@@ -125,17 +125,17 @@ def get_all_docs(server_id):
         docs=list(vs.docstore._dict.values())
         _docs_cache[server_id_str]=docs
     return _docs_cache[server_id_str]
-def get_hybrid_retriever(server_id, bm25_k,faiss_k,faiss_fetch_k=45):
+def get_hybrid_retriever(server_id, discord_bm25_k,discord_faiss_k,discord_faiss_fetch_k=45):
     vectorstore = get_vectorstore(server_id)
     if vectorstore is None:
         return None
     all_docs = get_all_docs(server_id)
     if not all_docs:
         return None
-    bm25_retriever = BM25Retriever.from_documents(all_docs, k=bm25_k)
+    bm25_retriever = BM25Retriever.from_documents(all_docs, k=discord_bm25_k)
     faiss_retriever = vectorstore.as_retriever(
         search_type="mmr",
-        search_kwargs={"k": faiss_k, "fetch_k": faiss_fetch_k, "lambda_mult": 0.4}
+        search_kwargs={"k": discord_faiss_k, "fetch_k": discord_faiss_fetch_k, "lambda_mult": 0.4}
     )
     def hybrid_retrieve(query):
         bm25_docs = bm25_retriever.invoke(query)
@@ -153,7 +153,7 @@ def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
 
-def answer_query(question: str, server_id: int,discord_prompt:str,bm25_k:int,faiss_k:int):
+def answer_query(question: str, server_id: int,discord_prompt:str,discord_bm25_k:int,discord_faiss_k:int):
     checker(discord_prompt)
     full_prompt = ChatPromptTemplate.from_template(text)
     vectorstore = get_vectorstore(server_id)
@@ -161,7 +161,7 @@ def answer_query(question: str, server_id: int,discord_prompt:str,bm25_k:int,fai
     if vectorstore is None:
         return "No content has been uploaded yet. Use -upload with URLs or PDF attachments first."
 
-    retriever = get_hybrid_retriever(server_id,bm25_k,faiss_k,45)
+    retriever = get_hybrid_retriever(server_id,discord_bm25_k,discord_faiss_k,45)
     if retriever is None:
         return "No content has been uploaded yet. Use -upload with URLs or PDF attachments first."
     docs = retriever(question)

@@ -12,6 +12,7 @@ from python.ingest import create_vectorstore, read_pdf, split_texts, webscraper
 from python.sub_urls import get_sub_urls
 from python.contacts.xlsx_contacts import ingest_contacts_to_vectorstore
 from dbhelper.db_helper import get_all_uploads
+from backend.middleware.auth import *
 
 URL_PATTERN     = r"(https?://[^\s]+)"
 MAX_FILE_SIZE   = 10 * 1024 * 1024   # 10 MB
