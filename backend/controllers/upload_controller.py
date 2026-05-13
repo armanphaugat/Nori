@@ -15,7 +15,7 @@ from dbhelper.db_helper import get_all_uploads
 from backend.middleware.auth import *
 
 URL_PATTERN     = r"(https?://[^\s]+)"
-MAX_FILE_SIZE   = 10 * 1024 * 1024   # 10 MB
+MAX_FILE_SIZE   = 10 * 1024 * 1024
 
 async def handle_get_sub_urls(url: str = Query(...)) -> dict:
     url = url.strip()
@@ -101,11 +101,7 @@ async def handle_upload(
     }
 
 
-async def handle_upload_contacts(
-    guild_id: str        = Form(...),
-    file:     UploadFile = File(...),
-    user: dict = Depends(require_guild_admin),
-) -> dict:
+async def handle_upload_contacts(guild_id: str        = Form(...),file:     UploadFile = File(...),user: dict = Depends(require_guild_admin),) -> dict:
     guild_id = guild_id.strip()
     if not guild_id:
         raise HTTPException(status_code=400, detail="'guild_id' is required")

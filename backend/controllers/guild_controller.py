@@ -8,13 +8,6 @@ from dbhelper.db_helper import get_admin_user
 
 DISCORD_API = os.getenv("DISCORD_API", "https://discord.com/api/v10")
 
-
-# ---------------------------------------------------------------------------
-# GET /guilds
-# Returns guild id + name + icon for every guild the logged-in user is in.
-# Reads the stored Discord access token from admin_users — the frontend
-# never needs to hold the Discord token itself.
-# ---------------------------------------------------------------------------
 async def handle_get_guilds(
     user: dict = Depends(verify_access_token),
 ) -> dict:
@@ -57,13 +50,6 @@ async def handle_get_guilds(
         ]
     }
 
-
-# ---------------------------------------------------------------------------
-# GET /guilds/{guild_id}/channels
-# Returns text channels in a guild using the BOT token (not user token).
-# User OAuth token cannot call /guilds/:id/channels — bot token is required.
-# Add DISCORD_BOT_TOKEN to your .env file.
-# ---------------------------------------------------------------------------
 async def handle_get_guild_channels(
     guild_id: str,
     user: dict = Depends(verify_access_token),
@@ -94,7 +80,6 @@ async def handle_get_guild_channels(
         )
 
     channels = resp.json()
-    # type 0 = GUILD_TEXT, type 5 = GUILD_ANNOUNCEMENT
     text_channels = [
         {"id": c["id"], "name": c["name"], "type": c["type"]}
         for c in channels

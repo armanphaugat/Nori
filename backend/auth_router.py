@@ -47,11 +47,7 @@ def _set_refresh_cookie(response:Response,token:str):
     )
 
 def _clear_refresh_cookie(response:Response,token:str):
-    response.delete_cookie(
-        key=REFRESH_COOKIE_NAME,
-        path="/auth",httponly=True,samesite="strict"
-    )
-
+    response.delete_cookie(key=REFRESH_COOKIE_NAME,path="/auth",httponly=True,samesite="strict")
 async def _discord_api_get(path: str, access_token: str) -> dict:
     """Call a Discord API endpoint with the user's access token."""
     async with httpx.AsyncClient() as client:
@@ -66,11 +62,6 @@ async def _discord_api_get(path: str, access_token: str) -> dict:
             detail=f"Discord API error on {path}: {resp.status_code}",
         )
     return resp.json()
- 
- 
-# ---------------------------------------------------------------------------
-# CSRF state store (in-memory; replace with Redis for multi-process deploy)
-# ---------------------------------------------------------------------------
 _pending_states: set[str] = set()
  
  
@@ -85,11 +76,6 @@ def _verify_and_consume_state(state: str) -> None:
         raise HTTPException(status_code=400, detail="Invalid OAuth state (CSRF check failed)")
     _pending_states.discard(state)
  
- 
-# ---------------------------------------------------------------------------
-# GET /auth/discord
-# Redirect user to Discord OAuth consent screen.
-# ---------------------------------------------------------------------------
 @auth_router.get("/discord")
 async def discord_login() -> RedirectResponse:
     state = _generate_state()

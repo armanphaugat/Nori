@@ -49,14 +49,7 @@ def _make_access_token(discord_id: str, guild_ids: list[str]) -> str:
 
 
 def _set_refresh_cookie(response: Response, token: str) -> None:
-    response.set_cookie(
-        key=REFRESH_COOKIE_NAME,
-        value=token,
-        httponly=True,
-        secure=True,
-        max_age=REFRESH_TOKEN_EXPIRE_DAYS * 86_400,
-        path="/auth",
-    )
+    response.set_cookie(key=REFRESH_COOKIE_NAME,value=token,httponly=True,secure=True,max_age=REFRESH_TOKEN_EXPIRE_DAYS * 86_400,path="/auth",)
 
 
 def _clear_refresh_cookie(response: Response) -> None:

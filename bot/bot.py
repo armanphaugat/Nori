@@ -59,7 +59,7 @@ async def ask(ctx, *, question: str = None):
             await ctx.send(answer)
             
     except Exception as e:
-        await ctx.send(f"❌ An error occurred: {str(e)}")
+        await ctx.send(f"An error occurred: {str(e)}")
         print(f"Error in ask command: {e}")
 
 @bot.command()
@@ -71,7 +71,7 @@ async def help(ctx):
     )
 
     embed.add_field(
-        name="❓ `-ask <question>`",
+        name="`-ask <question>`",
         value="Ask a question to the bot\n`!ask What is Python?`",
         inline=False
     )

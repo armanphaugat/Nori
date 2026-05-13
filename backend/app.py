@@ -19,13 +19,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth_router,prefix="/auth",      tags=["Auth"])
-app.include_router(server_router,    prefix="/server",    tags=["Server"])
-app.include_router(upload_router,    prefix="/upload",    tags=["Upload"])
-app.include_router(query_router,     prefix="/query",     tags=["Query"])
-app.include_router(channel_router,   prefix="/channel",   tags=["Channel"])
-app.include_router(analytics_router, prefix="/analytics", tags=["Analytics"])
-app.include_router(guild_router, prefix="/guilds", tags=["Guilds"])
+app.include_router(auth_router,prefix="/auth",tags=["Auth"])
+app.include_router(server_router,prefix="/server",tags=["Server"])
+app.include_router(upload_router,prefix="/upload",tags=["Upload"])
+app.include_router(query_router,prefix="/query",tags=["Query"])
+app.include_router(channel_router,prefix="/channel",tags=["Channel"])
+app.include_router(analytics_router,prefix="/analytics",tags=["Analytics"])
+app.include_router(guild_router,prefix="/guilds",tags=["Guilds"])
 
 @app.get("/", tags=["Health"])
 def health_check():
