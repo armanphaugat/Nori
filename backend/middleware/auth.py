@@ -1,15 +1,18 @@
+# backend/middleware/auth.py
+
 import os
 
 import jwt
-from fastapi import Depends, HTTPException, Request, status,Form
+from fastapi import Depends, HTTPException, Query, Request, status, Form
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from dbhelper.db_helper import get_guild_admin
 from dotenv import load_dotenv
 load_dotenv()
-JWT_SECRET= os.getenv("JWT_SECRET")
+
+JWT_SECRET = os.getenv("JWT_SECRET")
 JWT_ALGORITHM: str = "HS256"
-BOT_SHARED_SECRET: str = os.environ["BOT_SHARED_SECRET"]
+BOT_SHARED_SECRET: str = os.environ.get("BOT_SHARED_SECRET", "")  # Bug 7 fix also applied here
 
 bearer_scheme = HTTPBearer(auto_error=True)
 
@@ -35,8 +38,9 @@ async def verify_access_token(
         )
 
 
+# ✅ Bug 1 Fix: Used for POST/PUT/PATCH/DELETE routes — reads guild_id from form body
 async def require_guild_admin(
-    guild_id: str=Form(...),
+    guild_id: str = Form(...),
     user: dict = Depends(verify_access_token),
 ) -> dict:
     row = get_guild_admin(guild_id, user["discord_id"])
@@ -45,7 +49,21 @@ async def require_guild_admin(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not an admin of this guild",
         )
-    return {**user, "role": row["role"]}
+    return {**user, "guild_id": guild_id, "role": row["role"]}
+
+
+# ✅ Bug 1 Fix: New variant for GET routes — reads guild_id from query string
+async def require_guild_admin_query(
+    guild_id: str = Query(...),
+    user: dict = Depends(verify_access_token),
+) -> dict:
+    row = get_guild_admin(guild_id, user["discord_id"])
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not an admin of this guild",
+        )
+    return {**user, "guild_id": guild_id, "role": row["role"]}
 
 
 async def require_bot_token(request: Request) -> bool:

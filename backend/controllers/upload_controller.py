@@ -37,6 +37,7 @@ async def handle_upload(
     guild_id: str                        = Form(...),
     files:    Optional[List[UploadFile]] = File(None),
     urls:     Optional[str]              = Form(None),
+    user:     dict                       = Depends(require_guild_admin),
 ) -> dict:
     guild_id = guild_id.strip()
     if not guild_id:
@@ -103,6 +104,7 @@ async def handle_upload(
 async def handle_upload_contacts(
     guild_id: str        = Form(...),
     file:     UploadFile = File(...),
+    user: dict = Depends(require_guild_admin),
 ) -> dict:
     guild_id = guild_id.strip()
     if not guild_id:
@@ -140,7 +142,7 @@ async def handle_upload_contacts(
         raise HTTPException(status_code=500, detail=f"Failed to ingest contacts: {e}")
 
 
-async def handle_get_all_uploads(guild_id: str = Query(...)) -> dict:
+async def handle_get_all_uploads(guild_id: str = Query(...),user:dict = Depends(require_guild_admin_query),) -> dict:
     try:
         result = get_all_uploads(guild_id)
         if result is None:
