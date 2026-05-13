@@ -8,6 +8,9 @@ from bs4 import SoupStrainer
 import PyPDF2
 import pdfplumber
 from io import BytesIO
+import docx2txt
+from PIL import Image
+import pytesseract
 embeddings = HuggingFaceEmbeddings(
     model_name="sentence-transformers/all-MiniLM-L6-v2"
 )
@@ -102,12 +105,55 @@ def read_pdf(file):
         raise ValueError("No text extracted — PDF might be a scanned image")
 
     return text
-#add for word files
-#add for ocr
-def split_texts(texts):
+
+def read_word(file):
+    try:
+        if isinstance(file, BytesIO):
+            file.seek(0)
+            text = docx2txt.process(file)
+        elif isinstance(file, str):
+            text = docx2txt.process(file)
+        else:
+            raise ValueError("file must be a file path or BytesIO object")
+
+        if not text or not text.strip():
+            raise ValueError("No text extracted from Word document")
+
+        return text.lower()
+
+    except ValueError:
+        raise
+    except Exception as e:
+        raise ValueError(f"Failed to read Word file: {e}")
+
+def read_ocr(file):
+    try:
+        if isinstance(file, BytesIO):
+            file.seek(0)
+            image = Image.open(file)
+        elif isinstance(file, str):
+            image = Image.open(file)
+        else:
+            raise ValueError("file must be a file path or BytesIO object")
+        if image.mode not in ("RGB", "L"):
+            image = image.convert("RGB")
+
+        text = pytesseract.image_to_string(image)
+
+        if not text or not text.strip():
+            raise ValueError("No text extracted — image may be blank or unreadable")
+
+        return text.lower()
+
+    except ValueError:
+        raise
+    except Exception as e:
+        raise ValueError(f"Failed to read image via OCR: {e}")
+
+def split_texts(texts, chunk_size=500, chunk_overlap=100):
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=100,
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
         separators=["\n\n", "\n", ".", " ", ""]
     )
     chunks = []
