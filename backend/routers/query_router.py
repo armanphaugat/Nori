@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-
 from backend.middleware.auth import verify_access_token
 from backend.controllers.query_controller import handle_query
 

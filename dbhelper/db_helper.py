@@ -274,7 +274,6 @@ def get_uploads(guild_id: str) -> list[dict]:
         return [dict(r) for r in rows]
 
 
-# kept as alias so existing callers don't break
 get_all_uploads = get_uploads
 
 
