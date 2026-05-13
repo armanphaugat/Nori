@@ -1,17 +1,7 @@
 from fastapi import Form, HTTPException
 
-from dbhelper.db_helper import (
-    add_server,
-    insert_system_prompt,
-    update_bm25_k,
-    update_chunk_overlap,
-    update_chunk_size,
-    update_faiss_k,
-    update_max_tokens,
-    update_system_prompt,
-    update_temperature,
-)
-
+from dbhelper.db_helper import *
+from backend.middleware.auth import *
 MAX_CHUNK_SIZE    = 1000
 MAX_CHUNK_OVERLAP = 1000
 MIN_CHUNK_OVERLAP = 100
@@ -92,7 +82,7 @@ async def handle_insert_system_prompt(
     guild_id: str = Form(...),
     text:     str = Form(...),
 ) -> dict:
-    insert_system_prompt(guild_id, text)
+    update_system_prompt(guild_id, text)
     return {"status": "success", "message": "System prompt inserted successfully"}
 
 
@@ -102,3 +92,27 @@ async def handle_update_system_prompt(
 ) -> dict:
     update_system_prompt(guild_id, text)
     return {"status": "success", "message": "System prompt updated successfully"}
+
+async def handle_get_server_config(
+    guild_id: str = Query(...),
+    user: dict = Depends(require_guild_admin_query),   # already imported via middleware.auth *
+) -> dict:
+    from dbhelper.db_helper import get_server
+    row = get_server(guild_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Server not found — register it first via /server/add")
+    return {
+        "guild_id":       row["server_id"],
+        "name":           row["server_name"],
+        "prefix":         row["prefix"],
+        "max_tokens":     row["max_tokens"],
+        "temperature":    row["temperature"],
+        "chunk_size":     row["chunk_size"],
+        "chunk_overlap":  row["chunk_overlap"],
+        "faiss_k":        row["faiss_k"],
+        "bm25_k":         row["bm25_k"],
+        "system_prompt":  row["system_prompt"],
+        "mod_channel":    row["mod_channel"],
+        "added_at":       row["added_at"].isoformat() if row.get("added_at") else None,
+        "updated_at":     row["updated_at"].isoformat() if row.get("updated_at") else None,
+    }
