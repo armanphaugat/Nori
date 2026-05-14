@@ -11,14 +11,18 @@ from fastapi.responses import RedirectResponse
 
 from backend.middleware.auth import JWT_ALGORITHM, JWT_SECRET, verify_access_token
 from dbhelper.db_helper import (
+    add_guild_admin,
     create_session,
     get_admin_user,
+    get_server,
     get_session_by_hash,
     get_user_sessions,
     revoke_session,
     revoke_session_by_id,
     upsert_admin_user,
 )
+
+ADMINISTRATOR_PERMISSION = 0x8  # Discord permission bit for Administrator
 
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 15))
 REFRESH_TOKEN_EXPIRE_DAYS   = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 7))
@@ -38,7 +42,7 @@ def _hash_token(raw: str) -> str:
 
 
 def _make_access_token(discord_id: str, guild_ids: list[str]) -> str:
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     payload = {
         "sub":        discord_id,
         "discord_id": discord_id,
@@ -48,9 +52,18 @@ def _make_access_token(discord_id: str, guild_ids: list[str]) -> str:
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
+IS_PROD = os.getenv("ENV", "development") == "production"
 
 def _set_refresh_cookie(response: Response, token: str) -> None:
-    response.set_cookie(key=REFRESH_COOKIE_NAME,value=token,httponly=True,secure=True,max_age=REFRESH_TOKEN_EXPIRE_DAYS * 86_400,path="/auth",)
+    response.set_cookie(
+        key=REFRESH_COOKIE_NAME,
+        value=token,
+        httponly=True,
+        secure=IS_PROD,
+        samesite="lax",
+        max_age=REFRESH_TOKEN_EXPIRE_DAYS * 86_400,
+        path="/auth",
+    )
 
 
 def _clear_refresh_cookie(response: Response) -> None:
@@ -58,7 +71,7 @@ def _clear_refresh_cookie(response: Response) -> None:
         key=REFRESH_COOKIE_NAME,
         path="/auth",
         httponly=True,
-        samesite="strict",
+        samesite="lax",
     )
 
 
@@ -132,6 +145,21 @@ async def handle_discord_callback(code: str, state: str, request: Request) -> Re
     guilds    = await _call_discord_api("/users/@me/guilds", d_access)
     guild_ids = [g["id"] for g in guilds]
 
+    # Auto-register user as admin for any guild where they are owner or have Administrator permission
+    # Only if that guild is already registered in the servers table (FK constraint)
+    for guild in guilds:
+        is_owner = guild.get("owner", False)
+        permissions = int(guild.get("permissions", 0))
+        is_admin = is_owner or bool(permissions & ADMINISTRATOR_PERMISSION)
+        if is_admin and get_server(guild["id"]):
+            role = "owner" if is_owner else "admin"
+            add_guild_admin(
+                guild_id=guild["id"],
+                discord_id=me["id"],
+                role=role,
+                granted_by=me["id"],
+            )
+
     upsert_admin_user(
         discord_id=me["id"],
         username=f"{me['username']}#{me.get('discriminator', '0')}",
@@ -191,13 +219,11 @@ async def handle_refresh_tokens(
 async def handle_logout(
     response: Response,
     rt: str | None = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
-    user: dict = Depends(verify_access_token),
 ) -> dict:
     if rt:
         session = get_session_by_hash(_hash_token(rt))
         if session:
             revoke_session(session["id"])
-
     _clear_refresh_cookie(response)
     return {"detail": "Logged out"}
 

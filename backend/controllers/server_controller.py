@@ -15,8 +15,15 @@ def _require_server_updated(result: int, label: str) -> None:
 async def handle_add_server(
     guild_id: str = Form(...),
     name:     str = Form(...),
+    user:     dict = Depends(verify_access_token),
 ) -> dict:
     add_server(guild_id, name)
+    add_guild_admin(
+        guild_id=guild_id,
+        discord_id=user["discord_id"],
+        role="owner",
+        granted_by=user["discord_id"],
+    )
     return {"status": "success", "message": "Server added successfully"}
 
 

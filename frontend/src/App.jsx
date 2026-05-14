@@ -157,10 +157,24 @@ const LS = {
 function getToken() { return LS.str("wb_token"); }
 function setToken(t) { t ? LS.strSet("wb_token", t) : LS.rm("wb_token"); }
 
-async function apiFetch(path, opts = {}, _retry = true) {
+let _refreshPromise = null;
+
+async function refreshOnce() {
+  if (_refreshPromise) return _refreshPromise;
+  _refreshPromise = fetch(`${API_BASE}/auth/refresh`, { method: "POST", credentials: "include" })
+    .then(async rr => {
+      if (rr.ok) { const d = await rr.json(); if (d.access_token) { setToken(d.access_token); return d.access_token; } }
+      return null;
+    })
+    .catch(() => null)
+    .finally(() => { _refreshPromise = null; });
+  return _refreshPromise;
+}
+
+async function apiFetch(path, opts = {}, _retry = true, _token = null) {
   const { method = "GET", body, isForm = false } = opts;
   const headers = {};
-  const token = getToken();
+  const token = _token || getToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
   if (!isForm && body) headers["Content-Type"] = "application/json";
   const res = await fetch(`${API_BASE}${path}`, {
@@ -168,10 +182,8 @@ async function apiFetch(path, opts = {}, _retry = true) {
     body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
   });
   if (res.status === 401 && _retry) {
-    try {
-      const rr = await fetch(`${API_BASE}/auth/refresh`, { method: "POST", credentials: "include" });
-      if (rr.ok) { const d = await rr.json(); if (d.access_token) { setToken(d.access_token); return apiFetch(path, opts, false); } }
-    } catch (_) {}
+    const newToken = await refreshOnce();
+    if (newToken) return apiFetch(path, opts, false, newToken);
     setToken(null); LS.rm("wb_user");
     throw new Error("Session expired — please log in again");
   }
@@ -184,6 +196,8 @@ const fd = (obj) => { const f = new FormData(); Object.entries(obj).forEach(([k,
 const API = {
   getMe:             ()           => apiFetch("/auth/me"),
   logout:            ()           => apiFetch("/auth/logout", { method: "POST" }),
+  getGuilds:         ()           => apiFetch("/guilds/"),
+  getGuildChannels:  (gid)        => apiFetch(`/guilds/${encodeURIComponent(gid)}/channels`),
   addServer:         (gid, name)  => apiFetch("/server/add", { method: "POST", body: fd({ guild_id: gid, name }), isForm: true }),
   getConfig:         (gid)        => apiFetch(`/server/config?guild_id=${encodeURIComponent(gid)}`),
   updateFaissK:      (gid, k)     => apiFetch("/server/update-faiss-k",    { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
@@ -551,21 +565,28 @@ function LandingPage({ user, onLogin, onShowDashboard }) {
 }
 
 // ─── OVERVIEW TAB ─────────────────────────────────────────────────────────────
-function OverviewTab({ guilds, activeGuildId, user, onActivate, onRemove, onAdd, analytics }) {
+function OverviewTab({ guilds, discordGuilds, activeGuildId, user, onActivate, onRemove, onAdd, analytics }) {
   const [showAdd, setShowAdd] = useState(false);
-  const [newId, setNewId] = useState("");
-  const [newName, setNewName] = useState("");
+  const [selectedGuild, setSelectedGuild] = useState(null);
   const [adding, setAdding] = useState(false);
   const [addStatus, setAddStatus] = useState(null);
 
+  // Filter to only servers the user owns and hasn't registered yet
+  const availableToAdd = discordGuilds.filter(g => g.owner && !guilds.find(r => r.id === g.id));
+
   const handleAdd = async () => {
-    if (!newId.trim()) { setAddStatus({ ok:false, msg:"Guild ID is required" }); return; }
-    if (guilds.find(g => g.id === newId.trim())) { setAddStatus({ ok:false, msg:"Server already registered" }); return; }
+    if (!selectedGuild) { setAddStatus({ ok:false, msg:"Please select a server" }); return; }
+    if (guilds.find(g => g.id === selectedGuild.id)) { setAddStatus({ ok:false, msg:"Server already registered" }); return; }
     setAdding(true);
-    try { await API.addServer(newId.trim(), newName.trim() || `Server ${newId.trim().slice(0,8)}`); } catch (_) {}
-    onAdd({ id: newId.trim(), name: newName.trim() || `Server ${newId.trim().slice(0,8)}`, createdAt: Date.now() });
-    setAddStatus({ ok:true, msg:"✓ Server registered!" });
-    setTimeout(() => { setShowAdd(false); setAddStatus(null); setNewId(""); setNewName(""); }, 900);
+    try {
+      await API.addServer(selectedGuild.id, selectedGuild.name);
+      const newGuild = { id: selectedGuild.id, name: selectedGuild.name, icon: selectedGuild.icon };
+      onAdd(newGuild);
+      setAddStatus({ ok:true, msg:"✓ Server registered!" });
+      setTimeout(() => { setShowAdd(false); setAddStatus(null); setSelectedGuild(null); }, 900);
+    } catch (e) {
+      setAddStatus({ ok:false, msg:"✗ " + e.message });
+    }
     setAdding(false);
   };
 
@@ -629,10 +650,19 @@ function OverviewTab({ guilds, activeGuildId, user, onActivate, onRemove, onAdd,
         {showAdd && (
           <div style={{ padding:"18px 20px", borderTop:"1px solid var(--border)", background:"var(--bg-e)" }}>
             <div style={{ fontSize:13, fontWeight:600, color:"var(--text)", marginBottom:12 }}>Register New Server</div>
-            <label style={{ fontSize:11, color:"var(--text-m)", fontWeight:700, display:"block", marginBottom:5, textTransform:"uppercase", letterSpacing:".05em" }}>Discord Server ID *</label>
-            <input className="field field-mono" value={newId} onChange={e => setNewId(e.target.value)} placeholder="e.g. 1476466974098985067" style={{ marginBottom:10 }} />
-            <label style={{ fontSize:11, color:"var(--text-m)", fontWeight:700, display:"block", marginBottom:5, textTransform:"uppercase", letterSpacing:".05em" }}>Display Name</label>
-            <input className="field" value={newName} onChange={e => setNewName(e.target.value)} placeholder="My Server" style={{ marginBottom:12 }} />
+            <label style={{ fontSize:11, color:"var(--text-m)", fontWeight:700, display:"block", marginBottom:5, textTransform:"uppercase", letterSpacing:".05em" }}>Select Your Discord Server</label>
+            <select className="field" value={selectedGuild?.id || ""} onChange={e => {
+              const g = discordGuilds.find(g => g.id === e.target.value);
+              setSelectedGuild(g || null);
+            }} style={{ marginBottom:12 }}>
+              <option value="">— choose a server —</option>
+              {availableToAdd.length === 0
+                ? <option disabled>No new servers to add</option>
+                : availableToAdd.map(g => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
+                  ))
+              }
+            </select>
             {addStatus && <div style={{ marginBottom:10 }}><StatusBadge {...addStatus} /></div>}
             <div style={{ display:"flex", gap:10 }}>
               <Btn onClick={handleAdd} disabled={adding} style={{ flex:2, justifyContent:"center", padding:"10px" }}>
@@ -815,6 +845,7 @@ function ChannelsTab({ guilds }) {
   const [channels, setChannels] = useState([]);
   const [modChannel, setModChannel] = useState(null);
   const [loaded, setLoaded] = useState(false);
+  const [discordChannels, setDiscordChannels] = useState([]); // real channel names from Discord
   const [newChanId, setNewChanId] = useState("");
   const [newModId, setNewModId] = useState("");
   const [status, setStatus] = useState(null);
@@ -824,13 +855,29 @@ function ChannelsTab({ guilds }) {
     if (!id) { setLoaded(false); return; }
     setLoading(true);
     try {
-      const d = await API.listChannels(id);
-      setChannels(d.channel_ids || []); setModChannel(d.mod_channel || null); setLoaded(true);
+      const [d, dc] = await Promise.allSettled([
+        API.listChannels(id),
+        API.getGuildChannels(id),
+      ]);
+      if (d.status === "fulfilled") {
+        setChannels(d.value.channel_ids || []);
+        setModChannel(d.value.mod_channel || null);
+        setLoaded(true);
+      }
+      if (dc.status === "fulfilled") {
+        setDiscordChannels(dc.value.channels || []);
+      }
     } catch (e) { setStatus({ ok:false, msg:"✗ " + e.message }); }
     setLoading(false);
   };
 
-  const handleSelect = (id) => { setGid(id); setLoaded(false); setStatus(null); load(id); };
+  // Resolve a channel ID to its name if available
+  const chanName = (id) => {
+    const found = discordChannels.find(c => c.id === id);
+    return found ? `#${found.name}` : id;
+  };
+
+  const handleSelect = (id) => { setGid(id); setLoaded(false); setStatus(null); setDiscordChannels([]); load(id); };
 
   const addChan = async () => {
     if (!gid || !newChanId.trim()) return;
@@ -887,14 +934,23 @@ function ChannelsTab({ guilds }) {
             ) : channels.map(ch => (
               <div key={ch} style={{ display:"flex", alignItems:"center", gap:12, padding:"11px 18px", borderBottom:"1px solid rgba(15,15,15,0.05)" }}>
                 <span style={{ color:"var(--accent)", fontWeight:700 }}>#</span>
-                <span style={{ flex:1, fontFamily:"'DM Mono',monospace", fontSize:12.5, color:"var(--text)" }}>{ch}</span>
+                <span style={{ flex:1, fontSize:13, color:"var(--text)" }}>{chanName(ch)}</span>
                 <Btn onClick={() => removeChan(ch)} variant="danger" style={{ padding:"5px 10px", fontSize:11.5 }}>✕ Remove</Btn>
               </div>
             ))}
             <div style={{ padding:"12px 18px", borderTop:"1px solid var(--border)", display:"flex", gap:10 }}>
-              <input className="field field-mono" value={newChanId} onChange={e => setNewChanId(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && addChan()}
-                placeholder="Channel ID (e.g. 1234567890123456789)" style={{ flex:1, height:36 }} />
+              {discordChannels.length > 0 ? (
+                <select className="field" value={newChanId} onChange={e => setNewChanId(e.target.value)} style={{ flex:1, height:36 }}>
+                  <option value="">— select a channel —</option>
+                  {discordChannels.filter(c => !channels.includes(c.id)).map(c => (
+                    <option key={c.id} value={c.id}>#{c.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <input className="field field-mono" value={newChanId} onChange={e => setNewChanId(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && addChan()}
+                  placeholder="Channel ID" style={{ flex:1, height:36 }} />
+              )}
               <Btn onClick={addChan} variant="ghost" style={{ padding:"7px 14px", flexShrink:0 }}>+ Add</Btn>
             </div>
           </div>
@@ -910,16 +966,25 @@ function ChannelsTab({ guilds }) {
                 background:"var(--warning-bg)", border:"1px solid rgba(179,92,0,0.2)", borderRadius:"var(--r-sm)",
               }}>
                 <span style={{ fontWeight:700 }}>#</span>
-                <span style={{ fontFamily:"'DM Mono',monospace", fontSize:12.5, color:"var(--warning)", flex:1 }}>{modChannel}</span>
+                <span style={{ fontSize:13, color:"var(--warning)", flex:1 }}>{chanName(modChannel)}</span>
                 <Tag variant="warn">ACTIVE</Tag>
               </div>
             ) : (
               <p style={{ fontSize:12.5, color:"var(--text-m)", marginBottom:10 }}>No mod channel set.</p>
             )}
             <div style={{ display:"flex", gap:10 }}>
-              <input className="field field-mono" value={newModId} onChange={e => setNewModId(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && setMod()}
-                placeholder="Mod channel ID" style={{ flex:1, height:36 }} />
+              {discordChannels.length > 0 ? (
+                <select className="field" value={newModId} onChange={e => setNewModId(e.target.value)} style={{ flex:1, height:36 }}>
+                  <option value="">— select mod channel —</option>
+                  {discordChannels.map(c => (
+                    <option key={c.id} value={c.id}>#{c.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <input className="field field-mono" value={newModId} onChange={e => setNewModId(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && setMod()}
+                  placeholder="Mod channel ID" style={{ flex:1, height:36 }} />
+              )}
               <Btn onClick={setMod} variant="ghost" style={{ padding:"7px 14px", flexShrink:0 }}>Set</Btn>
             </div>
           </div>
@@ -1373,7 +1438,7 @@ const TABS = [
   { id:"crawler",   label:"🌐 URL Crawler" },
 ];
 
-function Dashboard({ user, guilds, onGuildsChange }) {
+function Dashboard({ user, guilds, discordGuilds, onGuildsChange }) {
   const [tab, setTab] = useState("overview");
   const [activeGuildId, setActiveGuildId] = useState(LS.str("wb_active_guild") || guilds[0]?.id || null);
   const [analytics, setAnalytics] = useState(null);
@@ -1424,7 +1489,7 @@ function Dashboard({ user, guilds, onGuildsChange }) {
       {/* Content */}
       <div style={{ flex:1, overflowY:"auto" }}>
         <div style={{ maxWidth:740, padding:"36px 40px" }}>
-          {tab === "overview"  && <OverviewTab guilds={guilds} activeGuildId={activeGuildId} user={user} analytics={analytics} onActivate={handleActivate} onRemove={handleRemove} onAdd={handleAdd} />}
+          {tab === "overview"  && <OverviewTab guilds={guilds} discordGuilds={discordGuilds} activeGuildId={activeGuildId} user={user} analytics={analytics} onActivate={handleActivate} onRemove={handleRemove} onAdd={handleAdd} />}
           {tab === "config"    && <ServerConfigTab guilds={guilds} />}
           {tab === "channels"  && <ChannelsTab guilds={guilds} />}
           {tab === "upload"    && <UploadTab guilds={guilds} />}
@@ -1442,7 +1507,8 @@ function Dashboard({ user, guilds, onGuildsChange }) {
 export default function App() {
   const [view, setView] = useState("landing"); // "landing" | "dashboard"
   const [user, setUser] = useState(LS.get("wb_user", null));
-  const [guilds, setGuilds] = useState(LS.get("wb_guilds", []));
+  const [guilds, setGuilds] = useState(LS.get("wb_guilds", []));         // DB-registered servers only
+  const [discordGuilds, setDiscordGuilds] = useState([]);                 // all Discord guilds for dropdowns
   const [booting, setBooting] = useState(true);
 
   // ── OAuth redirect handler ─────────────────────────────────────────────────
@@ -1460,6 +1526,12 @@ export default function App() {
         try {
           const u = await API.getMe();
           setUser(u); LS.set("wb_user", u);
+          // Load Discord guilds for dropdowns (not registered servers)
+          try {
+            const { guilds: dg } = await API.getGuilds();
+            setDiscordGuilds(dg || []);
+          } catch (_) {}
+          // wb_guilds stays as-is (only DB-registered servers added via "Add Server")
           setView("dashboard");
         } catch (_) {
           const u = { username:"Discord User", discord_id:"unknown" };
@@ -1474,6 +1546,10 @@ export default function App() {
         try {
           const u = await API.getMe();
           setUser(u); LS.set("wb_user", u);
+          try {
+            const { guilds: dg } = await API.getGuilds();
+            setDiscordGuilds(dg || []);
+          } catch (_) {}
         } catch (_) { setToken(null); LS.rm("wb_user"); }
       }
       setBooting(false);
@@ -1523,7 +1599,7 @@ export default function App() {
       {view === "landing" ? (
         <LandingPage user={user} onLogin={discordLogin} onShowDashboard={() => setView("dashboard")} />
       ) : (
-        <Dashboard user={user} guilds={guilds} onGuildsChange={handleGuildsChange} />
+        <Dashboard user={user} guilds={guilds} discordGuilds={discordGuilds} onGuildsChange={handleGuildsChange} />
       )}
     </>
   );

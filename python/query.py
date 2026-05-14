@@ -11,6 +11,7 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_groq import ChatGroq
 import redis as r
+from utils.apikeyrotation import redis_client, random_key
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),".."))
 from utils.apikeyrotation import rotate_key, get_key, set_key,random_key
@@ -21,7 +22,7 @@ def get_llm():
     return ChatGroq(
         model="llama-3.3-70b-versatile",
         temperature=0,
-        api_key=r.get("groq_active_key") or random_key()
+        api_key = redis_client.get("groq_active_key") or random_key()
     )
 text = """System: You are a Precise Technical Assistant.
  
