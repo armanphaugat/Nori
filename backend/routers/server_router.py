@@ -5,7 +5,7 @@ from backend.controllers.server_controller import *
 
 server_router = APIRouter()
 
-server_router.add_api_route("/add",handle_add_server,methods=["POST"],dependencies=[Depends(require_guild_admin)])
+server_router.add_api_route("/add",handle_add_server,methods=["POST"],dependencies=[Depends(verify_access_token)])
 server_router.add_api_route("/update-faiss-k",handle_update_faiss_k,methods=["PATCH"],dependencies=[Depends(require_guild_admin)])
 server_router.add_api_route("/update-bm25-k",handle_update_bm25_k,methods=["PATCH"],dependencies=[Depends(require_guild_admin)])
 server_router.add_api_route("/update-temperature",handle_update_temperature,methods=["PATCH"],dependencies=[Depends(require_guild_admin)])
