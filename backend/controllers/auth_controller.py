@@ -29,6 +29,7 @@ DISCORD_CLIENT_SECRET       = os.environ["DISCORD_CLIENT_SECRET"]
 DISCORD_REDIRECT_URI        = os.environ["DISCORD_REDIRECT_URI"]
 DISCORD_OAUTH_URL           = os.environ["DISCORD_OAUTH_URL"]
 DISCORD_TOKEN_URL           = os.environ["DISCORD_TOKEN_URL"]
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3001")
 
 _pending_states: set[str] = set()
 
@@ -151,8 +152,7 @@ async def handle_discord_callback(code: str, state: str, request: Request) -> Re
     )
 
     access_token = _make_access_token(me["id"], guild_ids)
-
-    redirect = RedirectResponse(url=f"/#token={access_token}", status_code=302)
+    redirect = RedirectResponse(url=f"{FRONTEND_URL}/#token={access_token}", status_code=302)
     _set_refresh_cookie(redirect, raw_refresh)
     return redirect
 
