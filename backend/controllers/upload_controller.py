@@ -17,17 +17,20 @@ from backend.middleware.auth import *
 URL_PATTERN     = r"(https?://[^\s]+)"
 MAX_FILE_SIZE   = 10 * 1024 * 1024
 
-async def handle_get_sub_urls(url: str = Query(...)) -> dict:
+async def handle_get_sub_urls(url: str = Query(...),user:dict=Depends(verify_access_token),) -> dict:
     url = url.strip()
     if not url:
         raise HTTPException(status_code=400, detail="'url' query parameter is required")
     if not re.match(r"https?://", url):
         raise HTTPException(status_code=400, detail="'url' must start with http:// or https://")
-
     try:
-        loop   = asyncio.get_running_loop()
+        loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(None, get_sub_urls, url)
+        if result.get("error"):
+            raise HTTPException(status_code=400, detail=result["error"])
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"[handle_get_sub_urls] Error: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch sub-URLs")
@@ -40,6 +43,9 @@ async def handle_upload(
     user:     dict                       = Depends(require_guild_admin),
 ) -> dict:
     guild_id = guild_id.strip()
+    print(f"[DEBUG] guild_id={guild_id!r}")
+    print(f"[DEBUG] urls={urls!r}")
+    print(f"[DEBUG] files={[f.filename for f in (files or [])]}")
     if not guild_id:
         raise HTTPException(status_code=400, detail="'guild_id' cannot be empty")
 

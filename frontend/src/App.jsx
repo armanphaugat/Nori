@@ -215,7 +215,7 @@ const API = {
     const f = new FormData(); f.append("guild_id", gid);
     files.forEach(fi => f.append("files", fi));
     if (urls) f.append("urls", urls);
-    return apiFetch("/upload", { method: "PUT", body: f, isForm: true });
+    return apiFetch("/upload/", { method: "PUT", body: f, isForm: true });
   },
   uploadContacts:  (gid, file)  => { const f = new FormData(); f.append("guild_id", gid); f.append("file", file); return apiFetch("/upload/contacts", { method: "PUT", body: f, isForm: true }); },
   getAllUploads:    (gid)        => apiFetch(`/upload/all?guild_id=${encodeURIComponent(gid)}`),
@@ -1187,11 +1187,12 @@ function CrawlerTab({ guilds }) {
     if (!baseUrl.trim()) return;
     setCrawling(true); setStatus(null); setSelected(new Set()); setHasResult(false);
     try {
-      const d = await API.getSubUrls(baseUrl.trim());
-      setAllUrls(d.sub_urls || []); setHasResult(true);
-    } catch (e) { setStatus({ ok:false, msg:"✗ " + e.message }); }
+        const d = await API.getSubUrls(baseUrl.trim());
+        if (d.error) throw new Error(d.error);          // ← add this
+        setAllUrls(d.sub_urls || []); setHasResult(true);
+    } catch (e) { setStatus({ ok: false, msg: "✗ " + e.message }); }
     setCrawling(false);
-  };
+};
 
   const filtered = filter ? allUrls.filter(u => u.toLowerCase().includes(filter.toLowerCase())) : allUrls;
 

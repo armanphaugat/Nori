@@ -28,6 +28,17 @@ DISCORD_BOT_KEY = os.getenv("DISCORD_BOT_KEY")
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='-', intents=intents, help_command=None)
 
+def is_no_kb_response(answer: str) -> bool:
+    """Returns True if the LLM replied that it doesn't have the information."""
+    no_kb_phrases = [
+        "i don't have this information",
+        "i do not have this information",
+        "not in the provided documentation",
+        "not available in the provided",
+    ]
+    lower = answer.lower()
+    return any(phrase in lower for phrase in no_kb_phrases)
+
 @bot.event
 async def on_ready():
     print(f"✅ Logged in as {bot.user}")
@@ -48,16 +59,14 @@ async def ask(ctx, *, question: str = None):
         async with ctx.typing():
             loop = asyncio.get_running_loop()
             answer = await loop.run_in_executor(None, answer_query, question, ctx.guild.id,info["system_prompt"],info["bm25_k"],info["faiss_k"])
-            if answer is None:
-                await ctx.send("I couldn't find an answer to your question.")
-                mod_channel_row=get_mod_channel(str(ctx.guild.id))
+            await ctx.send(answer)
+            if is_no_kb_response(answer):
+                mod_channel_row = get_mod_channel(str(ctx.guild.id))
                 if mod_channel_row:
                     mod_channel = bot.get_channel(int(mod_channel_row["mod_channel"]))
-                    if mod_channel:               
+                    if mod_channel:
                         await mod_channel.send(f"{ctx.author.mention} (**{ctx.author}**) asked: {question}")
                 return
-            await ctx.send(answer)
-            
     except Exception as e:
         await ctx.send(f"An error occurred: {str(e)}")
         print(f"Error in ask command: {e}")
@@ -96,15 +105,14 @@ async def on_message(message):
         async with message.channel.typing():
             loop=asyncio.get_running_loop()
             answer = await loop.run_in_executor(None, answer_query, message.content, message.guild.id,info["system_prompt"],info["bm25_k"],info["faiss_k"])
-            if answer is None:
-                await message.channel.send("I couldn't find an answer to your question.")
+            await message.channel.send(answer)
+            if is_no_kb_response(answer):
                 mod_channel_row=get_mod_channel(str(message.guild.id))
                 if mod_channel_row:
                     mod_channel = bot.get_channel(int(mod_channel_row["mod_channel"]))
                     if mod_channel:               
                         await mod_channel.send(f"{message.author.mention} (**{message.author}**) asked: {message.content}")
                 return
-            await message.reply(answer)
         return 
     await bot.process_commands(message)
 
