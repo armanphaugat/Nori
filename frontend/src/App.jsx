@@ -390,7 +390,7 @@ function Sidebar({ tab, onTab, guilds, activeGuild, user, onLogout }) {
           <Icon name="hub" size={20} fill style={{ color: "#fff" }} />
         </div>
         <div>
-          <div style={{ fontWeight: 700, fontSize: 15, color: "var(--on-surface)" }}>WalluBot</div>
+          <div style={{ fontWeight: 700, fontSize: 15, color: "var(--on-surface)" }}>VaultBot</div>
           <div style={{ fontSize: 11, color: "var(--on-surface-variant)" }}>AI Workspace</div>
         </div>
       </div>
@@ -450,21 +450,327 @@ function Sidebar({ tab, onTab, guilds, activeGuild, user, onLogout }) {
 
 // ─── LANDING PAGE ─────────────────────────────────────────────────────────────
 const FEATURES = [
-  { icon: "psychology", title: "Hybrid RAG Retrieval", desc: "Combines FAISS vector search with BM25 keyword retrieval for precise, grounded answers every time." },
-  { icon: "description", title: "PDF & URL Ingestion", desc: "Upload PDFs or paste website URLs — content gets chunked, embedded, and stored in your vector store automatically." },
-  { icon: "travel_explore", title: "Web Crawler", desc: "Discover all sub-pages of any website, select which ones to ingest, and bulk-import entire documentation sites." },
-  { icon: "tune", title: "Live Tunable Parameters", desc: "Adjust FAISS-K, BM25-K, temperature, chunk size, chunk overlap, and max tokens — all with live sliders." },
-  { icon: "tag", title: "Channel Control", desc: "Whitelist exactly which Discord channels the bot listens in and set a dedicated mod/log channel." },
-  { icon: "insights", title: "Analytics Dashboard", desc: "Track total queries, ingested documents, and bot activity across all registered servers." },
-  { icon: "table_view", title: "Structured Data (XLSX)", desc: "Upload Excel sheets for contacts, faculty data, and structured records alongside documents." },
-  { icon: "lock", title: "Discord OAuth Login", desc: "Secure admin access via Discord OAuth. Only verified server admins can configure and manage." },
-  { icon: "edit_note", title: "System Prompt Editor", desc: "Customize the bot's persona with a full system prompt editor — make it truly yours." },
+  // ---------- Layman Features ----------
+  {
+    icon: "smart_toy",
+    title: "Your Own AI Discord Bot",
+    desc: "Create a custom AI chatbot for your Discord server trained on your own documents and websites."
+  },
+  {
+    icon: "description",
+    title: "Upload PDFs & Files",
+    desc: "Simply upload PDFs, notes, Excel sheets, or text files and let the AI learn from them instantly."
+  },
+  {
+    icon: "language",
+    title: "Train From Websites",
+    desc: "Paste a website link and the bot can learn from entire documentation pages automatically."
+  },
+  {
+    icon: "travel_explore",
+    title: "Website Auto Crawler",
+    desc: "Automatically finds all pages of a website so you can import everything in one click."
+  },
+  {
+    icon: "forum",
+    title: "Answers From Your Data",
+    desc: "The bot answers questions using your uploaded content instead of random internet guesses."
+  },
+  {
+    icon: "edit_note",
+    title: "Custom Bot Personality",
+    desc: "Change how the bot talks, behaves, and responds with your own custom instructions."
+  },
+  {
+    icon: "tag",
+    title: "Choose Bot Channels",
+    desc: "Select exactly which Discord channels the bot can read and reply in."
+  },
+  {
+    icon: "lock",
+    title: "Secure Discord Login",
+    desc: "Only authorized Discord server admins can manage and configure the bot."
+  },
+  {
+    icon: "insights",
+    title: "Server Analytics",
+    desc: "Track usage, uploads, questions asked, and overall bot activity from a dashboard."
+  },
+  {
+    icon: "sync",
+    title: "Instant Knowledge Updates",
+    desc: "Re-upload documents anytime to keep your AI assistant updated with the latest information."
+  },
+  {
+    icon: "image_search",
+    title: "Image & Screenshot Ingestion",
+    desc: "Upload screenshots or images and the bot extracts and indexes text from them using OCR automatically."
+  },
+  {
+    icon: "travel_explore",
+    title: "Web Search Fallback",
+    desc: "When your documents don't have the answer, the bot searches the web and clearly labels it as a web result — so users always get a response."
+  },
+  {
+    icon: "translate",
+    title: "Auto Language Detection",
+    desc: "The bot automatically detects the user's language and replies in the same language every time."
+  },
+  {
+    icon: "format_quote",
+    title: "Source Citations",
+    desc: "Every answer references the exact document or section it came from so users know where the information is from."
+  },
+ 
+  // ---------- Technical Features ----------
+  {
+    icon: "psychology",
+    title: "Hybrid RAG Retrieval",
+    desc: "Combines FAISS semantic vector search with BM25 keyword retrieval for highly accurate context fetching."
+  },
+  {
+    icon: "storage",
+    title: "FAISS Vector Database",
+    desc: "Embeddings are indexed and stored using FAISS for ultra-fast similarity search performance."
+  },
+  {
+    icon: "dataset",
+    title: "Smart Chunking Pipeline",
+    desc: "Documents are intelligently chunked with configurable overlap and chunk sizes for optimal retrieval quality."
+  },
+  {
+    icon: "tune",
+    title: "Live Retrieval Controls",
+    desc: "Dynamically tune FAISS-K, BM25-K, temperature, max tokens, chunk size, and overlap with live sliders."
+  },
+  {
+    icon: "api",
+    title: "FastAPI Backend",
+    desc: "Powered by a scalable FastAPI architecture optimized for async ingestion and AI response handling."
+  },
+  {
+    icon: "hub",
+    title: "Multi-Server Architecture",
+    desc: "Supports isolated knowledge bases and configurations for multiple Discord servers simultaneously."
+  },
+  {
+    icon: "memory",
+    title: "Contextual Conversation Memory",
+    desc: "Maintains contextual awareness across interactions for more coherent multi-turn conversations."
+  },
+  {
+    icon: "link",
+    title: "Advanced Content Parsing",
+    desc: "Extracts clean readable website content while filtering scripts, navigation, and unnecessary HTML."
+  },
+  {
+    icon: "cloud_upload",
+    title: "Multi-Format Ingestion",
+    desc: "Supports ingestion pipelines for PDFs, TXT, DOCX, XLSX, images, and web-based content sources."
+  },
+  {
+    icon: "shield",
+    title: "Role-Based Access Control",
+    desc: "Implements secure permission layers for server admins, moderators, and dashboard users."
+  },
+  {
+    icon: "monitoring",
+    title: "Logging & Monitoring",
+    desc: "Tracks uploads, crawls, queries, and moderation events through dedicated logging systems."
+  },
+  {
+    icon: "bolt",
+    title: "Optimized Retrieval Pipeline",
+    desc: "Low-latency retrieval and response generation pipeline designed for scalable production workloads."
+  },
+  {
+    icon: "manage_search",
+    title: "RAG-First, Web-Second Pipeline",
+    desc: "Queries hit your private knowledge base first. Only if no match is found does it fall back to live web search via Tavily — keeping answers grounded and accurate."
+  },
+  {
+    icon: "text_fields",
+    title: "OCR Text Extraction",
+    desc: "Scanned PDFs and image uploads are processed through an OCR pipeline to extract and index readable text for retrieval."
+  },
 ];
-
+const STATS = [
+  { value: "9+",   label: "Retrieval Modes"      },
+  { value: "5+",   label: "File Types Supported" },
+  { value: "∞",    label: "Servers You Can Add"  },
+  { value: "90%", label: "Cheaper Than Other Bots" },
+];
+ 
+const HOW_IT_WORKS = [
+  {
+    step: "01",
+    icon: "login",
+    title: "Login with Discord",
+    desc: "OAuth login verifies you're a server admin. No passwords, no extra signups — just your existing Discord account.",
+  },
+  {
+    step: "02",
+    icon: "upload_file",
+    title: "Upload Your Knowledge",
+    desc: "Drag in PDFs, paste website URLs, or import Excel sheets. The crawler handles entire doc sites automatically.",
+  },
+  {
+    step: "03",
+    icon: "tune",
+    title: "Tune & Configure",
+    desc: "Set which channels the bot watches, customize its persona via the system prompt editor, and dial in retrieval parameters.",
+  },
+  {
+    step: "04",
+    icon: "smart_toy",
+    title: "Your Bot Goes Live",
+    desc: "Members ask questions in Discord and get precise, grounded answers pulled from your own documents — instantly.",
+  },
+];
+ 
+// Comparison rows: true = has it, false = doesn't, "partial" = limited
+const COMPARISON = [
+  {
+    feature: "RAG / Document Q&A",
+    yours: true,   mee6: false, carl: false, atlas: "partial",
+  },
+  {
+    feature: "PDF & File Ingestion",
+    yours: true,   mee6: false, carl: false, atlas: true,
+  },
+  {
+    feature: "Web Crawler + URL Ingest",
+    yours: true,   mee6: false, carl: false, atlas: false,
+  },
+  {
+    feature: "Hybrid Vector + BM25 Search",
+    yours: true,   mee6: false, carl: false, atlas: false,
+  },
+  {
+    feature: "Live Parameter Tuning",
+    yours: true,   mee6: false, carl: false, atlas: false,
+  },
+  {
+    feature: "System Prompt Editor",
+    yours: true,   mee6: false, carl: false, atlas: "partial",
+  },
+  {
+    feature: "Per-Channel Control",
+    yours: true,   mee6: true,  carl: true,  atlas: true,
+  },
+  {
+    feature: "Analytics Dashboard",
+    yours: true,   mee6: "partial", carl: false, atlas: "partial",
+  },
+  {
+    feature: "Self-Hostable / Open Source",
+    yours: true,   mee6: false, carl: false, atlas: false,
+  },
+  {
+    feature: "XLSX Structured Data",
+    yours: true,   mee6: false, carl: false, atlas: false,
+  },
+  {
+    feature: "Discord OAuth Admin Auth",
+    yours: true,   mee6: true,  carl: true,  atlas: true,
+  },
+];
+ 
+const TECH_STACK = [
+  { icon: "bolt",          label: "FastAPI"     },
+  { icon: "link",          label: "LangChain"   },
+  { icon: "search",        label: "FAISS"       },
+  { icon: "text_fields",   label: "BM25"        },
+  { icon: "hub",           label: "Discord.py"  },
+  { icon: "storage",       label: "PostgreSQL"  },
+  { icon: "developer_mode",label: "Docker"      },
+];
+ 
+// ─── COMPARISON CELL HELPER ───────────────────────────────────────────────────
+function CmpCell({ val, highlight = false }) {
+  if (val === true)
+    return (
+      <td style={{ padding: "13px 20px", textAlign: "center", borderBottom: "1px solid rgba(199,196,215,0.15)", background: highlight ? "rgba(70,72,212,0.03)" : "transparent" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 24, height: 24, borderRadius: "50%", background: "rgba(34,197,94,0.12)", color: "#166534" }}>
+          <Icon name="check" size={15} />
+        </span>
+      </td>
+    );
+  if (val === false)
+    return (
+      <td style={{ padding: "13px 20px", textAlign: "center", borderBottom: "1px solid rgba(199,196,215,0.15)", background: highlight ? "rgba(70,72,212,0.03)" : "transparent" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 24, height: 24, borderRadius: "50%", background: "var(--error-container)", color: "var(--error)" }}>
+          <Icon name="close" size={15} />
+        </span>
+      </td>
+    );
+  // partial
+  return (
+    <td style={{ padding: "13px 20px", textAlign: "center", borderBottom: "1px solid rgba(199,196,215,0.15)", background: highlight ? "rgba(70,72,212,0.03)" : "transparent" }}>
+      <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 24, height: 24, borderRadius: "50%", background: "rgba(234,179,8,0.12)", color: "#854d0e" }}>
+        <Icon name="remove" size={15} />
+      </span>
+    </td>
+  );
+}
+ const FAQS = [
+  {
+    q: "Do I need to know coding to set it up?",
+    a: "No. Login with Discord, upload your files, and the bot is live. The dashboard handles everything visually.",
+  },
+  {
+    q: "Where is my uploaded data stored?",
+    a: "All your documents and embeddings are stored on your own server infrastructure. We never access or share your data.",
+  },
+  {
+    q: "What file types can I upload?",
+    a: "PDF, TXT, DOCX, XLSX, images (with OCR), and any public website URL or documentation site.",
+  },
+  {
+    q: "What happens if the bot doesn't know the answer?",
+    a: "VaultBot first searches your documents. If nothing is found, it falls back to a live web search and clearly labels the result as coming from the web.",
+  },
+  {
+    q: "Can I use it on multiple Discord servers?",
+    a: "Yes. Each server gets its own isolated knowledge base and configuration — completely separate from others.",
+  },
+  {
+    q: "Is it free?",
+    a: "We offer a free tier to get started. Paid plans unlock higher query limits and priority support.",
+  },
+];
+const USE_CASES = [
+  {
+    icon: "school",
+    title: "Universities & Colleges",
+    desc: "Answer student questions about timetables, syllabi, exam schedules, and campus policies — 24/7 without staff effort.",
+    tag: "Education",
+  },
+  {
+    icon: "headset_mic",
+    title: "Product Support Servers",
+    desc: "Train the bot on your docs and let it handle tier-1 support. Fewer repeated questions, faster resolutions.",
+    tag: "Support",
+  },
+  {
+    icon: "sports_esports",
+    title: "Gaming Communities",
+    desc: "Upload game wikis, patch notes, and guides. Let players ask strategy questions and get instant answers.",
+    tag: "Gaming",
+  },
+  {
+    icon: "business",
+    title: "Business Workspaces",
+    desc: "Internal knowledge base on Discord. HR policies, onboarding docs, SOPs — all queryable by your team.",
+    tag: "Business",
+  },
+];
+// ─── LANDING PAGE ─────────────────────────────────────────────────────────────
 function LandingPage({ user, onLogin, onShowDashboard }) {
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
-      {/* Nav */}
+ 
+      {/* ── Nav ── */}
       <nav style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "0 40px", height: 64,
@@ -475,7 +781,7 @@ function LandingPage({ user, onLogin, onShowDashboard }) {
           <div style={{ width: 36, height: 36, borderRadius: "var(--r-md)", background: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Icon name="hub" fill size={20} style={{ color: "#fff" }} />
           </div>
-          <span style={{ fontWeight: 700, fontSize: 17, color: "var(--on-surface)" }}>WalluBot</span>
+          <span style={{ fontWeight: 700, fontSize: 17, color: "var(--on-surface)" }}>VaultBot</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {user ? (
@@ -489,8 +795,8 @@ function LandingPage({ user, onLogin, onShowDashboard }) {
           )}
         </div>
       </nav>
-
-      {/* Hero */}
+ 
+      {/* ── Hero ── */}
       <section style={{ padding: "96px 40px 80px", textAlign: "center", position: "relative", overflow: "hidden", maxWidth: 900, margin: "0 auto" }}>
         <div style={{ position: "absolute", width: 600, height: 600, top: -200, right: -200, background: "rgba(70,72,212,0.05)", borderRadius: "50%", filter: "blur(100px)", pointerEvents: "none" }} />
         <div style={{ position: "relative" }} className="au">
@@ -500,7 +806,7 @@ function LandingPage({ user, onLogin, onShowDashboard }) {
             <span style={{ color: "var(--primary)" }}>an AI Brain</span>
           </h1>
           <p style={{ fontSize: 18, color: "var(--on-surface-variant)", lineHeight: 1.7, maxWidth: 560, margin: "0 auto 40px" }}>
-            WalluBot transforms your documents, PDFs, and websites into an intelligent Q&A assistant that lives directly inside your Discord server.
+            VaultBot transforms your documents, PDFs, and websites into an intelligent Q&amp;A assistant that lives directly inside your Discord server.
           </p>
           <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
             {user ? (
@@ -520,8 +826,58 @@ function LandingPage({ user, onLogin, onShowDashboard }) {
           </div>
         </div>
       </section>
-
-      {/* Features */}
+      {/* ── Live Demo Preview ── */}
+<section style={{ padding: "0 40px 72px", maxWidth: 700, margin: "0 auto" }}>
+  <div style={{ textAlign: "center", marginBottom: 28 }}>
+    <Tag style={{ marginBottom: 12 }}>See It In Action</Tag>
+    <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em" }}>What It Looks Like in Discord</h2>
+  </div>
+  <Card style={{ background: "#313338", border: "none", borderRadius: "var(--r-lg)", overflow: "hidden" }}>
+    {/* Channel header */}
+    <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 8 }}>
+      <Icon name="tag" size={18} style={{ color: "#80848e" }} />
+      <span style={{ fontSize: 14, fontWeight: 600, color: "#f2f3f5" }}>support</span>
+    </div>
+    {/* Messages */}
+    <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* User message */}
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+        <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#5865f2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0 }}>U</div>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "#f2f3f5", marginBottom: 4 }}>user <span style={{ fontSize: 11, color: "#80848e", fontWeight: 400 }}>Today at 10:32 AM</span></div>
+          <div style={{ fontSize: 14, color: "#dbdee1", lineHeight: 1.5 }}>What is the refund policy for premium plans?</div>
+        </div>
+      </div>
+      {/* Bot message */}
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+        <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Icon name="hub" size={18} fill style={{ color: "#fff" }} />
+        </div>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--primary)", marginBottom: 4 }}>VaultBot <Tag style={{ fontSize: 10, padding: "1px 6px", marginLeft: 4 }}>BOT</Tag> <span style={{ fontSize: 11, color: "#80848e", fontWeight: 400 }}>Today at 10:32 AM</span></div>
+          <div style={{ fontSize: 14, color: "#dbdee1", lineHeight: 1.6 }}>
+            According to your <span style={{ color: "#00a8fc" }}>refund-policy.pdf</span>:<br /><br />
+            Premium plan subscribers are eligible for a full refund within <strong style={{ color: "#f2f3f5" }}>14 days</strong> of purchase, provided no more than <strong style={{ color: "#f2f3f5" }}>2 AI queries</strong> have been made. After this window, partial refunds may be issued at admin discretion.
+          </div>
+          <div style={{ marginTop: 8, fontSize: 12, color: "#80848e" }}>📄 Source: refund-policy.pdf · Page 3</div>
+        </div>
+      </div>
+    </div>
+    </Card>
+    </section>
+      {/* ── Stats Bar ── */}
+      <section style={{ padding: "32px 40px", borderTop: "1px solid rgba(199,196,215,0.3)", borderBottom: "1px solid rgba(199,196,215,0.3)", background: "var(--surface-lowest)" }}>
+        <div style={{ maxWidth: 800, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 24, textAlign: "center" }}>
+          {STATS.map((s, i) => (
+            <div key={i}>
+              <div style={{ fontSize: 36, fontWeight: 800, color: "var(--primary)", letterSpacing: "-0.03em" }}>{s.value}</div>
+              <div style={{ fontSize: 13, color: "var(--on-surface-variant)", marginTop: 4 }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+ 
+      {/* ── Features ── */}
       <section style={{ padding: "72px 40px", background: "var(--surface-low)", borderTop: "1px solid rgba(199,196,215,0.3)" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 48 }}>
@@ -541,22 +897,179 @@ function LandingPage({ user, onLogin, onShowDashboard }) {
           </div>
         </div>
       </section>
-
-      {/* CTA */}
-      <section style={{ padding: "72px 40px", textAlign: "center" }}>
+ 
+      {/* ── How It Works ── */}
+      <section style={{ padding: "72px 40px" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 48 }}>
+            <Tag style={{ marginBottom: 12 }}>Setup</Tag>
+            <h2 style={{ fontSize: 32, fontWeight: 700, letterSpacing: "-0.02em" }}>Up and Running in Minutes</h2>
+            <p style={{ fontSize: 15, color: "var(--on-surface-variant)", marginTop: 12 }}>Four steps from zero to a fully AI-powered Discord server.</p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16 }}>
+            {HOW_IT_WORKS.map((s, i) => (
+              <Card key={i} style={{ position: "relative" }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: "var(--primary)", opacity: 0.4, marginBottom: 10 }}>STEP {s.step}</div>
+                <div style={{ width: 44, height: 44, borderRadius: "var(--r-md)", background: "var(--primary-fixed)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+                  <Icon name={s.icon} size={22} style={{ color: "var(--primary)" }} />
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--on-surface)", marginBottom: 6 }}>{s.title}</div>
+                <div style={{ fontSize: 13, color: "var(--on-surface-variant)", lineHeight: 1.6 }}>{s.desc}</div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+      {/* ── Use Cases ── */}
+<section style={{ padding: "72px 40px" }}>
+  <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+    <div style={{ textAlign: "center", marginBottom: 48 }}>
+      <Tag style={{ marginBottom: 12 }}>Use Cases</Tag>
+      <h2 style={{ fontSize: 32, fontWeight: 700, letterSpacing: "-0.02em" }}>Built For Your Community</h2>
+      <p style={{ fontSize: 15, color: "var(--on-surface-variant)", marginTop: 12 }}>Whatever your server is about, VaultBot speaks its language.</p>
+    </div>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 16 }}>
+      {USE_CASES.map((u, i) => (
+        <Card key={i}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <div style={{ width: 44, height: 44, borderRadius: "var(--r-md)", background: "var(--primary-fixed)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name={u.icon} size={22} style={{ color: "var(--primary)" }} />
+            </div>
+            <Tag variant="neutral" style={{ fontSize: 10 }}>{u.tag}</Tag>
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--on-surface)", marginBottom: 6 }}>{u.title}</div>
+          <div style={{ fontSize: 13, color: "var(--on-surface-variant)", lineHeight: 1.6 }}>{u.desc}</div>
+        </Card>
+      ))}
+    </div>
+  </div>
+</section>
+      {/* ── Comparison Table ── */}
+      <section style={{ padding: "72px 40px", background: "var(--surface-low)", borderTop: "1px solid rgba(199,196,215,0.3)" }}>
+        <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 48 }}>
+            <Tag style={{ marginBottom: 12 }}>Why VaultBot</Tag>
+            <h2 style={{ fontSize: 32, fontWeight: 700, letterSpacing: "-0.02em" }}>How We Stack Up</h2>
+            <p style={{ fontSize: 15, color: "var(--on-surface-variant)", marginTop: 12 }}>
+              Most bots manage your server. VaultBot makes it <em>smart</em>.
+            </p>
+          </div>
+ 
+          <Card pad="0" style={{ overflow: "hidden" }}>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
+                <thead>
+                  <tr>
+                    <th style={{ padding: "14px 20px", textAlign: "left", background: "var(--surface-low)", borderBottom: "1px solid rgba(199,196,215,0.3)", fontSize: 12, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--on-surface-variant)", minWidth: 200 }}>
+                      Feature
+                    </th>
+                    {/* VaultBot column — highlighted */}
+                    <th style={{ padding: "14px 20px", textAlign: "center", background: "rgba(70,72,212,0.06)", borderBottom: "1px solid rgba(199,196,215,0.3)", fontSize: 13, fontWeight: 700, color: "var(--primary)", minWidth: 120, borderLeft: "2px solid var(--primary)" }}>
+                      VaultBot
+                    </th>
+                    <th style={{ padding: "14px 20px", textAlign: "center", background: "var(--surface-low)", borderBottom: "1px solid rgba(199,196,215,0.3)", fontSize: 12, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--on-surface-variant)", minWidth: 110 }}>
+                      MEE6
+                    </th>
+                    <th style={{ padding: "14px 20px", textAlign: "center", background: "var(--surface-low)", borderBottom: "1px solid rgba(199,196,215,0.3)", fontSize: 12, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--on-surface-variant)", minWidth: 110 }}>
+                      Carl-bot
+                    </th>
+                    <th style={{ padding: "14px 20px", textAlign: "center", background: "var(--surface-low)", borderBottom: "1px solid rgba(199,196,215,0.3)", fontSize: 12, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--on-surface-variant)", minWidth: 110 }}>
+                      Atlas
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {COMPARISON.map((row, i) => (
+                    <tr key={i} style={{ transition: "background var(--tr)" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "var(--surface-low)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                    >
+                      <td style={{ padding: "13px 20px", fontWeight: 500, color: "var(--on-surface)", borderBottom: "1px solid rgba(199,196,215,0.15)", fontSize: 13.5 }}>
+                        {row.feature}
+                      </td>
+                      <CmpCell val={row.yours}  highlight />
+                      <CmpCell val={row.mee6}   />
+                      <CmpCell val={row.carl}   />
+                      <CmpCell val={row.atlas}  />
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {/* Legend */}
+            <div style={{ padding: "14px 20px", borderTop: "1px solid rgba(199,196,215,0.2)", display: "flex", gap: 20, flexWrap: "wrap" }}>
+              {[
+                { color: "rgba(34,197,94,0.12)", text: "#166534", icon: "check",  label: "Supported" },
+                { color: "rgba(234,179,8,0.12)",  text: "#854d0e", icon: "remove", label: "Partial / Limited" },
+                { color: "var(--error-container)", text: "var(--error)", icon: "close", label: "Not available" },
+              ].map((l, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: "var(--on-surface-variant)" }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 20, height: 20, borderRadius: "50%", background: l.color, color: l.text }}>
+                    <Icon name={l.icon} size={13} />
+                  </span>
+                  {l.label}
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      </section>
+ 
+      {/* ── Tech Stack ── */}
+      <section style={{ padding: "48px 40px", borderTop: "1px solid rgba(199,196,215,0.3)" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", color: "var(--on-surface-variant)", textTransform: "uppercase", marginBottom: 24 }}>
+            Built on battle-tested open-source
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 12 }}>
+            {TECH_STACK.map((t, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", borderRadius: "var(--r-full)", background: "var(--surface-container)", border: "1px solid rgba(199,196,215,0.4)", fontSize: 13, fontWeight: 500, color: "var(--on-surface-variant)" }}>
+                <Icon name={t.icon} size={16} style={{ color: "var(--primary)" }} />
+                {t.label}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+            {/* ── FAQ ── */}
+<section style={{ padding: "72px 40px" }}>
+  <div style={{ maxWidth: 720, margin: "0 auto" }}>
+    <div style={{ textAlign: "center", marginBottom: 48 }}>
+      <Tag style={{ marginBottom: 12 }}>FAQ</Tag>
+      <h2 style={{ fontSize: 32, fontWeight: 700, letterSpacing: "-0.02em" }}>Common Questions</h2>
+    </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {FAQS.map((f, i) => (
+        <Card key={i} style={{ cursor: "default" }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--on-surface)", marginBottom: 8, display: "flex", alignItems: "flex-start", gap: 10 }}>
+            <Icon name="help" size={18} style={{ color: "var(--primary)", flexShrink: 0, marginTop: 1 }} />
+            {f.q}
+          </div>
+          <div style={{ fontSize: 13, color: "var(--on-surface-variant)", lineHeight: 1.7, paddingLeft: 28 }}>{f.a}</div>
+        </Card>
+      ))}
+    </div>
+  </div>
+</section>
+      {/* ── CTA ── */}
+      <section style={{ padding: "72px 40px", textAlign: "center", background: "var(--surface-low)", borderTop: "1px solid rgba(199,196,215,0.3)" }}>
         <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 14 }}>Ready to get started?</h2>
-        <p style={{ fontSize: 15, color: "var(--on-surface-variant)", marginBottom: 32 }}>Login with Discord and configure your server's AI bot in minutes.</p>
+        <p style={{ fontSize: 15, color: "var(--on-surface-variant)", marginBottom: 32 }}>
+          Login with Discord and configure your server's AI bot in minutes.
+        </p>
         {user ? (
-          <Btn onClick={onShowDashboard} style={{ fontSize: 15, padding: "13px 28px" }}><Icon name="dashboard" /> Open Dashboard</Btn>
+          <Btn onClick={onShowDashboard} style={{ fontSize: 15, padding: "13px 28px" }}>
+            <Icon name="dashboard" /> Open Dashboard
+          </Btn>
         ) : (
           <Btn onClick={onLogin} variant="discord" style={{ fontSize: 15, padding: "13px 28px" }}>
             <DiscordIcon size={20} /> Get Started with Discord
           </Btn>
         )}
       </section>
-
+ 
       <footer style={{ padding: "28px 40px", textAlign: "center", color: "var(--on-surface-variant)", fontSize: 12.5, borderTop: "1px solid rgba(199,196,215,0.3)" }}>
-        © 2025 WalluBot · Q-ARAG · Built with FastAPI + LangChain · Not affiliated with Discord Inc.
+        © 2025 VaultBot · Q-ARAG · Built with FastAPI + LangChain · Not affiliated with Discord Inc.
       </footer>
     </div>
   );
@@ -740,11 +1253,47 @@ function OverviewTab({ guilds, discordGuilds, activeGuildId, user, onActivate, o
       <Card>
         <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Quick Start Guide</div>
         {[
-          ["Register your Discord server", "Click Add Server above and select your Discord server."],
-          ["Configure RAG parameters", "Go to Server Config tab, select your server, and tune the sliders."],
-          ["Upload your knowledge base", "Use the Knowledge Base tab to ingest PDFs, URLs, or XLSX files."],
-          ["Set allowed channels", "Go to Channels tab and whitelist channels + set a mod channel."],
-        ].map(([title, desc], i) => (
+  [
+    "Register your Discord server",
+    "Click Add Server above and select the Discord server you want to connect with the AI bot."
+  ],
+  [
+    "Configure AI settings",
+    "Open the Server Config tab and customize retrieval settings, temperature, token limits, and response behavior."
+  ],
+  [
+    "Upload your knowledge base",
+    "Train the bot using PDFs, website URLs, documentation pages, TXT files, or Excel sheets."
+  ],
+  [
+    "Crawl entire websites",
+    "Use the Web Crawler to automatically discover and import all important pages from a website."
+  ],
+  [
+    "Customize the bot personality",
+    "Edit the system prompt to define how your AI assistant should behave and respond."
+  ],
+  [
+    "Set allowed channels",
+    "Whitelist specific Discord channels where the bot can listen and reply to users."
+  ],
+  [
+    "Configure moderation logs",
+    "Select a dedicated mod/log channel to track uploads, configuration changes, and bot events."
+  ],
+  [
+    "Test your AI assistant",
+    "Ask questions inside your Discord server and verify that answers are generated from your uploaded data."
+  ],
+  [
+    "Monitor analytics",
+    "Track queries, uploaded documents, activity logs, and server usage directly from the dashboard."
+  ],
+  [
+    "Keep knowledge updated",
+    "Re-upload files or re-crawl websites anytime to refresh the bot’s knowledge base."
+  ]
+].map(([title, desc], i) => (
           <div key={i} style={{ display: "flex", gap: 14, padding: "12px 0", borderBottom: i < 3 ? "1px solid rgba(199,196,215,0.2)" : "none" }}>
             <div style={{
               width: 24, height: 24, borderRadius: 6, background: "var(--primary-fixed)",
@@ -1472,7 +2021,7 @@ function ChatWidget({ guildId, guildName }) {
             <Icon name="hub" fill size={16} style={{ color: "#fff" }} />
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--on-surface)" }}>{guildName || "WalluBot"}</div>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--on-surface)" }}>{guildName || "VaultBot"}</div>
             <div style={{ fontSize: 11, color: "var(--on-surface-variant)" }}>RAG Assistant</div>
           </div>
           <OnlineDot />
@@ -1677,7 +2226,7 @@ export default function App() {
             <div style={{ width: 52, height: 52, borderRadius: "var(--r-lg)", background: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Icon name="hub" fill size={28} style={{ color: "#fff" }} />
             </div>
-            <div style={{ fontSize: 14, color: "var(--on-surface-variant)" }}>Loading WalluBot…</div>
+            <div style={{ fontSize: 14, color: "var(--on-surface-variant)" }}>Loading VaultBot…</div>
           </div>
         </div>
       </>

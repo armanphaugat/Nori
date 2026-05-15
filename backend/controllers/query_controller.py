@@ -24,7 +24,7 @@ async def handle_query(request: Request) -> dict:
 
     try:
         loop   = asyncio.get_running_loop()
-        answer = await loop.run_in_executor(None, answer_query, question, server)
+        answer = await loop.run_in_executor(None, answer_query, question, server,None,10,10)
         return {"answer": answer}
     except Exception as e:
         print(f"[handle_query] Error: {e}")

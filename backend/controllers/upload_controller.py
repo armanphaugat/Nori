@@ -70,7 +70,7 @@ async def handle_upload(#do not touch (aayushi work)
 
     for link in links:
         try:
-            scraped = webscraper(link)
+            scraped = await webscraper(link)
             if scraped:
                 texts.extend(scraped)
         except Exception as e:

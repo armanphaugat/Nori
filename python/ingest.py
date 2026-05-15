@@ -12,6 +12,7 @@ import docx2txt
 from PIL import Image
 import pytesseract
 from playwright.sync_api import sync_playwright
+import asyncio
 import whisper
 import tempfile
 import os
@@ -30,7 +31,7 @@ TAGS = [
     "address", "time", "blockquote"
 ]
 
-def webscraper(url):
+async def webscraper(url):
     try:
         loader = WebBaseLoader(
             url,
@@ -54,14 +55,18 @@ def webscraper(url):
     except Exception as e:
         print(f"WebBaseLoader failed for {url}: {e} -> trying Playwright")
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page(
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-            )
-            page.goto(url, wait_until="networkidle", timeout=15000)
-            html = page.content()
-            browser.close()
+        def run_playwright():
+            with sync_playwright() as p:
+                browser =p.chromium.launch(headless=True)
+                page =browser.new_page(
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                )
+                page.goto(url, wait_until="networkidle", timeout=15000)
+                html =page.content()
+                browser.close()
+                return html
+        loop=asyncio.get_event_loop()
+        html=await loop.run_in_executor(None,run_playwright)
 
         soup = BeautifulSoup(html, "html.parser", parse_only=SoupStrainer(TAGS))
         lines = soup.get_text(separator="\n").splitlines()
