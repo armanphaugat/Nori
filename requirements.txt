@@ -16,3 +16,4 @@ docx2txt
 pytesseract 
 Pillow
 playwright
+whisper

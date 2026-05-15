@@ -134,7 +134,10 @@ async def handle_upload(#do not touch (aayushi work)
         "video_processed": video_count,
     }
 # add new endpoint for raw txt string 
-
+async def handle_upload_faq(guild_id: str=Form(...),text:str=Form(...),user: dict = Depends(require_guild_admin),)-> dict:
+    guild_id = guild_id.strip()
+    if not guild_id:
+        raise HTTPException(status_code=400, detail="'guild_id' is required")
 async def handle_upload_contacts(guild_id: str        = Form(...),file:     UploadFile = File(...),user: dict = Depends(require_guild_admin),) -> dict:
     guild_id = guild_id.strip()
     if not guild_id:

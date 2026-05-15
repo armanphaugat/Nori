@@ -920,7 +920,6 @@ function ServerConfigTab({ guilds }) {
     </div>
   );
 }
-
 // ─── CHANNELS TAB ─────────────────────────────────────────────────────────────
 function ChannelsTab({ guilds }) {
   const [gid, setGid] = useState("");
