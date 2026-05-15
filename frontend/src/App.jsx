@@ -192,30 +192,37 @@ const API = {
   getGuildChannels:  (gid)        => apiFetch(`/guilds/${encodeURIComponent(gid)}/channels`),
   addServer:         (gid, name)  => apiFetch("/server/add", { method: "POST", body: fd({ guild_id: gid, name }), isForm: true }),
   getConfig:         (gid)        => apiFetch(`/server/config?guild_id=${encodeURIComponent(gid)}`),
-  updateFaissK:      (gid, k)     => apiFetch("/server/update-faiss-k",    { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
-  updateBm25K:       (gid, k)     => apiFetch("/server/update-bm25-k",     { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
-  updateTemp:        (gid, k)     => apiFetch("/server/update-temperature", { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
-  updateChunkSize:   (gid, k)     => apiFetch("/server/update-chunk-size",  { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
+  updateFaissK:      (gid, k)     => apiFetch("/server/update-faiss-k",     { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
+  updateBm25K:       (gid, k)     => apiFetch("/server/update-bm25-k",      { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
+  updateTemp:        (gid, k)     => apiFetch("/server/update-temperature",  { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
+  updateChunkSize:   (gid, k)     => apiFetch("/server/update-chunk-size",   { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
   updateChunkOverlap:(gid, k)     => apiFetch("/server/update-chunk-overlap",{ method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
-  updateMaxToken:    (gid, k)     => apiFetch("/server/update-max-token",   { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
-  updateSystemPrompt:(gid, text)  => apiFetch("/server/update-system-prompt",{ method: "PUT", body: fd({ guild_id: gid, text }), isForm: true }),
+  updateMaxToken:    (gid, k)     => apiFetch("/server/update-max-token",    { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
+  updateSystemPrompt:(gid, text)  => apiFetch("/server/update-system-prompt",{ method: "PUT",   body: fd({ guild_id: gid, text }), isForm: true }),
   listChannels:      (gid)        => apiFetch(`/channel/list?guild_id=${encodeURIComponent(gid)}`),
-  listServersWithStatus: () => apiFetch("/server/list"),
-  listAllServersWithStatus: () => apiFetch("/server/list-all"),
+  listServersWithStatus:    ()    => apiFetch("/server/list"),
+  listAllServersWithStatus: ()    => apiFetch("/server/list-all"),
   addChannel:        (gid, cid)   => apiFetch("/channel/add",     { method: "PUT",    body: fd({ guild_id: gid, channel_id: cid }), isForm: true }),
   deleteChannel:     (gid, cid)   => apiFetch("/channel/delete",  { method: "DELETE", body: fd({ guild_id: gid, channel_id: cid }), isForm: true }),
   addModChannel:     (gid, cid)   => apiFetch("/channel/add-mod", { method: "PUT",    body: fd({ guild_id: gid, channel_id: cid }), isForm: true }),
   upload: (gid, files, urls) => {
-    const f = new FormData(); f.append("guild_id", gid);
+    const f = new FormData();
+    f.append("guild_id", gid);
     files.forEach(fi => f.append("files", fi));
     if (urls) f.append("urls", urls);
     return apiFetch("/upload/", { method: "PUT", body: f, isForm: true });
   },
-  uploadContacts:  (gid, file)  => { const f = new FormData(); f.append("guild_id", gid); f.append("file", file); return apiFetch("/upload/contacts", { method: "PUT", body: f, isForm: true }); },
-  getAllUploads:    (gid)        => apiFetch(`/upload/all?guild_id=${encodeURIComponent(gid)}`),
-  getSubUrls:      (url)        => apiFetch(`/upload/sub-urls?url=${encodeURIComponent(url)}`),
-  query:           (question, server) => apiFetch("/query", { method: "POST", body: { question, server } }),
-  getAnalytics:    (gid)        => apiFetch(`/analytics/summary?guild_id=${encodeURIComponent(gid)}`),
+  uploadContacts: (gid, file) => {
+    const f = new FormData();
+    f.append("guild_id", gid);
+    f.append("file", file);
+    return apiFetch("/upload/contacts", { method: "PUT", body: f, isForm: true });
+  },
+  addFaq: (gid, text) => apiFetch("/upload/add-faq", { method: "POST", body: fd({ guild_id: gid, text }), isForm: true }),
+  getAllUploads: (gid)  => apiFetch(`/upload/all?guild_id=${encodeURIComponent(gid)}`),
+  getSubUrls:   (url)  => apiFetch(`/upload/sub-urls?url=${encodeURIComponent(url)}`),
+  query:        (question, server) => apiFetch("/query", { method: "POST", body: { question, server } }),
+  getAnalytics: (gid)  => apiFetch(`/analytics/summary?guild_id=${encodeURIComponent(gid)}`),
 };
 
 // ─── TINY COMPONENTS ─────────────────────────────────────────────────────────
@@ -1061,13 +1068,17 @@ function UploadTab({ guilds }) {
   const [xlsxFile, setXlsxFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [xlsxUploading, setXlsxUploading] = useState(false);
+  // ── FAQ state ──
+  const [faqText, setFaqText] = useState("");
+  const [faqUploading, setFaqUploading] = useState(false);
+  // ──────────────
   const [status, setStatus] = useState(null);
   const [uploads, setUploads] = useState([]);
   const [loadingUploads, setLoadingUploads] = useState(false);
-  const docRef = useRef(null);
-  const imgRef = useRef(null);
-  const vidRef = useRef(null);
-  const audRef = useRef(null);
+  const docRef  = useRef(null);
+  const imgRef  = useRef(null);
+  const vidRef  = useRef(null);
+  const audRef  = useRef(null);
   const xlsxRef = useRef(null);
 
   const ALLOWED_EXTENSIONS = {
@@ -1077,33 +1088,18 @@ function UploadTab({ guilds }) {
     aud: [".mp3", ".wav", ".m4a"],
   };
 
-  const extOf = (name) => "." + name.split(".").pop().toLowerCase();
-
-  const filterFiles = (list, type) =>
-    [...list].filter((f) => ALLOWED_EXTENSIONS[type].includes(extOf(f.name)));
-
-  const addFiles = (setter, type) => (e) => {
-    setter((p) => [...p, ...filterFiles(e.target.files, type)]);
-    e.target.value = "";
-  };
-
-  const dropFiles = (setter, type) => (e) => {
-    e.preventDefault();
-    setter((p) => [...p, ...filterFiles(e.dataTransfer.files, type)]);
-  };
-
-  const removeFile = (setter, idx) =>
-    setter((p) => p.filter((_, j) => j !== idx));
+  const extOf     = (name) => "." + name.split(".").pop().toLowerCase();
+  const filterFiles = (list, type) => [...list].filter((f) => ALLOWED_EXTENSIONS[type].includes(extOf(f.name)));
+  const addFiles  = (setter, type) => (e) => { setter((p) => [...p, ...filterFiles(e.target.files, type)]); e.target.value = ""; };
+  const dropFiles = (setter, type) => (e) => { e.preventDefault(); setter((p) => [...p, ...filterFiles(e.dataTransfer.files, type)]); };
+  const removeFile = (setter, idx) => setter((p) => p.filter((_, j) => j !== idx));
 
   const allFiles = [...docFiles, ...imgFiles, ...vidFiles, ...audFiles];
 
   const loadUploads = useCallback(async (id) => {
     if (!id) return;
     setLoadingUploads(true);
-    try {
-      const d = await API.getAllUploads(id);
-      setUploads(Array.isArray(d) ? d : d.uploads || []);
-    } catch (_) {}
+    try { const d = await API.getAllUploads(id); setUploads(Array.isArray(d) ? d : d.uploads || []); } catch (_) {}
     setLoadingUploads(false);
   }, []);
 
@@ -1124,13 +1120,25 @@ function UploadTab({ guilds }) {
     if (!gid) { setStatus({ ok: false, msg: "Select a server first" }); return; }
     if (!xlsxFile) { setStatus({ ok: false, msg: "No .xlsx file selected" }); return; }
     setXlsxUploading(true); setStatus(null);
-    try {
-      const d = await API.uploadContacts(gid, xlsxFile);
-      setStatus({ ok: true, msg: d.message });
-      setXlsxFile(null);
-    } catch (e) { setStatus({ ok: false, msg: e.message }); }
+    try { const d = await API.uploadContacts(gid, xlsxFile); setStatus({ ok: true, msg: d.message }); setXlsxFile(null); }
+    catch (e) { setStatus({ ok: false, msg: e.message }); }
     setXlsxUploading(false);
   };
+
+  // ── NEW: submit FAQ text ──────────────────────────────────────────────────
+  const doFaqUpload = async () => {
+    if (!gid)            { setStatus({ ok: false, msg: "Select a server first" }); return; }
+    if (!faqText.trim()) { setStatus({ ok: false, msg: "FAQ text cannot be empty" }); return; }
+    setFaqUploading(true); setStatus(null);
+    try {
+      const d = await API.addFaq(gid, faqText.trim());
+      setStatus({ ok: true, msg: d.message || "FAQ added successfully" });
+      setFaqText("");
+      loadUploads(gid);
+    } catch (e) { setStatus({ ok: false, msg: e.message }); }
+    setFaqUploading(false);
+  };
+  // ─────────────────────────────────────────────────────────────────────────
 
   const FileSection = ({ label, hint, iconName, accentBg, accentColor, files, setFiles, inputRef, accept, type }) => (
     <Card style={{ marginBottom: 14 }}>
@@ -1143,25 +1151,13 @@ function UploadTab({ guilds }) {
           <div style={{ fontSize: 12, color: "var(--on-surface-variant)" }}>{hint}</div>
         </div>
       </div>
-      <div
-        className="drop-zone"
-        onClick={() => inputRef.current?.click()}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={dropFiles(setFiles, type)}
-      >
+      <div className="drop-zone" onClick={() => inputRef.current?.click()} onDragOver={(e) => e.preventDefault()} onDrop={dropFiles(setFiles, type)}>
         <Icon name="upload_file" size={36} style={{ color: accentColor, opacity: 0.6 }} />
         <p style={{ fontSize: 14, color: "var(--on-surface-variant)" }}>
           Drop files here or <span style={{ color: "var(--primary)", fontWeight: 600 }}>browse</span>
         </p>
       </div>
-      <input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        multiple
-        style={{ display: "none" }}
-        onChange={addFiles(setFiles, type)}
-      />
+      <input ref={inputRef} type="file" accept={accept} multiple style={{ display: "none" }} onChange={addFiles(setFiles, type)} />
       {files.length > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
           {files.map((f, i) => (
@@ -1178,7 +1174,7 @@ function UploadTab({ guilds }) {
 
   return (
     <div style={{ width: "100%", minHeight: "100vh", boxSizing: "border-box" }}>
-      <SectionHeader label="Knowledge Base" title="Upload Content" subtitle="Ingest PDFs, documents, images, audio, video, and structured data into your vector store." />
+      <SectionHeader label="Knowledge Base" title="Upload Content" subtitle="Ingest PDFs, documents, images, audio, video, structured data, and FAQ text into your vector store." />
 
       {/* Server select */}
       <Card style={{ marginBottom: 16 }}>
@@ -1210,64 +1206,20 @@ function UploadTab({ guilds }) {
         />
       </Card>
 
-      {/* Documents: PDF + DOCX */}
-      <FileSection
-        label="Documents"
-        hint=".pdf, .docx"
-        iconName="description"
-        accentBg="var(--primary-fixed)"
-        accentColor="var(--primary)"
-        files={docFiles}
-        setFiles={setDocFiles}
-        inputRef={docRef}
-        accept=".pdf,.docx"
-        type="doc"
-      />
+      {/* Documents */}
+      <FileSection label="Documents" hint=".pdf, .docx" iconName="description" accentBg="var(--primary-fixed)" accentColor="var(--primary)" files={docFiles} setFiles={setDocFiles} inputRef={docRef} accept=".pdf,.docx" type="doc" />
 
       {/* Images */}
-      <FileSection
-        label="Images"
-        hint=".png, .jpg, .jpeg, .tiff, .bmp, .webp"
-        iconName="image"
-        accentBg="rgba(168,85,247,0.1)"
-        accentColor="#7c3aed"
-        files={imgFiles}
-        setFiles={setImgFiles}
-        inputRef={imgRef}
-        accept=".png,.jpg,.jpeg,.tiff,.bmp,.webp"
-        type="img"
-      />
+      <FileSection label="Images" hint=".png, .jpg, .jpeg, .tiff, .bmp, .webp" iconName="image" accentBg="rgba(168,85,247,0.1)" accentColor="#7c3aed" files={imgFiles} setFiles={setImgFiles} inputRef={imgRef} accept=".png,.jpg,.jpeg,.tiff,.bmp,.webp" type="img" />
 
       {/* Video */}
-      <FileSection
-        label="Video"
-        hint=".mp4"
-        iconName="videocam"
-        accentBg="rgba(245,158,11,0.1)"
-        accentColor="#b45309"
-        files={vidFiles}
-        setFiles={setVidFiles}
-        inputRef={vidRef}
-        accept=".mp4"
-        type="vid"
-      />
+      <FileSection label="Video" hint=".mp4" iconName="videocam" accentBg="rgba(245,158,11,0.1)" accentColor="#b45309" files={vidFiles} setFiles={setVidFiles} inputRef={vidRef} accept=".mp4" type="vid" />
 
       {/* Audio */}
-      <FileSection
-        label="Audio"
-        hint=".mp3, .wav, .m4a"
-        iconName="headphones"
-        accentBg="rgba(20,184,166,0.1)"
-        accentColor="#0f766e"
-        files={audFiles}
-        setFiles={setAudFiles}
-        inputRef={audRef}
-        accept=".mp3,.wav,.m4a"
-        type="aud"
-      />
+      <FileSection label="Audio" hint=".mp3, .wav, .m4a" iconName="headphones" accentBg="rgba(20,184,166,0.1)" accentColor="#0f766e" files={audFiles} setFiles={setAudFiles} inputRef={audRef} accept=".mp3,.wav,.m4a" type="aud" />
 
       {/* XLSX upload */}
-      <Card style={{ marginBottom: 16 }}>
+      <Card style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
           <div style={{ width: 36, height: 36, borderRadius: "var(--r-md)", background: "rgba(34,197,94,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Icon name="table_chart" size={18} style={{ color: "#166534" }} />
@@ -1292,8 +1244,40 @@ function UploadTab({ guilds }) {
         <input ref={xlsxRef} type="file" accept=".xlsx" style={{ display: "none" }} onChange={e => { if (e.target.files[0]) setXlsxFile(e.target.files[0]); }} />
       </Card>
 
+      {/* ── NEW: FAQ / Raw Text ─────────────────────────────────────────────── */}
+      <Card style={{ marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+          <div style={{ width: 36, height: 36, borderRadius: "var(--r-md)", background: "rgba(239,68,68,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon name="quiz" size={18} style={{ color: "#b91c1c" }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>FAQ / Raw Text</div>
+            <div style={{ fontSize: 12, color: "var(--on-surface-variant)" }}>Paste a Q&A pair or any plain text snippet to add directly to the vector store</div>
+          </div>
+        </div>
+        <textarea
+          className="kb-input kb-mono"
+          value={faqText}
+          onChange={e => setFaqText(e.target.value)}
+          rows={5}
+          placeholder={"Q: What are your office hours?\nA: We are open Monday to Friday, 9 AM – 5 PM."}
+          style={{ resize: "vertical", lineHeight: 1.6, fontFamily: "monospace", fontSize: 13 }}
+        />
+        <Btn
+          onClick={doFaqUpload}
+          disabled={faqUploading}
+          style={{ marginTop: 10, width: "100%", justifyContent: "center", background: "rgba(239,68,68,0.12)", color: "#b91c1c", border: "1px solid rgba(239,68,68,0.25)" }}
+        >
+          {faqUploading
+            ? <><Spinner size={14} /> Adding FAQ…</>
+            : <><Icon name="add_circle" size={16} /> Add to Vector Store</>}
+        </Btn>
+      </Card>
+      {/* ─────────────────────────────────────────────────────────────────────── */}
+
       {status && <div style={{ marginBottom: 14 }}><StatusBadge {...status} /></div>}
 
+      {/* Upload buttons */}
       <div style={{ display: "flex", gap: 12, marginBottom: 32 }}>
         <Btn onClick={doUpload} disabled={uploading} style={{ flex: 2, justifyContent: "center" }}>
           {uploading ? <><Spinner size={14} /> Ingesting…</> : <><Icon name="cloud_upload" size={16} /> Upload to Vector Store</>}

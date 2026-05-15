@@ -8,7 +8,7 @@ from typing import List, Optional
 from fastapi import File, Form, HTTPException, Query, UploadFile
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
-from python.ingest import create_vectorstore, read_pdf, read_word, read_ocr, read_video, split_texts, webscraper
+from python.ingest import create_vectorstore, read_pdf, read_word, read_ocr, read_video, split_texts, webscraper,append_text_to_vectorstore
 from python.sub_urls import get_sub_urls
 from python.contacts.xlsx_contacts import ingest_contacts_to_vectorstore
 from dbhelper.db_helper import get_all_uploads
@@ -139,7 +139,20 @@ async def handle_upload_faq(guild_id: str=Form(...),text:str=Form(...),user: dic
     if not guild_id:
         raise HTTPException(status_code=400, detail="'guild_id' is required")
     if not text:
-        raise HTTPException(status_code=400, detail="'guild_id' is required")
+        raise HTTPException(status_code=400, detail="FaQ is required")
+    try:
+        result=append_text_to_vectorstore(guild_id,text)
+        if result==1:
+            return {
+            "status":          "success",
+            "message":         f"Question Added",
+            }
+        else:
+            raise HTTPException(status_code=500, detail="The Faq was not able To Add")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"FaQ Append failed: {e}")
+
+
 async def handle_upload_contacts(guild_id: str        = Form(...),file:     UploadFile = File(...),user: dict = Depends(require_guild_admin),) -> dict:
     guild_id = guild_id.strip()
     if not guild_id:
