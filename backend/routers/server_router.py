@@ -15,3 +15,5 @@ server_router.add_api_route("/update-max-token",handle_update_max_token,methods=
 server_router.add_api_route("/insert-system-prompt",handle_insert_system_prompt,methods=["PUT"],dependencies=[Depends(require_guild_admin)])
 server_router.add_api_route("/update-system-prompt",handle_update_system_prompt,methods=["PUT"],dependencies=[Depends(require_guild_admin)])
 server_router.add_api_route("/config",handle_get_server_config,methods=["GET"],dependencies=[Depends(require_guild_admin_query)],)
+server_router.add_api_route("/list",handle_get_user_servers_with_status,methods=["GET"],dependencies=[Depends(verify_access_token)])
+server_router.add_api_route("/list-all",handle_get_all_servers_with_status,methods=["GET"],dependencies=[Depends(verify_access_token)])
