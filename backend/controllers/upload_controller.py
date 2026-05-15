@@ -36,7 +36,7 @@ async def handle_get_sub_urls(url: str = Query(...),user:dict=Depends(verify_acc
         raise HTTPException(status_code=500, detail="Failed to fetch sub-URLs")
 
 
-async def handle_upload(
+async def handle_upload(#do not touch (aayushi work)
     guild_id: str                        = Form(...),
     files:    Optional[List[UploadFile]] = File(None),
     urls:     Optional[str]              = Form(None),

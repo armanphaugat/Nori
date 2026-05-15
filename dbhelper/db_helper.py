@@ -587,3 +587,161 @@ def remove_guild_admin(guild_id: str, discord_id: str) -> None:
             {"guild_id": str(guild_id), "discord_id": discord_id},
         )
         s.commit()
+
+# ─── ADD THIS FUNCTION TO dbhelper/db_helper.py ────────────────────────────────
+
+def get_user_servers_with_config_status(discord_id: str) -> list[dict]:
+    """
+    Get all servers owned/administered by a user with config status.
+    Uses LEFT JOIN to include servers even if they don't have full config.
+    
+    Returns:
+    [
+      {
+        "guild_id": "123456789",
+        "name": "AI ASSISTANT",
+        "config_status": "configured" | "partial" | "unconfigured",
+        "has_custom_prompt": true/false,
+        "has_channels": true/false,
+        "channel_count": 0,
+        "faiss_k": 15,
+        "bm25_k": 10,
+        "temperature": 0.5,
+        "added_at": "2024-01-15T10:30:00"
+      }
+    ]
+    """
+    with DB() as s:
+        rows = s.execute(
+            text("""
+                SELECT 
+                    s.server_id,
+                    s.server_name,
+                    s.faiss_k,
+                    s.bm25_k,
+                    s.temperature,
+                    s.chunk_size,
+                    s.chunk_overlap,
+                    s.max_tokens,
+                    s.system_prompt,
+                    s.mod_channel,
+                    s.added_at,
+                    s.updated_at,
+                    COUNT(DISTINCT c.channel_id)::integer AS channel_count,
+                    (s.system_prompt IS NOT NULL AND s.system_prompt != '')::boolean AS has_custom_prompt,
+                    (COUNT(DISTINCT c.channel_id) > 0)::boolean AS has_channels,
+                    CASE 
+                        WHEN s.system_prompt IS NOT NULL 
+                             AND s.faiss_k IS NOT NULL 
+                             AND s.bm25_k IS NOT NULL
+                             AND COUNT(DISTINCT c.channel_id) > 0
+                        THEN 'configured'
+                        WHEN s.system_prompt IS NOT NULL 
+                             OR s.faiss_k IS NOT NULL 
+                             OR COUNT(DISTINCT c.channel_id) > 0
+                        THEN 'partial'
+                        ELSE 'unconfigured'
+                    END AS config_status
+                FROM servers s
+                INNER JOIN guild_admins ga ON s.server_id = ga.guild_id
+                LEFT JOIN channels c ON s.server_id = c.server_id
+                WHERE ga.discord_id = :discord_id
+                GROUP BY s.server_id, s.server_name, s.faiss_k, s.bm25_k, 
+                         s.temperature, s.chunk_size, s.chunk_overlap, 
+                         s.max_tokens, s.system_prompt, s.mod_channel, 
+                         s.added_at, s.updated_at
+                ORDER BY s.added_at DESC
+            """),
+            {"discord_id": discord_id},
+        ).mappings().all()
+        
+        return [
+            {
+                "guild_id": row["server_id"],
+                "name": row["server_name"],
+                "config_status": row["config_status"],
+                "has_custom_prompt": row["has_custom_prompt"],
+                "has_channels": row["has_channels"],
+                "channel_count": row["channel_count"],
+                "faiss_k": row["faiss_k"],
+                "bm25_k": row["bm25_k"],
+                "temperature": row["temperature"],
+                "chunk_size": row["chunk_size"],
+                "chunk_overlap": row["chunk_overlap"],
+                "max_tokens": row["max_tokens"],
+                "system_prompt": row["system_prompt"],
+                "mod_channel": row["mod_channel"],
+                "added_at": row["added_at"].isoformat() if row.get("added_at") else None,
+                "updated_at": row["updated_at"].isoformat() if row.get("updated_at") else None,
+            }
+            for row in rows
+        ]
+
+
+def get_all_servers_with_config_status() -> list[dict]:
+    """
+    Get all servers with their config status (admin use only).
+    Uses LEFT JOIN to include servers with partial configs.
+    """
+    with DB() as s:
+        rows = s.execute(
+            text("""
+                SELECT 
+                    s.server_id,
+                    s.server_name,
+                    s.faiss_k,
+                    s.bm25_k,
+                    s.temperature,
+                    s.chunk_size,
+                    s.chunk_overlap,
+                    s.max_tokens,
+                    s.system_prompt,
+                    s.mod_channel,
+                    s.added_at,
+                    s.updated_at,
+                    COUNT(DISTINCT c.channel_id)::integer AS channel_count,
+                    (s.system_prompt IS NOT NULL AND s.system_prompt != '')::boolean AS has_custom_prompt,
+                    (COUNT(DISTINCT c.channel_id) > 0)::boolean AS has_channels,
+                    CASE 
+                        WHEN s.system_prompt IS NOT NULL 
+                             AND s.faiss_k IS NOT NULL 
+                             AND s.bm25_k IS NOT NULL
+                             AND COUNT(DISTINCT c.channel_id) > 0
+                        THEN 'configured'
+                        WHEN s.system_prompt IS NOT NULL 
+                             OR s.faiss_k IS NOT NULL 
+                             OR COUNT(DISTINCT c.channel_id) > 0
+                        THEN 'partial'
+                        ELSE 'unconfigured'
+                    END AS config_status
+                FROM servers s
+                LEFT JOIN channels c ON s.server_id = c.server_id
+                GROUP BY s.server_id, s.server_name, s.faiss_k, s.bm25_k, 
+                         s.temperature, s.chunk_size, s.chunk_overlap, 
+                         s.max_tokens, s.system_prompt, s.mod_channel, 
+                         s.added_at, s.updated_at
+                ORDER BY s.added_at DESC
+            """),
+        ).mappings().all()
+        
+        return [
+            {
+                "guild_id": row["server_id"],
+                "name": row["server_name"],
+                "config_status": row["config_status"],
+                "has_custom_prompt": row["has_custom_prompt"],
+                "has_channels": row["has_channels"],
+                "channel_count": row["channel_count"],
+                "faiss_k": row["faiss_k"],
+                "bm25_k": row["bm25_k"],
+                "temperature": row["temperature"],
+                "chunk_size": row["chunk_size"],
+                "chunk_overlap": row["chunk_overlap"],
+                "max_tokens": row["max_tokens"],
+                "system_prompt": row["system_prompt"],
+                "mod_channel": row["mod_channel"],
+                "added_at": row["added_at"].isoformat() if row.get("added_at") else None,
+                "updated_at": row["updated_at"].isoformat() if row.get("updated_at") else None,
+            }
+            for row in rows
+        ]
