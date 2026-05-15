@@ -8,7 +8,7 @@ from typing import List, Optional
 from fastapi import File, Form, HTTPException, Query, UploadFile
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
-from python.ingest import create_vectorstore, read_pdf, split_texts, webscraper
+from python.ingest import create_vectorstore, read_pdf, read_word, read_ocr, read_video, split_texts, webscraper
 from python.sub_urls import get_sub_urls
 from python.contacts.xlsx_contacts import ingest_contacts_to_vectorstore
 from dbhelper.db_helper import get_all_uploads
@@ -16,6 +16,7 @@ from backend.middleware.auth import *
 
 URL_PATTERN     = r"(https?://[^\s]+)"
 MAX_FILE_SIZE   = 10 * 1024 * 1024
+ALLOWED_EXTENSIONS = {".pdf", ".docx", ".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".webp", ".mp4", ".mp3", ".wav", ".m4a"}
 
 async def handle_get_sub_urls(url: str = Query(...),user:dict=Depends(verify_access_token),) -> dict:
     url = url.strip()
@@ -41,6 +42,7 @@ async def handle_upload(
     files:    Optional[List[UploadFile]] = File(None),
     urls:     Optional[str]              = Form(None),
     user:     dict                       = Depends(require_guild_admin),
+    
 ) -> dict:
     guild_id = guild_id.strip()
     print(f"[DEBUG] guild_id={guild_id!r}")
@@ -49,8 +51,11 @@ async def handle_upload(
     if not guild_id:
         raise HTTPException(status_code=400, detail="'guild_id' cannot be empty")
 
-    pdf_files = [f for f in (files or []) if f.filename]
-    for f in pdf_files:
+    valid_files = [f for f in (files or []) if f.filename]
+    for f in valid_files:
+        ext = os.path.splitext(f.filename or "")[1].lower()
+        if ext not in ALLOWED_EXTENSIONS:
+            raise HTTPException(status_code=400, detail=f"Unsupported file type '{ext}'")
         f.file.seek(0, 2)
         size = f.file.tell()
         f.file.seek(0)
@@ -58,7 +63,7 @@ async def handle_upload(
             raise HTTPException(status_code=400, detail="File must be smaller than 10 MB")
 
     links = re.findall(URL_PATTERN, urls) if urls else []
-    if not pdf_files and not links:
+    if not valid_files and not links:
         raise HTTPException(status_code=400, detail="No PDFs or URLs provided")
 
     texts: list[str] = []
@@ -70,18 +75,38 @@ async def handle_upload(
                 texts.extend(scraped)
         except Exception as e:
             print(f"[handle_upload] Scrape error for {link}: {e}")
+    
+    pdf_count = word_count = ocr_count = video_count = 0
 
-    for pdf in pdf_files:
+    for upload in valid_files:
+        ext = os.path.splitext(upload.filename or "")[1].lower()
         try:
-            file_bytes = await pdf.read()
+            file_bytes = await upload.read()
             if not file_bytes:
-                print(f"[handle_upload] Empty file: {pdf.filename}")
+                print(f"[handle_upload] Empty file: {upload.filename}")
                 continue
-            pdf_text = read_pdf(BytesIO(file_bytes))
-            if pdf_text:
-                texts.append(pdf_text)
+            bio = BytesIO(file_bytes)
+            if ext == ".pdf":
+                text = read_pdf(bio)
+                pdf_count += 1
+            elif ext == ".docx":
+                text = read_word(bio)
+                word_count += 1
+            elif ext in {".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".webp"}:
+                text = read_ocr(bio)
+                ocr_count += 1
+            elif ext in {".mp4", ".mp3", ".wav", ".m4a"}:
+                text = read_video(bio)
+                video_count += 1
+            else:
+                continue
+
+            if text:
+                cleaned = split_texts([text])
+                texts.extend(cleaned)
+
         except Exception as e:
-            print(f"[handle_upload] PDF read error for {pdf.filename}: {e}")
+            print(f"[handle_upload] Processing {upload.filename} failed: {e}")
 
     if not texts:
         raise HTTPException(status_code=400, detail="No valid content extracted")
@@ -103,9 +128,12 @@ async def handle_upload(
         "status":          "success",
         "message":         f"Processed {len(chunks)} chunks",
         "urls_processed":  len(links),
-        "pdfs_processed":  len(pdf_files),
+        "pdfs_processed": pdf_count,
+        "word_processed": word_count,
+        "ocr_processed":  ocr_count,
+        "video_processed": video_count,
     }
-
+# add new endpoint for raw txt string 
 
 async def handle_upload_contacts(guild_id: str        = Form(...),file:     UploadFile = File(...),user: dict = Depends(require_guild_admin),) -> dict:
     guild_id = guild_id.strip()
