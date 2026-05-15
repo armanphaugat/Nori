@@ -1050,35 +1050,72 @@ function ChannelsTab({ guilds }) {
 }
 
 // ─── UPLOAD TAB ───────────────────────────────────────────────────────────────
+// ─── UPLOAD TAB ───────────────────────────────────────────────────────────────
 function UploadTab({ guilds }) {
   const [gid, setGid] = useState("");
   const [urls, setUrls] = useState("");
-  const [pdfFiles, setPdfFiles] = useState([]);
+  const [docFiles, setDocFiles] = useState([]);
+  const [imgFiles, setImgFiles] = useState([]);
+  const [vidFiles, setVidFiles] = useState([]);
+  const [audFiles, setAudFiles] = useState([]);
   const [xlsxFile, setXlsxFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [xlsxUploading, setXlsxUploading] = useState(false);
   const [status, setStatus] = useState(null);
   const [uploads, setUploads] = useState([]);
   const [loadingUploads, setLoadingUploads] = useState(false);
-  const pdfRef = useRef(null);
+  const docRef = useRef(null);
+  const imgRef = useRef(null);
+  const vidRef = useRef(null);
+  const audRef = useRef(null);
   const xlsxRef = useRef(null);
+
+  const ALLOWED_EXTENSIONS = {
+    doc: [".pdf", ".docx"],
+    img: [".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".webp"],
+    vid: [".mp4"],
+    aud: [".mp3", ".wav", ".m4a"],
+  };
+
+  const extOf = (name) => "." + name.split(".").pop().toLowerCase();
+
+  const filterFiles = (list, type) =>
+    [...list].filter((f) => ALLOWED_EXTENSIONS[type].includes(extOf(f.name)));
+
+  const addFiles = (setter, type) => (e) => {
+    setter((p) => [...p, ...filterFiles(e.target.files, type)]);
+    e.target.value = "";
+  };
+
+  const dropFiles = (setter, type) => (e) => {
+    e.preventDefault();
+    setter((p) => [...p, ...filterFiles(e.dataTransfer.files, type)]);
+  };
+
+  const removeFile = (setter, idx) =>
+    setter((p) => p.filter((_, j) => j !== idx));
+
+  const allFiles = [...docFiles, ...imgFiles, ...vidFiles, ...audFiles];
 
   const loadUploads = useCallback(async (id) => {
     if (!id) return;
     setLoadingUploads(true);
-    try { const d = await API.getAllUploads(id); setUploads(Array.isArray(d) ? d : d.uploads || []); }
-    catch (_) {}
+    try {
+      const d = await API.getAllUploads(id);
+      setUploads(Array.isArray(d) ? d : d.uploads || []);
+    } catch (_) {}
     setLoadingUploads(false);
   }, []);
 
   const doUpload = async () => {
     if (!gid) { setStatus({ ok: false, msg: "Select a server first" }); return; }
-    if (!urls.trim() && !pdfFiles.length) { setStatus({ ok: false, msg: "Add URLs or PDFs first" }); return; }
+    if (!urls.trim() && !allFiles.length) { setStatus({ ok: false, msg: "Add URLs or files first" }); return; }
     setUploading(true); setStatus(null);
     try {
-      const d = await API.upload(gid, pdfFiles, urls.trim());
-      setStatus({ ok: true, msg: `${d.urls_processed || 0} URL(s), ${d.pdfs_processed || 0} PDF(s) ingested successfully` });
-      setUrls(""); setPdfFiles([]); loadUploads(gid);
+      const d = await API.upload(gid, allFiles, urls.trim());
+      setStatus({ ok: true, msg: `${d.urls_processed || 0} URL(s), ${d.pdfs_processed || 0} file(s) ingested successfully` });
+      setUrls(""); setDocFiles([]); setImgFiles([]); setVidFiles([]); setAudFiles([]);
+      loadUploads(gid);
     } catch (e) { setStatus({ ok: false, msg: e.message }); }
     setUploading(false);
   };
@@ -1087,15 +1124,63 @@ function UploadTab({ guilds }) {
     if (!gid) { setStatus({ ok: false, msg: "Select a server first" }); return; }
     if (!xlsxFile) { setStatus({ ok: false, msg: "No .xlsx file selected" }); return; }
     setXlsxUploading(true); setStatus(null);
-    try { const d = await API.uploadContacts(gid, xlsxFile); setStatus({ ok: true, msg: d.message }); setXlsxFile(null); }
-    catch (e) { setStatus({ ok: false, msg: e.message }); }
+    try {
+      const d = await API.uploadContacts(gid, xlsxFile);
+      setStatus({ ok: true, msg: d.message });
+      setXlsxFile(null);
+    } catch (e) { setStatus({ ok: false, msg: e.message }); }
     setXlsxUploading(false);
   };
 
-  return (
-    <div>
-      <SectionHeader label="Knowledge Base" title="Upload Content" subtitle="Ingest PDFs, URLs, and structured data into your vector store." />
+  const FileSection = ({ label, hint, iconName, accentBg, accentColor, files, setFiles, inputRef, accept, type }) => (
+    <Card style={{ marginBottom: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+        <div style={{ width: 36, height: 36, borderRadius: "var(--r-md)", background: accentBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Icon name={iconName} size={18} style={{ color: accentColor }} />
+        </div>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 600 }}>{label}</div>
+          <div style={{ fontSize: 12, color: "var(--on-surface-variant)" }}>{hint}</div>
+        </div>
+      </div>
+      <div
+        className="drop-zone"
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={dropFiles(setFiles, type)}
+      >
+        <Icon name="upload_file" size={36} style={{ color: accentColor, opacity: 0.6 }} />
+        <p style={{ fontSize: 14, color: "var(--on-surface-variant)" }}>
+          Drop files here or <span style={{ color: "var(--primary)", fontWeight: 600 }}>browse</span>
+        </p>
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        multiple
+        style={{ display: "none" }}
+        onChange={addFiles(setFiles, type)}
+      />
+      {files.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+          {files.map((f, i) => (
+            <div key={i} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 10px", background: accentBg, borderRadius: "var(--r-sm)", fontSize: 12, color: accentColor }}>
+              <Icon name="insert_drive_file" size={13} />
+              {f.name.length > 22 ? f.name.slice(0, 19) + "…" : f.name}
+              <span onClick={() => removeFile(setFiles, i)} style={{ cursor: "pointer", opacity: 0.6, fontWeight: 700 }}>✕</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
 
+  return (
+    <div style={{ width: "100%", minHeight: "100vh", boxSizing: "border-box" }}>
+      <SectionHeader label="Knowledge Base" title="Upload Content" subtitle="Ingest PDFs, documents, images, audio, video, and structured data into your vector store." />
+
+      {/* Server select */}
       <Card style={{ marginBottom: 16 }}>
         <label style={{ fontSize: 11, fontWeight: 600, color: "var(--on-surface-variant)", display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: ".06em" }}>Server</label>
         <select className="kb-input" value={gid} onChange={e => { setGid(e.target.value); setUploads([]); loadUploads(e.target.value); }}>
@@ -1115,38 +1200,71 @@ function UploadTab({ guilds }) {
             <div style={{ fontSize: 12, color: "var(--on-surface-variant)" }}>One per line</div>
           </div>
         </div>
-        <textarea className="kb-input kb-mono" value={urls} onChange={e => setUrls(e.target.value)}
-          rows={4} placeholder={"https://docs.example.com\nhttps://yoursite.com/about"}
-          style={{ resize: "vertical", lineHeight: 1.6, fontFamily: "monospace", fontSize: 13 }} />
+        <textarea
+          className="kb-input kb-mono"
+          value={urls}
+          onChange={e => setUrls(e.target.value)}
+          rows={4}
+          placeholder={"https://docs.example.com\nhttps://yoursite.com/about"}
+          style={{ resize: "vertical", lineHeight: 1.6, fontFamily: "monospace", fontSize: 13 }}
+        />
       </Card>
 
-      {/* PDF upload */}
-      <Card style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-          <div style={{ width: 36, height: 36, borderRadius: "var(--r-md)", background: "var(--primary-fixed)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Icon name="description" size={18} style={{ color: "var(--primary)" }} />
-          </div>
-          <div style={{ fontSize: 14, fontWeight: 600 }}>PDF Files</div>
-        </div>
-        <div className="drop-zone" onClick={() => pdfRef.current?.click()}
-          onDragOver={e => e.preventDefault()}
-          onDrop={e => { e.preventDefault(); const dropped = [...e.dataTransfer.files].filter(f => f.type === "application/pdf"); setPdfFiles(p => [...p, ...dropped]); }}>
-          <Icon name="upload_file" size={36} style={{ color: "var(--primary)", opacity: .6 }} />
-          <p style={{ fontSize: 14, color: "var(--on-surface-variant)" }}>Drop PDFs here or <span style={{ color: "var(--primary)", fontWeight: 600 }}>browse</span></p>
-        </div>
-        <input ref={pdfRef} type="file" accept=".pdf" multiple style={{ display: "none" }} onChange={e => setPdfFiles(p => [...p, ...[...e.target.files]])} />
-        {pdfFiles.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
-            {pdfFiles.map((f, i) => (
-              <div key={i} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 10px", background: "var(--primary-fixed)", borderRadius: "var(--r-sm)", fontSize: 12, color: "var(--primary)" }}>
-                <Icon name="picture_as_pdf" size={13} />
-                {f.name.length > 22 ? f.name.slice(0, 19) + "…" : f.name}
-                <span onClick={() => setPdfFiles(p => p.filter((_, j) => j !== i))} style={{ cursor: "pointer", opacity: .6, fontWeight: 700 }}>✕</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
+      {/* Documents: PDF + DOCX */}
+      <FileSection
+        label="Documents"
+        hint=".pdf, .docx"
+        iconName="description"
+        accentBg="var(--primary-fixed)"
+        accentColor="var(--primary)"
+        files={docFiles}
+        setFiles={setDocFiles}
+        inputRef={docRef}
+        accept=".pdf,.docx"
+        type="doc"
+      />
+
+      {/* Images */}
+      <FileSection
+        label="Images"
+        hint=".png, .jpg, .jpeg, .tiff, .bmp, .webp"
+        iconName="image"
+        accentBg="rgba(168,85,247,0.1)"
+        accentColor="#7c3aed"
+        files={imgFiles}
+        setFiles={setImgFiles}
+        inputRef={imgRef}
+        accept=".png,.jpg,.jpeg,.tiff,.bmp,.webp"
+        type="img"
+      />
+
+      {/* Video */}
+      <FileSection
+        label="Video"
+        hint=".mp4"
+        iconName="videocam"
+        accentBg="rgba(245,158,11,0.1)"
+        accentColor="#b45309"
+        files={vidFiles}
+        setFiles={setVidFiles}
+        inputRef={vidRef}
+        accept=".mp4"
+        type="vid"
+      />
+
+      {/* Audio */}
+      <FileSection
+        label="Audio"
+        hint=".mp3, .wav, .m4a"
+        iconName="headphones"
+        accentBg="rgba(20,184,166,0.1)"
+        accentColor="#0f766e"
+        files={audFiles}
+        setFiles={setAudFiles}
+        inputRef={audRef}
+        accept=".mp3,.wav,.m4a"
+        type="aud"
+      />
 
       {/* XLSX upload */}
       <Card style={{ marginBottom: 16 }}>
@@ -1159,11 +1277,14 @@ function UploadTab({ guilds }) {
             <div style={{ fontSize: 12, color: "var(--on-surface-variant)" }}>Contacts / Faculty</div>
           </div>
         </div>
-        <div className="drop-zone" onClick={() => xlsxRef.current?.click()}
+        <div
+          className="drop-zone"
+          onClick={() => xlsxRef.current?.click()}
           onDragOver={e => e.preventDefault()}
           onDrop={e => { e.preventDefault(); const f = [...e.dataTransfer.files].find(f => f.name.endsWith(".xlsx")); if (f) setXlsxFile(f); }}
-          style={{ borderColor: xlsxFile ? "#166534" : undefined, background: xlsxFile ? "rgba(34,197,94,0.05)" : undefined }}>
-          <Icon name={xlsxFile ? "check_circle" : "table_chart"} size={36} style={{ color: xlsxFile ? "#166534" : "var(--tertiary)", opacity: .7 }} />
+          style={{ borderColor: xlsxFile ? "#166534" : undefined, background: xlsxFile ? "rgba(34,197,94,0.05)" : undefined }}
+        >
+          <Icon name={xlsxFile ? "check_circle" : "table_chart"} size={36} style={{ color: xlsxFile ? "#166534" : "var(--tertiary)", opacity: 0.7 }} />
           <p style={{ fontSize: 14, color: xlsxFile ? "#166534" : "var(--on-surface-variant)", fontWeight: xlsxFile ? 600 : 400 }}>
             {xlsxFile ? xlsxFile.name : <>Drop <strong>.xlsx</strong> or browse</>}
           </p>
