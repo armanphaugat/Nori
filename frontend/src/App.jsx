@@ -856,7 +856,7 @@ function LandingPage({ user, onLogin, onShowDashboard }) {
         <div>
           <div style={{ fontSize: 13, fontWeight: 600, color: "var(--primary)", marginBottom: 4 }}>VaultBot <Tag style={{ fontSize: 10, padding: "1px 6px", marginLeft: 4 }}>BOT</Tag> <span style={{ fontSize: 11, color: "#80848e", fontWeight: 400 }}>Today at 10:32 AM</span></div>
           <div style={{ fontSize: 14, color: "#dbdee1", lineHeight: 1.6 }}>
-            According to your <span style={{ color: "#00a8fc" }}>refund-policy.pdf</span>:<br /><br />
+            According to Context <span style={{ color: "#00a8fc" }}></span>:<br /><br />
             Premium plan subscribers are eligible for a full refund within <strong style={{ color: "#f2f3f5" }}>14 days</strong> of purchase, provided no more than <strong style={{ color: "#f2f3f5" }}>2 AI queries</strong> have been made. After this window, partial refunds may be issued at admin discretion.
           </div>
           <div style={{ marginTop: 8, fontSize: 12, color: "#80848e" }}>📄 Source: refund-policy.pdf · Page 3</div>
