@@ -17,3 +17,5 @@ pytesseract
 Pillow
 playwright
 whisper
+tavily-python
+exa-py
