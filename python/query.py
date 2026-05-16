@@ -12,7 +12,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_groq import ChatGroq
 import redis as r
 from utils.apikeyrotation import redis_client, random_key
-import sys
+from utils.web_search import web_search_fallback
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),".."))
 from utils.apikeyrotation import rotate_key, get_key, set_key,random_key
 embeddings = HuggingFaceEmbeddings(
@@ -153,19 +153,31 @@ def get_hybrid_retriever(server_id, discord_bm25_k,discord_faiss_k,discord_faiss
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
+def is_no_kb_response(answer: str) -> bool:
 
-def answer_query(question: str, server_id: int,discord_prompt:str,discord_bm25_k:int,discord_faiss_k:int):
+    no_kb_phrases = [
+        "i don't have this information",
+        "i do not have this information",
+        "not in the provided documentation",
+        "not available in the provided",
+    ]
+    lower = answer.lower()
+    return any(phrase in lower for phrase in no_kb_phrases)
+
+def answer_query(question: str, server_id: int, discord_prompt: str, discord_bm25_k: int, discord_faiss_k: int) -> str:
     checker(discord_prompt)
     full_prompt = ChatPromptTemplate.from_template(text)
     vectorstore = get_vectorstore(server_id)
-    llm=get_llm()
+    llm = get_llm()
     if vectorstore is None:
-        return "No content has been uploaded yet. Use -upload with URLs or PDF attachments first."
-
-    retriever = get_hybrid_retriever(server_id,discord_bm25_k,discord_faiss_k,45)
+        return web_search_fallback(question) or "No content has been uploaded yet. Use -upload with URLs or attachments first."
+    retriever = get_hybrid_retriever(server_id, discord_bm25_k, discord_faiss_k, 45)
     if retriever is None:
-        return "No content has been uploaded yet. Use -upload with URLs or PDF attachments first."
+        return web_search_fallback(question) or "No content has been uploaded yet. Use -upload with URLs or attachments first."
     docs = retriever(question)
     context = format_docs(docs)
     chain = full_prompt | llm | StrOutputParser()
-    return chain.invoke({"context": context, "question": question})
+    ans = chain.invoke({"context": context, "question": question})
+    if is_no_kb_response(ans):
+        return web_search_fallback(question) or ans
+    return ans

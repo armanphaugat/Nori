@@ -29,7 +29,6 @@ intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='-', intents=intents, help_command=None)
 
 def is_no_kb_response(answer: str) -> bool:
-    """Returns True if the LLM replied that it doesn't have the information."""
     no_kb_phrases = [
         "i don't have this information",
         "i do not have this information",
