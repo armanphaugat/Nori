@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 import os
 import re
+import sys
 load_dotenv(override=True)
 
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -26,7 +27,7 @@ def get_llm():
     )
 text = """System: You are a Precise Technical Assistant.
  
-Core Instruction: Answer ONLY using the provided Context. Do not use external knowledge.
+Core Instruction: Answer ONLY using the provided Context. Do not use external knowledge. Must be 4000 or fewer in length.
  
 Rules:
 1. Context Check:
@@ -135,8 +136,8 @@ def get_hybrid_retriever(server_id, discord_bm25_k,discord_faiss_k,discord_faiss
         return None
     bm25_retriever = BM25Retriever.from_documents(all_docs, k=discord_bm25_k)
     faiss_retriever = vectorstore.as_retriever(
-        search_type="mmr",
-        search_kwargs={"k": discord_faiss_k, "fetch_k": discord_faiss_fetch_k, "lambda_mult": 0.4}
+        search_type="similarity",
+        search_kwargs={"k": discord_faiss_k}
     )
     def hybrid_retrieve(query):
         bm25_docs = bm25_retriever.invoke(query)
