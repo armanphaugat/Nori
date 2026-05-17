@@ -13,7 +13,7 @@ async def query_graphlit(server_id:str,question:str):
         content_filter=None
         if content_ids:
             content_filter={
-                "contents":[{"id":cid for cid in content_ids}]
+                "contents":[{"id":cid} for cid in content_ids]
             }
         feed_filter=None
         if feed_ids:

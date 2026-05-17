@@ -12,12 +12,7 @@ import base64
 graphlit = Graphlit()
 whisper_model = whisper.load_model("base")
 
-from graphlit_client.types import (
-    FeedTypes,
-    WebFeedPropertiesInput,
-    FeedSchedulePolicyInput,
-    TimedPolicyRecurrenceTypes,
-)
+from graphlit_api import FeedTypes, WebFeedPropertiesInput, FeedSchedulePolicyInput, TimedPolicyRecurrenceTypes
 
 def read_word(file):
     try:
