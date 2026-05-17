@@ -747,7 +747,7 @@ def get_all_servers_with_config_status() -> list[dict]:
         ]
     
 async def add_content_id(server_id: str, content_id: str):
-    with DB() as s:
+    async with DB() as s:
         await s.execute(text("""INSERT INTO server_uploads (server_id, content_id) VALUES (:server_id, :content_id)"""),{"server_id": server_id,"content_id": content_id})
         await s.commit()
 
@@ -758,3 +758,22 @@ async def add_feed_id(server_id: str, feed_id: str):
             {"server_id": server_id, "feed_id": feed_id}
         )
         await s.commit()
+
+async def get_content_ids(server_id: str) -> list[str]:
+    async with DB() as s:
+        result = await s.execute(
+            text("SELECT content_id FROM server_uploads WHERE server_id = :server_id"),
+            {"server_id": server_id}
+        )
+        rows = result.fetchall()
+        return [row[0] for row in rows]
+
+
+async def get_feed_ids(server_id: str) -> list[str]:
+    async with DB() as s:
+        result = await s.execute(
+            text("SELECT feed_id FROM server_feeds WHERE server_id = :server_id"),
+            {"server_id": server_id}
+        )
+        rows = result.fetchall()
+        return [row[0] for row in rows]
