@@ -1,16 +1,61 @@
+# ─── Stage 1: Python dependency builder ───────────────────────────────────────
+FROM python:3.12-slim AS builder
+
+WORKDIR /build
+
+# System packages needed to compile Python wheels
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+
+# ─── Stage 2: Runtime image ────────────────────────────────────────────────────
 FROM python:3.12-slim
 
 WORKDIR /app
 
+# Runtime system deps:
+#   tesseract-ocr  → pytesseract (OCR uploads)
+#   ffmpeg         → openai-whisper (audio/video uploads)
+#   libglib2.0-0 libsm6 libxext6 libxrender1 → Pillow / OpenCV
+#   curl           → Docker healthcheck
+#   chromium + dependencies → Playwright headless browser (web scraping fallback)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc g++ \
+    tesseract-ocr \
+    ffmpeg \
+    libglib2.0-0 libsm6 libxext6 libxrender1 \
+    curl \
+    chromium \
+    libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
+    libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 \
+    libxfixes3 libxrandr2 libgbm1 libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Tell Playwright to use the system Chromium instead of downloading its own
+ENV PLAYWRIGHT_BROWSERS_PATH=/usr/bin
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
 
-COPY backend/ ./backend/
-COPY python/  ./python/
+# Copy installed Python packages from builder stage
+COPY --from=builder /install /usr/local
+
+# Copy application source
+# NOTE: all five dirs are required — the old Dockerfile was missing dbhelper/ and utils/
+COPY backend/   ./backend/
+COPY python/    ./python/
+COPY dbhelper/  ./dbhelper/
+COPY utils/     ./utils/
+COPY prompt.txt ./prompt.txt
 
 EXPOSE 8000
-CMD ["uvicorn", "backend.routes:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Health endpoint is GET /  → returns {"message": "RAG API running"}
+HEALTHCHECK --interval=30s --timeout=10s --start-period=25s --retries=3 \
+    CMD curl -f http://localhost:8000/ || exit 1
+
+# FIX: old CMD used backend.routes:app — that module doesn't exist.
+# The FastAPI app is defined in backend/app.py → backend.app:app
+CMD ["uvicorn", "backend.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]

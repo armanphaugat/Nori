@@ -13,7 +13,14 @@ import asyncio
 import redis
 from utils.apikeyrotation import *
 load_dotenv()
-
+class Buttons(discord.ui.View):
+    def __init__(self, *, timeout=180):
+        super().__init__(timeout=timeout)
+    @discord.ui.button(label="Button",style=discord.ButtonStyle.gray)
+    async def gray_button(self,button:discord.ui.Button,interaction:discord.Interaction):
+        await interaction.response.edit_message(content=f"This is an edited button response!")
+async def button(ctx):
+    await ctx.send("This message has buttons!",view=Buttons())
 os.environ["USER_AGENT"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 redis_client = redis.Redis(
     host=os.getenv("REDIS_HOST", "localhost"),
@@ -72,12 +79,12 @@ async def on_reaction_add(reaction, user):
                 await mod_channel.send(embed=embed)
         await reaction.message.channel.send(
             f"<@{data['user_id']}> Sorry the answer wasn't helpful! "
-            f"Our team has been notified and will assist you shortly. 🙏"
+            f"Our team has been notified and will assist you shortly."
         )
 
     elif str(reaction.emoji) == "👍":
         await reaction.message.channel.send(
-            f"<@{data['user_id']}> Glad the answer was helpful! 😊"
+            f"<@{data['user_id']}> Glad the answer was helpful!"
         )
 
     # Clean up tracking after feedback received
@@ -90,16 +97,12 @@ async def send_answer_with_feedback(channel, user, guild_id, question, answer):
     answer_msg = await channel.send(answer)
     await answer_msg.add_reaction("👍")
     await answer_msg.add_reaction("👎")
-
-    # Register for feedback tracking
     pending_feedback[answer_msg.id] = {
         "question": question,
         "answer": answer,
         "user_id": user.id,
         "guild_id": guild_id,
     }
-
-    # Auto-cleanup after 2 minutes if no reaction
     async def cleanup():
         await asyncio.sleep(120)
         if answer_msg.id in pending_feedback:
