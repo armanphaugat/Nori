@@ -10,7 +10,7 @@ import tempfile
 from graphlit import Graphlit
 from dbhelper.db_helper import *
 import base64
-
+import pandas as pd
 graphlit = Graphlit()
 whisper_model = whisper.load_model("base")
 
@@ -33,7 +33,6 @@ def read_word(file):
     except Exception as e:
         raise ValueError(f"Failed to read Word file: {e}")
 
-
 def read_ocr(file):
     try:
         if isinstance(file, BytesIO):
@@ -54,7 +53,6 @@ def read_ocr(file):
     except Exception as e:
         raise ValueError(f"Failed to read image via OCR: {e}")
 
-
 def read_video(file):
     tmp_path = None
     try:
@@ -69,7 +67,6 @@ def read_video(file):
                 tmp_path = tmp.name
         else:
             raise ValueError("file must be a file path or BytesIO object")
-        print(f"Transcribing {tmp_path}")
         result = whisper_model.transcribe(tmp_path)
         text = result["text"]
         if not text or not text.strip():
@@ -83,18 +80,18 @@ def read_video(file):
         if tmp_path and isinstance(file, BytesIO) and os.path.exists(tmp_path):
             os.remove(tmp_path)
 
-
 async def add_url_graphlit(server_id: str, url: str):
     try:
         response = await graphlit.client.ingest_uri(url, is_synchronous=True)
-        content_id = response.ingest_uri.id
-        await add_content_id(server_id, content_id)
+        await add_content_id(server_id, response.ingest_uri.id)
     except Exception as e:
         print(f"[{server_id}] Failed to ingest {url}: {e}")
 
-
-async def add_pdf_graphlit(server_id: str, pdf: bytes):
+async def add_pdf_graphlit(server_id: str, pdf):
     try:
+        if isinstance(pdf, BytesIO):
+            pdf.seek(0)
+            pdf = pdf.read()
         base64_data = base64.b64encode(pdf).decode("utf-8")
         response = await graphlit.client.ingest_encoded_file(
             name=f"{server_id}_upload.pdf",
@@ -104,26 +101,24 @@ async def add_pdf_graphlit(server_id: str, pdf: bytes):
         )
         if not response:
             print("No ingestion Done")
-            return
+            return 0
         await add_content_id(server_id, response.ingest_encoded_file.id)
-        print(f"[{server_id}] Saved content_id")
+        return 1
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
-
+        return 0
 
 async def add_text_graphlit(server_id: str, faq_text: str):
     try:
-        response = await graphlit.client.ingest_text(
-            text=faq_text,
-            is_synchronous=True
-        )
+        response = await graphlit.client.ingest_text(text=faq_text, is_synchronous=True)
         if not response:
             print("Not Able To Add Text To Graphlit")
-            return
+            return 0
         await add_content_id(server_id, str(response.ingest_text.id))
+        return 1
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
-
+        return 0
 
 async def add_website_graphlit(server_id: str, url: str):
     try:
@@ -135,36 +130,59 @@ async def add_website_graphlit(server_id: str, url: str):
         )
         feed_id = response.create_feed.id
         await add_feed_id(server_id, str(feed_id))
-        print(f"[{server_id}] Feed created")
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
-
 
 async def add_word_graphlit(server_id: str, file):
     try:
         text = read_word(file)
         response = await graphlit.client.ingest_text(text=text, is_synchronous=True)
         await add_content_id(server_id, str(response.ingest_text.id))
-        print(f"[{server_id}] Word ingested")
+        return 1
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
-
+        return 0
 
 async def add_image_graphlit(server_id: str, file):
     try:
         text = read_ocr(file)
         response = await graphlit.client.ingest_text(text=text, is_synchronous=True)
         await add_content_id(server_id, str(response.ingest_text.id))
-        print(f"[{server_id}] Image ingested")
+        return 1
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
-
+        return 0
 
 async def add_video_graphlit(server_id: str, file):
     try:
         text = read_video(file)
         response = await graphlit.client.ingest_text(text=text, is_synchronous=True)
         await add_content_id(server_id, str(response.ingest_text.id))
-        print(f"[{server_id}] Video ingested")
+        return 1
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
+        return 0
+    
+async def add_xlsx_graphlit(server_id: str, source) -> dict:
+    if isinstance(source, BytesIO):
+        source.seek(0)
+    df = pd.read_excel(source, header=0)
+    df = df.fillna("").astype(str).apply(lambda col: col.str.strip())
+    df = df[df.apply(lambda row: any(row.values), axis=1)].reset_index(drop=True)
+    if df.empty:
+        return {"rows": 0, "status": "error", "error": "No valid rows found."}
+    ingested = 0
+    failed = 0
+    for _, row in df.iterrows():
+        chunk = "\n".join([f"{col}: {val}" for col, val in row.items() if val])
+        if not chunk:
+            continue
+        result = await add_text_graphlit(server_id, chunk)
+        if result == 1:
+            ingested += 1
+        else:
+            failed += 1
+    if ingested == 0:
+        return {"rows": len(df), "status": "error", "error": "All rows failed to ingest."}
+
+    return {"rows": len(df), "ingested": ingested, "failed": failed, "status": "success", "error": None}
