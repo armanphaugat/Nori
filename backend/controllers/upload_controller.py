@@ -8,7 +8,7 @@ from typing import List, Optional
 from fastapi import File, Form, HTTPException, Query, UploadFile
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
-from python.ingest import create_vectorstore, read_pdf, read_word, read_ocr, read_video, split_texts, webscraper,append_text_to_vectorstore
+from python.ingest import *
 from python.sub_urls import get_sub_urls
 from python.contacts.xlsx_contacts import ingest_contacts_to_vectorstore
 from dbhelper.db_helper import get_all_uploads
