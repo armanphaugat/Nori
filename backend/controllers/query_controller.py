@@ -5,8 +5,13 @@ import os
 from fastapi import HTTPException, Request
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
-from python.query import answer_query
-
+from python.query import *
+def is_no_kb_response(answer: str) -> bool:
+    if not answer or not answer.strip():
+        return True
+    
+    normalized = answer.lower().strip().rstrip(".")
+    return "i don't know" in normalized
 
 async def handle_query(request: Request) -> dict:
     try:
@@ -23,8 +28,9 @@ async def handle_query(request: Request) -> dict:
         raise HTTPException(status_code=400, detail="'server' is required")
 
     try:
-        loop   = asyncio.get_running_loop()
-        answer = await loop.run_in_executor(None, answer_query, question, server,None,10,10)
+        answer = await query_graphlit(server,question)
+        if is_no_kb_response(answer):
+            answer= await query_graphlit_web(server,question)
         return {"answer": answer}
     except Exception as e:
         print(f"[handle_query] Error: {e}")
