@@ -6,12 +6,11 @@ from discord.ext.commands import cooldown, BucketType
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from dbhelper.db_helper import *
-from python.query import answer_query
+from python.query import *
 from io import BytesIO
 import re
 import asyncio
 import redis
-from utils.apikeyrotation import *
 load_dotenv()
 class Buttons(discord.ui.View):
     def __init__(self, *, timeout=180):
@@ -120,16 +119,11 @@ async def ask(ctx, *, question: str = None):
         if not question:
             await ctx.send("No Question Provided")
             return
-        info = get_server(ctx.guild.id)
-        if info is None:
-            await ctx.send("Please Configure Bot On DashBoard")
-            return
         async with ctx.typing():
             loop = asyncio.get_running_loop()
-            answer = await loop.run_in_executor(
-                None, answer_query, question, ctx.guild.id,
-                info["system_prompt"], info["bm25_k"], info["faiss_k"]
-            )
+            answer = await query_graphlit(ctx.guild.id,question)
+            if is_no_kb_response(answer):
+                answer=await query_graphlit_web(ctx.guild.id,question)
             await send_answer_with_feedback(ctx.channel, ctx.author, ctx.guild.id, question, answer)
             if is_no_kb_response(answer):
                 mod_channel_row = get_mod_channel(str(ctx.guild.id))
