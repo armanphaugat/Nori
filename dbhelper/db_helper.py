@@ -777,3 +777,44 @@ async def get_feed_ids(server_id: str) -> list[str]:
         )
         rows = result.fetchall()
         return [row[0] for row in rows]
+    
+def get_spec_id(guild_id: str, spec_name: str) -> Optional[str]:
+    column = "kb_spec_id" if spec_name == "kb_spec" else "web_spec_id"
+    with DB() as s:
+        row = s.execute(
+            text(f"SELECT {column} FROM servers WHERE server_id = :id"),
+            {"id": str(guild_id)},
+        ).mappings().first()
+        return row[column] if row else None
+
+
+def save_spec_id(guild_id: str, spec_name: str, spec_id: str) -> None:
+    column = "kb_spec_id" if spec_name == "kb_spec" else "web_spec_id"
+    with DB() as s:
+        s.execute(
+            text(f"""
+                UPDATE servers
+                SET {column} = :spec_id, updated_at = NOW()
+                WHERE server_id = :id
+            """),
+            {"spec_id": spec_id, "id": str(guild_id)},
+        )
+        s.commit()
+
+
+def get_kb_spec_id(guild_id: str) -> Optional[str]:
+    with DB() as s:
+        row = s.execute(
+            text("SELECT kb_spec_id FROM servers WHERE server_id = :id"),
+            {"id": str(guild_id)},
+        ).mappings().first()
+        return row["kb_spec_id"] if row else None
+
+
+def get_web_spec_id(guild_id: str) -> Optional[str]:
+    with DB() as s:
+        row = s.execute(
+            text("SELECT web_spec_id FROM servers WHERE server_id = :id"),
+            {"id": str(guild_id)},
+        ).mappings().first()
+        return row["web_spec_id"] if row else None
