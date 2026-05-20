@@ -276,6 +276,15 @@ def get_uploads(guild_id: str) -> list[dict]:
 
 get_all_uploads = get_uploads
 
+def remove_upload(upload_id: str, guild_id: str) -> bool:
+    with DB() as s:
+        result = s.execute(
+            text("DELETE FROM uploads WHERE id = :id AND server_id = :sid RETURNING id"),
+            {"id": upload_id, "sid": str(guild_id)},
+        )
+        s.commit()
+        return result.fetchone() is not None
+
 
 # ---------------------------------------------------------------------------
 # analytics

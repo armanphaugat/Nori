@@ -13,6 +13,7 @@ from python.sub_urls import get_sub_urls
 from python.contacts.xlsx_contacts import ingest_contacts_to_vectorstore
 from dbhelper.db_helper import get_all_uploads
 from backend.middleware.auth import *
+from dbhelper.db_helper import get_all_uploads, remove_upload
 
 URL_PATTERN     = r"(https?://[^\s]+)"
 MAX_FILE_SIZE   = 10 * 1024 * 1024
@@ -185,3 +186,19 @@ async def handle_get_all_uploads(guild_id: str = Query(...),user:dict = Depends(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve uploads: {e}")
+
+async def handle_delete_upload(
+    upload_id: str,
+    guild_id: str = Query(...),
+    user: dict = Depends(require_guild_admin),
+) -> dict:
+    try:
+        removed = remove_upload(upload_id, guild_id)
+        if not removed:
+            raise HTTPException(status_code=404, detail="Upload not found or server ID mismatch")
+        return {"status": "success", "message": "Upload removed successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[handle_delete_upload] Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete upload: {e}")
