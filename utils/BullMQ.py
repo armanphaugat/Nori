@@ -4,7 +4,7 @@ from redis import asyncio as ioredis
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),".."))
-from utils.apikeyrotation import rotate_key, get_key, set_key
+from utils.apikeyrotation import *
 connection={
     "host":"localhost",
     "port":6379,
@@ -16,6 +16,10 @@ queue=Queue(
 async def process(job,job_token):
     rotate_key()
     set_key()
+    rotate_exa_key()
+    set_exa_key()
+    rotate_tavily_key()
+    set_tavily_key()
 
 worker = Worker("api-key-rotation", process, {"connection": connection})
 async def main():

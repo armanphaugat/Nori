@@ -1,22 +1,43 @@
+# ─── Web framework ────────────────────────────────────────────────────────────
 fastapi
 uvicorn[standard]
 python-multipart
 python-dotenv
+httpx                        # used in auth_controller for Discord OAuth calls
+
+# ─── Auth ─────────────────────────────────────────────────────────────────────
+PyJWT                        # FIX: was missing — used as `import jwt` in middleware/auth.py
+
+# ─── Database ─────────────────────────────────────────────────────────────────
+sqlalchemy
+psycopg2-binary              # FIX: was missing — postgres driver for SQLAlchemy
+
+# ─── Cache / Queue ────────────────────────────────────────────────────────────
+redis
+redis[asyncio]               # needed by BullMQ async worker
+bullmq                       # FIX: was missing — used in utils/BullMQ.py
+
+# ─── LangChain / RAG stack ────────────────────────────────────────────────────
+langchain-core
 langchain-community
 langchain-huggingface
 langchain-groq
 langchain-text-splitters
-langchain-core
 faiss-cpu
 sentence-transformers
+rank-bm25                  
 PyPDF2
+pdfplumber                 
+docx2txt
+pandas                      
+openpyxl                     
+pytesseract
+Pillow
 beautifulsoup4
 requests
-docx2txt 
-pytesseract 
-Pillow
 playwright
-whisper
+openai-whisper
 tavily-python
 exa-py
 graphlit-client
+discord.py

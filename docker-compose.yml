@@ -1,21 +1,45 @@
 version: "3.9"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Q-ARAG Discord Bot — full stack
+#
+# Services:
+#   redis      → key-value store for API key rotation + BullMQ jobs
+#   backend    → FastAPI REST API (RAG engine, auth, uploads, analytics)
+#   bot        → Discord bot (reads messages, calls answer_query)
+#   bullmq     → Background worker: rotates Groq/Tavily/Exa API keys every 5 min
+#   frontend   → React dashboard served by nginx
+#
+# Shared volume:
+#   vectorstore_data → FAISS index files written by backend, read by bot
+#                      Both containers must mount the same volume.
+# ─────────────────────────────────────────────────────────────────────────────
+
 services:
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: nexus-frontend
+
+  # ── Redis ──────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: nexus-redis
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
     ports:
-      - "5173:80"
-    depends_on:
-      - backend
+      - "6379:6379"       # expose only if you need external access; remove in prod
     restart: unless-stopped
     networks:
       - nexus-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Backend (FastAPI) ──────────────────────────────────────────────────────
   backend:
     build:
       context: .
-      dockerfile: DockerFile.backend
+      dockerfile: Dockerfile.backend
     container_name: nexus-backend
     ports:
       - "8000:8000"
@@ -23,8 +47,14 @@ services:
       - .env
     environment:
       - PYTHONUNBUFFERED=1
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     volumes:
+      # Shared FAISS indexes — bot and backend both read/write here
       - vectorstore_data:/app/vectorstore
+    depends_on:
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - nexus-net
@@ -33,27 +63,73 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 20s
+      start_period: 25s
+
+  # ── Discord Bot ────────────────────────────────────────────────────────────
   bot:
     build:
-      context: ./bot
-      dockerfile: DockerFile
+      context: .
+      dockerfile: Dockerfile.bot
     container_name: nexus-bot
     env_file:
       - .env
     environment:
       - PYTHONUNBUFFERED=1
-      - BACKEND_URL=http://backend:8000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      # Must share the same vectorstore volume as backend
+      - vectorstore_data:/app/vectorstore
     depends_on:
       backend:
         condition: service_healthy
     restart: unless-stopped
     networks:
       - nexus-net
+
+  # ── BullMQ Key-Rotation Worker ─────────────────────────────────────────────
+  # FIX: this service was completely missing from the original compose file.
+  # Without it, Groq/Tavily/Exa API keys never rotate and rate limits hit fast.
+  bullmq:
+    build:
+      context: .
+      dockerfile: Dockerfile.bullmq
+    container_name: nexus-bullmq
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - nexus-net
+
+  # ── Frontend (React + nginx) ───────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend    # updated version that includes nginx.conf
+    container_name: nexus-frontend
+    ports:
+      - "80:80"           # changed from 5173:80 — use standard HTTP port in prod
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - nexus-net
+
+# ─── Named volumes ─────────────────────────────────────────────────────────────
 volumes:
+  redis_data:
+    driver: local
   vectorstore_data:
     driver: local
 
+# ─── Network ───────────────────────────────────────────────────────────────────
 networks:
   nexus-net:
     driver: bridge

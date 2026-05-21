@@ -4,17 +4,6 @@ from urllib.parse import urljoin, urlparse
 
 
 def get_sub_urls(url: str) -> dict:
-    """
-    Scrape all unique hyperlinks found on the given URL's page.
-
-    Returns:
-        {
-            "base_url": str,
-            "sub_urls": List[str],   # absolute, deduplicated, sorted
-            "count": int,
-            "error": str | None
-        }
-    """
     result = {"base_url": url, "sub_urls": [], "count": 0, "error": None}
     try:
         headers = {

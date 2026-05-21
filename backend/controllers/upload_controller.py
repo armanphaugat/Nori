@@ -8,18 +8,18 @@ from typing import List, Optional
 from fastapi import File, Form, HTTPException, Query, UploadFile
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
-from python.ingest import create_vectorstore, read_pdf, read_word, read_ocr, read_video, split_texts, webscraper
+from python.ingest import *
 from python.sub_urls import get_sub_urls
 from python.contacts.xlsx_contacts import ingest_contacts_to_vectorstore
 from dbhelper.db_helper import get_all_uploads
 from backend.middleware.auth import *
 from dbhelper.db_helper import get_all_uploads, remove_upload
 
-URL_PATTERN     = r"(https?://[^\s]+)"
-MAX_FILE_SIZE   = 10 * 1024 * 1024
+URL_PATTERN = r"(https?://[^\s]+)"
+MAX_FILE_SIZE = 10 * 1024 * 1024
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".webp", ".mp4", ".mp3", ".wav", ".m4a"}
 
-async def handle_get_sub_urls(url: str = Query(...),user:dict=Depends(verify_access_token),) -> dict:
+async def handle_get_sub_urls(url: str = Query(...), user: dict = Depends(verify_access_token)) -> dict:
     url = url.strip()
     if not url:
         raise HTTPException(status_code=400, detail="'url' query parameter is required")
@@ -37,18 +37,13 @@ async def handle_get_sub_urls(url: str = Query(...),user:dict=Depends(verify_acc
         print(f"[handle_get_sub_urls] Error: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch sub-URLs")
 
-
-async def handle_upload(#do not touch (aayushi work)
-    guild_id: str                        = Form(...),
-    files:    Optional[List[UploadFile]] = File(None),
-    urls:     Optional[str]              = Form(None),
-    user:     dict                       = Depends(require_guild_admin),
-    
+async def handle_upload(
+    guild_id: str = Form(...),
+    files: Optional[List[UploadFile]] = File(None),
+    urls: Optional[str] = Form(None),
+    user: dict = Depends(require_guild_admin),
 ) -> dict:
     guild_id = guild_id.strip()
-    print(f"[DEBUG] guild_id={guild_id!r}")
-    print(f"[DEBUG] urls={urls!r}")
-    print(f"[DEBUG] files={[f.filename for f in (files or [])]}")
     if not guild_id:
         raise HTTPException(status_code=400, detail="'guild_id' cannot be empty")
 
@@ -67,16 +62,12 @@ async def handle_upload(#do not touch (aayushi work)
     if not valid_files and not links:
         raise HTTPException(status_code=400, detail="No PDFs or URLs provided")
 
-    texts: list[str] = []
-
     for link in links:
         try:
-            scraped = webscraper(link)
-            if scraped:
-                texts.extend(scraped)
+            await add_website_graphlit(guild_id, link)
         except Exception as e:
             print(f"[handle_upload] Scrape error for {link}: {e}")
-    
+
     pdf_count = word_count = ocr_count = video_count = 0
 
     for upload in valid_files:
@@ -86,97 +77,74 @@ async def handle_upload(#do not touch (aayushi work)
             if not file_bytes:
                 print(f"[handle_upload] Empty file: {upload.filename}")
                 continue
-            bio = BytesIO(file_bytes)
             if ext == ".pdf":
-                text = read_pdf(bio)
+                await add_pdf_graphlit(guild_id, file_bytes)
                 pdf_count += 1
             elif ext == ".docx":
-                text = read_word(bio)
+                await add_word_graphlit(guild_id, BytesIO(file_bytes))
                 word_count += 1
             elif ext in {".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".webp"}:
-                text = read_ocr(bio)
+                await add_image_graphlit(guild_id, BytesIO(file_bytes))
                 ocr_count += 1
             elif ext in {".mp4", ".mp3", ".wav", ".m4a"}:
-                text = read_video(bio)
+                await add_video_graphlit(guild_id, BytesIO(file_bytes))
                 video_count += 1
-            else:
-                continue
-
-            if text:
-                cleaned = split_texts([text])
-                texts.extend(cleaned)
-
         except Exception as e:
             print(f"[handle_upload] Processing {upload.filename} failed: {e}")
 
-    if not texts:
-        raise HTTPException(status_code=400, detail="No valid content extracted")
-
-    try:
-        chunks = split_texts(texts)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Text splitting failed: {e}")
-
-    try:
-        created = create_vectorstore(chunks, guild_id)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Vector store creation failed: {e}")
-
-    if not created:
-        raise HTTPException(status_code=500, detail="Vector store creation returned falsy")
-
     return {
-        "status":          "success",
-        "message":         f"Processed {len(chunks)} chunks",
-        "urls_processed":  len(links),
+        "status": "success",
+        "message": "Processed",
+        "urls_processed": len(links),
         "pdfs_processed": pdf_count,
         "word_processed": word_count,
-        "ocr_processed":  ocr_count,
+        "ocr_processed": ocr_count,
         "video_processed": video_count,
     }
-# add new endpoint for raw txt string 
-async def handle_upload_faq(guild_id: str=Form(...),text:str=Form(...),user: dict = Depends(require_guild_admin),)-> dict:
-    guild_id = guild_id.strip()
-    if not guild_id:
-        raise HTTPException(status_code=400, detail="'guild_id' is required")
-async def handle_upload_contacts(guild_id: str        = Form(...),file:     UploadFile = File(...),user: dict = Depends(require_guild_admin),) -> dict:
-    guild_id = guild_id.strip()
-    if not guild_id:
-        raise HTTPException(status_code=400, detail="'guild_id' is required")
 
+async def handle_upload_faq(guild_id: str = Form(...), text: str = Form(...), user: dict = Depends(require_guild_admin)) -> dict:
+    guild_id = guild_id.strip()
+    if not guild_id:
+        raise HTTPException(status_code=400, detail="'guild_id' is required")
+    if not text:
+        raise HTTPException(status_code=400, detail="FaQ is required")
+    try:
+        result = await add_text_graphlit(guild_id, text)
+        if result == 1:
+            return {"status": "success", "message": "Question Added"}
+        raise HTTPException(status_code=500, detail="The Faq was not able To Add")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"FaQ Append failed: {e}")
+
+async def handle_upload_xlsx(guild_id: str = Form(...), file: UploadFile = File(...), user: dict = Depends(require_guild_admin)) -> dict:
+    guild_id = guild_id.strip()
+    if not guild_id:
+        raise HTTPException(status_code=400, detail="'guild_id' is required")
     if not (file.filename or "").endswith(".xlsx"):
         raise HTTPException(status_code=400, detail="Only .xlsx files are accepted")
-
     try:
         contents = await file.read()
         if not contents:
             raise HTTPException(status_code=400, detail="Uploaded file is empty")
-
-        loop   = asyncio.get_running_loop()
-        result = await loop.run_in_executor(
-            None,
-            ingest_contacts_to_vectorstore,
-            BytesIO(contents),
-            guild_id,
-        )
-
+        result = await add_xlsx_graphlit(guild_id, BytesIO(contents))
         if result["status"] != "success":
             raise HTTPException(status_code=500, detail=result["error"])
-
         return {
-            "status":  "success",
-            "message": f"Ingested {result['rows']} faculty records as {result['chunks']} chunks",
-            "rows":    result["rows"],
-            "chunks":  result["chunks"],
+            "status": "success",
+            "message": f"Ingested {result['ingested']} rows out of {result['rows']}",
+            "rows": result["rows"],
+            "ingested": result["ingested"],
+            "failed": result["failed"],
         }
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[handle_upload_contacts] Error: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to ingest contacts: {e}")
+        print(f"[handle_upload_xlsx] Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to ingest xlsx: {e}")
 
-
-async def handle_get_all_uploads(guild_id: str = Query(...),user:dict = Depends(require_guild_admin_query),) -> dict:
+async def handle_get_all_uploads(guild_id: str = Query(...), user: dict = Depends(require_guild_admin_query)) -> dict:
     try:
         result = get_all_uploads(guild_id)
         if result is None:
