@@ -39,4 +39,5 @@ playwright
 openai-whisper
 tavily-python
 exa-py
+graphlit-client
 discord.py

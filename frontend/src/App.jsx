@@ -241,6 +241,7 @@ const API = {
   },
   addFaq: (gid, text) => apiFetch("/upload/add-faq", { method: "POST", body: fd({ guild_id: gid, text }), isForm: true }),
   getAllUploads: (gid)  => apiFetch(`/upload/all?guild_id=${encodeURIComponent(gid)}`),
+  deleteUpload:  (gid, uid) => apiFetch(`/upload/${encodeURIComponent(uid)}?guild_id=${encodeURIComponent(gid)}`, { method: "DELETE" }),
   getSubUrls:   (url)  => apiFetch(`/upload/sub-urls?url=${encodeURIComponent(url)}`),
   query:        (question, server) => apiFetch("/query", { method: "POST", body: { question, server } }),
   getAnalytics: (gid)  => apiFetch(`/analytics/summary?guild_id=${encodeURIComponent(gid)}`),
@@ -602,20 +603,7 @@ const TECH_STACK = [
   { icon: "storage",        label: "PostgreSQL" },
   { icon: "developer_mode", label: "Docker" },
 ];
-const FAQS = [
-  { q: "Do I need to know coding to set it up?",       a: "No. Login with Discord, upload your files, and the bot is live. The dashboard handles everything visually." },
-  { q: "Where is my uploaded data stored?",            a: "All your documents and embeddings are stored on your own server infrastructure. We never access or share your data." },
-  { q: "What file types can I upload?",                a: "PDF, TXT, DOCX, XLSX, images (with OCR), and any public website URL or documentation site." },
-  { q: "What happens if the bot doesn't know?",        a: "VaultBot first searches your documents. If nothing is found, it falls back to a live web search and clearly labels the result." },
-  { q: "Can I use it on multiple Discord servers?",    a: "Yes. Each server gets its own isolated knowledge base and configuration." },
-  { q: "Is it free?",                                  a: "We offer a free tier to get started. Paid plans unlock higher query limits and priority support." },
-];
-const USE_CASES = [
-  { icon: "school",         title: "Universities & Colleges",  desc: "Answer student questions about timetables, syllabi, exam schedules, and campus policies — 24/7.", tag: "Education" },
-  { icon: "headset_mic",    title: "Product Support Servers",  desc: "Train the bot on your docs and let it handle tier-1 support. Fewer repeated questions.", tag: "Support" },
-  { icon: "sports_esports", title: "Gaming Communities",       desc: "Upload game wikis, patch notes, and guides. Let players ask strategy questions and get instant answers.", tag: "Gaming" },
-  { icon: "business",       title: "Business Workspaces",      desc: "Internal knowledge base on Discord. HR policies, onboarding docs, SOPs — all queryable by your team.", tag: "Business" },
-];
+
 
 function CmpCell({ val, highlight = false }) {
   const bg = highlight ? "rgba(70,72,212,0.03)" : "transparent";
@@ -629,7 +617,6 @@ function CmpCell({ val, highlight = false }) {
   return                      td(<span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:24,height:24,borderRadius:"50%",background:"rgba(234,179,8,0.12)",color:"#854d0e" }}><Icon name="remove" size={15}/></span>);
 }
 
-import { useState, useEffect, useRef } from "react";
 
 /* ─────────────── CSS ─────────────── */
 const css = `
@@ -644,11 +631,11 @@ const css = `
     --blue-light: #bec2ff;
     --blue-dim: rgba(88,101,242,0.12);
     --blue-glow: rgba(88,101,242,0.25);
-    --bg: #12131b;
-    --s1: #0d0e16;
-    --s2: #1a1b23;
-    --s3: #1f1f27;
-    --s4: #292932;
+    --bg: #07080d;
+    --s1: #040508;
+    --s2: #090a12;
+    --s3: #0c0e18;
+    --s4: #151724;
     --border: rgba(255,255,255,0.08);
     --border2: rgba(190,194,255,0.2);
     --text: #e3e1ed;
@@ -703,6 +690,28 @@ const css = `
   @keyframes tdot { 0%,100%{opacity:0.3;transform:translateY(0);} 50%{opacity:1;transform:translateY(-3px);} }
   @keyframes blink { 0%,100%{box-shadow:0 0 0 0 rgba(88,101,242,0.4);} 70%{box-shadow:0 0 0 7px transparent;} }
   @keyframes glow-pulse { 0%,100%{box-shadow:0 0 20px rgba(88,101,242,0.15);} 50%{box-shadow:0 0 35px rgba(88,101,242,0.3);} }
+  @keyframes bounce-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  @keyframes antenna-wiggle { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(15deg); } }
+  @keyframes pulse-eye { 0%, 100% { transform: scaleY(1); } 48% { transform: scaleY(1); } 50% { transform: scaleY(0.1); } 52% { transform: scaleY(1); } }
+  @keyframes scroll-mouse { 0% { opacity: 0; transform: translateY(-4px); } 50% { opacity: 1; } 100% { opacity: 0; transform: translateY(8px); } }
+
+  .mascot-bounce { animation: bounce-slow 4s ease-in-out infinite; }
+  .mascot-antenna { animation: antenna-wiggle 2.5s ease-in-out infinite; transform-origin: bottom center; display: inline-block; }
+  .mascot-eye { animation: pulse-eye 5s ease-in-out infinite; transform-origin: center; }
+  .scroll-btn {
+    position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--muted2); text-decoration: none; z-index: 10;
+  }
+  .scroll-wheel {
+    width: 22px; height: 36px; border: 2px solid var(--muted2); border-radius: 99px;
+    display: flex; justify-content: center; padding-top: 6px;
+  }
+  .scroll-wheel-dot {
+    width: 4px; height: 8px; background: var(--blue-light); border-radius: 99px;
+    animation: scroll-mouse 1.6s cubic-bezier(0.4,0,0.2,1) infinite;
+  }
 
   .a0{animation:fadeUp 0.5s ease both;}
   .a1{animation:fadeUp 0.5s 0.07s ease both;}
@@ -745,30 +754,9 @@ const css = `
 `;
 
 /* ─────────────── Helpers ─────────────── */
-function Icon({ name, size = 20, fill = 0 }) {
-  return (
-    <span
-      className="material-symbols-outlined"
-      style={{
-        fontSize: size,
-        fontVariationSettings: `'FILL' ${fill}`,
-        lineHeight: 1,
-        display: "inline-flex",
-        alignItems: "center",
-      }}
-    >
-      {name}
-    </span>
-  );
-}
 
-function DiscordIcon({ size = 16 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
-    </svg>
-  );
-}
+
+
 
 function useReveal() {
   const ref = useRef(null);
@@ -784,26 +772,19 @@ function useReveal() {
   return ref;
 }
 
-/* ─────────────── Data ─────────────── */
 const FEATS = [
   { icon:"robot_2",      fill:1, color:"tertiary", title:"Your Own AI Discord Bot",    desc:"Create a custom AI chatbot for your Discord server trained on your own documents and websites." },
   { icon:"picture_as_pdf",fill:1,color:"error",    title:"Upload PDFs & Files",         desc:"Upload PDFs, notes, Excel sheets, or text files and let the AI learn from them instantly." },
-  { icon:"language",     fill:1, color:"secondary", title:"Train From Websites",         desc:"Paste a website link and the bot can learn from entire documentation pages automatically." },
-  { icon:"travel_explore",fill:1,color:"blue",     title:"Website Auto Crawler",         desc:"Automatically finds all pages of a website so you can import everything in one click." },
+  { icon:"language",     fill:1, color:"secondary", title:"Website Ingestion & Crawler",  desc:"Import any website URL or let our auto-crawler discover and parse entire documentation folders in one click." },
   { icon:"question_answer",fill:1,color:"tertiary",title:"Answers From Your Data",       desc:"The bot answers questions using your uploaded content instead of random internet guesses." },
   { icon:"tune",         fill:1, color:"secondary", title:"Custom Bot Personality",       desc:"Change how the bot talks, behaves, and responds with your own custom system prompt instructions." },
   { icon:"forum",        fill:1, color:"blue",      title:"Choose Bot Channels",          desc:"Select exactly which Discord channels the bot can read and reply in." },
   { icon:"bar_chart",   fill:1,  color:"error",     title:"Server Analytics",             desc:"Track usage, uploads, questions asked, and overall bot activity from a dashboard." },
-  { icon:"hub",         fill:1,  color:"tertiary",  title:"Hybrid RAG Retrieval",         desc:"Combines FAISS semantic vector search with BM25 keyword retrieval for highly accurate context fetching." },
+  { icon:"sync",        fill:1,  color:"secondary", title:"Auto URL Updation",          desc:"Automatically monitor and sync URLs to refresh the knowledge base with the latest web updates." },
   { icon:"image_search",fill:1,  color:"secondary", title:"Image & Screenshot OCR",       desc:"Upload screenshots or images and the bot extracts and indexes text from them automatically." },
   { icon:"translate",   fill:1,  color:"blue",      title:"Auto Language Detection",      desc:"The bot automatically detects the user's language and replies in the same language every time." },
   { icon:"link",        fill:1,  color:"error",     title:"Source Citations",             desc:"Every answer references the exact document or section it came from." },
   { icon:"search",      fill:1,  color:"tertiary",  title:"Web Search Fallback",          desc:"When your docs don't have the answer, the bot searches the web and clearly labels the result." },
-  { icon:"history",     fill:1,  color:"secondary", title:"Contextual Memory",            desc:"Maintains contextual awareness across interactions for more coherent multi-turn conversations." },
-  { icon:"settings_suggest",fill:1,color:"blue",   title:"Live Retrieval Controls",       desc:"Dynamically tune FAISS-K, BM25-K, temperature, max tokens, chunk size and overlap with live sliders." },
-  { icon:"dns",         fill:1,  color:"error",     title:"Multi-Server Architecture",    desc:"Supports isolated knowledge bases and configurations for multiple Discord servers simultaneously." },
-  { icon:"verified_user",fill:1, color:"secondary", title:"Secure Discord Login",         desc:"Only authorized Discord server admins can manage and configure the bot via OAuth." },
-  { icon:"sync",        fill:1,  color:"blue",      title:"Instant Knowledge Updates",    desc:"Re-upload documents anytime to keep your AI assistant updated with the latest information." },
 ];
 
 const colorMap = {
@@ -828,17 +809,12 @@ const USE_CASES = [
 ];
 
 const COMP = [
-  ["RAG / Document Q&A",         "yes","no","no","partial"],
-  ["PDF & File Ingestion",        "yes","no","no","yes"],
-  ["Web Crawler + URL Ingest",    "yes","no","no","no"],
-  ["Hybrid Vector + BM25 Search", "yes","no","no","no"],
-  ["Live Parameter Tuning",       "yes","no","no","no"],
-  ["System Prompt Editor",        "yes","no","no","partial"],
-  ["Per-Channel Control",         "yes","yes","yes","yes"],
-  ["Analytics Dashboard",         "yes","partial","no","partial"],
-  ["Self-Hostable / Open Source", "yes","no","no","no"],
-  ["XLSX Structured Data",        "yes","no","no","no"],
-  ["Discord OAuth Admin Auth",    "yes","yes","yes","yes"],
+  ["RAG / Document Q&A",         "yes", "no",      "No dynamic ingestion of PDFs or custom files; only static pre-programmed answers."],
+  ["PDF & File Ingestion",        "yes", "no",      "Lack semantic vector pipelines to parse custom notes, text files, and server docs."],
+  ["Web Crawler & URL Ingestion", "yes", "no",      "Cannot scan URL structures to crawl website hierarchies or sync online docs."],
+  ["Auto URL Updation",          "yes", "no",      "Cannot automatically monitor and refresh links to keep knowledge bases updated."],
+  ["Custom Bot Personality",       "yes", "partial", "Limited to basic prefix commands; cannot write fully flexible AI personalities."],
+  ["Analytics Dashboard",         "yes", "partial", "No visual tracking of user query accuracy, source distribution, or chunk density."],
 ];
 
 const FAQS = [
@@ -867,10 +843,68 @@ function Tick({ v }) {
 }
 
 /* ─────────────── Component ─────────────── */
-export default function LandingPage() {
+function LandingPage({ user, onLogin, onShowDashboard }) {
   const [faq, setFaq] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const pageRef = useReveal();
+
+  const [playgroundMessages, setPlaygroundMessages] = useState([
+    {
+      sender: "bot",
+      text: "Hello! I am **Vaulty** 🤖, your server's custom RAG knowledge brain. Choose one of the preset questions below to see how I search through uploaded documents and respond with accurate, source-cited information!",
+      citations: []
+    }
+  ]);
+  const [playgroundTyping, setPlaygroundTyping] = useState(false);
+  const [activePreset, setActivePreset] = useState(null);
+  const [selectedCitation, setSelectedCitation] = useState(null);
+
+  const PLAYGROUND_PRESETS = [
+    {
+      question: "What is the final exam retake schedule?",
+      answer: "According to the official **Academic Regulations.pdf**, final retakes are scheduled from **June 15th to June 22nd, 2026**. All applications must be submitted by June 8th.",
+      citations: [
+        { name: "Academic Regulations.pdf", type: "pdf", text: "Section 4.2: Retake examinations for the Summer term will commence on June 15, 2026 and run through June 22, 2026. Deadlines for student registration are strictly enforced as June 8, 2026." }
+      ]
+    },
+    {
+      question: "What is the refund policy for digital assets?",
+      answer: "Per the **refund-policy URL**, digital assets can be refunded within **14 days** of purchase, provided the assets haven't been downloaded or imported into a project.",
+      citations: [
+        { name: "refund-policy.html (URL)", type: "url", text: "Article 2 - Digital goods are eligible for a 14-day refund window. This eligibility is immediately voided upon download, license activation, or project integration." }
+      ]
+    },
+    {
+      question: "Where do I find the Shadow Core in Chapter 3?",
+      answer: "In the **game_guide.docx**, the Shadow Core is located behind the **waterfall cavern in Chapter 3**. Make sure to equip the Fire Shield before entering to withstand the heat.",
+      citations: [
+        { name: "game_guide.docx", type: "docx", text: "Chapter 3: The Shadow Core lies hidden within the humid caverns behind the Great Waterfall. Fire protection (Shield or Potion) is required for traversal." }
+      ]
+    }
+  ];
+
+  const handlePlaygroundRun = (idx) => {
+    if (playgroundTyping) return;
+    const preset = PLAYGROUND_PRESETS[idx];
+    setActivePreset(idx);
+    setSelectedCitation(null);
+    
+    // Add user question
+    const updated = [
+      ...playgroundMessages,
+      { sender: "user", text: preset.question, citations: [] }
+    ];
+    setPlaygroundMessages(updated);
+    setPlaygroundTyping(true);
+
+    setTimeout(() => {
+      setPlaygroundMessages([
+        ...updated,
+        { sender: "bot", text: preset.answer, citations: preset.citations }
+      ]);
+      setPlaygroundTyping(false);
+    }, 1100);
+  };
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40);
@@ -914,16 +948,21 @@ export default function LandingPage() {
           {[["Features","#features"],["How it Works","#howitworks"],["Compare","#compare"],["FAQ","#faq"]].map(([l,h],i) => (
             <a key={i} href={h} className="nav-link" style={{ padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,letterSpacing:"0.04em",color:"var(--muted)",textDecoration:"none",transition:"all var(--tr)" }}>{l}</a>
           ))}
-          <button className="btn-sm" style={{ marginLeft:10,display:"flex",alignItems:"center",gap:8,padding:"8px 18px",borderRadius:9,fontSize:13,fontWeight:600,background:"var(--blue)",color:"#fff",border:"none",cursor:"pointer",boxShadow:"0 0 14px var(--blue-glow)",transition:"all var(--tr)" }}>
-            <DiscordIcon /> Login with Discord
-          </button>
+          {user ? (
+            <button onClick={onShowDashboard} className="btn-sm" style={{ marginLeft:10,display:"flex",alignItems:"center",gap:8,padding:"8px 18px",borderRadius:9,fontSize:13,fontWeight:600,background:"var(--blue)",color:"#fff",border:"none",cursor:"pointer",boxShadow:"0 0 14px var(--blue-glow)",transition:"all var(--tr)" }}>
+              <Icon name="grid_view" size={15} /> Dashboard
+            </button>
+          ) : (
+            <button onClick={onLogin} className="btn-sm" style={{ marginLeft:10,display:"flex",alignItems:"center",gap:8,padding:"8px 18px",borderRadius:9,fontSize:13,fontWeight:600,background:"var(--blue)",color:"#fff",border:"none",cursor:"pointer",boxShadow:"0 0 14px var(--blue-glow)",transition:"all var(--tr)" }}>
+              <DiscordIcon /> Login with Discord
+            </button>
+          )}
         </div>
       </nav>
 
       {/* ── HERO ── */}
       <section style={{ minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 64px",position:"relative",overflow:"hidden" }}>
-        {/* grid bg */}
-        <div style={{ position:"absolute",inset:0,backgroundImage:"linear-gradient(rgba(190,194,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(190,194,255,0.03) 1px,transparent 1px)",backgroundSize:"64px 64px",pointerEvents:"none" }} />
+
         <div className="light-bloom" style={{ top:-100,left:"30%",transform:"none" }} />
         <div className="light-bloom" style={{ bottom:"5%",left:"-5%",width:400,height:400 }} />
 
@@ -946,11 +985,11 @@ export default function LandingPage() {
             </p>
 
             <div className="a3" style={{ display:"flex",gap:12,flexWrap:"wrap",marginBottom:40 }}>
-              <button className="btn-primary" style={{ display:"flex",alignItems:"center",gap:9,padding:"14px 26px",borderRadius:10,fontSize:15,fontWeight:700,background:"var(--blue)",color:"#fff",border:"none",cursor:"pointer",boxShadow:"0 0 22px var(--blue-glow)",transition:"all var(--tr)" }}>
-                <DiscordIcon /> Add to Discord
+              <button onClick={user ? onShowDashboard : onLogin} className="btn-primary" style={{ display:"flex",alignItems:"center",gap:9,padding:"14px 26px",borderRadius:10,fontSize:15,fontWeight:700,background:"var(--blue)",color:"#fff",border:"none",cursor:"pointer",boxShadow:"0 0 22px var(--blue-glow)",transition:"all var(--tr)" }}>
+                <DiscordIcon /> {user ? "Go to Dashboard" : "Add to Discord"}
                 <Icon name="arrow_forward" size={18} />
               </button>
-              <button className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"14px 22px",borderRadius:10,fontSize:15,fontWeight:600,background:"rgba(255,255,255,0.04)",color:"var(--muted)",border:"1px solid var(--border)",cursor:"pointer",transition:"all var(--tr)" }}>
+              <button onClick={() => document.getElementById("playground")?.scrollIntoView({ behavior:"smooth" })} className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"14px 22px",borderRadius:10,fontSize:15,fontWeight:600,background:"rgba(255,255,255,0.04)",color:"var(--muted)",border:"1px solid var(--border)",cursor:"pointer",transition:"all var(--tr)" }}>
                 View Live Demo
               </button>
             </div>
@@ -962,7 +1001,32 @@ export default function LandingPage() {
           </div>
 
           {/* RIGHT — Discord mockup bento */}
-          <div className="a5 hide900" style={{ width:380,flexShrink:0 }}>
+          <div className="a5 hide900" style={{ width:380,flexShrink:0,position:"relative" }}>
+            {/* Cute Vaulty Robot Mascot winking at user */}
+            <div className="mascot-bounce" style={{ position:"absolute",top:-85,right:-30,zIndex:100,pointerEvents:"none",display:"flex",flexDirection:"column",alignItems:"center" }}>
+              <div style={{ background:"linear-gradient(135deg,#c084fc,#6366f1)",padding:"6px 12px",borderRadius:"12px 12px 0 12px",color:"#fff",fontSize:10,fontWeight:800,boxShadow:"0 8px 16px rgba(0,0,0,0.3)",marginBottom:8,whiteSpace:"nowrap",border:"1px solid rgba(255,255,255,0.15)" }}>
+                Hey! Try my live demo below! 🤖✨
+              </div>
+              <svg width="85" height="85" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter:"drop-shadow(0 8px 16px rgba(99,102,241,0.4))" }}>
+                <rect x="18" y="24" width="64" height="52" rx="20" fill="#222533" stroke="#6366f1" strokeWidth="3" />
+                <rect x="23" y="29" width="54" height="42" rx="14" fill="#0f111a" />
+                <g className="mascot-antenna">
+                  <line x1="50" y1="24" x2="50" y2="12" stroke="#6366f1" strokeWidth="3.5" strokeLinecap="round" />
+                  <circle cx="50" cy="9" r="5" fill="#f472b6" />
+                </g>
+                <g className="mascot-eye">
+                  <circle cx="38" cy="48" r="6" fill="#67e8f9" />
+                  <circle cx="38" cy="48" r="2.5" fill="#fff" />
+                  <path d="M 57 48 Q 62 44 67 48" stroke="#67e8f9" strokeWidth="3" strokeLinecap="round" fill="none" />
+                </g>
+                <ellipse cx="32" cy="58" rx="3.5" ry="1.5" fill="#f472b6" opacity="0.5" />
+                <ellipse cx="68" cy="58" rx="3.5" ry="1.5" fill="#f472b6" opacity="0.5" />
+                <path d="M 46 56 Q 50 59 54 56" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+                <rect x="12" y="42" width="6" height="16" rx="3" fill="#6366f1" />
+                <rect x="82" y="42" width="6" height="16" rx="3" fill="#6366f1" />
+              </svg>
+            </div>
+
             <div style={{ display:"grid",gridTemplateColumns:"repeat(6,1fr)",gridTemplateRows:"repeat(6,1fr)",gap:16,height:480 }}>
               {/* Chat window — 6 cols × 4 rows */}
               <div className="glass" style={{ gridColumn:"1/7",gridRow:"1/5",borderRadius:12,overflow:"hidden",boxShadow:"0 20px 60px rgba(0,0,0,0.5)" }}>
@@ -1022,6 +1086,124 @@ export default function LandingPage() {
               <div className="glass" style={{ gridColumn:"4/7",gridRow:"5/7",borderRadius:12,padding:"20px 18px",display:"flex",flexDirection:"column",justifyContent:"center" }}>
                 <div style={{ fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:800,fontSize:30,letterSpacing:"-0.03em",color:"var(--secondary)",lineHeight:1 }}>99.9%</div>
                 <div style={{ fontSize:12,color:"var(--muted2)",marginTop:6,fontWeight:600,letterSpacing:"0.03em",textTransform:"uppercase" }}>Uptime SLA</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── SCROLL DOWN MOUSE WHEEL INDICATOR ── */}
+      <a href="#playground" className="scroll-btn">
+        <span style={{ marginBottom:6 }}>Scroll Down</span>
+        <div className="scroll-wheel">
+          <div className="scroll-wheel-dot" />
+        </div>
+      </a>
+
+      {/* ── INTERACTIVE PLAYGROUND SIMULATOR ── */}
+      <section id="playground" style={{ padding:"96px 64px",background:"var(--s1)",borderTop:"1px solid var(--border)",position:"relative" }}>
+        <div style={{ maxWidth:1200,margin:"0 auto" }}>
+          <div style={{ textAlign:"center",marginBottom:48 }}>
+            <div className="rv"><SectionLabel text="Interactive Demo" /></div>
+            <div className="rv"><H2>Test Vaulty's RAG Brain Live</H2></div>
+            <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.75,maxWidth:600,margin:"0 auto" }}>
+              See how Vaulty instantly ingests diverse sources, performs vector searches, and cites exact references to answer questions. Click a preset below to try!
+            </p>
+          </div>
+
+          <div style={{ display:"flex",gap:32,flexWrap:"wrap",alignItems:"flex-start" }}>
+            {/* PRESETS SIDE PANEL (35% width) */}
+            <div style={{ flex:"1 1 340px",display:"flex",flexDirection:"column",gap:12 }}>
+              <div style={{ fontSize:13,fontWeight:700,color:"var(--muted2)",letterSpacing:"0.05em",textTransform:"uppercase",marginBottom:4 }}>Select a Preset Question</div>
+              {PLAYGROUND_PRESETS.map((p,idx) => (
+                <button key={idx} onClick={() => handlePlaygroundRun(idx)} className="glass card-hover" style={{ display:"flex",flexDirection:"column",gap:8,padding:"16px 20px",borderRadius:12,border:`1.5px solid ${activePreset===idx?"var(--blue)":"var(--border)"}`,background:activePreset===idx?"rgba(88,101,242,0.06)":"rgba(255,255,255,0.02)",color:"#fff",cursor:"pointer",textAlign:"left",outline:"none",transition:"all var(--tr)" }}>
+                  <div style={{ display:"flex",alignItems:"center",gap:8,fontSize:11,fontWeight:700,color:"var(--blue-light)",textTransform:"uppercase",letterSpacing:"0.04em" }}>
+                    <Icon name={p.citations[0].type==="pdf"?"picture_as_pdf":p.citations[0].type==="url"?"language":"description"} size={14} />
+                    Source: {p.citations[0].name}
+                  </div>
+                  <div style={{ fontSize:14.5,fontWeight:600,lineHeight:1.45 }}>"{p.question}"</div>
+                </button>
+              ))}
+              
+              {selectedCitation && (
+                <div className="glass ai" style={{ marginTop:16,padding:16,borderRadius:12,border:"1px solid var(--blue)",background:"rgba(99,102,241,0.04)",boxShadow:"0 8px 24px rgba(99,102,241,0.1)" }}>
+                  <div style={{ display:"flex",alignItems:"center",gap:6,fontSize:12,fontWeight:700,color:"var(--blue-light)",marginBottom:8 }}>
+                    <Icon name="verified" size={14} /> Vector Semantic Match Details
+                  </div>
+                  <div style={{ fontSize:11,color:"var(--muted2)",marginBottom:4 }}>Source chunk retrieved by FAISS:</div>
+                  <div style={{ fontSize:12.5,color:"var(--text)",fontStyle:"italic",lineHeight:1.5,background:"rgba(0,0,0,0.2)",padding:"8px 10px",borderRadius:6 }}>
+                    "{selectedCitation.text}"
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* CHAT DISPLAY (65% width) */}
+            <div className="glass" style={{ flex:"2 2 500px",borderRadius:16,overflow:"hidden",boxShadow:"0 20px 50px rgba(0,0,0,0.4)",border:"1px solid var(--border)",background:"#1e1f22" }}>
+              {/* discord header bar */}
+              <div style={{ background:"#1e1f22",padding:"14px 20px",borderBottom:"1px solid rgba(0,0,0,0.25)",display:"flex",alignItems:"center",justifyContent:"space-between" }}>
+                <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+                  <Icon name="tag" size={20} style={{ color:"var(--muted)" }} />
+                  <span style={{ fontWeight:700,fontSize:14,color:"#fff",fontFamily:"'Plus Jakarta Sans',sans-serif" }}>#vaulty-playground</span>
+                </div>
+                <div style={{ fontSize:11,fontWeight:700,color:"var(--blue-light)",background:"rgba(99,102,241,0.12)",padding:"4px 8px",borderRadius:6,border:"1px solid rgba(99,102,241,0.2)" }}>
+                  PLAYGROUND RETRIEVAL SIMULATOR
+                </div>
+              </div>
+
+              {/* message feed container */}
+              <div style={{ padding:24,background:"#313338",minHeight:340,display:"flex",flexDirection:"column",gap:20 }}>
+                {playgroundMessages.map((msg,i) => (
+                  <div key={i} style={{ display:"flex",gap:14,animation:"fadeUp 0.3s ease both" }}>
+                    {msg.sender === "user" ? (
+                      <>
+                        <div style={{ width:38,height:38,borderRadius:"50%",background:"linear-gradient(135deg,#a78bfa,#f472b6)",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,color:"#fff",fontWeight:800 }}>U</div>
+                        <div>
+                          <div style={{ fontSize:11,color:"var(--muted2)",marginBottom:4 }}>User · simulated</div>
+                          <div style={{ color:"#fff",fontSize:14,lineHeight:1.5 }}>{msg.text}</div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{ width:38,height:38,borderRadius:"50%",background:"var(--blue)",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",position:"relative" }}>
+                          <Icon name="robot_2" size={20} fill={1} style={{ color:"#fff" }} />
+                        </div>
+                        <div style={{ flex:1 }}>
+                          <div style={{ display:"flex",alignItems:"center",gap:6,marginBottom:4 }}>
+                            <span style={{ fontWeight:700,fontSize:14,color:"#fff" }}>Vaulty</span>
+                            <span style={{ fontSize:9,fontWeight:800,textTransform:"uppercase",background:"var(--blue)",color:"#fff",padding:"2px 5px",borderRadius:4,letterSpacing:"0.05em" }}>BOT</span>
+                            <span style={{ fontSize:11,color:"var(--muted2)" }}>· now</span>
+                          </div>
+                          <div style={{ color:"var(--text)",fontSize:13.5,lineHeight:1.6 }}>
+                            {msg.text}
+                          </div>
+                          {msg.citations.length > 0 && (
+                            <div style={{ display:"flex",flexWrap:"wrap",gap:8,marginTop:12 }}>
+                              {msg.citations.map((c,j) => (
+                                <button key={j} onClick={() => setSelectedCitation(c)} style={{ display:"flex",alignItems:"center",gap:6,background:"rgba(99,102,241,0.08)",border:"1px solid rgba(99,102,241,0.25)",borderRadius:8,padding:"6px 12px",fontSize:12,fontWeight:700,color:"var(--blue-light)",cursor:"pointer",outline:"none",transition:"all var(--tr)" }} className="card-hover">
+                                  <Icon name="link" size={12} />
+                                  Source: {c.name}
+                                  <span style={{ fontSize:10,opacity:0.6 }}>(Click to view matching text)</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+
+                {playgroundTyping && (
+                  <div style={{ display:"flex",gap:14,alignItems:"center" }}>
+                    <div style={{ width:38,height:38,borderRadius:"50%",background:"var(--blue)",display:"flex",alignItems:"center",justifyContent:"center" }}>
+                      <Icon name="robot_2" size={20} fill={1} style={{ color:"#fff" }} />
+                    </div>
+                    <div style={{ background:"rgba(0,0,0,0.15)",padding:"12px 18px",borderRadius:12,display:"flex",gap:6,alignItems:"center" }}>
+                      <span className="td" /><span className="td" /><span className="td" />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1096,26 +1278,26 @@ export default function LandingPage() {
           <div className="rv"><H2>Everything Your Bot Can Do</H2></div>
           <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.75,maxWidth:580,marginBottom:52 }}>A complete AI knowledge assistant built for Discord, with hybrid retrieval, deep customization, and multi-format ingestion.</p>
 
-          {/* Large RAG feature */}
+          {/* Large USP feature */}
           <div className="rv glass glass-hover feat-card" style={{ borderRadius:16,padding:"32px",marginBottom:20,display:"flex",flexDirection:"column",gap:20,position:"relative",overflow:"hidden",transition:"all 0.25s ease" }}>
             <div className="feat-icon" style={{ width:52,height:52,borderRadius:14,background:"rgba(208,188,255,0.12)",border:"1px solid rgba(208,188,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--tertiary)",transition:"all 0.3s ease" }}>
-              <Icon name="hub" size={26} fill={1} />
+              <Icon name="dashboard_customize" size={26} fill={1} />
             </div>
-            <h3 style={{ fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:700,fontSize:26,color:"#fff",letterSpacing:"-0.01em" }}>Hybrid RAG Architecture</h3>
-            <p style={{ fontSize:16,color:"var(--muted)",lineHeight:1.7,maxWidth:640 }}>Combining the semantic power of FAISS vector search with the keyword precision of BM25. Get the best of both worlds, ultra-low latency with highly accurate context fetching. Supports PDFs, websites, Excel, images, and more.</p>
+            <h3 style={{ fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:700,fontSize:26,color:"#fff",letterSpacing:"-0.01em" }}>Live Admin Control & Auto-Sync Engine</h3>
+            <p style={{ fontSize:16,color:"var(--muted)",lineHeight:1.7,maxWidth:720 }}>Manage your server's entire knowledge base through a sleek, interactive administrative dashboard. Instantly drag & drop files, crawl website URLs in real-time, monitor user questions with detailed analytics, and schedule automatic link synchronization—all without writing a single line of code.</p>
             <div style={{ display:"flex",gap:10,flexWrap:"wrap" }}>
-              {["FAISS","BM25","OpenAI Embedding v3","LangChain","FastAPI"].map((t,i) => (
+              {["Drag & Drop Ingestion","Auto-Sync Scheduler","Visual Analytics Panel","Zero-Code Setup","Per-Channel Controls"].map((t,i) => (
                 <span key={i} style={{ background:"rgba(255,255,255,0.04)",border:"1px solid var(--border)",padding:"5px 12px",borderRadius:6,fontSize:12,fontWeight:600,color:"var(--muted)",letterSpacing:"0.03em" }}>{t}</span>
               ))}
             </div>
             <div style={{ position:"absolute",right:-10,bottom:-10,opacity:0.05,pointerEvents:"none" }}>
-              <Icon name="schema" size={200} fill={1} />
+              <Icon name="settings_suggest" size={200} fill={1} />
             </div>
           </div>
 
           {/* Features grid */}
           <div className="feats-grid" style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:1,background:"var(--border)",border:"1px solid var(--border)",borderRadius:16,overflow:"hidden" }}>
-            {FEATS.filter(f=>f.title!=="Hybrid RAG Retrieval").map((f,i) => {
+            {FEATS.map((f,i) => {
               const c = colorMap[f.color];
               return (
                 <div key={i} className="rv feat-card" style={{ background:"var(--s2)",padding:24,transition:"all 0.25s ease",transitionDelay:`${(i%3)*0.04}s` }}>
@@ -1192,8 +1374,8 @@ export default function LandingPage() {
               <thead>
                 <tr style={{ background:"var(--s3)" }}>
                   <th style={{ padding:"16px 24px",fontWeight:700,fontSize:11,letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--muted2)",borderBottom:"1px solid var(--border)",textAlign:"left" }}>Feature</th>
-                  {["VaultBot AI","MEE6","Carl-bot","Atlas"].map((h,i) => (
-                    <th key={i} style={{ padding:"16px 24px",fontWeight:700,fontSize:11,letterSpacing:"0.06em",textTransform:"uppercase",borderBottom:i===0?"2px solid var(--blue)":"1px solid var(--border)",textAlign:"center",color:i===0?"var(--blue-light)":"var(--muted2)",background:i===0?"rgba(88,101,242,0.06)":"transparent" }}>{h}</th>
+                  {["VaultBot AI","Other Bots","What's Missing?"].map((h,i) => (
+                    <th key={i} style={{ padding:"16px 24px",fontWeight:700,fontSize:11,letterSpacing:"0.06em",textTransform:"uppercase",borderBottom:i===0?"2px solid var(--blue)":"1px solid var(--border)",textAlign:i===2?"left":"center",color:i===0?"var(--blue-light)":"var(--muted2)",background:i===0?"rgba(88,101,242,0.06)":"transparent" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1201,9 +1383,9 @@ export default function LandingPage() {
                 {COMP.map((row,i) => (
                   <tr key={i} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
                     <td style={{ padding:"14px 24px",color:"var(--text)",fontWeight:500,fontSize:14 }}>{row[0]}</td>
-                    {row.slice(1).map((v,j) => (
-                      <td key={j} style={{ padding:"14px 24px",textAlign:"center",background:j===0?"rgba(88,101,242,0.03)":"transparent" }}><Tick v={v} /></td>
-                    ))}
+                    <td style={{ padding:"14px 24px",textAlign:"center",background:"rgba(88,101,242,0.03)" }}><Tick v={row[1]} /></td>
+                    <td style={{ padding:"14px 24px",textAlign:"center" }}><Tick v={row[2]} /></td>
+                    <td style={{ padding:"14px 24px",color:"var(--muted)",fontSize:13,lineHeight:1.45 }}>{row[3]}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1251,7 +1433,7 @@ export default function LandingPage() {
                 Browse Features →
               </a>
             </div>
-            <p className="rv" style={{ marginTop:24,fontSize:13,color:"var(--muted2)" }}>Free tier available for servers up to 500 members.</p>
+            <p className="rv" style={{ marginTop:24,fontSize:13,color:"var(--muted2)" }}>Free tier available with free trial query credits included for every server.</p>
           </div>
         </div>
       </section>
@@ -1266,50 +1448,35 @@ export default function LandingPage() {
               </div>
               <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:800,fontSize:18,color:"#fff" }}>VaultBot</span>
             </div>
-            <p style={{ fontSize:14,color:"var(--muted)",lineHeight:1.7,maxWidth:340,marginBottom:24 }}>Empowering communities with their own data. Secure, fast, and intelligent retrieval for the Discord era. Built with FastAPI + LangChain.</p>
-            <div style={{ display:"flex",gap:10 }}>
-              {[
-                { icon:"alternate_email", href:"mailto:hello@vaultbot.ai",        title:"Email us" },
-                { icon:"hub",             href:"https://discord.gg/vaultbot",     title:"Join our Discord" },
-                { icon:"code",            href:"https://github.com/vaultbot-ai",  title:"GitHub" },
-              ].map((s,i) => (
-                <a key={i} href={s.href} title={s.title} target="_blank" rel="noopener noreferrer" className="glass" style={{ width:38,height:38,borderRadius:9,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--muted2)",textDecoration:"none",transition:"color var(--tr)" }}>
-                  <Icon name={s.icon} size={17} />
-                </a>
-              ))}
-            </div>
+            <p style={{ fontSize:14,color:"var(--muted)",lineHeight:1.7,maxWidth:340,marginBottom:24 }}>VaultBot is an advanced RAG knowledge base assistant designed for Discord servers. Securely crawl, parse, index, and query your documentation, manuals, sheets, and images in real-time.</p>
           </div>
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:24 }}>
             <div>
-              <h4 style={{ fontFamily:"'Plus Jakarta Sans',sans-serif",fontSize:13,fontWeight:700,color:"#fff",marginBottom:16,letterSpacing:"0.04em",textTransform:"uppercase" }}>Product</h4>
-              <nav style={{ display:"flex",flexDirection:"column",gap:10 }}>
-                {[
-                  { label:"Features",       href:"#features" },
-                  { label:"Documentation",  href:"/documentation" },
-                  { label:"Status",         href:"/status" },
-                  { label:"Changelog",      href:"/changelog" },
-                ].map((l,i) => (
-                  <a key={i} href={l.href} target={l.href.startsWith("http") ? "_blank" : undefined} rel={l.href.startsWith("http") ? "noopener noreferrer" : undefined} style={{ fontSize:13.5,color:"var(--muted)",textDecoration:"none",transition:"color var(--tr)" }}>{l.label}</a>
+              <h4 style={{ fontFamily:"'Plus Jakarta Sans',sans-serif",fontSize:13,fontWeight:700,color:"#fff",marginBottom:16,letterSpacing:"0.04em",textTransform:"uppercase" }}>Supported Ingestion</h4>
+              <ul style={{ display:"flex",flexDirection:"column",gap:10,listStyle:"none",padding:0 }}>
+                {["PDF Documents", "Websites & URLs", "Excel Sheets (XLSX)", "OCR Images (PNG/JPG)"].map((l,i) => (
+                  <li key={i} style={{ fontSize:13.5,color:"var(--muted)",display:"flex",alignItems:"center",gap:8 }}>
+                    <span style={{ width:4,height:4,borderRadius:"50%",background:"var(--blue-light)" }} />
+                    {l}
+                  </li>
                 ))}
-              </nav>
+              </ul>
             </div>
             <div>
-              <h4 style={{ fontFamily:"'Plus Jakarta Sans',sans-serif",fontSize:13,fontWeight:700,color:"#fff",marginBottom:16,letterSpacing:"0.04em",textTransform:"uppercase" }}>Legal</h4>
-              <nav style={{ display:"flex",flexDirection:"column",gap:10 }}>
-                {[
-                  { label:"Privacy Policy",    href:"/privacy" },
-                  { label:"Terms of Service",  href:"/terms" },
-                  { label:"Security",          href:"/security" },
-                  { label:"Cookie Policy",     href:"/cookies" },
-                ].map((l,i) => (
-                  <a key={i} href={l.href} style={{ fontSize:13.5,color:"var(--muted)",textDecoration:"none",transition:"color var(--tr)" }}>{l.label}</a>
+              <h4 style={{ fontFamily:"'Plus Jakarta Sans',sans-serif",fontSize:13,fontWeight:700,color:"#fff",marginBottom:16,letterSpacing:"0.04em",textTransform:"uppercase" }}>Built With</h4>
+              <ul style={{ display:"flex",flexDirection:"column",gap:10,listStyle:"none",padding:0 }}>
+                {["FastAPI Framework", "React Dashboard", "PostgreSQL Storage", "Graphlit Integration"].map((l,i) => (
+                  <li key={i} style={{ fontSize:13.5,color:"var(--muted)",display:"flex",alignItems:"center",gap:8 }}>
+                    <span style={{ width:4,height:4,borderRadius:"50%",background:"var(--secondary)" }} />
+                    {l}
+                  </li>
                 ))}
-              </nav>
+              </ul>
             </div>
           </div>
         </div>
         <div style={{ maxWidth:1200,margin:"32px auto 0",paddingTop:24,borderTop:"1px solid var(--border)",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap" }}>
-          <span style={{ fontSize:12,color:"var(--muted2)" }}>© 2025 VaultBot · Q-ARAG · Not affiliated with Discord Inc.</span>
+          <span style={{ fontSize:12,color:"var(--muted2)" }}>© 2026 VaultBot · Q-ARAG · Not affiliated with Discord Inc.</span>
           <span style={{ fontSize:12,color:"var(--muted2)" }}>Securely indexing the future.</span>
         </div>
       </footer>
@@ -1775,6 +1942,19 @@ function UploadTab({ guildId, onGoToOverview }) {
   const [uploads, setUploads] = useState([]);
   const [loadingUploads, setLoadingUploads] = useState(false);
 
+  // New admin state additions
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState("all");
+  const [inspectUpload, setInspectUpload] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [dragActive, setDragActive] = useState({ doc: false, img: false, vid: false, aud: false, xlsx: false });
+
+  const handleDrag = (type, active) => (e) => {
+    e.preventDefault();
+    setDragActive(p => ({ ...p, [type]: active }));
+  };
+
   const docRef  = useRef(null);
   const imgRef  = useRef(null);
   const vidRef  = useRef(null);
@@ -1842,6 +2022,20 @@ function UploadTab({ guildId, onGoToOverview }) {
     setFaqUploading(false);
   };
 
+  const doDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await API.deleteUpload(guildId, deleteTarget.id);
+      setStatus({ ok: true, msg: `Successfully deleted "${deleteTarget.name || deleteTarget.filename || "item"}"` });
+      setDeleteTarget(null);
+      loadUploads(guildId);
+    } catch (e) {
+      setStatus({ ok: false, msg: `Deletion failed: ${e.message}` });
+    }
+    setDeleting(false);
+  };
+
   const FileSection = ({ label, hint, iconName, accentBg, accentColor, files, setFiles, inputRef, accept, type }) => (
     <Card style={{ marginBottom: 14 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
@@ -1853,7 +2047,22 @@ function UploadTab({ guildId, onGoToOverview }) {
           <div style={{ fontSize: 12, color: "var(--on-surface-variant)" }}>{hint}</div>
         </div>
       </div>
-      <div className="drop-zone" onClick={() => inputRef.current?.click()} onDragOver={e => e.preventDefault()} onDrop={dropFiles(setFiles, type)}>
+      <div className="drop-zone"
+        onClick={() => inputRef.current?.click()}
+        onDragOver={handleDrag(type, true)}
+        onDragEnter={handleDrag(type, true)}
+        onDragLeave={handleDrag(type, false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragActive(p => ({ ...p, [type]: false }));
+          dropFiles(setFiles, type)(e);
+        }}
+        style={{
+          borderColor: dragActive[type] ? "var(--primary)" : undefined,
+          background: dragActive[type] ? "rgba(99,102,241,0.06)" : undefined,
+          boxShadow: dragActive[type] ? "0 0 24px rgba(99,102,241,0.18)" : undefined,
+          transition: "all 0.25s ease"
+        }}>
         <Icon name="upload_file" size={36} style={{ color: accentColor, opacity: 0.6 }}/>
         <p style={{ fontSize: 14, color: "var(--on-surface-variant)" }}>Drop files here or <span style={{ color: "var(--primary)", fontWeight: 600 }}>browse</span></p>
       </div>
@@ -1912,9 +2121,22 @@ function UploadTab({ guildId, onGoToOverview }) {
           </div>
           <div><div style={{ fontSize: 14, fontWeight: 600 }}>Structured Data (.xlsx)</div><div style={{ fontSize: 12, color: "var(--on-surface-variant)" }}>Contacts / Faculty</div></div>
         </div>
-        <div className="drop-zone" onClick={() => xlsxRef.current?.click()} onDragOver={e => e.preventDefault()}
-          onDrop={e => { e.preventDefault(); const f = [...e.dataTransfer.files].find(f => f.name.endsWith(".xlsx")); if (f) setXlsxFile(f); }}
-          style={{ borderColor: xlsxFile ? "#166834" : undefined, background: xlsxFile ? "rgba(34,197,94,0.05)" : undefined }}>
+        <div className="drop-zone" onClick={() => xlsxRef.current?.click()}
+          onDragOver={handleDrag("xlsx", true)}
+          onDragEnter={handleDrag("xlsx", true)}
+          onDragLeave={handleDrag("xlsx", false)}
+          onDrop={e => {
+            e.preventDefault();
+            setDragActive(p => ({ ...p, xlsx: false }));
+            const f = [...e.dataTransfer.files].find(f => f.name.endsWith(".xlsx"));
+            if (f) setXlsxFile(f);
+          }}
+          style={{
+            borderColor: xlsxFile ? "#166834" : (dragActive.xlsx ? "var(--primary)" : undefined),
+            background: xlsxFile ? "rgba(34,197,94,0.05)" : (dragActive.xlsx ? "rgba(99,102,241,0.06)" : undefined),
+            boxShadow: dragActive.xlsx ? "0 0 24px rgba(99,102,241,0.18)" : undefined,
+            transition: "all 0.25s ease"
+          }}>
           <Icon name={xlsxFile ? "check_circle" : "table_chart"} size={36} style={{ color: xlsxFile ? "#166834" : "var(--tertiary)", opacity: 0.7 }}/>
           <p style={{ fontSize: 14, color: xlsxFile ? "#166834" : "var(--on-surface-variant)", fontWeight: xlsxFile ? 600 : 400 }}>
             {xlsxFile ? xlsxFile.name : <>Drop <strong>.xlsx</strong> or browse</>}
@@ -1959,25 +2181,258 @@ function UploadTab({ guildId, onGoToOverview }) {
             {loadingUploads ? <Spinner size={13}/> : <><Icon name="refresh" size={15}/> Refresh</>}
           </Btn>
         </div>
+
+        {/* SEARCH AND FILTERS */}
+        <div style={{ display: "flex", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 260, position: "relative" }}>
+            <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--on-surface-variant)" }}>
+              <Icon name="search" size={16} />
+            </span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search ingested sources..."
+              style={{
+                width: "100%", padding: "10px 14px 10px 36px", borderRadius: "var(--r-md)",
+                background: "var(--surface-container)", border: "1px solid var(--border)",
+                color: "#fff", outline: "none", fontSize: 13.5
+              }}
+            />
+          </div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {["all", "pdf", "url", "faq", "xlsx"].map(t => (
+              <button
+                key={t}
+                onClick={() => setFilterType(t)}
+                style={{
+                  padding: "6px 14px", borderRadius: 99, border: `1px solid ${filterType===t?"var(--primary)":"var(--border)"}`,
+                  background: filterType===t?"rgba(99,102,241,0.1)":"var(--surface-container)",
+                  color: filterType===t?"var(--primary)":"var(--on-surface-variant)",
+                  fontSize: 12.5, fontWeight: 600, cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.03em"
+                }}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <Card pad="0" style={{ overflow: "hidden" }}>
           <table className="data-table">
-            <thead><tr><th>Source</th><th>Type</th><th>Date</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Source Name</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Chunks</th>
+                <th>Date</th>
+                <th style={{ textAlign: "right", paddingRight: 20 }}>Actions</th>
+              </tr>
+            </thead>
             <tbody>
               {uploads.length === 0 ? (
-                <tr><td colSpan={3} style={{ textAlign: "center", color: "var(--on-surface-variant)", padding: "28px" }}>No uploads yet</td></tr>
-              ) : uploads.map((u, i) => (
-                <tr key={i}>
-                  <td style={{ maxWidth: 300, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    <span style={{ fontFamily: "monospace", fontSize: 12 }}>{u.url || u.filename || u.source || "—"}</span>
-                  </td>
-                  <td><Tag variant="neutral">{u.type || "url"}</Tag></td>
-                  <td style={{ color: "var(--on-surface-variant)", fontSize: 12 }}>{u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}</td>
-                </tr>
-              ))}
+                <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--on-surface-variant)", padding: "28px" }}>No uploads yet</td></tr>
+              ) : (
+                uploads.filter(u => {
+                  const name = u.name || u.url || u.filename || u.source || "";
+                  const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase());
+                  const matchesType = filterType === "all" || (u.type || "url").toLowerCase() === filterType.toLowerCase();
+                  return matchesSearch && matchesType;
+                }).map((u, i) => {
+                  const displayStatus = (u.status || "completed").toLowerCase();
+                  const isIngested = displayStatus === "completed" || displayStatus === "processed";
+                  const isFailed = displayStatus === "failed" || displayStatus === "error";
+
+                  return (
+                    <tr key={i}>
+                      <td style={{ maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <Icon
+                            name={u.type === "pdf" ? "picture_as_pdf" : (u.type === "url" ? "language" : (u.type === "faq" ? "quiz" : "description"))}
+                            size={16}
+                            style={{ color: "var(--primary)" }}
+                          />
+                          <span style={{ fontFamily: "monospace", fontSize: 12 }}>{u.name || u.url || u.filename || u.source || "—"}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <Tag variant="neutral">{u.type || "url"}</Tag>
+                      </td>
+                      <td>
+                        {isIngested ? (
+                          <Tag variant="success">
+                            <span style={{ display:"inline-flex",alignItems:"center",gap:5 }}>
+                              <span style={{ width:6,height:6,borderRadius:"50%",background:"#22c55e" }}/> Ingested
+                            </span>
+                          </Tag>
+                        ) : isFailed ? (
+                          <Tag variant="error">
+                            <span style={{ display:"inline-flex",alignItems:"center",gap:5 }}>
+                              <span style={{ width:6,height:6,borderRadius:"50%",background:"#ef4444" }}/> Failed
+                            </span>
+                          </Tag>
+                        ) : (
+                          <Tag variant="warning">
+                            <span style={{ display:"inline-flex",alignItems:"center",gap:5 }}>
+                              <span style={{ width:6,height:6,borderRadius:"50%",background:"#eab308",animation:"blink 1.5s ease infinite" }}/> Processing
+                            </span>
+                          </Tag>
+                        )}
+                      </td>
+                      <td style={{ fontWeight: 600 }}>{u.chunks || 0}</td>
+                      <td style={{ color: "var(--on-surface-variant)", fontSize: 12 }}>
+                        {u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}
+                      </td>
+                      <td style={{ textAlign: "right", paddingRight: 16 }}>
+                        <div style={{ display: "inline-flex", gap: 6 }}>
+                          <button
+                            onClick={() => setInspectUpload(u)}
+                            title="Inspect Metadata"
+                            style={{
+                              background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)",
+                              borderRadius: 6, width: 28, height: 28, color: "var(--primary)",
+                              cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center"
+                            }}
+                          >
+                            <Icon name="info" size={14} />
+                          </button>
+                          <button
+                            onClick={() => setDeleteTarget(u)}
+                            title="Delete Source"
+                            style={{
+                              background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)",
+                              borderRadius: 6, width: 28, height: 28, color: "#ef4444",
+                              cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center"
+                            }}
+                          >
+                            <Icon name="delete" size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </Card>
       </div>
+
+      {/* METADATA INSPECTOR MODAL */}
+      {inspectUpload && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(10,11,18,0.85)", backdropFilter: "blur(8px)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 999, padding: 24
+        }}>
+          <div className="glass" style={{
+            width: "100%", maxWidth: 540, borderRadius: 16, border: "1px solid var(--border2)",
+            background: "var(--s3)", boxShadow: "0 24px 60px rgba(0,0,0,0.6)", overflow: "hidden"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 24px", borderBottom: "1px solid var(--border)" }}>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: 8 }}>
+                <Icon name="info" size={16} style={{ color: "var(--primary)" }} /> Source Metadata Inspector
+              </h3>
+              <button onClick={() => setInspectUpload(null)} style={{ background: "transparent", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 18 }}>✕</button>
+            </div>
+            <div style={{ padding: 24 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+                <div>
+                  <div style={{ fontSize: 11, color: "var(--muted2)", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Source Name</div>
+                  <div style={{ fontSize: 13, color: "#fff", wordBreak: "break-all", fontFamily: "monospace" }}>{inspectUpload.name || inspectUpload.filename || "—"}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: "var(--muted2)", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Ingestion Type</div>
+                  <Tag variant="neutral">{inspectUpload.type || "url"}</Tag>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: "var(--muted2)", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Status</div>
+                  <div style={{ fontSize: 13, color: "#fff" }}>{inspectUpload.status || "Ingested"}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: "var(--muted2)", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Vector Index Chunks</div>
+                  <div style={{ fontSize: 13, color: "var(--primary)", fontWeight: 700 }}>{inspectUpload.chunks || 0} chunks</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: "var(--muted2)", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Database Record ID</div>
+                  <div style={{ fontSize: 11, color: "var(--muted)", fontFamily: "monospace" }}>{inspectUpload.id}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: "var(--muted2)", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Ingested At</div>
+                  <div style={{ fontSize: 13, color: "#fff" }}>{inspectUpload.created_at ? new Date(inspectUpload.created_at).toLocaleString() : "—"}</div>
+                </div>
+              </div>
+              <div style={{ background: "rgba(0,0,0,0.25)", padding: 14, borderRadius: 10, border: "1px solid var(--border)" }}>
+                <div style={{ fontSize: 11, color: "var(--muted2)", textTransform: "uppercase", fontWeight: 700, marginBottom: 6 }}>Vector Embedding Status</div>
+                <div style={{ fontSize: 12.5, color: "var(--text)", lineHeight: 1.5 }}>
+                  This document has been fully cataloged by the **Graphlit AI Engine**. Semantic text fragments have been embedded using OpenAI text-embeddings-3-small and stored inside the **FAISS vector database** for precise context matching.
+                </div>
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 24 }}>
+                <Btn onClick={() => setInspectUpload(null)}>Close Inspector</Btn>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CONFIRMABLE DELETION MODAL */}
+      {deleteTarget && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(10,11,18,0.85)", backdropFilter: "blur(8px)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 999, padding: 24
+        }}>
+          <div className="glass" style={{
+            width: "100%", maxWidth: 480, borderRadius: 16, border: "1px solid rgba(239,68,68,0.25)",
+            background: "var(--s3)", boxShadow: "0 24px 60px rgba(0,0,0,0.6)", overflow: "hidden"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 24px", borderBottom: "1px solid rgba(239,68,68,0.15)" }}>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#ef4444", display: "flex", alignItems: "center", gap: 8 }}>
+                <Icon name="warning" size={16} /> Confirm Source Deletion
+              </h3>
+              <button onClick={() => setDeleteTarget(null)} style={{ background: "transparent", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 18 }}>✕</button>
+            </div>
+            <div style={{ padding: 24 }}>
+              <p style={{ fontSize: 14, color: "var(--text)", lineHeight: 1.6, marginTop: 0 }}>
+                You are about to delete <strong>"{deleteTarget.name || deleteTarget.filename || "this source"}"</strong> from your vector knowledge store.
+              </p>
+              <div style={{ background: "rgba(239,68,68,0.06)", padding: 14, borderRadius: 10, border: "1px solid rgba(239,68,68,0.15)", marginBottom: 20 }}>
+                <div style={{ fontSize: 11, color: "#ef4444", fontWeight: 800, textTransform: "uppercase", marginBottom: 4 }}>Critical Consequences:</div>
+                <div style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.5 }}>
+                  Vaulty will instantly forget all information parsed from this document. Any user querying VaultBot inside Discord will no longer retrieve responses derived from this content. This action is permanent and cannot be undone.
+                </div>
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+                <button
+                  onClick={() => setDeleteTarget(null)}
+                  disabled={deleting}
+                  style={{
+                    padding: "10px 18px", borderRadius: 8, border: "1px solid var(--border)",
+                    background: "transparent", color: "var(--muted)", fontSize: 13, fontWeight: 600, cursor: "pointer"
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={doDelete}
+                  disabled={deleting}
+                  style={{
+                    padding: "10px 18px", borderRadius: 8, border: "none",
+                    background: "#ef4444", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer",
+                    boxShadow: "0 0 16px rgba(239,68,68,0.25)", display: "flex", alignItems: "center", gap: 6
+                  }}
+                >
+                  {deleting ? <><Spinner size={13} color="#fff" /> Deleting…</> : "Yes, Permanently Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
