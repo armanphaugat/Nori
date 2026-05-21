@@ -14,7 +14,6 @@ load_dotenv()
 os.environ["USER_AGENT"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 
 DISCORD_BOT_KEY = os.getenv("DISCORD_BOT_KEY")
-
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='-', intents=intents, help_command=None)
 
@@ -812,10 +811,9 @@ async def on_message(message):
 @bot.command()
 @commands.cooldown(4, 60, commands.BucketType.user)
 async def ask(ctx, *, question: str = None):
-    """Ask a question from the knowledge base."""
     try:
         if not question:
-            await ctx.send("❌ No question provided.\nUsage: `-ask <your question>`")
+            await ctx.send("No question provided.\n Usage: `-ask <your question>`")
             return
         async with ctx.typing():
             try:
@@ -839,7 +837,7 @@ async def ask(ctx, *, question: str = None):
                 except asyncio.TimeoutError:
                     answer = "Web search timed out. Please try again."
                 except Exception as e:
-                    print(f"[ask] query_graphlit_web error: {e}")
+                    print(f"[ask] query_graphlit_web error: {str(e)}")
         
         await send_answer_with_feedback(
             ctx.channel, ctx.author, ctx.guild.id, question, answer
@@ -852,9 +850,8 @@ async def ask(ctx, *, question: str = None):
 
 @bot.command()
 async def close(ctx):
-    """Close and archive your support ticket."""
     if not isinstance(ctx.channel, discord.Thread):
-        await ctx.send("❌ This command can only be used inside a ticket thread.")
+        await ctx.send("This command can only be used inside a ticket thread.")
         return
     thread = ctx.channel
     is_owner = thread.name.lower() == f"ticket-{ctx.author.name}".lower().replace(" ", "-")
@@ -877,7 +874,6 @@ async def close(ctx):
 
 @bot.command()
 async def help(ctx):
-    """Show all available commands."""
     embed = discord.Embed(
         title="📚 Bot Help & Commands",
         description="Here are all the available commands:",
@@ -905,7 +901,7 @@ async def help(ctx):
         name="`-close`",
         value=(
             "Close and archive your support ticket\n"
-            "_Only works inside a ticket thread_"
+            "Only works inside a ticket thread"
         ),
         inline=False
     )
@@ -917,13 +913,13 @@ async def help(ctx):
         inline=False
     )
     embed.add_field(
-        name="ℹ️ How it works:",
+        name="How it works:",
         value=(
-            "**1️⃣ Click:** Use button in `#support` or `-ask` command\n"
-            "**2️⃣ Ask:** Type your question\n"
-            "**3️⃣ Answer:** I search the knowledge base\n"
-            "**4️⃣ Rate:** React 👍 or 👎\n"
-            "**5️⃣ Improve:** Your feedback helps us!"
+            "1) Click: Use button in `#support` or `-ask` command\n"
+            "2) Ask: Type your question\n"
+            "3) Answer: I search the knowledge base\n"
+            "4) Rate: React 👍 or 👎\n"
+            "5) Improve: Your feedback helps us!"
         ),
         inline=False
     )
@@ -932,13 +928,12 @@ async def help(ctx):
 
 @bot.event
 async def on_command_error(ctx, error):
-    """Handle command errors gracefully."""
     if isinstance(error, commands.CommandOnCooldown):
-        await ctx.send(f"⏱️ You're using this command too fast! Try again in {error.retry_after:.1f} seconds.")
+        await ctx.send(f"You're using this command too fast! Try again in {error.retry_after:.1f} seconds.")
     elif isinstance(error, commands.MissingRequiredArgument):
         await ctx.send(f"❌ Missing required argument. Use `-help` to see command usage.")
     elif isinstance(error, commands.CommandNotFound):
-        return  # Silently ignore unknown commands
+        return
     else:
         print(f"[on_command_error] {type(error).__name__}: {error}")
 
