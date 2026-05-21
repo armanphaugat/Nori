@@ -43,6 +43,7 @@ async def handle_upload(
     urls: Optional[str] = Form(None),
     user: dict = Depends(require_guild_admin),
 ) -> dict:
+    print("Handle Upload Called")
     guild_id = guild_id.strip()
     if not guild_id:
         raise HTTPException(status_code=400, detail="'guild_id' cannot be empty")

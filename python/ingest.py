@@ -11,10 +11,19 @@ from graphlit import Graphlit
 from dbhelper.db_helper import *
 import base64
 import pandas as pd
-graphlit = Graphlit()
+from graphlit_api import FeedTypes, WebFeedPropertiesInput, FeedSchedulePolicyInput, TimedPolicyRecurrenceTypes,FeedInput
+load_dotenv()
+env_id = os.getenv("GRAPHLIT_ENVIRONMENT_ID")
+org_key = os.getenv("GRAPHLIT_ORGANIZATION_KEY")
+jwt_secret = os.getenv("GRAPHLIT_JWT_SECRET")
+graphlit = Graphlit(
+    environment_id=env_id,
+    organization_id=org_key,
+    jwt_secret=jwt_secret,
+)
+
 whisper_model = whisper.load_model("base")
 
-from graphlit_api import FeedTypes, WebFeedPropertiesInput, FeedSchedulePolicyInput, TimedPolicyRecurrenceTypes
 
 def read_word(file):
     try:
@@ -84,6 +93,7 @@ async def add_url_graphlit(server_id: str, url: str):
     try:
         response = await graphlit.client.ingest_uri(url, is_synchronous=True)
         await add_content_id(server_id, response.ingest_uri.id)
+        print("Url Addded")
     except Exception as e:
         print(f"[{server_id}] Failed to ingest {url}: {e}")
 
@@ -123,13 +133,20 @@ async def add_text_graphlit(server_id: str, faq_text: str):
 async def add_website_graphlit(server_id: str, url: str):
     try:
         response = await graphlit.client.create_feed(
-            name=f"{server_id}_feed",
-            type=FeedTypes.WEB,
-            web=WebFeedPropertiesInput(uri=url),
-            schedule_policy=FeedSchedulePolicyInput(recurrence_type=TimedPolicyRecurrenceTypes.DAILY)
+            feed=FeedInput(
+                name=f"{server_id}_feed",
+                type=FeedTypes.WEB,
+                web=WebFeedPropertiesInput(uri=url),
+                schedulePolicy={
+                    "recurrenceType": "REPEAT",  # REPEAT tells Graphlit to keep checking
+                    "repeatInterval": "P1D"
+                }
+            )
         )
         feed_id = response.create_feed.id
-        await add_feed_id(server_id, str(feed_id))
+        print(f"[DEBUG] Feed created: {feed_id} for server: {server_id}")
+        add_feed_id(server_id, str(feed_id))
+        print(f"[DEBUG] Feed ID saved successfully")
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
 

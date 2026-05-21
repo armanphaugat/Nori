@@ -68,6 +68,7 @@ async def _get_or_create_kb_spec(server_id: str) -> str:
 
 
 async def query_graphlit(server_id: str, question: str) -> str:
+    print("Query Graphlit Called")
     try:
         content_ids = get_content_ids(server_id)
         feed_ids = get_feed_ids(server_id)
@@ -79,7 +80,7 @@ async def query_graphlit(server_id: str, question: str) -> str:
         return "No knowledge base found for this server."
 
     spec_id = await _get_or_create_kb_spec(server_id)
-    response = await graphlit.client.create_conversation(
+    conv_response = await graphlit.client.create_conversation(
         conversation=ConversationInput(
             name=f"{server_id}_kb_query",
             specification=EntityReferenceInput(id=spec_id),
@@ -89,24 +90,30 @@ async def query_graphlit(server_id: str, question: str) -> str:
             )
         )
     )
-    conversation_result = response.create_conversation
-    response = await graphlit.client.prompt_conversation(
-        prompt=question,
-        mime_type=None,
-        data=None,
-        id=conversation_result.id,
-        specification=EntityReferenceInput(id=spec_id),
-        persona=None,
-        system_prompt=None,
-        tools=None,
-        require_tool=None,
-        include_details=True,
-        correlation_id=None
-    )
-    result = response.prompt_conversation
-    if result is None or result.message is None or result.message.message is None:
-        return "I don't know"
-    return result.message.message[:1800]
+    conversation_id = conv_response.create_conversation.id
+    try:
+        response = await graphlit.client.prompt_conversation(
+            prompt=question,
+            mime_type=None,
+            data=None,
+            id=conversation_id,
+            specification=EntityReferenceInput(id=spec_id),
+            persona=None,
+            system_prompt=None,
+            tools=None,
+            require_tool=None,
+            include_details=True,
+            correlation_id=None
+        )
+        result = response.prompt_conversation
+        if result is None or result.message is None or result.message.message is None:
+            return "I don't know"
+        return result.message.message[:1800]
+    finally:
+        try:
+            await graphlit.client.delete_conversation(id=conversation_id)
+        except Exception as e:
+            print(f"[WARN] Failed to delete KB conversation {conversation_id}: {e}")
 
 async def _get_or_create_web_spec(server_id: str) -> str:
     try:
@@ -138,6 +145,7 @@ async def _get_or_create_web_spec(server_id: str) -> str:
 
 
 async def query_graphlit_web(server_id: str, question: str) -> str:
+    print("Query Web-Graphlit Called")
     try:
         response = await graphlit.client.search_web(
             text=question,
@@ -177,23 +185,30 @@ async def query_graphlit_web(server_id: str, question: str) -> str:
                 specification=EntityReferenceInput(id=spec_id),
             )
         )
-        answer_response = await graphlit.client.prompt_conversation(
-            prompt=prompt,
-            id=conv_response.create_conversation.id,
-            specification=EntityReferenceInput(id=spec_id),
-            mime_type=None,
-            data=None,
-            persona=None,
-            system_prompt=None,
-            tools=None,
-            require_tool=None,
-            include_details=True,
-            correlation_id=None
-        )
-        result_msg = answer_response.prompt_conversation
-        if result_msg is None or result_msg.message is None or result_msg.message.message is None:
-            return "I don't know"
-        return result_msg.message.message[:1800]
+        conversation_id = conv_response.create_conversation.id
+        try:
+            answer_response = await graphlit.client.prompt_conversation(
+                prompt=prompt,
+                id=conversation_id,
+                specification=EntityReferenceInput(id=spec_id),
+                mime_type=None,
+                data=None,
+                persona=None,
+                system_prompt=None,
+                tools=None,
+                require_tool=None,
+                include_details=True,
+                correlation_id=None
+            )
+            result_msg = answer_response.prompt_conversation
+            if result_msg is None or result_msg.message is None or result_msg.message.message is None:
+                return "I don't know"
+            return result_msg.message.message[:1800]
+        finally:
+            try:
+                await graphlit.client.delete_conversation(id=conversation_id)
+            except Exception as e:
+                print(f"[WARN] Failed to delete web conversation {conversation_id}: {e}")
 
     except Exception as exc:
         print(f"[ERROR] query_graphlit_web: {exc}")

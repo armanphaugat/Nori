@@ -1,17 +1,20 @@
 import os
 from datetime import date, datetime
 from typing import Optional
-
+from dotenv import load_dotenv
+load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL")
+print(DATABASE_URL)
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-
 engine = create_engine(
-    os.getenv("DATABASE_URL"),
+    DATABASE_URL,
     pool_pre_ping=True,
     pool_size=5,
     max_overflow=10,
     pool_recycle=300,
 )
+print(engine)
 DB = sessionmaker(bind=engine)
 
 
