@@ -55,14 +55,12 @@ async def handle_get_guild_channels(
             status_code=500,
             detail="DISCORD_BOT_TOKEN not configured on server",
         )
-
     async with httpx.AsyncClient() as client:
         resp = await client.get(
             f"{DISCORD_API}/guilds/{guild_id}/channels",
             headers={"Authorization": f"Bot {bot_token}"},
             timeout=10,
         )
-
     if resp.status_code == 403:
         raise HTTPException(
             status_code=403,
@@ -73,16 +71,45 @@ async def handle_get_guild_channels(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"Discord API error: {resp.status_code}",
         )
-
     channels = resp.json()
-    text_channels = [
-        {"id": c["id"], "name": c["name"], "type": c["type"]}
+    categories = {
+        c["id"]: {"id": c["id"], "name": c["name"], "channels": []}
         for c in channels
-        if c["type"] in (0, 5)
-    ]
-    text_channels.sort(key=lambda c: c["name"])
-    return {"channels": text_channels}
+        if c["type"] == 4
+    }
+    uncategorized = {"id": None, "name": "Uncategorized", "channels": []}
+    for c in channels:
+        if c["type"] not in (0, 5):
+            continue
+        channel_obj = {
+            "id": c["id"],
+            "name": c["name"],
+            "type": c["type"],
+            "position": c.get("position", 0),
+        }
+        parent_id = c.get("parent_id")
+        if parent_id and parent_id in categories:
+            categories[parent_id]["channels"].append(channel_obj)
+        else:
+            uncategorized["channels"].append(channel_obj)
+    for cat in categories.values():
+        cat["channels"].sort(key=lambda c: c["position"])
+    uncategorized["channels"].sort(key=lambda c: c["position"])
+    category_positions = {
+        c["id"]: c.get("position", 0)
+        for c in channels
+        if c["type"] == 4
+    }
+    sorted_categories = sorted(
+        categories.values(),
+        key=lambda cat: category_positions.get(cat["id"], 0)
+    )
+    result = []
+    if uncategorized["channels"]:
+        result.append(uncategorized)
+    result.extend(sorted_categories)
 
+    return {"categories": result}
 async def handle_get_eligible_guilds(
     user: dict = Depends(verify_access_token),
 ) -> dict:
