@@ -11,6 +11,7 @@ from graphlit import Graphlit
 from dbhelper.db_helper import *
 import base64
 import pandas as pd
+from dotenv import load_dotenv
 from graphlit_api import FeedTypes, WebFeedPropertiesInput, FeedSchedulePolicyInput, TimedPolicyRecurrenceTypes,FeedInput
 load_dotenv()
 env_id = os.getenv("GRAPHLIT_ENVIRONMENT_ID")

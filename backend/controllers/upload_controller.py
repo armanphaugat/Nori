@@ -63,8 +63,8 @@ async def handle_upload_website(
             username=user["username"],
             kind="url",
             name=url,
-            feed_id=feed_id,       # add this
-            content_id=None,       # explicitly None
+            feed_id=feed_id,
+            content_id=None,
             status="ok",
         )
         return {"status": "success", "message": "Website feed created"}
@@ -166,30 +166,6 @@ async def handle_upload_file(
 
         elif ext in {".mp4", ".mp3", ".wav", ".m4a"}:
             content_id = await add_video_graphlit(guild_id, BytesIO(file_bytes))
-
-        elif ext in {".xlsx", ".xls"}:
-            result = await add_xlsx_graphlit(guild_id, BytesIO(file_bytes))
-            if result.get("status") == "error":
-                raise HTTPException(status_code=500, detail=result.get("error", "XLSX ingestion failed"))
-            content_id = result.get("content_id")
-            log_upload(
-                guild_id=guild_id,
-                user_id=user["discord_id"],
-                username=user["username"],
-                kind="pdf",
-                name=file.filename,
-                content_id=content_id,
-                status="ok",
-            )
-            return {
-                "status": "success",
-                "message": "XLSX ingested",
-                "type": ext.lstrip("."),
-                "rows": result.get("rows"),
-                "ingested": result.get("ingested"),
-                "failed": result.get("failed"),
-            }
-
         log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
