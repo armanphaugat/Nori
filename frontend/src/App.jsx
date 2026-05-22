@@ -1,255 +1,59 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
+import { 
+  API, 
+  getToken, 
+  setToken, 
+  LS, 
+  API_BASE 
+} from "./utils/api.js";
+import { 
+  GlobalStyles, 
+  Icon, 
+  OnlineDot, 
+  Spinner 
+} from "./components/Common.jsx";
 
-// ─── GLOBAL STYLES ────────────────────────────────────────────────────────────
-const GLOBAL_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-  @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+// Import modular pages and components
+import LandingPage from "./components/LandingPage.jsx";
+import ServerSelect from "./components/ServerSelect.jsx";
+import Sidebar from "./components/Sidebar.jsx";
+import ChannelsTab from "./components/ChannelsTab.jsx";
+import UploadTab from "./components/UploadTab.jsx";
+import UtilsTab from "./components/UtilsTab.jsx";
+import ChatWidget from "./components/ChatWidget.jsx";
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body, #root { min-height: 100%; height: 100%; }
+function Dashboard({ 
+  user, 
+  guilds, 
+  discordGuilds, 
+  activeGuildId, 
+  onSwitchServer, 
+  onLogout 
+}) {
+  const [tab, setTab] = useState("channels"); // Default to Channels tab as first of 3 tabs
 
-  body {
-    font-family: 'Inter', sans-serif;
-    background: #fff8f5;
-    color: #1f1b17;
-    -webkit-font-smoothing: antialiased;
-  }
+  const activeGuild = guilds.find(g => g.id === activeGuildId) || null;
 
-  :root {
-    --bg:                    #fff8f5;
-    --surface:               #fff8f5;
-    --surface-low:           #fcf2eb;
-    --surface-container:     #f6ece6;
-    --surface-high:          #f0e6e0;
-    --surface-highest:       #eae1da;
-    --surface-lowest:        #ffffff;
-    --surface-dim:           #e2d8d2;
-    --on-surface:            #1f1b17;
-    --on-surface-variant:    #464554;
-    --outline:               #767586;
-    --outline-variant:       #c7c4d7;
-    --primary:               #4648d4;
-    --primary-container:     #6063ee;
-    --primary-fixed:         #e1e0ff;
-    --on-primary:            #ffffff;
-    --on-primary-container:  #fffbff;
-    --secondary:             #5f5e5e;
-    --secondary-container:   #e2dfde;
-    --on-secondary:          #ffffff;
-    --tertiary:              #5b5c5c;
-    --tertiary-container:    #737574;
-    --on-tertiary:           #ffffff;
-    --error:                 #ba1a1a;
-    --error-container:       #ffdad6;
-    --on-error-container:    #93000a;
-    --inverse-surface:       #342f2b;
-    --discord:               #5865f2;
+  const tabLabels = {
+    channels: "Channel Management",
+    upload: "Knowledge Base",
+    utils: "Server Utilities"
+  };
 
-    --r-sm: 8px;
-    --r-md: 12px;
-    --r-lg: 16px;
-    --r-xl: 24px;
-    --r-full: 9999px;
-    --tr: 0.18s cubic-bezier(0.4,0,0.2,1);
-    --shadow-sm: 0 4px 20px rgba(0,0,0,0.03);
-    --shadow-md: 0 10px 40px rgba(0,0,0,0.06);
-  }
+  const getAvatarUrl = (u) => {
+    if (u?.avatar && u?.id) {
+      return `https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.png`;
+    }
+    return null;
+  };
 
-  .ms { font-family: 'Material Symbols Outlined'; font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; font-size: 20px; line-height:1; display:inline-flex; }
-  .ms-fill { font-variation-settings: 'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24; }
+  const getServerIconUrl = (g) => {
+    if (g?.id && g?.icon) {
+      return `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png`;
+    }
+    return null;
+  };
 
-  @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-  @keyframes spin { to{transform:rotate(360deg)} }
-  @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.4} }
-  @keyframes typing { 0%,100%{opacity:1} 50%{opacity:.2} }
-
-  .au { animation: fadeUp .45s cubic-bezier(0.16,1,0.3,1) both; }
-
-  ::-webkit-scrollbar { width:4px; height:4px; }
-  ::-webkit-scrollbar-track { background:transparent; }
-  ::-webkit-scrollbar-thumb { background:var(--outline-variant); border-radius:99px; }
-
-  .kb-input {
-    width:100%; background:var(--surface-lowest); border:1.5px solid var(--outline-variant);
-    color:var(--on-surface); border-radius:var(--r-md); padding:10px 14px;
-    font-size:14px; font-family:'Inter',sans-serif; outline:none;
-    transition:border-color var(--tr),box-shadow var(--tr);
-  }
-  .kb-input::placeholder { color:var(--on-surface-variant); opacity:.6; }
-  .kb-input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(70,72,212,0.12); }
-
-  .kb-mono { font-family:'DM Mono',monospace!important; font-size:12px!important; }
-
-  input[type=range] {
-    -webkit-appearance:none; width:100%; height:4px;
-    background:var(--surface-highest); border-radius:99px; outline:none; cursor:pointer;
-  }
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance:none; width:18px; height:18px;
-    background:var(--primary); border-radius:50%; cursor:pointer;
-    box-shadow:0 2px 8px rgba(70,72,212,0.3); border:2px solid #fff; transition:transform .1s;
-  }
-  input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.15); }
-
-  .nav-item {
-    display:flex; align-items:center; gap:10px; padding:9px 12px;
-    border-radius:var(--r-md); font-size:14px; font-weight:500; color:var(--on-surface-variant);
-    cursor:pointer; border:none; background:none; font-family:'Inter',sans-serif;
-    transition:all var(--tr); white-space:nowrap; width:100%; text-align:left;
-  }
-  .nav-item:hover { background:var(--surface-high); color:var(--on-surface); }
-  .nav-item.active { background:var(--primary-fixed); color:var(--primary); font-weight:600; }
-
-  .drop-zone {
-    border:2px dashed var(--outline-variant); border-radius:var(--r-lg);
-    padding:32px 20px; display:flex; flex-direction:column; align-items:center;
-    gap:10px; cursor:pointer; transition:all var(--tr); text-align:center;
-    background:var(--surface-low);
-  }
-  .drop-zone:hover { border-color:var(--primary); background:rgba(70,72,212,0.04); }
-
-  .data-table { width:100%; border-collapse:collapse; font-size:13.5px; }
-  .data-table th {
-    padding:11px 16px; text-align:left; color:var(--on-surface-variant); font-weight:600;
-    font-size:11px; letter-spacing:.06em; text-transform:uppercase;
-    background:var(--surface-low); border-bottom:1px solid var(--outline-variant);
-    white-space:nowrap;
-  }
-  .data-table td {
-    padding:13px 16px; border-bottom:1px solid rgba(199,196,215,0.15);
-    color:var(--on-surface-variant); vertical-align:middle;
-  }
-  .data-table tr:hover td { background:var(--surface-low); color:var(--on-surface); }
-
-  .typing-dot {
-    width:5px; height:5px; border-radius:50%; background:var(--primary); display:inline-block;
-    animation:typing 1.2s ease infinite;
-  }
-
-  .server-select-wrapper {
-    position: relative;
-  }
-  .server-select-wrapper select {
-    appearance: none;
-    -webkit-appearance: none;
-    padding-right: 32px;
-    cursor: pointer;
-  }
-  .server-select-wrapper::after {
-    content: 'expand_more';
-    font-family: 'Material Symbols Outlined';
-    font-size: 16px;
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-    color: var(--on-surface-variant);
-  }
-`;
-
-function GlobalStyles() {
-  useEffect(() => {
-    const el = document.createElement("style");
-    el.textContent = GLOBAL_CSS;
-    document.head.appendChild(el);
-    return () => document.head.removeChild(el);
-  }, []);
-  return null;
-}
-
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
-const API_BASE = typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL
-  ? import.meta.env.VITE_API_URL : "http://localhost:8000";
-
-// ─── STORAGE HELPERS ──────────────────────────────────────────────────────────
-const LS = {
-  get: (k, fb) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } },
-  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
-  str: (k) => { try { return localStorage.getItem(k) || null; } catch { return null; } },
-  strSet: (k, v) => { try { localStorage.setItem(k, v || ""); } catch {} },
-  rm: (k) => { try { localStorage.removeItem(k); } catch {} },
-};
-
-function getToken() { return LS.str("wb_token"); }
-function setToken(t) { t ? LS.strSet("wb_token", t) : LS.rm("wb_token"); }
-
-let _refreshPromise = null;
-async function refreshOnce() {
-  if (_refreshPromise) return _refreshPromise;
-  _refreshPromise = fetch(`${API_BASE}/auth/refresh`, { method: "POST", credentials: "include" })
-    .then(async rr => { if (rr.ok) { const d = await rr.json(); if (d.access_token) { setToken(d.access_token); return d.access_token; } } return null; })
-    .catch(() => null).finally(() => { _refreshPromise = null; });
-  return _refreshPromise;
-}
-
-async function apiFetch(path, opts = {}, _retry = true, _token = null) {
-  const { method = "GET", body, isForm = false } = opts;
-  const headers = {};
-  const token = _token || getToken();
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-  if (!isForm && body) headers["Content-Type"] = "application/json";
-  const res = await fetch(`${API_BASE}${path}`, {
-    method, headers, credentials: "include",
-    body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
-  });
-  if (res.status === 401 && _retry) {
-    const newToken = await refreshOnce();
-    if (newToken) return apiFetch(path, opts, false, newToken);
-    setToken(null); LS.rm("wb_user");
-    throw new Error("Session expired — please log in again");
-  }
-  if (!res.ok) { let e; try { e = await res.json(); } catch { e = {}; } throw new Error(e.detail || e.message || `HTTP ${res.status}`); }
-  return res.json();
-}
-
-const fd = (obj) => { const f = new FormData(); Object.entries(obj).forEach(([k, v]) => f.append(k, v)); return f; };
-
-const API = {
-  getMe:             ()           => apiFetch("/auth/me"),
-  logout:            ()           => apiFetch("/auth/logout", { method: "POST" }),
-  getGuilds:         ()           => apiFetch("/guilds/"),
-  getGuildChannels:  (gid)        => apiFetch(`/guilds/${encodeURIComponent(gid)}/channels`),
-  addServer:         (gid, name)  => apiFetch("/server/add", { method: "POST", body: fd({ guild_id: gid, name }), isForm: true }),
-  getConfig:         (gid)        => apiFetch(`/server/config?guild_id=${encodeURIComponent(gid)}`),
-  updateFaissK:      (gid, k)     => apiFetch("/server/update-faiss-k",     { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
-  updateBm25K:       (gid, k)     => apiFetch("/server/update-bm25-k",      { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
-  updateTemp:        (gid, k)     => apiFetch("/server/update-temperature",  { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
-  updateChunkSize:   (gid, k)     => apiFetch("/server/update-chunk-size",   { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
-  updateChunkOverlap:(gid, k)     => apiFetch("/server/update-chunk-overlap",{ method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
-  updateMaxToken:    (gid, k)     => apiFetch("/server/update-max-token",    { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
-  updateSystemPrompt:(gid, text)  => apiFetch("/server/update-system-prompt",{ method: "PUT",   body: fd({ guild_id: gid, text }), isForm: true }),
-  listChannels:      (gid)        => apiFetch(`/channel/list?guild_id=${encodeURIComponent(gid)}`),
-  listServersWithStatus:    ()    => apiFetch("/server/list"),
-  listAllServersWithStatus: ()    => apiFetch("/server/list-all"),
-  addChannel:        (gid, cid)   => apiFetch("/channel/add",     { method: "PUT",    body: fd({ guild_id: gid, channel_id: cid }), isForm: true }),
-  deleteChannel:     (gid, cid)   => apiFetch("/channel/delete",  { method: "DELETE", body: fd({ guild_id: gid, channel_id: cid }), isForm: true }),
-  addModChannel:     (gid, cid)   => apiFetch("/channel/add-mod", { method: "PUT",    body: fd({ guild_id: gid, channel_id: cid }), isForm: true }),
-  upload: (gid, files, urls) => {
-    const f = new FormData();
-    f.append("guild_id", gid);
-    files.forEach(fi => f.append("files", fi));
-    if (urls) f.append("urls", urls);
-    return apiFetch("/upload/", { method: "PUT", body: f, isForm: true });
-  },
-  uploadContacts: (gid, file) => {
-    const f = new FormData();
-    f.append("guild_id", gid);
-    f.append("file", file);
-    return apiFetch("/upload/contacts", { method: "PUT", body: f, isForm: true });
-  },
-  addFaq: (gid, text) => apiFetch("/upload/add-faq", { method: "POST", body: fd({ guild_id: gid, text }), isForm: true }),
-  getAllUploads: (gid)  => apiFetch(`/upload/all?guild_id=${encodeURIComponent(gid)}`),
-  deleteUpload:  (gid, uid) => apiFetch(`/upload/${encodeURIComponent(uid)}?guild_id=${encodeURIComponent(gid)}`, { method: "DELETE" }),
-  getSubUrls:   (url)  => apiFetch(`/upload/sub-urls?url=${encodeURIComponent(url)}`),
-  query:        (question, server) => apiFetch("/query", { method: "POST", body: { question, server } }),
-  getAnalytics: (gid)  => apiFetch(`/analytics/summary?guild_id=${encodeURIComponent(gid)}`),
-};
-
-// ─── TINY COMPONENTS ─────────────────────────────────────────────────────────
-
-function Spinner({ size = 16, color = "var(--primary)" }) {
   return (
     <span style={{
       width: size, height: size, border: `2px solid rgba(70,72,212,0.15)`,
@@ -425,48 +229,7 @@ const NAV_ITEMS = [
   { id: "crawler",   label: "URL Crawler",       icon: "travel_explore" },
 ];
 
-function Sidebar({ tab, onTab, guilds, discordGuilds, activeGuildId, onActivate, onAdd, user, onLogout }) {
-  const [registering, setRegistering] = useState(false);
-  const [registerError, setRegisterError] = useState(null);
-
-  // Merge registered guilds + unregistered Discord guilds the user admins into one list
-  const allServers = [
-    ...guilds,
-    ...(discordGuilds || []).filter(dg => !guilds.find(g => g.id === dg.id)),
-  ];
-
-  const isRegistered = (id) => !!guilds.find(g => g.id === id);
-
-  const handleServerChange = async (e) => {
-    const selectedId = e.target.value;
-    if (!selectedId) return;
-    setRegisterError(null);
-
-    // Already registered — just switch to it
-    if (isRegistered(selectedId)) {
-      onActivate(selectedId);
-      return;
-    }
-
-    // Not registered yet — auto-register then activate
-    const discordGuild = (discordGuilds || []).find(g => g.id === selectedId);
-    if (!discordGuild) return;
-
-    setRegistering(true);
-    try {
-      await API.addServer(discordGuild.id, discordGuild.name);
-      onAdd({ id: discordGuild.id, name: discordGuild.name, icon: discordGuild.icon || null });
-      onActivate(discordGuild.id);
-    } catch (err) {
-      setRegisterError("Failed to register server. Try again.");
-      console.error("Auto-register error:", err);
-    } finally {
-      setRegistering(false);
-    }
-  };
-
-  const activeGuild = allServers.find(g => g.id === activeGuildId) || null;
-
+function Sidebar({ tab, onTab, guilds, activeGuildId, onActivate, user, onLogout }) {
   return (
     <aside style={{
       width: 240, flexShrink: 0, background: "var(--surface-low)",
@@ -499,8 +262,8 @@ function Sidebar({ tab, onTab, guilds, discordGuilds, activeGuildId, onActivate,
           Active Server
         </div>
 
-        {allServers.length === 0 ? (
-          /* No servers at all */
+        {guilds.length === 0 ? (
+          /* No servers yet */
           <div style={{
             padding: "10px 12px", borderRadius: "var(--r-md)",
             background: "var(--surface-container)", border: "1.5px dashed var(--outline-variant)",
@@ -508,82 +271,40 @@ function Sidebar({ tab, onTab, guilds, discordGuilds, activeGuildId, onActivate,
           }}>
             <Icon name="add_circle" size={16} style={{ color: "var(--on-surface-variant)", opacity: 0.5 }} />
             <span style={{ fontSize: 12, color: "var(--on-surface-variant)", fontStyle: "italic" }}>
-              No servers found
+              No servers yet
             </span>
           </div>
         ) : (
           /* Server dropdown */
-          <div className="server-select-wrapper" style={{ position: "relative" }}>
+          <div className="server-select-wrapper">
             <select
               className="kb-input"
               value={activeGuildId || ""}
-              onChange={handleServerChange}
-              disabled={registering}
+              onChange={e => e.target.value && onActivate(e.target.value)}
               style={{
                 fontSize: 13, height: 40, fontWeight: 600,
                 background: activeGuildId ? "var(--primary-fixed)" : "var(--surface-lowest)",
                 color: activeGuildId ? "var(--primary)" : "var(--on-surface-variant)",
                 border: activeGuildId ? "1.5px solid rgba(70,72,212,0.3)" : "1.5px solid var(--outline-variant)",
-                opacity: registering ? 0.6 : 1,
-                cursor: registering ? "wait" : "pointer",
               }}
             >
               {!activeGuildId && <option value="">— select server —</option>}
-              {allServers.map(g => {
-                const registered = isRegistered(g.id);
-                return (
-                  <option key={g.id} value={g.id}>
-                    {g.name}{!registered ? " ✦ new" : ""}
-                  </option>
-                );
-              })}
+              {guilds.map(g => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
             </select>
-
-            {/* Registering spinner */}
-            {registering && (
-              <div style={{
-                position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
-                pointerEvents: "none",
-              }}>
-                <Spinner size={14} color="var(--primary)" />
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Registering status */}
-        {registering && (
-          <div style={{
-            marginTop: 6, display: "flex", alignItems: "center", gap: 5,
-            padding: "4px 8px", borderRadius: "var(--r-sm)",
-          }}>
-            <Spinner size={10} color="var(--primary)" />
-            <span style={{ fontSize: 11, color: "var(--primary)" }}>
-              Registering server…
-            </span>
-          </div>
-        )}
-
-        {/* Error */}
-        {registerError && !registering && (
-          <div style={{
-            marginTop: 6, display: "flex", alignItems: "center", gap: 5,
-            padding: "4px 8px", borderRadius: "var(--r-sm)",
-          }}>
-            <Icon name="error" size={12} style={{ color: "var(--error)" }} />
-            <span style={{ fontSize: 11, color: "var(--error)" }}>{registerError}</span>
           </div>
         )}
 
         {/* Active server status pill */}
-        {activeGuild && !registering && !registerError && (
+        {activeGuildId && guilds.find(g => g.id === activeGuildId) && (
           <div style={{
             marginTop: 6, display: "flex", alignItems: "center", gap: 5,
             padding: "4px 8px", borderRadius: "var(--r-sm)",
           }}>
             <OnlineDot />
             <span style={{ fontSize: 11, color: "var(--on-surface-variant)" }}>
-              {isRegistered(activeGuild.id) ? "All tabs use this server" : ""}
+              All tabs use this server
             </span>
           </div>
         )}
@@ -611,7 +332,7 @@ function Sidebar({ tab, onTab, guilds, discordGuilds, activeGuildId, onActivate,
               background: "linear-gradient(135deg, var(--primary), var(--primary-container))",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0,
-            }}>{(user.username || "U").slice(0, 1).toUpperCase()}</div>
+            }}>{(user.username || "U").slice(0,1).toUpperCase()}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: "var(--on-surface)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.username || "Admin"}</div>
               <div style={{ fontSize: 11, color: "var(--on-surface-variant)" }}>Admin</div>
@@ -2744,15 +2465,13 @@ function Dashboard({ user, guilds, discordGuilds, onGuildsChange, onLogout }) {
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "var(--bg)" }}>
       <Sidebar
-  tab={tab} onTab={setTab}
-  guilds={guilds}
-  discordGuilds={discordGuilds}
-  activeGuildId={activeGuildId}
-  onActivate={handleActivate}
-  onAdd={handleAdd}
-  user={user}
-  onLogout={onLogout}
-/>
+        tab={tab} onTab={setTab}
+        guilds={guilds}
+        activeGuildId={activeGuildId}
+        onActivate={handleActivate}
+        user={user}
+        onLogout={onLogout}
+      />
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         {/* Top bar */}
@@ -2777,91 +2496,201 @@ function Dashboard({ user, guilds, discordGuilds, onGuildsChange, onLogout }) {
           </div>
         </header>
 
-        {/* Content */}
+        {/* Dynamic Main Workspace Content */}
         <div style={{ flex: 1, overflowY: "auto", padding: "32px 40px" }}>
           <div style={{ maxWidth: 760 }}>
-            {tab === "overview" && (
-              <OverviewTab
-                guilds={guilds} discordGuilds={discordGuilds}
-                activeGuildId={activeGuildId} user={user} analytics={analytics}
-                onActivate={handleActivate} onRemove={handleRemove} onAdd={handleAdd}
-              />
+            {tab === "channels" && (
+              <ChannelsTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
             )}
-            {tab === "config"   && <ServerConfigTab guildId={activeGuildId} onGoToOverview={goToOverview}/>}
-            {tab === "channels" && <ChannelsTab      guildId={activeGuildId} onGoToOverview={goToOverview}/>}
-            {tab === "upload"   && <UploadTab        guildId={activeGuildId} onGoToOverview={goToOverview}/>}
-            {tab === "crawler"  && <CrawlerTab       guildId={activeGuildId} onGoToOverview={goToOverview}/>}
+            {tab === "upload" && (
+              <UploadTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
+            )}
+            {tab === "utils" && (
+              <UtilsTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
+            )}
           </div>
         </div>
       </div>
 
-      <ChatWidget guildId={activeGuild?.id} guildName={activeGuild?.name}/>
+      {/* Floating Chatbot Assistant Widget */}
+      <ChatWidget guildId={activeGuild?.id} guildName={activeGuild?.name} />
     </div>
   );
 }
 
-// ─── ROOT APP ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [view, setView] = useState("landing");
   const [user, setUser] = useState(LS.get("wb_user", null));
   const [guilds, setGuilds] = useState(LS.get("wb_guilds", []));
   const [discordGuilds, setDiscordGuilds] = useState([]);
   const [booting, setBooting] = useState(true);
+  const [activeGuildId, setActiveGuildId] = useState(LS.str("wb_active_guild") || null);
 
   useEffect(() => {
-    const hash   = window.location.hash;
+    const hash = window.location.hash;
     const params = new URLSearchParams(window.location.search);
     const hashToken = hash.startsWith("#token=") ? hash.slice(7) : hash.startsWith("#access_token=") ? hash.slice(14) : null;
-    const token  = hashToken || params.get("token") || params.get("access_token");
+    const token = hashToken || params.get("token") || params.get("access_token");
 
     (async () => {
-      if (token) {
-        window.history.replaceState(null, "", window.location.pathname);
-        setToken(token);
+      const activeToken = token || getToken();
+      if (activeToken) {
+        if (token) {
+          window.history.replaceState(null, "", window.location.pathname);
+          setToken(token);
+        }
         try {
           const u = await API.getMe();
-          setUser(u); LS.set("wb_user", u);
-          try { const { guilds: dg } = await API.getGuilds(); setDiscordGuilds(dg || []); } catch (_) {}
-          setView("dashboard");
+          setUser(u); 
+          LS.set("wb_user", u);
+          
+          try { 
+            const [guildsRes, statusRes] = await Promise.all([
+              API.getGuilds(),
+              API.listServersWithStatus()
+            ]);
+            const allGuilds = guildsRes.guilds || [];
+            const dbServers = statusRes.servers || [];
+
+            setDiscordGuilds(allGuilds);
+
+            const mappedConfigured = dbServers.map(s => {
+              const dcGuild = allGuilds.find(g => g.id === s.guild_id);
+              return {
+                id: s.guild_id,
+                name: s.name,
+                icon: dcGuild?.icon || null,
+                config_status: s.config_status,
+                channel_count: s.channel_count,
+                has_custom_prompt: s.has_custom_prompt,
+              };
+            });
+            setGuilds(mappedConfigured);
+            LS.set("wb_guilds", mappedConfigured);
+          } catch (_) {}
+          
+          setView("servers");
         } catch (_) {
-          setUser({ username: "Discord User", discord_id: "unknown" });
-          setView("dashboard");
+          setView("servers");
         }
-        setBooting(false); return;
+        setBooting(false); 
+        return;
       }
+      
       const storedToken = getToken();
       if (storedToken && !user) {
         try {
           const u = await API.getMe();
-          setUser(u); LS.set("wb_user", u);
-          try { const { guilds: dg } = await API.getGuilds(); setDiscordGuilds(dg || []); } catch (_) {}
-        } catch (_) { setToken(null); LS.rm("wb_user"); }
+          setUser(u); 
+          LS.set("wb_user", u);
+          try { 
+            const { guilds: dg } = await API.getGuilds(); 
+            setDiscordGuilds(dg || []); 
+          } catch (_) {}
+          
+          setView("servers");
+        } catch (_) { 
+          setToken(null); 
+          LS.rm("wb_user"); 
+        }
+      } else if (storedToken && user) {
+        try { 
+          const { guilds: dg } = await API.getGuilds(); 
+          setDiscordGuilds(dg || []); 
+        } catch (_) {}
+        setView("servers");
       }
       setBooting(false);
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleGuildsChange = (updated) => { setGuilds(updated); LS.set("wb_guilds", updated); };
+  // Guard routing: redirect to server select if in dashboard without selected guild
+  useEffect(() => {
+    if (view === "dashboard" && !activeGuildId) {
+      setView("servers");
+    }
+  }, [view, activeGuildId]);
+
+  const handleGuildsChange = (updated) => { 
+    setGuilds(updated); 
+    LS.set("wb_guilds", updated); 
+  };
+
+  const handleActivateServer = (id) => {
+    setActiveGuildId(id);
+    LS.strSet("wb_active_guild", id);
+    setView("dashboard");
+  };
 
   const handleLogout = async () => {
     try { await API.logout(); } catch (_) {}
-    setToken(null); LS.rm("wb_user"); LS.rm("wb_guilds"); LS.rm("wb_active_guild");
-    setUser(null); setGuilds([]); setView("landing");
+    setToken(null); 
+    LS.rm("wb_user"); 
+    LS.rm("wb_guilds"); 
+    LS.rm("wb_active_guild");
+    setUser(null); 
+    setGuilds([]); 
+    setActiveGuildId(null);
+    setView("landing");
   };
 
-  const discordLogin = () => { window.location.href = `${API_BASE}/auth/discord`; };
+  const discordLogin = () => { 
+    window.location.href = `${API_BASE}/auth/discord`; 
+  };
 
   if (booting) {
     return (
       <>
-        <GlobalStyles/>
-        <div style={{ height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"var(--bg)" }}>
-          <div style={{ display:"flex",flexDirection:"column",alignItems:"center",gap:20 }}>
-            <div style={{ width:52,height:52,borderRadius:"var(--r-lg)",background:"var(--primary)",display:"flex",alignItems:"center",justifyContent:"center" }}>
-              <Icon name="hub" fill size={28} style={{ color:"#fff" }}/>
+        <GlobalStyles />
+        <div style={{
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "radial-gradient(circle at 50% 50%, rgba(88, 101, 242, 0.08) 0%, rgba(7, 8, 13, 1) 100%)",
+          color: "#e3e1ed",
+          fontFamily: "'Inter', sans-serif"
+        }}>
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 24,
+            animation: "fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both"
+          }}>
+            <div style={{
+              width: 64,
+              height: 64,
+              borderRadius: "16px",
+              background: "linear-gradient(135deg, var(--primary) 0%, var(--blue) 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 8px 32px rgba(88, 101, 242, 0.3)",
+              position: "relative"
+            }}>
+              <Icon name="hub" fill size={32} style={{ color: "#fff" }} />
+              <span style={{
+                position: "absolute",
+                inset: -4,
+                borderRadius: "20px",
+                border: "2px solid var(--blue)",
+                opacity: 0.5,
+                animation: "pulse-dot 2.5s infinite"
+              }} />
             </div>
-            <div style={{ fontSize:14,color:"var(--on-surface-variant)" }}>Loading VaultBot…</div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: "-0.01em", color: "#fff" }}>
+                Vault<span style={{ color: "var(--blue)" }}>Bot</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--on-surface-variant)" }}>
+                <span>Loading your workspace</span>
+                <span className="typing-dot" style={{ animationDelay: "0s" }} />
+                <span className="typing-dot" style={{ animationDelay: "0.2s" }} />
+                <span className="typing-dot" style={{ animationDelay: "0.4s" }} />
+              </div>
+            </div>
           </div>
         </div>
       </>
@@ -2870,11 +2699,35 @@ export default function App() {
 
   return (
     <>
-      <GlobalStyles/>
-      {view === "landing" ? (
-        <LandingPage user={user} onLogin={discordLogin} onShowDashboard={() => setView("dashboard")}/>
-      ) : (
-        <Dashboard user={user} guilds={guilds} discordGuilds={discordGuilds} onGuildsChange={handleGuildsChange} onLogout={handleLogout}/>
+      <GlobalStyles />
+      {view === "landing" && (
+        <LandingPage 
+          user={user} 
+          onLogin={discordLogin} 
+          onShowDashboard={() => setView("servers")} 
+        />
+      )}
+      
+      {view === "servers" && (
+        <ServerSelect
+          user={user}
+          guilds={guilds}
+          discordGuilds={discordGuilds}
+          onActivate={handleActivateServer}
+          onAdd={(newServer) => handleGuildsChange([...guilds, newServer])}
+          onLogout={handleLogout}
+        />
+      )}
+
+      {view === "dashboard" && (
+        <Dashboard 
+          user={user} 
+          guilds={guilds} 
+          discordGuilds={discordGuilds} 
+          activeGuildId={activeGuildId}
+          onSwitchServer={() => setView("servers")}
+          onLogout={handleLogout}
+        />
       )}
     </>
   );
