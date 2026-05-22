@@ -9,5 +9,4 @@ upload_router.add_api_route("/website",     handle_upload_website,    methods=["
 upload_router.add_api_route("/url",         handle_upload_url,        methods=["POST"],   dependencies=[Depends(require_guild_admin)])
 upload_router.add_api_route("/file",        handle_upload_file,       methods=["POST"],   dependencies=[Depends(require_guild_admin)])
 upload_router.add_api_route("/faq",         handle_upload_faq,        methods=["POST"],   dependencies=[Depends(require_guild_admin)])
-upload_router.add_api_route("/xlsx",        handle_upload_xlsx,       methods=["POST"],   dependencies=[Depends(require_guild_admin)])
-upload_router.add_api_route("/delete-content",handle_delete_upload,     methods=["DELETE"], dependencies=[Depends(require_guild_admin)])
+upload_router.add_api_route("/delete-content/{upload_id}",handle_delete_upload,     methods=["DELETE"], dependencies=[Depends(require_guild_admin)])

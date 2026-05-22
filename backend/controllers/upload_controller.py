@@ -56,14 +56,15 @@ async def handle_upload_website(
     if not re.match(r"https?://", url):
         raise HTTPException(status_code=400, detail="'url' must start with http:// or https://")
     try:
-        content_id = await add_website_graphlit(guild_id, url)
+        feed_id = await add_website_graphlit(guild_id, url)
         log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
             kind="url",
             name=url,
-            content_id=content_id,
+            feed_id=feed_id,       # add this
+            content_id=None,       # explicitly None
             status="ok",
         )
         return {"status": "success", "message": "Website feed created"}
@@ -257,64 +258,6 @@ async def handle_upload_faq(
         raise HTTPException(status_code=500, detail="Failed to ingest FAQ")
 
 
-async def handle_upload_xlsx(
-    guild_id: str = Form(...),
-    file: UploadFile = File(...),
-    user: dict = Depends(require_guild_admin),
-) -> dict:
-    guild_id = guild_id.strip()
-    if not guild_id:
-        raise HTTPException(status_code=400, detail="'guild_id' cannot be empty")
-
-    ext = os.path.splitext(file.filename or "")[1].lower()
-    if ext not in {".xlsx", ".xls"}:
-        raise HTTPException(status_code=400, detail=f"Expected .xlsx or .xls file, got '{ext}'")
-
-    file.file.seek(0, 2)
-    if file.file.tell() > MAX_FILE_SIZE:
-        raise HTTPException(status_code=400, detail="File must be smaller than 10 MB")
-    file.file.seek(0)
-
-    file_bytes = await file.read()
-    if not file_bytes:
-        raise HTTPException(status_code=400, detail="Uploaded file is empty")
-
-    try:
-        result = await add_xlsx_graphlit(guild_id, BytesIO(file_bytes))
-        if result.get("status") == "error":
-            raise HTTPException(status_code=500, detail=result.get("error", "XLSX ingestion failed"))
-        content_id = result.get("content_id")
-        log_upload(
-            guild_id=guild_id,
-            user_id=user["discord_id"],
-            username=user["username"],
-            kind="pdf",
-            name=file.filename,
-            content_id=content_id,
-            status="ok",
-        )
-        return {
-            "status": "success",
-            "message": "XLSX ingested",
-            "rows": result.get("rows"),
-            "ingested": result.get("ingested"),
-            "failed": result.get("failed"),
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        log_upload(
-            guild_id=guild_id,
-            user_id=user["discord_id"],
-            username=user["username"],
-            kind="pdf",
-            name=file.filename,
-            status="failed",
-            error=str(e),
-        )
-        print(f"[handle_upload_xlsx] {file.filename} failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to process XLSX: {e}")
-
 
 async def handle_delete_upload(
     upload_id: str,
@@ -322,14 +265,23 @@ async def handle_delete_upload(
     user: dict = Depends(require_guild_admin),
 ) -> dict:
     try:
-        # fetch the row first so we know the content_id and type
         row = get_upload_by_id(upload_id, guild_id)
         if not row:
             raise HTTPException(status_code=404, detail="Upload not found")
 
+        feed_id = row.get("feed_id")
         content_id = row.get("content_id")
-        if content_id:
-            await delete_content_graphlit(content_id)
+
+        if feed_id:
+            success = await delete_feed_graphlit(feed_id)
+            if not success:
+                raise HTTPException(status_code=502, detail="Failed to delete feed from Graphlit")
+            remove_feed_id(guild_id, feed_id)
+        elif content_id:
+            success = await delete_content_graphlit(content_id)
+            if not success:
+                raise HTTPException(status_code=502, detail="Failed to delete content from Graphlit")
+            remove_content_id(guild_id, content_id)
 
         deleted = remove_upload(upload_id, guild_id)
         if not deleted:

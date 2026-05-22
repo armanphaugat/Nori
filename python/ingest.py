@@ -89,8 +89,9 @@ def read_video(file):
 async def add_url_graphlit(server_id: str, url: str):
     try:
         response = await graphlit.client.ingest_uri(url, is_synchronous=True)
-        await add_content_id(server_id, response.ingest_uri.id)
+        add_content_id(server_id, response.ingest_uri.id)
         print("Url Addded")
+        return response.ingest_uri.id
     except Exception as e:
         print(f"[{server_id}] Failed to ingest {url}: {e}")
 
@@ -109,8 +110,8 @@ async def add_pdf_graphlit(server_id: str, pdf):
         if not response:
             print("No ingestion Done")
             return 0
-        await add_content_id(server_id, response.ingest_encoded_file.id)
-        return 1
+        add_content_id(server_id, response.ingest_encoded_file.id)
+        return response.ingest_encoded_file.id
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
         return 0
@@ -121,8 +122,8 @@ async def add_text_graphlit(server_id: str, faq_text: str):
         if not response:
             print("Not Able To Add Text To Graphlit")
             return 0
-        await add_content_id(server_id, str(response.ingest_text.id))
-        return 1
+        add_content_id(server_id, str(response.ingest_text.id))
+        return response.ingest_text.id
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
         return 0
@@ -143,7 +144,7 @@ async def add_website_graphlit(server_id: str, url: str):
         feed_id = response.create_feed.id
         print(f"[DEBUG] Feed created: {feed_id} for server: {server_id}")
         add_feed_id(server_id, str(feed_id))
-        print(f"[DEBUG] Feed ID saved successfully")
+        return feed_id
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
 
@@ -151,8 +152,8 @@ async def add_word_graphlit(server_id: str, file):
     try:
         text = read_word(file)
         response = await graphlit.client.ingest_text(text=text, is_synchronous=True)
-        await add_content_id(server_id, str(response.ingest_text.id))
-        return 1
+        add_content_id(server_id, str(response.ingest_text.id))
+        return response.ingest_text.id
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
         return 0
@@ -161,8 +162,8 @@ async def add_image_graphlit(server_id: str, file):
     try:
         text = read_ocr(file)
         response = await graphlit.client.ingest_text(text=text, is_synchronous=True)
-        await add_content_id(server_id, str(response.ingest_text.id))
-        return 1
+        add_content_id(server_id, str(response.ingest_text.id))
+        return response.ingest_text.id
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
         return 0
@@ -171,32 +172,9 @@ async def add_video_graphlit(server_id: str, file):
     try:
         text = read_video(file)
         response = await graphlit.client.ingest_text(text=text, is_synchronous=True)
-        await add_content_id(server_id, str(response.ingest_text.id))
-        return 1
+        add_content_id(server_id, str(response.ingest_text.id))
+        return response.ingest_text.id
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
         return 0
     
-async def add_xlsx_graphlit(server_id: str, source) -> dict:
-    if isinstance(source, BytesIO):
-        source.seek(0)
-    df = pd.read_excel(source, header=0)
-    df = df.fillna("").astype(str).apply(lambda col: col.str.strip())
-    df = df[df.apply(lambda row: any(row.values), axis=1)].reset_index(drop=True)
-    if df.empty:
-        return {"rows": 0, "status": "error", "error": "No valid rows found."}
-    ingested = 0
-    failed = 0
-    for _, row in df.iterrows():
-        chunk = "\n".join([f"{col}: {val}" for col, val in row.items() if val])
-        if not chunk:
-            continue
-        result = await add_text_graphlit(server_id, chunk)
-        if result == 1:
-            ingested += 1
-        else:
-            failed += 1
-    if ingested == 0:
-        return {"rows": len(df), "status": "error", "error": "All rows failed to ingest."}
-
-    return {"rows": len(df), "ingested": ingested, "failed": failed, "status": "success", "error": None}

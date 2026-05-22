@@ -175,32 +175,29 @@ def remove_mod_channel(guild_id: str) -> None:
 # ---------------------------------------------------------------------------
 
 def log_upload(
-    guild_id: str,
-    user_id: str,
-    username: str,
-    kind: str,
-    name: str,
-    content_id: str = None,
-    status: str = "ok",
-    error: str = None,
+    guild_id, user_id, username, kind, name,
+    content_id=None,
+    feed_id=None,
+    status="ok",
+    error=None,
 ) -> None:
     with DB() as s:
         s.execute(
             text("""
                 INSERT INTO uploads
-                    (server_id, uploaded_by, username, type, name, content_id, status, error)
+                    (server_id, uploaded_by, username, type, name, content_id, feed_id, status, error)
                 VALUES
-                    (:sid, :uid, :uname, :type, :name, :cid, :status, :error)
+                    (:sid, :uid, :uname, :type, :name, :cid, :fid, :status, :error)
             """),
             {
                 "sid": str(guild_id), "uid": str(user_id), "uname": username,
                 "type": kind, "name": name,
                 "cid": content_id,
+                "fid": feed_id,    # add this
                 "status": status, "error": error,
             },
         )
         s.commit()
-
 def get_uploads(guild_id: str) -> list[dict]:
     with DB() as s:
         rows = s.execute(
