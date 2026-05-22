@@ -786,3 +786,11 @@ def remove_feed_id(server_id: str, feed_id: str) -> bool:
         )
         s.commit()
         return result.rowcount > 0
+    
+def get_upload_by_id(upload_id: str, guild_id: str) -> dict | None:
+    with DB() as s:
+        row = s.execute(
+            text("SELECT * FROM uploads WHERE id = :id AND server_id = :sid"),
+            {"id": upload_id, "sid": str(guild_id)},
+        ).mappings().first()
+        return dict(row) if row else None

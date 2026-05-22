@@ -43,6 +43,7 @@ async def handle_get_sub_urls(
         raise HTTPException(status_code=400, detail=result["error"])
     return result
 
+
 async def handle_upload_website(
     guild_id: str = Form(...),
     url: str = Form(...),
@@ -55,12 +56,29 @@ async def handle_upload_website(
     if not re.match(r"https?://", url):
         raise HTTPException(status_code=400, detail="'url' must start with http:// or https://")
     try:
-        await add_website_graphlit(guild_id, url)
+        content_id = await add_website_graphlit(guild_id, url)
+        log_upload(
+            guild_id=guild_id,
+            user_id=user["discord_id"],
+            username=user["username"],
+            kind="url",
+            name=url,
+            content_id=content_id,
+            status="ok",
+        )
         return {"status": "success", "message": "Website feed created"}
     except Exception as e:
+        log_upload(
+            guild_id=guild_id,
+            user_id=user["discord_id"],
+            username=user["username"],
+            kind="url",
+            name=url,
+            status="failed",
+            error=str(e),
+        )
         print(f"[handle_upload_website] Error: {e}")
         raise HTTPException(status_code=500, detail="Failed to create website feed")
-
 
 
 async def handle_upload_url(
@@ -75,9 +93,27 @@ async def handle_upload_url(
     if not re.match(r"https?://", url):
         raise HTTPException(status_code=400, detail="'url' must start with http:// or https://")
     try:
-        await add_url_graphlit(guild_id, url)
+        content_id = await add_url_graphlit(guild_id, url)
+        log_upload(
+            guild_id=guild_id,
+            user_id=user["discord_id"],
+            username=user["username"],
+            kind="url",
+            name=url,
+            content_id=content_id,
+            status="ok",
+        )
         return {"status": "success", "message": "URL ingested"}
     except Exception as e:
+        log_upload(
+            guild_id=guild_id,
+            user_id=user["discord_id"],
+            username=user["username"],
+            kind="url",
+            name=url,
+            status="failed",
+            error=str(e),
+        )
         print(f"[handle_upload_url] Error: {e}")
         raise HTTPException(status_code=500, detail="Failed to ingest URL")
 
@@ -107,23 +143,43 @@ async def handle_upload_file(
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Uploaded file is empty")
 
+    # derive upload kind for logging
+    if ext in {".xlsx", ".xls"}:
+        kind = "pdf"   # reuse closest type or add "xlsx" to your uploads CHECK constraint
+    elif ext == ".docx":
+        kind = "pdf"   # same — extend the constraint if you want exact types
+    else:
+        kind = "pdf"
+
     try:
+        content_id = None
+
         if ext == ".pdf":
-            await add_pdf_graphlit(guild_id, file_bytes)
+            content_id = await add_pdf_graphlit(guild_id, file_bytes)
 
         elif ext == ".docx":
-            await add_word_graphlit(guild_id, BytesIO(file_bytes))
+            content_id = await add_word_graphlit(guild_id, BytesIO(file_bytes))
 
         elif ext in {".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".webp"}:
-            await add_image_graphlit(guild_id, BytesIO(file_bytes))
+            content_id = await add_image_graphlit(guild_id, BytesIO(file_bytes))
 
         elif ext in {".mp4", ".mp3", ".wav", ".m4a"}:
-            await add_video_graphlit(guild_id, BytesIO(file_bytes))
+            content_id = await add_video_graphlit(guild_id, BytesIO(file_bytes))
 
         elif ext in {".xlsx", ".xls"}:
             result = await add_xlsx_graphlit(guild_id, BytesIO(file_bytes))
             if result.get("status") == "error":
                 raise HTTPException(status_code=500, detail=result.get("error", "XLSX ingestion failed"))
+            content_id = result.get("content_id")
+            log_upload(
+                guild_id=guild_id,
+                user_id=user["discord_id"],
+                username=user["username"],
+                kind="pdf",
+                name=file.filename,
+                content_id=content_id,
+                status="ok",
+            )
             return {
                 "status": "success",
                 "message": "XLSX ingested",
@@ -133,11 +189,29 @@ async def handle_upload_file(
                 "failed": result.get("failed"),
             }
 
+        log_upload(
+            guild_id=guild_id,
+            user_id=user["discord_id"],
+            username=user["username"],
+            kind="pdf",
+            name=file.filename,
+            content_id=content_id,
+            status="ok",
+        )
         return {"status": "success", "message": f"{ext} ingested", "type": ext.lstrip(".")}
 
     except HTTPException:
         raise
     except Exception as e:
+        log_upload(
+            guild_id=guild_id,
+            user_id=user["discord_id"],
+            username=user["username"],
+            kind="pdf",
+            name=file.filename,
+            status="failed",
+            error=str(e),
+        )
         print(f"[handle_upload_file] {file.filename} failed: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to process file: {e}")
 
@@ -154,13 +228,31 @@ async def handle_upload_faq(
     if not faq_text:
         raise HTTPException(status_code=400, detail="'faq_text' cannot be empty")
     try:
-        result = await add_text_graphlit(guild_id, faq_text)
-        if result == 0:
+        content_id = await add_text_graphlit(guild_id, faq_text)
+        if not content_id:
             raise HTTPException(status_code=500, detail="Failed to store FAQ text")
+        log_upload(
+            guild_id=guild_id,
+            user_id=user["discord_id"],
+            username=user["username"],
+            kind="pdf",
+            name=faq_text[:80],   # store a short preview as the name
+            content_id=content_id,
+            status="ok",
+        )
         return {"status": "success", "message": "FAQ ingested"}
     except HTTPException:
         raise
     except Exception as e:
+        log_upload(
+            guild_id=guild_id,
+            user_id=user["discord_id"],
+            username=user["username"],
+            kind="pdf",
+            name=faq_text[:80],
+            status="failed",
+            error=str(e),
+        )
         print(f"[handle_upload_faq] Error: {e}")
         raise HTTPException(status_code=500, detail="Failed to ingest FAQ")
 
@@ -191,6 +283,16 @@ async def handle_upload_xlsx(
         result = await add_xlsx_graphlit(guild_id, BytesIO(file_bytes))
         if result.get("status") == "error":
             raise HTTPException(status_code=500, detail=result.get("error", "XLSX ingestion failed"))
+        content_id = result.get("content_id")
+        log_upload(
+            guild_id=guild_id,
+            user_id=user["discord_id"],
+            username=user["username"],
+            kind="pdf",
+            name=file.filename,
+            content_id=content_id,
+            status="ok",
+        )
         return {
             "status": "success",
             "message": "XLSX ingested",
@@ -201,23 +303,35 @@ async def handle_upload_xlsx(
     except HTTPException:
         raise
     except Exception as e:
+        log_upload(
+            guild_id=guild_id,
+            user_id=user["discord_id"],
+            username=user["username"],
+            kind="pdf",
+            name=file.filename,
+            status="failed",
+            error=str(e),
+        )
         print(f"[handle_upload_xlsx] {file.filename} failed: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to process XLSX: {e}")
+
 
 async def handle_delete_upload(
     upload_id: str,
     guild_id: str = Query(...),
-    is_feed: bool = Query(False),        # caller passes ?is_feed=true for website uploads
     user: dict = Depends(require_guild_admin),
 ) -> dict:
     try:
-        if is_feed:
-            await delete_feed_graphlit(upload_id)
-            deleted = await remove_feed_id(guild_id, upload_id)
-        else:
-            await delete_content_graphlit(upload_id)
-            deleted = await remove_content_id(guild_id, upload_id)
+        # fetch the row first so we know the content_id and type
+        row = get_upload_by_id(upload_id, guild_id)
+        if not row:
+            raise HTTPException(status_code=404, detail="Upload not found")
 
+        content_id = row.get("content_id")
+        if content_id:
+            await delete_content_graphlit(content_id)
+
+        deleted = remove_upload(upload_id, guild_id)
         if not deleted:
             raise HTTPException(status_code=404, detail="Upload not found in DB")
 
