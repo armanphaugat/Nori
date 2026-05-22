@@ -32,8 +32,6 @@ WEB_SYSTEM_PROMPT = (
     "Always cite your sources. "
     "Keep your answer concise and under 1800 characters."
 )
-
-
 async def _get_or_create_kb_spec(server_id: str) -> str:
     try:
         spec_id = get_kb_spec_id(server_id)
@@ -41,7 +39,6 @@ async def _get_or_create_kb_spec(server_id: str) -> str:
             return spec_id
     except Exception as e:
         print(f"[WARN] DB lookup kb_spec failed: {e}")
-
     spec_response = await graphlit.client.create_specification(
         specification=SpecificationInput(
             name=f"{server_id}_kb_spec",
@@ -75,10 +72,8 @@ async def query_graphlit(server_id: str, question: str) -> str:
     except Exception as e:
         print(f"[WARN] DB fetch content/feed ids failed: {e}")
         content_ids, feed_ids = [], []
-
     if not content_ids and not feed_ids:
         return "No knowledge base found for this server."
-
     spec_id = await _get_or_create_kb_spec(server_id)
     conv_response = await graphlit.client.create_conversation(
         conversation=ConversationInput(
@@ -122,7 +117,6 @@ async def _get_or_create_web_spec(server_id: str) -> str:
             return spec_id
     except Exception as e:
         print(f"[WARN] DB lookup web_spec failed: {e}")
-
     spec_response = await graphlit.client.create_specification(
         specification=SpecificationInput(
             name=f"{server_id}_web_spec",
@@ -153,7 +147,6 @@ async def query_graphlit_web(server_id: str, question: str) -> str:
             limit=5
         )
         result = response.search_web
-
         if result is None or result.results is None or len(result.results) == 0:
             response = await graphlit.client.search_web(
                 text=question,
@@ -161,10 +154,8 @@ async def query_graphlit_web(server_id: str, question: str) -> str:
                 limit=5
             )
             result = response.search_web
-
         if result is None or result.results is None or len(result.results) == 0:
             return "I don't know"
-
         context = ""
         for i, r in enumerate(result.results, 1):
             title = getattr(r, 'title', '')

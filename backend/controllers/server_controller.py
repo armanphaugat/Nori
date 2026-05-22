@@ -1,10 +1,6 @@
-from fastapi import Form, HTTPException
-
+from fastapi import Form, HTTPException, Query
 from dbhelper.db_helper import *
 from backend.middleware.auth import *
-MAX_CHUNK_SIZE    = 1000
-MAX_CHUNK_OVERLAP = 1000
-MIN_CHUNK_OVERLAP = 100
 
 
 def _require_server_updated(result: int, label: str) -> None:
@@ -26,6 +22,7 @@ async def handle_add_server(
     )
     return {"status": "success", "message": "Server added successfully"}
 
+
 async def handle_update_max_token(
     guild_id: str = Form(...),
     k:        int = Form(...),
@@ -33,95 +30,61 @@ async def handle_update_max_token(
     _require_server_updated(update_max_tokens(guild_id, k), "max_tokens")
     return {"status": "success", "message": "Max tokens updated successfully"}
 
+
 async def handle_get_server_config(
     guild_id: str = Query(...),
-    user: dict = Depends(require_guild_admin_query),   # already imported via middleware.auth *
+    user: dict = Depends(require_guild_admin_query),
 ) -> dict:
-    from dbhelper.db_helper import get_server
     row = get_server(guild_id)
     if not row:
         raise HTTPException(status_code=404, detail="Server not found — register it first via /server/add")
     return {
-        "guild_id":       row["server_id"],
-        "name":           row["server_name"],
-        "prefix":         row["prefix"],
-        "max_tokens":     row["max_tokens"],
-        "temperature":    row["temperature"],
-        "chunk_size":     row["chunk_size"],
-        "chunk_overlap":  row["chunk_overlap"],
-        "faiss_k":        row["faiss_k"],
-        "bm25_k":         row["bm25_k"],
-        "system_prompt":  row["system_prompt"],
-        "mod_channel":    row["mod_channel"],
-        "added_at":       row["added_at"].isoformat() if row.get("added_at") else None,
-        "updated_at":     row["updated_at"].isoformat() if row.get("updated_at") else None,
+        "guild_id":    row["server_id"],
+        "name":        row["server_name"],
+        "prefix":      row["prefix"],
+        "max_tokens":  row["max_tokens"],
+        "mod_channel": row["mod_channel"],
+        "kb_spec_id":  row["kb_spec_id"],
+        "web_spec_id": row["web_spec_id"],
+        "added_at":    row["added_at"].isoformat() if row.get("added_at") else None,
+        "updated_at":  row["updated_at"].isoformat() if row.get("updated_at") else None,
     }
+
+
 async def handle_get_user_servers_with_status(
     user: dict = Depends(verify_access_token),
 ) -> dict:
-    """
-    Get all servers for the current user with config status.
-    Shows server name and whether it has been fully configured.
-    
-    Response:
-    {
-      "servers": [
-        {
-          "guild_id": "123456789",
-          "name": "AI ASSISTANT",
-          "config_status": "configured",  // "configured", "partial", "unconfigured"
-          "has_custom_prompt": true,
-          "has_channels": true,
-          "channel_count": 3,
-          "faiss_k": 15,
-          "bm25_k": 10,
-          "temperature": 0.5,
-          "added_at": "2024-01-15T10:30:00"
-        }
-      ]
-    }
-    """
+    discord_id = user.get("discord_id")
+    if not discord_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
     try:
-        discord_id = user.get("discord_id")
-        if not discord_id:
-            raise HTTPException(status_code=401, detail="User not authenticated")
-        
         servers = get_user_servers_with_config_status(discord_id)
-        
         return {
             "status": "success",
             "count": len(servers),
-            "servers": servers
+            "servers": servers,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
- 
- 
+
+
 async def handle_get_all_servers_with_status(
     user: dict = Depends(verify_access_token),
 ) -> dict:
-    """
-    Get all servers with config status (admin/superadmin only).
-    Used for system-wide monitoring.
-    """
-    # You can add additional permission check here if needed
     try:
         servers = get_all_servers_with_config_status()
-        
-        # Calculate statistics
-        configured = len([s for s in servers if s["config_status"] == "configured"])
-        partial = len([s for s in servers if s["config_status"] == "partial"])
+        configured   = len([s for s in servers if s["config_status"] == "configured"])
+        partial      = len([s for s in servers if s["config_status"] == "partial"])
         unconfigured = len([s for s in servers if s["config_status"] == "unconfigured"])
-        
         return {
             "status": "success",
             "total_servers": len(servers),
             "stats": {
-                "configured": configured,
-                "partial": partial,
+                "configured":   configured,
+                "partial":      partial,
                 "unconfigured": unconfigured,
             },
-            "servers": servers
+            "servers": servers,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

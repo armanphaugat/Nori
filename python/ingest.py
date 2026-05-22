@@ -21,10 +21,7 @@ graphlit = Graphlit(
     organization_id=org_key,
     jwt_secret=jwt_secret,
 )
-
 whisper_model = whisper.load_model("base")
-
-
 def read_word(file):
     try:
         if isinstance(file, BytesIO):
@@ -138,7 +135,7 @@ async def add_website_graphlit(server_id: str, url: str):
                 type=FeedTypes.WEB,
                 web=WebFeedPropertiesInput(uri=url),
                 schedulePolicy={
-                    "recurrenceType": "REPEAT",  # REPEAT tells Graphlit to keep checking
+                    "recurrenceType": "REPEAT",
                     "repeatInterval": "P1D"
                 }
             )

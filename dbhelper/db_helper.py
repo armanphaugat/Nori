@@ -2,11 +2,14 @@ import os
 from datetime import date, datetime
 from typing import Optional
 from dotenv import load_dotenv
+
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 print(DATABASE_URL)
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
@@ -58,14 +61,9 @@ def reset_server_settings(guild_id: str) -> None:
         s.execute(
             text("""
                 UPDATE servers SET
-                    prefix        = '-',
-                    max_tokens    = 1024,
-                    temperature   = 0.0,
-                    chunk_size    = 500,
-                    chunk_overlap = 100,
-                    faiss_k       = 15,
-                    bm25_k        = 10,
-                    updated_at    = NOW()
+                    prefix     = '-',
+                    max_tokens = 1024,
+                    updated_at = NOW()
                 WHERE server_id = :id
             """),
             {"id": str(guild_id)},
@@ -73,78 +71,18 @@ def reset_server_settings(guild_id: str) -> None:
         s.commit()
 
 
-def update_faiss_k(guild_id: str, value: int) -> int:
-    with DB() as s:
-        result = s.execute(
-            text("UPDATE servers SET faiss_k = :value WHERE server_id = :id"),
-            {"value": value, "id": str(guild_id)},
-        )
-        s.commit()
-        return result.rowcount
-
-
-def update_bm25_k(guild_id: str, value: int) -> int:
-    with DB() as s:
-        result = s.execute(
-            text("UPDATE servers SET bm25_k = :value WHERE server_id = :id"),
-            {"value": value, "id": str(guild_id)},
-        )
-        s.commit()
-        return result.rowcount
-
-
-def update_temperature(guild_id: str, value: float) -> int:
-    with DB() as s:
-        result = s.execute(
-            text("UPDATE servers SET temperature = :value WHERE server_id = :id"),
-            {"value": value, "id": str(guild_id)},
-        )
-        s.commit()
-        return result.rowcount
-
-
-def update_chunk_size(guild_id: str, value: int) -> int:
-    with DB() as s:
-        result = s.execute(
-            text("UPDATE servers SET chunk_size = :value WHERE server_id = :id"),
-            {"value": value, "id": str(guild_id)},
-        )
-        s.commit()
-        return result.rowcount
-
-
-def update_chunk_overlap(guild_id: str, value: int) -> int:
-    with DB() as s:
-        result = s.execute(
-            text("UPDATE servers SET chunk_overlap = :value WHERE server_id = :id"),
-            {"value": value, "id": str(guild_id)},
-        )
-        s.commit()
-        return result.rowcount
-
-
 def update_max_tokens(guild_id: str, value: int) -> int:
     with DB() as s:
         result = s.execute(
-            text("UPDATE servers SET max_tokens = :value WHERE server_id = :id"),
+            text("""
+                UPDATE servers
+                SET max_tokens = :value, updated_at = NOW()
+                WHERE server_id = :id
+            """),
             {"value": value, "id": str(guild_id)},
         )
         s.commit()
         return result.rowcount
-
-
-def update_system_prompt(guild_id: str, system_prompt: str) -> None:
-    """Update (or clear) the system prompt for a server. Server must already exist."""
-    with DB() as s:
-        s.execute(
-            text("""
-                UPDATE servers
-                SET system_prompt = :system_prompt
-                WHERE server_id = :id
-            """),
-            {"system_prompt": system_prompt, "id": str(guild_id)},
-        )
-        s.commit()
 
 
 # ---------------------------------------------------------------------------
@@ -278,6 +216,7 @@ def get_uploads(guild_id: str) -> list[dict]:
 
 
 get_all_uploads = get_uploads
+
 
 def remove_upload(upload_id: str, guild_id: str) -> bool:
     with DB() as s:
@@ -600,56 +539,41 @@ def remove_guild_admin(guild_id: str, discord_id: str) -> None:
         )
         s.commit()
 
-# ─── ADD THIS FUNCTION TO dbhelper/db_helper.py ────────────────────────────────
+
+# ---------------------------------------------------------------------------
+# server config status queries
+# ---------------------------------------------------------------------------
 
 def get_user_servers_with_config_status(discord_id: str) -> list[dict]:
     """
     Get all servers owned/administered by a user with config status.
-    Uses LEFT JOIN to include servers even if they don't have full config.
-    
-    Returns:
-    [
-      {
-        "guild_id": "123456789",
-        "name": "AI ASSISTANT",
-        "config_status": "configured" | "partial" | "unconfigured",
-        "has_custom_prompt": true/false,
-        "has_channels": true/false,
-        "channel_count": 0,
-        "faiss_k": 15,
-        "bm25_k": 10,
-        "temperature": 0.5,
-        "added_at": "2024-01-15T10:30:00"
-      }
-    ]
+    Config is considered complete when: mod_channel is set AND at least one channel exists.
     """
     with DB() as s:
         rows = s.execute(
             text("""
-                SELECT 
+                SELECT
                     s.server_id,
                     s.server_name,
-                    s.faiss_k,
-                    s.bm25_k,
-                    s.temperature,
-                    s.chunk_size,
-                    s.chunk_overlap,
+                    s.prefix,
                     s.max_tokens,
-                    s.system_prompt,
                     s.mod_channel,
+                    s.kb_spec_id,
+                    s.web_spec_id,
                     s.added_at,
                     s.updated_at,
                     COUNT(DISTINCT c.channel_id)::integer AS channel_count,
-                    (s.system_prompt IS NOT NULL AND s.system_prompt != '')::boolean AS has_custom_prompt,
                     (COUNT(DISTINCT c.channel_id) > 0)::boolean AS has_channels,
-                    CASE 
-                        WHEN s.system_prompt IS NOT NULL 
-                             AND s.faiss_k IS NOT NULL 
-                             AND s.bm25_k IS NOT NULL
+                    (s.mod_channel IS NOT NULL)::boolean AS has_mod_channel,
+                    (s.kb_spec_id IS NOT NULL)::boolean AS has_kb,
+                    (s.web_spec_id IS NOT NULL)::boolean AS has_web,
+                    CASE
+                        WHEN s.mod_channel IS NOT NULL
+                             AND s.kb_spec_id IS NOT NULL
                              AND COUNT(DISTINCT c.channel_id) > 0
                         THEN 'configured'
-                        WHEN s.system_prompt IS NOT NULL 
-                             OR s.faiss_k IS NOT NULL 
+                        WHEN s.mod_channel IS NOT NULL
+                             OR s.kb_spec_id IS NOT NULL
                              OR COUNT(DISTINCT c.channel_id) > 0
                         THEN 'partial'
                         ELSE 'unconfigured'
@@ -658,33 +582,31 @@ def get_user_servers_with_config_status(discord_id: str) -> list[dict]:
                 INNER JOIN guild_admins ga ON s.server_id = ga.guild_id
                 LEFT JOIN channels c ON s.server_id = c.server_id
                 WHERE ga.discord_id = :discord_id
-                GROUP BY s.server_id, s.server_name, s.faiss_k, s.bm25_k, 
-                         s.temperature, s.chunk_size, s.chunk_overlap, 
-                         s.max_tokens, s.system_prompt, s.mod_channel, 
+                GROUP BY s.server_id, s.server_name, s.prefix, s.max_tokens,
+                         s.mod_channel, s.kb_spec_id, s.web_spec_id,
                          s.added_at, s.updated_at
                 ORDER BY s.added_at DESC
             """),
             {"discord_id": discord_id},
         ).mappings().all()
-        
+
         return [
             {
-                "guild_id": row["server_id"],
-                "name": row["server_name"],
-                "config_status": row["config_status"],
-                "has_custom_prompt": row["has_custom_prompt"],
-                "has_channels": row["has_channels"],
-                "channel_count": row["channel_count"],
-                "faiss_k": row["faiss_k"],
-                "bm25_k": row["bm25_k"],
-                "temperature": row["temperature"],
-                "chunk_size": row["chunk_size"],
-                "chunk_overlap": row["chunk_overlap"],
-                "max_tokens": row["max_tokens"],
-                "system_prompt": row["system_prompt"],
-                "mod_channel": row["mod_channel"],
-                "added_at": row["added_at"].isoformat() if row.get("added_at") else None,
-                "updated_at": row["updated_at"].isoformat() if row.get("updated_at") else None,
+                "guild_id":       row["server_id"],
+                "name":           row["server_name"],
+                "prefix":         row["prefix"],
+                "max_tokens":     row["max_tokens"],
+                "mod_channel":    row["mod_channel"],
+                "kb_spec_id":     row["kb_spec_id"],
+                "web_spec_id":    row["web_spec_id"],
+                "config_status":  row["config_status"],
+                "has_channels":   row["has_channels"],
+                "has_mod_channel": row["has_mod_channel"],
+                "has_kb":         row["has_kb"],
+                "has_web":        row["has_web"],
+                "channel_count":  row["channel_count"],
+                "added_at":       row["added_at"].isoformat() if row.get("added_at") else None,
+                "updated_at":     row["updated_at"].isoformat() if row.get("updated_at") else None,
             }
             for row in rows
         ]
@@ -693,103 +615,117 @@ def get_user_servers_with_config_status(discord_id: str) -> list[dict]:
 def get_all_servers_with_config_status() -> list[dict]:
     """
     Get all servers with their config status (admin use only).
-    Uses LEFT JOIN to include servers with partial configs.
     """
     with DB() as s:
         rows = s.execute(
             text("""
-                SELECT 
+                SELECT
                     s.server_id,
                     s.server_name,
-                    s.faiss_k,
-                    s.bm25_k,
-                    s.temperature,
-                    s.chunk_size,
-                    s.chunk_overlap,
+                    s.prefix,
                     s.max_tokens,
-                    s.system_prompt,
                     s.mod_channel,
+                    s.kb_spec_id,
+                    s.web_spec_id,
                     s.added_at,
                     s.updated_at,
                     COUNT(DISTINCT c.channel_id)::integer AS channel_count,
-                    (s.system_prompt IS NOT NULL AND s.system_prompt != '')::boolean AS has_custom_prompt,
                     (COUNT(DISTINCT c.channel_id) > 0)::boolean AS has_channels,
-                    CASE 
-                        WHEN s.system_prompt IS NOT NULL 
-                             AND s.faiss_k IS NOT NULL 
-                             AND s.bm25_k IS NOT NULL
+                    (s.mod_channel IS NOT NULL)::boolean AS has_mod_channel,
+                    (s.kb_spec_id IS NOT NULL)::boolean AS has_kb,
+                    (s.web_spec_id IS NOT NULL)::boolean AS has_web,
+                    CASE
+                        WHEN s.mod_channel IS NOT NULL
+                             AND s.kb_spec_id IS NOT NULL
                              AND COUNT(DISTINCT c.channel_id) > 0
                         THEN 'configured'
-                        WHEN s.system_prompt IS NOT NULL 
-                             OR s.faiss_k IS NOT NULL 
+                        WHEN s.mod_channel IS NOT NULL
+                             OR s.kb_spec_id IS NOT NULL
                              OR COUNT(DISTINCT c.channel_id) > 0
                         THEN 'partial'
                         ELSE 'unconfigured'
                     END AS config_status
                 FROM servers s
                 LEFT JOIN channels c ON s.server_id = c.server_id
-                GROUP BY s.server_id, s.server_name, s.faiss_k, s.bm25_k, 
-                         s.temperature, s.chunk_size, s.chunk_overlap, 
-                         s.max_tokens, s.system_prompt, s.mod_channel, 
+                GROUP BY s.server_id, s.server_name, s.prefix, s.max_tokens,
+                         s.mod_channel, s.kb_spec_id, s.web_spec_id,
                          s.added_at, s.updated_at
                 ORDER BY s.added_at DESC
             """),
         ).mappings().all()
-        
+
         return [
             {
-                "guild_id": row["server_id"],
-                "name": row["server_name"],
-                "config_status": row["config_status"],
-                "has_custom_prompt": row["has_custom_prompt"],
-                "has_channels": row["has_channels"],
-                "channel_count": row["channel_count"],
-                "faiss_k": row["faiss_k"],
-                "bm25_k": row["bm25_k"],
-                "temperature": row["temperature"],
-                "chunk_size": row["chunk_size"],
-                "chunk_overlap": row["chunk_overlap"],
-                "max_tokens": row["max_tokens"],
-                "system_prompt": row["system_prompt"],
-                "mod_channel": row["mod_channel"],
-                "added_at": row["added_at"].isoformat() if row.get("added_at") else None,
-                "updated_at": row["updated_at"].isoformat() if row.get("updated_at") else None,
+                "guild_id":       row["server_id"],
+                "name":           row["server_name"],
+                "prefix":         row["prefix"],
+                "max_tokens":     row["max_tokens"],
+                "mod_channel":    row["mod_channel"],
+                "kb_spec_id":     row["kb_spec_id"],
+                "web_spec_id":    row["web_spec_id"],
+                "config_status":  row["config_status"],
+                "has_channels":   row["has_channels"],
+                "has_mod_channel": row["has_mod_channel"],
+                "has_kb":         row["has_kb"],
+                "has_web":        row["has_web"],
+                "channel_count":  row["channel_count"],
+                "added_at":       row["added_at"].isoformat() if row.get("added_at") else None,
+                "updated_at":     row["updated_at"].isoformat() if row.get("updated_at") else None,
             }
             for row in rows
         ]
-    
-def add_content_id(server_id: str, content_id: str):
-    with DB() as s:
-        s.execute(text("""INSERT INTO server_uploads (server_id, content_id) VALUES (:server_id, :content_id)"""),{"server_id": server_id,"content_id": content_id})
-        s.commit()
 
-def add_feed_id(server_id: str, feed_id: str):
+
+# ---------------------------------------------------------------------------
+# server_uploads / server_feeds
+# ---------------------------------------------------------------------------
+
+def add_content_id(server_id: str, content_id: str) -> None:
     with DB() as s:
         s.execute(
-            text("INSERT INTO server_feeds (server_id, feed_id) VALUES (:server_id, :feed_id)"),
-            {"server_id": server_id, "feed_id": feed_id}
+            text("""
+                INSERT INTO server_uploads (server_id, content_id)
+                VALUES (:server_id, :content_id)
+            """),
+            {"server_id": server_id, "content_id": content_id},
         )
         s.commit()
+
+
+def add_feed_id(server_id: str, feed_id: str) -> None:
+    with DB() as s:
+        s.execute(
+            text("""
+                INSERT INTO server_feeds (server_id, feed_id)
+                VALUES (:server_id, :feed_id)
+            """),
+            {"server_id": server_id, "feed_id": feed_id},
+        )
+        s.commit()
+
 
 def get_content_ids(server_id: str) -> list[str]:
     with DB() as s:
-        result = s.execute(
+        rows = s.execute(
             text("SELECT content_id FROM server_uploads WHERE server_id = :server_id"),
-            {"server_id": server_id}
-        )
-        rows = result.fetchall()
+            {"server_id": server_id},
+        ).fetchall()
         return [row[0] for row in rows]
 
 
 def get_feed_ids(server_id: str) -> list[str]:
     with DB() as s:
-        result =s.execute(
+        rows = s.execute(
             text("SELECT feed_id FROM server_feeds WHERE server_id = :server_id"),
-            {"server_id": server_id}
-        )
-        rows = result.fetchall()
+            {"server_id": server_id},
+        ).fetchall()
         return [row[0] for row in rows]
-    
+
+
+# ---------------------------------------------------------------------------
+# spec IDs
+# ---------------------------------------------------------------------------
+
 def get_spec_id(guild_id: str, spec_name: str) -> Optional[str]:
     column = "kb_spec_id" if spec_name == "kb_spec" else "web_spec_id"
     with DB() as s:
