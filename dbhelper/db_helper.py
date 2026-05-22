@@ -791,3 +791,11 @@ def get_upload_by_id(upload_id: str, guild_id: str) -> dict | None:
             {"id": upload_id, "sid": str(guild_id)},
         ).mappings().first()
         return dict(row) if row else None
+    
+def get_user_guild_ids(discord_id: str) -> set:
+    with DB() as s:
+        rows = s.execute(
+            text("SELECT guild_id FROM guild_admins WHERE discord_id = :id"),
+            {"id": str(discord_id)},
+        ).mappings().all()
+    return {row["guild_id"] for row in rows}

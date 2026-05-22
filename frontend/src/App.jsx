@@ -212,22 +212,44 @@ export default function App() {
     const token = hashToken || params.get("token") || params.get("access_token");
 
     (async () => {
-      if (token) {
-        window.history.replaceState(null, "", window.location.pathname);
-        setToken(token);
+      const activeToken = token || getToken();
+      if (activeToken) {
+        if (token) {
+          window.history.replaceState(null, "", window.location.pathname);
+          setToken(token);
+        }
         try {
           const u = await API.getMe();
           setUser(u); 
           LS.set("wb_user", u);
+          
           try { 
-            const { guilds: dg } = await API.getGuilds(); 
-            setDiscordGuilds(dg || []); 
+            const [guildsRes, statusRes] = await Promise.all([
+              API.getGuilds(),
+              API.listServersWithStatus()
+            ]);
+            const allGuilds = guildsRes.guilds || [];
+            const dbServers = statusRes.servers || [];
+
+            setDiscordGuilds(allGuilds);
+
+            const mappedConfigured = dbServers.map(s => {
+              const dcGuild = allGuilds.find(g => g.id === s.guild_id);
+              return {
+                id: s.guild_id,
+                name: s.name,
+                icon: dcGuild?.icon || null,
+                config_status: s.config_status,
+                channel_count: s.channel_count,
+                has_custom_prompt: s.has_custom_prompt,
+              };
+            });
+            setGuilds(mappedConfigured);
+            LS.set("wb_guilds", mappedConfigured);
           } catch (_) {}
           
-          // Redirect immediately to server select
           setView("servers");
         } catch (_) {
-          setUser({ username: "Discord User", discord_id: "unknown" });
           setView("servers");
         }
         setBooting(false); 

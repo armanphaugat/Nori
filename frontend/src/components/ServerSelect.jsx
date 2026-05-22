@@ -10,18 +10,42 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
   const [addingId, setAddingId] = useState(null);
   const [errorStatus, setErrorStatus] = useState(null);
 
-  // Fetch configured and eligible servers from backend
+  // Fetch configured and addable servers from backend
   const loadStatuses = async () => {
     try {
       setLoading(true);
-      const [gRes, egRes] = await Promise.all([
+      const [guildsRes, statusRes] = await Promise.all([
         API.getGuilds(),
-        API.getEligibleGuilds()
+        API.listServersWithStatus()
       ]);
-      setConfiguredServers(gRes.guilds || []);
-      setAddableServers(egRes.guilds || []);
+      
+      const allGuilds = guildsRes.guilds || [];
+      const dbServers = statusRes.servers || [];
+
+      // 1. Configured servers: matched with listServersWithStatus
+      const configured = dbServers.map(s => {
+        const dcGuild = allGuilds.find(g => g.id === s.guild_id);
+        return {
+          id: s.guild_id,
+          name: s.name,
+          icon: dcGuild?.icon || null,
+          config_status: s.config_status,
+          channel_count: s.channel_count,
+          has_custom_prompt: s.has_custom_prompt,
+        };
+      });
+
+      // 2. Addable servers: all Discord guilds that are NOT in the database list
+      const addable = allGuilds.filter(g => {
+        const isAlreadyConfigured = dbServers.some(s => s.guild_id === g.id);
+        return !isAlreadyConfigured;
+      });
+
+      setConfiguredServers(configured);
+      setAddableServers(addable);
     } catch (e) {
       console.error("Failed to load servers with status:", e);
+      setErrorStatus({ ok: false, msg: e.message || "Failed to load servers" });
     } finally {
       setLoading(false);
     }
