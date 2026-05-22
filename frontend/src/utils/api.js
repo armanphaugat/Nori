@@ -49,6 +49,7 @@ export const API = {
   getMe:             ()           => apiFetch("/auth/me"),
   logout:            ()           => apiFetch("/auth/logout", { method: "POST" }),
   getGuilds:         ()           => apiFetch("/guilds/"),
+  getEligibleGuilds: ()           => apiFetch("/guilds/eligible"),
   getGuildChannels:  (gid)        => apiFetch(`/guilds/${encodeURIComponent(gid)}/channels`),
   addServer:         (gid, name)  => apiFetch("/server/add", { method: "POST", body: fd({ guild_id: gid, name }), isForm: true }),
   getConfig:         (gid)        => apiFetch(`/server/config?guild_id=${encodeURIComponent(gid)}`),

@@ -2,14 +2,16 @@ import os
 
 import httpx
 from fastapi import Depends, HTTPException, status
-
+import time
+CACHE_TTL = 30
 from backend.middleware.auth import verify_access_token
 from dbhelper.db_helper import get_admin_user
 
 DISCORD_API = os.getenv("DISCORD_API", "https://discord.com/api/v10")
 
 from dbhelper.db_helper import *
-
+_eligible_cache: dict[str, tuple[float, dict]] = {}
+CACHE_TTL = 30  # seconds
 async def handle_get_guilds(
     user: dict = Depends(verify_access_token),
 ) -> dict:
@@ -111,10 +113,20 @@ async def handle_get_guild_channels(
     result.extend(sorted_categories)
 
     return {"categories": result}
+
 async def handle_get_eligible_guilds(
     user: dict = Depends(verify_access_token),
 ) -> dict:
-    row = get_admin_user(user["discord_id"])
+    uid = user["discord_id"]
+    now = time.time()
+
+    # Return cached result if still fresh
+    if uid in _eligible_cache:
+        ts, cached = _eligible_cache[uid]
+        if now - ts < CACHE_TTL:
+            return cached
+
+    row = get_admin_user(uid)
     if not row:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -131,10 +143,9 @@ async def handle_get_eligible_guilds(
         raise HTTPException(status_code=502, detail=f"Discord API error: {resp.status_code}")
 
     guilds = resp.json()
-
     ADMIN_PERMISSION = 0x8
 
-    return {
+    result = {
         "guilds": [
             {
                 "id": g["id"],
@@ -150,43 +161,6 @@ async def handle_get_eligible_guilds(
             if g.get("owner") or (int(g.get("permissions", 0)) & ADMIN_PERMISSION)
         ]
     }
-
-async def handle_get_eligible_guilds(
-    user: dict = Depends(verify_access_token),
-) -> dict:
-    row = get_admin_user(user["discord_id"])
-    if not row:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(
-            f"{DISCORD_API}/users/@me/guilds",
-            headers={"Authorization": f"Bearer {row['discord_access_token']}"},
-            timeout=10,
-        )
-
-    if resp.status_code == 401:
-        raise HTTPException(status_code=401, detail="Discord token expired")
-    if resp.status_code != 200:
-        raise HTTPException(status_code=502, detail=f"Discord API error: {resp.status_code}")
-
-    guilds = resp.json()
-
-    ADMIN_PERMISSION = 0x8
-
-    return {
-        "guilds": [
-            {
-                "id": g["id"],
-                "name": g["name"],
-                "icon": (
-                    f"https://cdn.discordapp.com/icons/{g['id']}/{g['icon']}.png"
-                    if g.get("icon") else None
-                ),
-                "owner": g.get("owner", False),
-                "registered": bool(get_server(g["id"])),
-            }
-            for g in guilds
-            if g.get("owner") or (int(g.get("permissions", 0)) & ADMIN_PERMISSION)
-        ]
-    }
+    _eligible_cache[uid] = (now, result)
+    return result
+    

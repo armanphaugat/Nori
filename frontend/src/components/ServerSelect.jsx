@@ -12,44 +12,30 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
 
   // Fetch configured and addable servers from backend
   const loadStatuses = async () => {
-    try {
-      setLoading(true);
-      const [guildsRes, statusRes] = await Promise.all([
-        API.getGuilds(),
-        API.listServersWithStatus()
-      ]);
-      
-      const allGuilds = guildsRes.guilds || [];
-      const dbServers = statusRes.servers || [];
+  try {
+    setLoading(true);
+    const res = await API.getEligibleGuilds();
+    const guilds = res.guilds || [];
 
-      // 1. Configured servers: matched with listServersWithStatus
-      const configured = dbServers.map(s => {
-        const dcGuild = allGuilds.find(g => g.id === s.guild_id);
-        return {
-          id: s.guild_id,
-          name: s.name,
-          icon: dcGuild?.icon || null,
-          config_status: s.config_status,
-          channel_count: s.channel_count,
-          has_custom_prompt: s.has_custom_prompt,
-        };
-      });
+    const configured = guilds
+      .filter(g => g.registered)
+      .map(g => ({
+        id: g.id,
+        name: g.name,
+        icon: g.icon,
+      }));
 
-      // 2. Addable servers: all Discord guilds that are NOT in the database list
-      const addable = allGuilds.filter(g => {
-        const isAlreadyConfigured = dbServers.some(s => s.guild_id === g.id);
-        return !isAlreadyConfigured;
-      });
+    const addable = guilds.filter(g => !g.registered);
 
-      setConfiguredServers(configured);
-      setAddableServers(addable);
-    } catch (e) {
-      console.error("Failed to load servers with status:", e);
-      setErrorStatus({ ok: false, msg: e.message || "Failed to load servers" });
-    } finally {
-      setLoading(false);
-    }
-  };
+    setConfiguredServers(configured);
+    setAddableServers(addable);
+  } catch (e) {
+    console.error("Failed to load servers:", e);
+    setErrorStatus({ ok: false, msg: e.message || "Failed to load servers" });
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     loadStatuses();
