@@ -213,7 +213,7 @@ async def handle_upload_faq(
             user_id=user["discord_id"],
             username=user["username"],
             kind="pdf",
-            name=faq_text[:80],   # store a short preview as the name
+            name=faq_text[:80],
             content_id=content_id,
             status="ok",
         )

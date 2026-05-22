@@ -425,7 +425,48 @@ const NAV_ITEMS = [
   { id: "crawler",   label: "URL Crawler",       icon: "travel_explore" },
 ];
 
-function Sidebar({ tab, onTab, guilds, activeGuildId, onActivate, user, onLogout }) {
+function Sidebar({ tab, onTab, guilds, discordGuilds, activeGuildId, onActivate, onAdd, user, onLogout }) {
+  const [registering, setRegistering] = useState(false);
+  const [registerError, setRegisterError] = useState(null);
+
+  // Merge registered guilds + unregistered Discord guilds the user admins into one list
+  const allServers = [
+    ...guilds,
+    ...(discordGuilds || []).filter(dg => !guilds.find(g => g.id === dg.id)),
+  ];
+
+  const isRegistered = (id) => !!guilds.find(g => g.id === id);
+
+  const handleServerChange = async (e) => {
+    const selectedId = e.target.value;
+    if (!selectedId) return;
+    setRegisterError(null);
+
+    // Already registered — just switch to it
+    if (isRegistered(selectedId)) {
+      onActivate(selectedId);
+      return;
+    }
+
+    // Not registered yet — auto-register then activate
+    const discordGuild = (discordGuilds || []).find(g => g.id === selectedId);
+    if (!discordGuild) return;
+
+    setRegistering(true);
+    try {
+      await API.addServer(discordGuild.id, discordGuild.name);
+      onAdd({ id: discordGuild.id, name: discordGuild.name, icon: discordGuild.icon || null });
+      onActivate(discordGuild.id);
+    } catch (err) {
+      setRegisterError("Failed to register server. Try again.");
+      console.error("Auto-register error:", err);
+    } finally {
+      setRegistering(false);
+    }
+  };
+
+  const activeGuild = allServers.find(g => g.id === activeGuildId) || null;
+
   return (
     <aside style={{
       width: 240, flexShrink: 0, background: "var(--surface-low)",
@@ -458,8 +499,8 @@ function Sidebar({ tab, onTab, guilds, activeGuildId, onActivate, user, onLogout
           Active Server
         </div>
 
-        {guilds.length === 0 ? (
-          /* No servers yet */
+        {allServers.length === 0 ? (
+          /* No servers at all */
           <div style={{
             padding: "10px 12px", borderRadius: "var(--r-md)",
             background: "var(--surface-container)", border: "1.5px dashed var(--outline-variant)",
@@ -467,40 +508,82 @@ function Sidebar({ tab, onTab, guilds, activeGuildId, onActivate, user, onLogout
           }}>
             <Icon name="add_circle" size={16} style={{ color: "var(--on-surface-variant)", opacity: 0.5 }} />
             <span style={{ fontSize: 12, color: "var(--on-surface-variant)", fontStyle: "italic" }}>
-              No servers yet
+              No servers found
             </span>
           </div>
         ) : (
           /* Server dropdown */
-          <div className="server-select-wrapper">
+          <div className="server-select-wrapper" style={{ position: "relative" }}>
             <select
               className="kb-input"
               value={activeGuildId || ""}
-              onChange={e => e.target.value && onActivate(e.target.value)}
+              onChange={handleServerChange}
+              disabled={registering}
               style={{
                 fontSize: 13, height: 40, fontWeight: 600,
                 background: activeGuildId ? "var(--primary-fixed)" : "var(--surface-lowest)",
                 color: activeGuildId ? "var(--primary)" : "var(--on-surface-variant)",
                 border: activeGuildId ? "1.5px solid rgba(70,72,212,0.3)" : "1.5px solid var(--outline-variant)",
+                opacity: registering ? 0.6 : 1,
+                cursor: registering ? "wait" : "pointer",
               }}
             >
               {!activeGuildId && <option value="">— select server —</option>}
-              {guilds.map(g => (
-                <option key={g.id} value={g.id}>{g.name}</option>
-              ))}
+              {allServers.map(g => {
+                const registered = isRegistered(g.id);
+                return (
+                  <option key={g.id} value={g.id}>
+                    {g.name}{!registered ? " ✦ new" : ""}
+                  </option>
+                );
+              })}
             </select>
+
+            {/* Registering spinner */}
+            {registering && (
+              <div style={{
+                position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
+                pointerEvents: "none",
+              }}>
+                <Spinner size={14} color="var(--primary)" />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Registering status */}
+        {registering && (
+          <div style={{
+            marginTop: 6, display: "flex", alignItems: "center", gap: 5,
+            padding: "4px 8px", borderRadius: "var(--r-sm)",
+          }}>
+            <Spinner size={10} color="var(--primary)" />
+            <span style={{ fontSize: 11, color: "var(--primary)" }}>
+              Registering server…
+            </span>
+          </div>
+        )}
+
+        {/* Error */}
+        {registerError && !registering && (
+          <div style={{
+            marginTop: 6, display: "flex", alignItems: "center", gap: 5,
+            padding: "4px 8px", borderRadius: "var(--r-sm)",
+          }}>
+            <Icon name="error" size={12} style={{ color: "var(--error)" }} />
+            <span style={{ fontSize: 11, color: "var(--error)" }}>{registerError}</span>
           </div>
         )}
 
         {/* Active server status pill */}
-        {activeGuildId && guilds.find(g => g.id === activeGuildId) && (
+        {activeGuild && !registering && !registerError && (
           <div style={{
             marginTop: 6, display: "flex", alignItems: "center", gap: 5,
             padding: "4px 8px", borderRadius: "var(--r-sm)",
           }}>
             <OnlineDot />
             <span style={{ fontSize: 11, color: "var(--on-surface-variant)" }}>
-              All tabs use this server
+              {isRegistered(activeGuild.id) ? "All tabs use this server" : ""}
             </span>
           </div>
         )}
@@ -528,7 +611,7 @@ function Sidebar({ tab, onTab, guilds, activeGuildId, onActivate, user, onLogout
               background: "linear-gradient(135deg, var(--primary), var(--primary-container))",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0,
-            }}>{(user.username || "U").slice(0,1).toUpperCase()}</div>
+            }}>{(user.username || "U").slice(0, 1).toUpperCase()}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: "var(--on-surface)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.username || "Admin"}</div>
               <div style={{ fontSize: 11, color: "var(--on-surface-variant)" }}>Admin</div>
@@ -2661,13 +2744,15 @@ function Dashboard({ user, guilds, discordGuilds, onGuildsChange, onLogout }) {
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "var(--bg)" }}>
       <Sidebar
-        tab={tab} onTab={setTab}
-        guilds={guilds}
-        activeGuildId={activeGuildId}
-        onActivate={handleActivate}
-        user={user}
-        onLogout={onLogout}
-      />
+  tab={tab} onTab={setTab}
+  guilds={guilds}
+  discordGuilds={discordGuilds}
+  activeGuildId={activeGuildId}
+  onActivate={handleActivate}
+  onAdd={handleAdd}
+  user={user}
+  onLogout={onLogout}
+/>
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         {/* Top bar */}

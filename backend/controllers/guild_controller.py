@@ -8,13 +8,14 @@ from dbhelper.db_helper import get_admin_user
 
 DISCORD_API = os.getenv("DISCORD_API", "https://discord.com/api/v10")
 
+from dbhelper.db_helper import get_admin_user, get_user_guild_ids
+
 async def handle_get_guilds(
     user: dict = Depends(verify_access_token),
 ) -> dict:
     row = get_admin_user(user["discord_id"])
     if not row:
         raise HTTPException(status_code=404, detail="User not found")
-
     async with httpx.AsyncClient() as client:
         resp = await client.get(
             f"{DISCORD_API}/users/@me/guilds",
@@ -23,16 +24,10 @@ async def handle_get_guilds(
         )
 
     if resp.status_code == 401:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Discord access token expired — please log in again",
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Discord token expired")
     if resp.status_code != 200:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Discord API error: {resp.status_code}",
-        )
-
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=f"Discord API error: {resp.status_code}")
+    admin_guild_ids = get_user_guild_ids(user["discord_id"])
     guilds = resp.json()
     return {
         "guilds": [
@@ -41,12 +36,12 @@ async def handle_get_guilds(
                 "name": g["name"],
                 "icon": (
                     f"https://cdn.discordapp.com/icons/{g['id']}/{g['icon']}.png"
-                    if g.get("icon")
-                    else None
+                    if g.get("icon") else None
                 ),
                 "owner": g.get("owner", False),
             }
             for g in guilds
+            if g["id"] in admin_guild_ids
         ]
     }
 
