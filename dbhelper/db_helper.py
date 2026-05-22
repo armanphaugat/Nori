@@ -180,31 +180,26 @@ def log_upload(
     username: str,
     kind: str,
     name: str,
-    chunks: int,
+    content_id: str = None,
     status: str = "ok",
-    error: Optional[str] = None,
+    error: str = None,
 ) -> None:
     with DB() as s:
         s.execute(
             text("""
                 INSERT INTO uploads
-                    (server_id, uploaded_by, username, type, name, chunks, status, error)
+                    (server_id, uploaded_by, username, type, name, content_id, status, error)
                 VALUES
-                    (:sid, :uid, :uname, :type, :name, :chunks, :status, :error)
+                    (:sid, :uid, :uname, :type, :name, :cid, :status, :error)
             """),
             {
-                "sid": str(guild_id),
-                "uid": str(user_id),
-                "uname": username,
-                "type": kind,
-                "name": name,
-                "chunks": chunks,
-                "status": status,
-                "error": error,
+                "sid": str(guild_id), "uid": str(user_id), "uname": username,
+                "type": kind, "name": name,
+                "cid": content_id,
+                "status": status, "error": error,
             },
         )
         s.commit()
-
 
 def get_uploads(guild_id: str) -> list[dict]:
     with DB() as s:
@@ -766,3 +761,28 @@ def get_web_spec_id(guild_id: str) -> Optional[str]:
             {"id": str(guild_id)},
         ).mappings().first()
         return row["web_spec_id"] if row else None
+    
+def remove_content_id(server_id: str, content_id: str) -> bool:
+    with DB() as s:
+        result = s.execute(
+            text("""
+                DELETE FROM server_uploads
+                WHERE server_id = :server_id AND content_id = :content_id
+            """),
+            {"server_id": server_id, "content_id": content_id},
+        )
+        s.commit()
+        return result.rowcount > 0
+
+
+def remove_feed_id(server_id: str, feed_id: str) -> bool:
+    with DB() as s:
+        result = s.execute(
+            text("""
+                DELETE FROM server_feeds
+                WHERE server_id = :server_id AND feed_id = :feed_id
+            """),
+            {"server_id": server_id, "feed_id": feed_id},
+        )
+        s.commit()
+        return result.rowcount > 0
