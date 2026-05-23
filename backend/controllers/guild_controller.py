@@ -1,23 +1,26 @@
 import os
+import time
 
 import httpx
 from fastapi import Depends, HTTPException, status
-import time
-CACHE_TTL = 30
-from backend.middleware.auth import verify_access_token
-from dbhelper.db_helper import get_admin_user
 
-DISCORD_API = os.getenv("DISCORD_API", "https://discord.com/api/v10")
+from backend.middleware.auth import require_guild_admin_query, verify_access_token
+from dbhelper.db_helper import get_admin_user, get_server, get_user_guild_ids
 
-from dbhelper.db_helper import *
+DISCORD_API      = os.getenv("DISCORD_API", "https://discord.com/api/v10")
+ADMIN_PERMISSION = 0x8
+CACHE_TTL        = 30  # seconds
+
 _eligible_cache: dict[str, tuple[float, dict]] = {}
-CACHE_TTL = 30  # seconds
+
+
 async def handle_get_guilds(
     user: dict = Depends(verify_access_token),
 ) -> dict:
     row = get_admin_user(user["discord_id"])
     if not row:
         raise HTTPException(status_code=404, detail="User not found")
+
     async with httpx.AsyncClient() as client:
         resp = await client.get(
             f"{DISCORD_API}/users/@me/guilds",
@@ -29,14 +32,19 @@ async def handle_get_guilds(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Discord token expired")
     if resp.status_code != 200:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=f"Discord API error: {resp.status_code}")
+
+    # guild_admins is the source of truth for "registered in your app"
+    # Discord permissions is the source of truth for "allowed to manage"
+    # Both must pass
     admin_guild_ids = get_user_guild_ids(user["discord_id"])
     guilds = resp.json()
+
     return {
         "guilds": [
             {
-                "id": g["id"],
-                "name": g["name"],
-                "icon": (
+                "id":    g["id"],
+                "name":  g["name"],
+                "icon":  (
                     f"https://cdn.discordapp.com/icons/{g['id']}/{g['icon']}.png"
                     if g.get("icon") else None
                 ),
@@ -44,50 +52,51 @@ async def handle_get_guilds(
             }
             for g in guilds
             if g["id"] in admin_guild_ids
-            if g["id"] in admin_guild_ids
+            and (g.get("owner") or (int(g.get("permissions", 0)) & ADMIN_PERMISSION))
         ]
     }
 
+
 async def handle_get_guild_channels(
     guild_id: str,
-    user: dict = Depends(verify_access_token),
+    user: dict = Depends(require_guild_admin_query),
 ) -> dict:
+    """
+    Returns Discord channels for a guild, grouped by category.
+    Requires the caller to be in guild_admins for this guild.
+    """
     bot_token = os.getenv("DISCORD_BOT_TOKEN")
     if not bot_token:
-        raise HTTPException(
-            status_code=500,
-            detail="DISCORD_BOT_TOKEN not configured on server",
-        )
+        raise HTTPException(status_code=500, detail="DISCORD_BOT_TOKEN not configured on server")
+
     async with httpx.AsyncClient() as client:
         resp = await client.get(
             f"{DISCORD_API}/guilds/{guild_id}/channels",
             headers={"Authorization": f"Bot {bot_token}"},
             timeout=10,
         )
+
     if resp.status_code == 403:
-        raise HTTPException(
-            status_code=403,
-            detail="Bot is not in this guild — invite it first",
-        )
+        raise HTTPException(status_code=403, detail="Bot is not in this guild — invite it first")
     if resp.status_code != 200:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Discord API error: {resp.status_code}",
-        )
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=f"Discord API error: {resp.status_code}")
+
     channels = resp.json()
+
     categories = {
         c["id"]: {"id": c["id"], "name": c["name"], "channels": []}
         for c in channels
         if c["type"] == 4
     }
     uncategorized = {"id": None, "name": "Uncategorized", "channels": []}
+
     for c in channels:
         if c["type"] not in (0, 5):
             continue
         channel_obj = {
-            "id": c["id"],
-            "name": c["name"],
-            "type": c["type"],
+            "id":       c["id"],
+            "name":     c["name"],
+            "type":     c["type"],
             "position": c.get("position", 0),
         }
         parent_id = c.get("parent_id")
@@ -95,18 +104,22 @@ async def handle_get_guild_channels(
             categories[parent_id]["channels"].append(channel_obj)
         else:
             uncategorized["channels"].append(channel_obj)
-    for cat in categories.values():
-        cat["channels"].sort(key=lambda c: c["position"])
-    uncategorized["channels"].sort(key=lambda c: c["position"])
+
     category_positions = {
         c["id"]: c.get("position", 0)
         for c in channels
         if c["type"] == 4
     }
+
+    for cat in categories.values():
+        cat["channels"].sort(key=lambda c: c["position"])
+    uncategorized["channels"].sort(key=lambda c: c["position"])
+
     sorted_categories = sorted(
         categories.values(),
-        key=lambda cat: category_positions.get(cat["id"], 0)
+        key=lambda cat: category_positions.get(cat["id"], 0),
     )
+
     result = []
     if uncategorized["channels"]:
         result.append(uncategorized)
@@ -114,13 +127,18 @@ async def handle_get_guild_channels(
 
     return {"categories": result}
 
+
 async def handle_get_eligible_guilds(
     user: dict = Depends(verify_access_token),
 ) -> dict:
+    """
+    Returns all Discord guilds where the user has owner or Administrator permission,
+    annotated with whether they are registered in this app.
+    Results are cached per user for CACHE_TTL seconds.
+    """
     uid = user["discord_id"]
     now = time.time()
 
-    # Return cached result if still fresh
     if uid in _eligible_cache:
         ts, cached = _eligible_cache[uid]
         if now - ts < CACHE_TTL:
@@ -143,24 +161,23 @@ async def handle_get_eligible_guilds(
         raise HTTPException(status_code=502, detail=f"Discord API error: {resp.status_code}")
 
     guilds = resp.json()
-    ADMIN_PERMISSION = 0x8
 
     result = {
         "guilds": [
             {
-                "id": g["id"],
-                "name": g["name"],
-                "icon": (
+                "id":         g["id"],
+                "name":       g["name"],
+                "icon":       (
                     f"https://cdn.discordapp.com/icons/{g['id']}/{g['icon']}.png"
                     if g.get("icon") else None
                 ),
-                "owner": g.get("owner", False),
+                "owner":      g.get("owner", False),
                 "registered": bool(get_server(g["id"])),
             }
             for g in guilds
             if g.get("owner") or (int(g.get("permissions", 0)) & ADMIN_PERMISSION)
         ]
     }
+
     _eligible_cache[uid] = (now, result)
     return result
-    

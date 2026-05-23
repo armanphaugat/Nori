@@ -508,7 +508,11 @@ def add_guild_admin(
                 INSERT INTO guild_admins (guild_id, discord_id, role, granted_by, granted_at)
                 VALUES (:guild_id, :discord_id, :role, :granted_by, NOW())
                 ON CONFLICT (guild_id, discord_id) DO UPDATE SET
-                    role = EXCLUDED.role
+                    role = CASE
+                        WHEN guild_admins.role = 'owner' THEN 'owner'
+                        ELSE EXCLUDED.role
+                    END,
+                    granted_by = EXCLUDED.granted_by
             """),
             {
                 "guild_id": str(guild_id),
