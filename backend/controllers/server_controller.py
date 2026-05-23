@@ -6,22 +6,7 @@ from backend.middleware.auth import *
 def _require_server_updated(result: int, label: str) -> None:
     if result != 1:
         raise HTTPException(status_code=404, detail=f"Server not found or {label} not updated")
-async def sync_all_admins_for_guild(guild_id: str):
-    """After a guild is registered, pull its member list and seed all admins."""
-    bot_token = os.getenv("DISCORD_BOT_TOKEN")
-    ADMIN_PERMISSION = 0x8
 
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(
-            f"{DISCORD_API}/guilds/{guild_id}/members?limit=1000",
-            headers={"Authorization": f"Bot {bot_token}"},
-            timeout=10,
-        )
-    if resp.status_code != 200:
-        return  # best-effort
-
-    # This requires further role permission checks — or just let
-    # admins self-register on their next login via sync_guild_admins_on_login
 
 async def handle_add_server(
     guild_id: str = Form(...),
