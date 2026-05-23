@@ -73,15 +73,38 @@ export const API = {
     if (urls) f.append("urls", urls);
     return apiFetch("/upload/", { method: "PUT", body: f, isForm: true });
   },
+  uploadFile: (gid, file) => {
+    const f = new FormData();
+    f.append("guild_id", gid);
+    f.append("file", file);
+    return apiFetch("/upload/file", { method: "POST", body: f, isForm: true });
+  },
+  uploadUrl: (gid, url) => {
+    const f = new FormData();
+    f.append("guild_id", gid);
+    f.append("url", url);
+    return apiFetch("/upload/url", { method: "POST", body: f, isForm: true });
+  },
+  uploadWebsite: (gid, url) => {
+    const f = new FormData();
+    f.append("guild_id", gid);
+    f.append("url", url);
+    return apiFetch("/upload/website", { method: "POST", body: f, isForm: true });
+  },
   uploadContacts: (gid, file) => {
     const f = new FormData();
     f.append("guild_id", gid);
     f.append("file", file);
-    return apiFetch("/upload/contacts", { method: "PUT", body: f, isForm: true });
+    return apiFetch("/upload/contacts", { method: "POST", body: f, isForm: true });
   },
-  addFaq: (gid, text) => apiFetch("/upload/add-faq", { method: "POST", body: fd({ guild_id: gid, text }), isForm: true }),
+  addFaq: (gid, text) => {
+    const f = new FormData();
+    f.append("guild_id", gid);
+    f.append("faq_text", text);
+    return apiFetch("/upload/faq", { method: "POST", body: f, isForm: true });
+  },
   getAllUploads: (gid)  => apiFetch(`/upload/all?guild_id=${encodeURIComponent(gid)}`),
-  deleteUpload:  (gid, uid) => apiFetch(`/upload/${encodeURIComponent(uid)}?guild_id=${encodeURIComponent(gid)}`, { method: "DELETE" }),
+  deleteUpload:  (gid, uid) => apiFetch(`/upload/delete-content/${encodeURIComponent(uid)}?guild_id=${encodeURIComponent(gid)}`, { method: "DELETE" }),
   getSubUrls:   (url)  => apiFetch(`/upload/sub-urls?url=${encodeURIComponent(url)}`),
   query:        (question, server) => apiFetch("/query", { method: "POST", body: { question, server } }),
   getAnalytics: (gid)  => apiFetch(`/analytics/summary?guild_id=${encodeURIComponent(gid)}`),
