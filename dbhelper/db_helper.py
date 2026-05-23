@@ -20,139 +20,71 @@ engine = create_engine(
 print(engine)
 DB = sessionmaker(bind=engine)
 
-
-# ---------------------------------------------------------------------------
-# servers
-# ---------------------------------------------------------------------------
-
 def add_server(guild_id: str, name: str) -> None:
     with DB() as s:
-        s.execute(
-            text("""
-                INSERT INTO servers (server_id, server_name)
-                VALUES (:id, :name)
-                ON CONFLICT DO NOTHING
-            """),
-            {"id": str(guild_id), "name": name},
-        )
+        s.execute(text("""INSERT INTO servers (server_id, server_name) VALUES (:id, :name) ON CONFLICT DO NOTHING"""),{"id": str(guild_id), "name": name},)
         s.commit()
 
 
 def get_server(guild_id: str) -> Optional[dict]:
     with DB() as s:
-        row = s.execute(
-            text("SELECT * FROM servers WHERE server_id = :id"),
-            {"id": str(guild_id)},
-        ).mappings().first()
+        row = s.execute(text("SELECT * FROM servers WHERE server_id = :id"),{"id": str(guild_id)},).mappings().first()
         return dict(row) if row else None
 
 
 def get_all_servers() -> list[dict]:
     with DB() as s:
-        rows = s.execute(
-            text("SELECT * FROM servers ORDER BY added_at DESC")
-        ).mappings().all()
+        rows = s.execute(text("SELECT * FROM servers ORDER BY added_at DESC")).mappings().all()
         return [dict(r) for r in rows]
 
 
 def reset_server_settings(guild_id: str) -> None:
-    """Reset all tunable settings to their schema defaults."""
     with DB() as s:
         s.execute(
-            text("""
-                UPDATE servers SET
-                    prefix     = '-',
-                    max_tokens = 1024,
-                    updated_at = NOW()
-                WHERE server_id = :id
-            """),
-            {"id": str(guild_id)},
-        )
+            text("""UPDATE servers SET prefix= '-',max_tokens = 1024,updated_at = NOW() WHERE server_id = :id"""),{"id": str(guild_id)},)
         s.commit()
 
 
 def update_max_tokens(guild_id: str, value: int) -> int:
     with DB() as s:
         result = s.execute(
-            text("""
-                UPDATE servers
-                SET max_tokens = :value, updated_at = NOW()
-                WHERE server_id = :id
-            """),
-            {"value": value, "id": str(guild_id)},
-        )
+            text("""UPDATE servers SET max_tokens = :value, updated_at = NOW() WHERE server_id = :id"""),{"value": value, "id": str(guild_id)},)
         s.commit()
         return result.rowcount
 
-
-# ---------------------------------------------------------------------------
-# channels
-# ---------------------------------------------------------------------------
-
 def set_channel(guild_id: str, channel_id: str) -> None:
     with DB() as s:
-        s.execute(
-            text("""
-                INSERT INTO channels (server_id, channel_id)
-                VALUES (:guild_id, :channel_id)
-                ON CONFLICT DO NOTHING
-            """),
-            {"guild_id": str(guild_id), "channel_id": str(channel_id)},
-        )
+        s.execute(text("""INSERT INTO channels (server_id, channel_id) VALUES (:guild_id, :channel_id) ON CONFLICT DO NOTHING"""),{"guild_id": str(guild_id), "channel_id": str(channel_id)},)
         s.commit()
 
 
 def remove_channel(guild_id: str, channel_id: str) -> None:
     with DB() as s:
-        s.execute(
-            text("""
-                DELETE FROM channels
-                WHERE server_id = :guild_id AND channel_id = :channel_id
-            """),
-            {"guild_id": str(guild_id), "channel_id": str(channel_id)},
-        )
+        s.execute(text("""DELETE FROM channels WHERE server_id = :guild_id AND channel_id = :channel_id"""),{"guild_id": str(guild_id), "channel_id": str(channel_id)},)
         s.commit()
 
 
 def get_channels(guild_id: str) -> list[dict]:
     with DB() as s:
-        rows = s.execute(
-            text("SELECT channel_id FROM channels WHERE server_id = :guild_id"),
-            {"guild_id": str(guild_id)},
-        ).mappings().all()
+        rows = s.execute(text("SELECT channel_id FROM channels WHERE server_id = :guild_id"),{"guild_id": str(guild_id)},).mappings().all()
         return [dict(r) for r in rows]
 
 
 def get_all_channels() -> list[dict]:
     with DB() as s:
-        rows = s.execute(
-            text("SELECT * FROM channels ORDER BY added_at DESC")
-        ).mappings().all()
+        rows = s.execute(text("SELECT * FROM channels ORDER BY added_at DESC")).mappings().all()
         return [dict(r) for r in rows]
-
-
-# ---------------------------------------------------------------------------
-# mod_channel (stored on servers row)
-# ---------------------------------------------------------------------------
 
 def get_mod_channel(guild_id: str) -> Optional[dict]:
     with DB() as s:
-        row = s.execute(
-            text("SELECT mod_channel FROM servers WHERE server_id = :id"),
-            {"id": str(guild_id)},
-        ).mappings().first()
+        row = s.execute(text("SELECT mod_channel FROM servers WHERE server_id = :id"),{"id": str(guild_id)},).mappings().first()
         return dict(row) if row else None
 
 
 def insert_mod_channel(guild_id: str, channel_id: str) -> None:
     with DB() as s:
         s.execute(
-            text("""
-                UPDATE servers
-                SET mod_channel = :channel_id, updated_at = NOW()
-                WHERE server_id = :id
-            """),
-            {"channel_id": str(channel_id), "id": str(guild_id)},
+            text("""UPDATE servers SET mod_channel = :channel_id, updated_at = NOW() WHERE server_id = :id"""),{"channel_id": str(channel_id), "id": str(guild_id)},
         )
         s.commit()
 
@@ -160,19 +92,10 @@ def insert_mod_channel(guild_id: str, channel_id: str) -> None:
 def remove_mod_channel(guild_id: str) -> None:
     with DB() as s:
         s.execute(
-            text("""
-                UPDATE servers
-                SET mod_channel = NULL, updated_at = NOW()
-                WHERE server_id = :id
-            """),
+            text("""UPDATE servers SET mod_channel = NULL, updated_at = NOW() WHERE server_id = :id"""),
             {"id": str(guild_id)},
         )
         s.commit()
-
-
-# ---------------------------------------------------------------------------
-# uploads
-# ---------------------------------------------------------------------------
 
 def log_upload(
     guild_id, user_id, username, kind, name,
@@ -218,11 +141,6 @@ def remove_upload(upload_id: str, guild_id: str) -> bool:
         )
         s.commit()
         return result.fetchone() is not None
-
-
-# ---------------------------------------------------------------------------
-# analytics
-# ---------------------------------------------------------------------------
 
 def log_analytics(
     guild_id: str,
@@ -333,9 +251,6 @@ def get_analytics_summary(guild_id: str) -> Optional[dict]:
         return dict(row) if row else None
 
 
-# ---------------------------------------------------------------------------
-# admin_users
-# ---------------------------------------------------------------------------
 
 def upsert_admin_user(
     discord_id: str,
@@ -389,10 +304,6 @@ def get_admin_user(discord_id: str) -> Optional[dict]:
         ).mappings().fetchone()
         return dict(row) if row else None
 
-
-# ---------------------------------------------------------------------------
-# admin_sessions
-# ---------------------------------------------------------------------------
 
 def create_session(
     discord_id: str,
@@ -534,11 +445,6 @@ def remove_guild_admin(guild_id: str, discord_id: str) -> None:
             {"guild_id": str(guild_id), "discord_id": discord_id},
         )
         s.commit()
-
-
-# ---------------------------------------------------------------------------
-# server config status queries
-# ---------------------------------------------------------------------------
 
 def get_user_servers_with_config_status(discord_id: str) -> list[dict]:
     """
@@ -717,10 +623,6 @@ def get_feed_ids(server_id: str) -> list[str]:
         ).fetchall()
         return [row[0] for row in rows]
 
-
-# ---------------------------------------------------------------------------
-# spec IDs
-# ---------------------------------------------------------------------------
 
 def get_spec_id(guild_id: str, spec_name: str) -> Optional[str]:
     column = "kb_spec_id" if spec_name == "kb_spec" else "web_spec_id"

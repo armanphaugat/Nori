@@ -9,10 +9,9 @@ from dbhelper.db_helper import get_admin_user, get_server, get_user_guild_ids
 
 DISCORD_API      = os.getenv("DISCORD_API", "https://discord.com/api/v10")
 ADMIN_PERMISSION = 0x8
-CACHE_TTL        = 30  # seconds
+CACHE_TTL        = 30
 
 _eligible_cache: dict[str, tuple[float, dict]] = {}
-
 
 async def handle_get_guilds(
     user: dict = Depends(verify_access_token),
@@ -25,20 +24,15 @@ async def handle_get_guilds(
         resp = await client.get(
             f"{DISCORD_API}/users/@me/guilds",
             headers={"Authorization": f"Bearer {row['discord_access_token']}"},
-            timeout=10,
+            timeout=30,
         )
 
     if resp.status_code == 401:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Discord token expired")
     if resp.status_code != 200:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=f"Discord API error: {resp.status_code}")
-
-    # guild_admins is the source of truth for "registered in your app"
-    # Discord permissions is the source of truth for "allowed to manage"
-    # Both must pass
     admin_guild_ids = get_user_guild_ids(user["discord_id"])
     guilds = resp.json()
-
     return {
         "guilds": [
             {
@@ -59,12 +53,7 @@ async def handle_get_guilds(
 
 async def handle_get_guild_channels(
     guild_id: str,
-    user: dict = Depends(require_guild_admin_query),
 ) -> dict:
-    """
-    Returns Discord channels for a guild, grouped by category.
-    Requires the caller to be in guild_admins for this guild.
-    """
     bot_token = os.getenv("DISCORD_BOT_TOKEN")
     if not bot_token:
         raise HTTPException(status_code=500, detail="DISCORD_BOT_TOKEN not configured on server")
@@ -131,11 +120,6 @@ async def handle_get_guild_channels(
 async def handle_get_eligible_guilds(
     user: dict = Depends(verify_access_token),
 ) -> dict:
-    """
-    Returns all Discord guilds where the user has owner or Administrator permission,
-    annotated with whether they are registered in this app.
-    Results are cached per user for CACHE_TTL seconds.
-    """
     uid = user["discord_id"]
     now = time.time()
 
@@ -159,9 +143,7 @@ async def handle_get_eligible_guilds(
         raise HTTPException(status_code=401, detail="Discord token expired")
     if resp.status_code != 200:
         raise HTTPException(status_code=502, detail=f"Discord API error: {resp.status_code}")
-
     guilds = resp.json()
-
     result = {
         "guilds": [
             {

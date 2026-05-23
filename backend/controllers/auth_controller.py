@@ -25,7 +25,6 @@ from dbhelper.db_helper import (
 )
 
 ADMINISTRATOR_PERMISSION = 0x8
-
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 15))
 REFRESH_TOKEN_EXPIRE_DAYS   = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 7))
 REFRESH_COOKIE_NAME         = os.getenv("REFRESH_COOKIE_NAME", "refresh_token")
@@ -36,19 +35,18 @@ DISCORD_REDIRECT_URI        = os.environ["DISCORD_REDIRECT_URI"]
 DISCORD_OAUTH_URL           = os.environ["DISCORD_OAUTH_URL"]
 DISCORD_TOKEN_URL           = os.environ["DISCORD_TOKEN_URL"]
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3001")
-
 _pending_states: set[str] = set()
-
 
 def _hash_token(raw: str) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
-def _make_access_token(discord_id: str, guild_ids: list[str]) -> str:
+def _make_access_token(discord_id: str, guild_ids: list[str], username: str) -> str:
     now = datetime.now(timezone.utc)
     payload = {
         "sub":        discord_id,
         "discord_id": discord_id,
+        "username":   username,
         "guilds":     guild_ids,
         "iat":        now,
         "exp":        now + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
@@ -108,13 +106,6 @@ def _verify_and_consume_state(state: str) -> None:
 
 
 async def _sync_guild_admins(discord_id: str, discord_access_token: str) -> None:
-    """
-    Sync guild_admins table with the user's current Discord permissions.
-    - Upserts rows for registered guilds the user currently has admin/owner access to.
-    - Removes stale rows for guilds where they no longer have access.
-    - Never downgrades owner → admin (handled in DB upsert SQL).
-    - Never crashes login — all errors are swallowed.
-    """
     try:
         async with httpx.AsyncClient() as client:
             resp = await client.get(
@@ -123,11 +114,8 @@ async def _sync_guild_admins(discord_id: str, discord_access_token: str) -> None
                 timeout=10,
             )
         if resp.status_code != 200:
-            return  # best-effort — don't block login
-
+            return
         guilds = resp.json()
-
-        # Build set of guild IDs the user currently qualifies for (registered in app only)
         synced: set[str] = set()
         for g in guilds:
             is_owner = g.get("owner", False)
@@ -135,7 +123,7 @@ async def _sync_guild_admins(discord_id: str, discord_access_token: str) -> None
             if not is_admin:
                 continue
             if not get_server(g["id"]):
-                continue  # guild not registered in app — skip (FK constraint)
+                continue
             role = "owner" if is_owner else "admin"
             add_guild_admin(
                 guild_id=g["id"],
@@ -144,14 +132,11 @@ async def _sync_guild_admins(discord_id: str, discord_access_token: str) -> None
                 granted_by=discord_id,
             )
             synced.add(g["id"])
-
-        # Remove rows for guilds they no longer have access to
         current_db_guilds = get_user_guild_ids(discord_id)
         for stale_guild_id in current_db_guilds - synced:
             remove_guild_admin(stale_guild_id, discord_id)
 
     except Exception as e:
-        # Never let sync errors break login or token refresh
         print(f"[sync_guild_admins] Non-fatal error for {discord_id}: {e}")
 
 
@@ -189,25 +174,26 @@ async def handle_discord_callback(code: str, state: str, request: Request) -> Re
         raise HTTPException(status_code=400, detail="Failed to exchange Discord code")
 
     discord_tokens = token_resp.json()
-    d_access    = discord_tokens["access_token"]
-    d_refresh   = discord_tokens["refresh_token"]
-    d_expiry    = datetime.now(timezone.utc) + timedelta(seconds=discord_tokens["expires_in"])
+    d_access  = discord_tokens["access_token"]
+    d_refresh = discord_tokens["refresh_token"]
+    d_expiry  = datetime.now(timezone.utc) + timedelta(seconds=discord_tokens["expires_in"])
 
     me        = await _call_discord_api("/users/@me", d_access)
     guilds    = await _call_discord_api("/users/@me/guilds", d_access)
     guild_ids = [g["id"] for g in guilds]
 
+    # Build username once for reuse
+    username = f"{me['username']}#{me.get('discriminator', '0')}"
+
     upsert_admin_user(
         discord_id=me["id"],
-        username=f"{me['username']}#{me.get('discriminator', '0')}",
+        username=username,
         avatar=me.get("avatar"),
         email=me.get("email"),
         discord_access_token=d_access,
         discord_refresh_token=d_refresh,
         discord_token_expiry=d_expiry,
     )
-
-    # Sync guild_admins — must run after upsert_admin_user so FK exists
     await _sync_guild_admins(me["id"], d_access)
 
     raw_refresh = secrets.token_urlsafe(32)
@@ -219,7 +205,8 @@ async def handle_discord_callback(code: str, state: str, request: Request) -> Re
         ip_address=request.client.host if request.client else None,
     )
 
-    access_token = _make_access_token(me["id"], guild_ids)
+    # Pass full formatted username (consistent with what's stored in DB)
+    access_token = _make_access_token(me["id"], guild_ids, username)
     redirect = RedirectResponse(url=f"{FRONTEND_URL}/#token={access_token}", status_code=302)
     _set_refresh_cookie(redirect, raw_refresh)
     return redirect
@@ -257,7 +244,12 @@ async def handle_refresh_tokens(
         await _sync_guild_admins(user["discord_id"], user["discord_access_token"])
 
     guild_ids    = get_user_guild_ids(session["discord_id"])
-    access_token = _make_access_token(session["discord_id"], list(guild_ids))
+    # Pass username from DB row, consistent with login flow
+    access_token = _make_access_token(
+        session["discord_id"],
+        list(guild_ids),
+        user.get("username", "") if user else "",
+    )
 
     _set_refresh_cookie(response, new_raw_refresh)
     return {"access_token": access_token, "token_type": "bearer"}

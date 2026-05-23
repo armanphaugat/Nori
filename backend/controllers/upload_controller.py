@@ -238,7 +238,7 @@ async def handle_upload_faq(
 async def handle_delete_upload(
     upload_id: str,
     guild_id: str = Query(...),
-    user: dict = Depends(require_guild_admin),
+    user: dict = Depends(require_guild_admin_query),
 ) -> dict:
     try:
         row = get_upload_by_id(upload_id, guild_id)
