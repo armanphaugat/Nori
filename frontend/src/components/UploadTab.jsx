@@ -18,7 +18,8 @@ export default function UploadTab({ guildId, onGoToOverview }) {
   const [vidFiles, setVidFiles] = useState([]);
   const [audFiles, setAudFiles] = useState([]);
   const [xlsxFile, setXlsxFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
+  const [urlUploading, setUrlUploading] = useState(false);
+  const [sectionUploading, setSectionUploading] = useState({ doc: false, img: false, vid: false, aud: false });
   const [xlsxUploading, setXlsxUploading] = useState(false);
   const [faqText, setFaqText] = useState("");
   const [faqUploading, setFaqUploading] = useState(false);
@@ -53,11 +54,36 @@ export default function UploadTab({ guildId, onGoToOverview }) {
   };
 
   const extOf      = (name) => "." + name.split(".").pop().toLowerCase();
-  const filterFiles = (list, type) => [...list].filter(f => ALLOWED_EXTENSIONS[type].includes(extOf(f.name)));
-  const addFiles   = (setter, type) => (e) => { setter(p => [...p, ...filterFiles(e.target.files, type)]); e.target.value = ""; };
-  const dropFiles  = (setter, type) => (e) => { e.preventDefault(); setter(p => [...p, ...filterFiles(e.dataTransfer.files, type)]); };
+  const filterFiles = (list, type) => {
+    const filesArray = Array.from(list || []);
+    return filesArray.filter(f => ALLOWED_EXTENSIONS[type].includes(extOf(f.name)));
+  };
+  const handleFilesAdded = (list, setter, type, label) => {
+    const selected = Array.from(list || []);
+    if (selected.length === 0) return;
+
+    const allowed = selected.filter(f => {
+      const ext = extOf(f.name);
+      return ALLOWED_EXTENSIONS[type].includes(ext);
+    });
+
+    if (allowed.length < selected.length) {
+      const rejectedCount = selected.length - allowed.length;
+      setStatus({
+        ok: false,
+        msg: `Rejected ${rejectedCount} file(s). Only ${ALLOWED_EXTENSIONS[type].join(", ")} files are supported in ${label}.`
+      });
+    } else {
+      setStatus(null);
+    }
+
+    if (allowed.length > 0) {
+      setter(p => [...p, ...allowed]);
+    }
+  };
+  const addFiles   = (setter, type, label) => (e) => { handleFilesAdded(e.target.files, setter, type, label); e.target.value = ""; };
+  const dropFiles  = (setter, type, label) => (e) => { e.preventDefault(); handleFilesAdded(e.dataTransfer.files, setter, type, label); };
   const removeFile = (setter, idx) => setter(p => p.filter((_, j) => j !== idx));
-  const allFiles   = [...docFiles, ...imgFiles, ...vidFiles, ...audFiles];
 
   const loadUploads = useCallback(async (id) => {
     if (!id) return;
@@ -72,17 +98,31 @@ export default function UploadTab({ guildId, onGoToOverview }) {
     if (guildId) loadUploads(guildId);
   }, [guildId, loadUploads]);
 
-  const doUpload = async () => {
+  const doUrlUpload = async () => {
     if (!guildId) { setStatus({ ok: false, msg: "No server selected" }); return; }
-    if (!urls.trim() && !allFiles.length) { setStatus({ ok: false, msg: "Add URLs or files first" }); return; }
-    setUploading(true); setStatus(null);
+    const urlList = urls.split("\n").map(u => u.trim()).filter(Boolean);
+    if (!urlList.length) { setStatus({ ok: false, msg: "Add URLs first" }); return; }
+    setUrlUploading(true); setStatus(null);
     try {
-      const d = await API.upload(guildId, allFiles, urls.trim());
-      setStatus({ ok: true, msg: `${d.urls_processed || 0} URL(s), ${d.pdfs_processed || 0} file(s) ingested successfully` });
-      setUrls(""); setDocFiles([]); setImgFiles([]); setVidFiles([]); setAudFiles([]);
+      await Promise.all(urlList.map(u => API.uploadUrl(guildId, u)));
+      setStatus({ ok: true, msg: `${urlList.length} URL(s) ingested successfully` });
+      setUrls("");
       loadUploads(guildId);
     } catch (e) { setStatus({ ok: false, msg: e.message }); }
-    setUploading(false);
+    setUrlUploading(false);
+  };
+
+  const doSectionUpload = async (type, files, setFiles, label) => {
+    if (!guildId) { setStatus({ ok: false, msg: "No server selected" }); return; }
+    if (!files.length) { setStatus({ ok: false, msg: `Add ${label} files first` }); return; }
+    setSectionUploading(prev => ({ ...prev, [type]: true })); setStatus(null);
+    try {
+      await Promise.all(files.map(file => API.uploadFile(guildId, file)));
+      setStatus({ ok: true, msg: `${files.length} ${label} file(s) ingested successfully` });
+      setFiles([]);
+      loadUploads(guildId);
+    } catch (e) { setStatus({ ok: false, msg: e.message }); }
+    setSectionUploading(prev => ({ ...prev, [type]: false }));
   };
 
   const doXlsxUpload = async () => {
@@ -121,7 +161,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
   };
 
   const FileSection = ({ label, hint, iconName, accentBg, accentColor, files, setFiles, inputRef, accept, type }) => (
-    <Card style={{ marginBottom: 14 }}>
+    <Card style={{ margin: 0 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
         <div style={{ width: 36, height: 36, borderRadius: "var(--r-md)", background: accentBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <Icon name={iconName} size={18} style={{ color: accentColor }}/>
@@ -139,7 +179,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
         onDrop={(e) => {
           e.preventDefault();
           setDragActive(p => ({ ...p, [type]: false }));
-          dropFiles(setFiles, type)(e);
+          dropFiles(setFiles, type, label)(e);
         }}
         style={{
           borderColor: dragActive[type] ? "var(--blue)" : undefined,
@@ -150,17 +190,28 @@ export default function UploadTab({ guildId, onGoToOverview }) {
         <Icon name="upload_file" size={36} style={{ color: accentColor, opacity: 0.6 }}/>
         <p style={{ fontSize: 14, color: "var(--on-surface-variant)" }}>Drop files here or <span style={{ color: "var(--blue)", fontWeight: 600 }}>browse</span></p>
       </div>
-      <input ref={inputRef} type="file" accept={accept} multiple style={{ display: "none" }} onChange={addFiles(setFiles, type)}/>
+      <input ref={inputRef} type="file" accept={accept} multiple style={{ display: "none" }} onChange={addFiles(setFiles, type, label)}/>
       {files.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
-          {files.map((f, i) => (
-            <div key={i} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 10px", background: accentBg, borderRadius: "var(--r-sm)", fontSize: 12, color: accentColor }}>
-              <Icon name="insert_drive_file" size={13}/>
-              {f.name.length > 22 ? f.name.slice(0, 19) + "…" : f.name}
-              <span onClick={() => removeFile(setFiles, i)} style={{ cursor: "pointer", opacity: 0.6, fontWeight: 700 }}>✕</span>
-            </div>
-          ))}
-        </div>
+        <>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+            {files.map((f, i) => (
+              <div key={i} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 10px", background: accentBg, borderRadius: "var(--r-sm)", fontSize: 12, color: accentColor }}>
+                <Icon name="insert_drive_file" size={13}/>
+                {f.name.length > 22 ? f.name.slice(0, 19) + "…" : f.name}
+                <span onClick={(e) => { e.stopPropagation(); removeFile(setFiles, i); }} style={{ cursor: "pointer", opacity: 0.6, fontWeight: 700 }}>✕</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+            <Btn onClick={() => doSectionUpload(type, files, setFiles, label)} disabled={sectionUploading[type]}
+              style={{ flex: 1, justifyContent: "center", background: accentBg, color: accentColor, border: `1px solid ${accentColor}33` }}>
+              {sectionUploading[type] ? <><Spinner size={14}/> Ingesting…</> : <><Icon name="cloud_upload" size={16}/> Upload to Vector Store</>}
+            </Btn>
+            <Btn onClick={() => setFiles([])} disabled={sectionUploading[type]} variant="ghost" style={{ justifyContent: "center", border: "1px solid rgba(255,255,255,0.1)" }}>
+              Clear
+            </Btn>
+          </div>
+        </>
       )}
     </Card>
   );
@@ -176,85 +227,104 @@ export default function UploadTab({ guildId, onGoToOverview }) {
     <div style={{ width: "100%", boxSizing: "border-box" }}>
       <SectionHeader label="Knowledge Base" title="Upload Content" subtitle="Ingest PDFs, documents, images, audio, video, structured data, and FAQ text into your vector store." />
 
-      {/* URL upload */}
-      <Card style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-          <div style={{ width: 36, height: 36, borderRadius: "var(--r-md)", background: "rgba(0, 176, 244, 0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Icon name="language" size={18} style={{ color: "var(--blue)" }}/>
+      {status && <div style={{ marginBottom: 16 }}><StatusBadge {...status}/></div>}
+
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))",
+        gap: 16,
+        marginBottom: 24
+      }}>
+        {/* URL upload */}
+        <Card style={{ margin: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 36, height: 36, borderRadius: "var(--r-md)", background: "rgba(0, 176, 244, 0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name="language" size={18} style={{ color: "var(--blue)" }}/>
+            </div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600 }}>Web URLs</div>
+              <div style={{ fontSize: 12, color: "var(--on-surface-variant)" }}>One per line</div>
+            </div>
           </div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>Web URLs</div>
-            <div style={{ fontSize: 12, color: "var(--on-surface-variant)" }}>One per line</div>
+          <textarea className="kb-input kb-mono" value={urls} onChange={e => setUrls(e.target.value)} rows={4}
+            placeholder={"https://docs.example.com\nhttps://yoursite.com/about"}
+            style={{ resize: "vertical", lineHeight: 1.6, fontFamily: "monospace", fontSize: 13 }}/>
+          {urls.trim() && (
+            <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+              <Btn onClick={doUrlUpload} disabled={urlUploading}
+                style={{ flex: 1, justifyContent: "center", background: "rgba(0, 176, 244, 0.08)", color: "var(--blue)", border: "1px solid rgba(0, 176, 244, 0.2)" }}>
+                {urlUploading ? <><Spinner size={14}/> Ingesting URL(s)…</> : <><Icon name="cloud_upload" size={16}/> Upload to Vector Store</>}
+              </Btn>
+              <Btn onClick={() => setUrls("")} disabled={urlUploading} variant="ghost" style={{ justifyContent: "center", border: "1px solid rgba(255,255,255,0.1)" }}>
+                Clear
+              </Btn>
+            </div>
+          )}
+        </Card>
+
+        <FileSection label="Documents" hint=".pdf, .docx"                       iconName="description" accentBg="rgba(0, 176, 244, 0.08)"      accentColor="var(--blue)" files={docFiles} setFiles={setDocFiles} inputRef={docRef} accept=".pdf,.docx"            type="doc"/>
+        <FileSection label="Images"    hint=".png, .jpg, .jpeg, .tiff, .bmp, .webp" iconName="image"    accentBg="rgba(168,85,247,0.08)"         accentColor="#a855f7"        files={imgFiles} setFiles={setImgFiles} inputRef={imgRef} accept=".png,.jpg,.jpeg,.tiff,.bmp,.webp" type="img"/>
+        <FileSection label="Video"     hint=".mp4"                                iconName="videocam"   accentBg="rgba(245,158,11,0.08)"         accentColor="#f59e0b"        files={vidFiles} setFiles={setVidFiles} inputRef={vidRef} accept=".mp4"                    type="vid"/>
+        <FileSection label="Audio"     hint=".mp3, .wav, .m4a"                    iconName="headphones" accentBg="rgba(20,184,166,0.08)"         accentColor="#14b8a6"        files={audFiles} setFiles={setAudFiles} inputRef={audRef} accept=".mp3,.wav,.m4a"          type="aud"/>
+
+        {/* XLSX */}
+        <Card style={{ margin: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 36, height: 36, borderRadius: "var(--r-md)", background: "rgba(78,222,163,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name="table_chart" size={18} style={{ color: "#4edea3" }}/>
+            </div>
+            <div><div style={{ fontSize: 14, fontWeight: 600 }}>Structured Data (.xlsx)</div><div style={{ fontSize: 12, color: "var(--on-surface-variant)" }}>Contacts / Faculty</div></div>
           </div>
-        </div>
-        <textarea className="kb-input kb-mono" value={urls} onChange={e => setUrls(e.target.value)} rows={4}
-          placeholder={"https://docs.example.com\nhttps://yoursite.com/about"}
-          style={{ resize: "vertical", lineHeight: 1.6, fontFamily: "monospace", fontSize: 13 }}/>
-      </Card>
-
-      <FileSection label="Documents" hint=".pdf, .docx"                       iconName="description" accentBg="rgba(0, 176, 244, 0.08)"      accentColor="var(--blue)" files={docFiles} setFiles={setDocFiles} inputRef={docRef} accept=".pdf,.docx"            type="doc"/>
-      <FileSection label="Images"    hint=".png, .jpg, .jpeg, .tiff, .bmp, .webp" iconName="image"    accentBg="rgba(168,85,247,0.08)"         accentColor="#a855f7"        files={imgFiles} setFiles={setImgFiles} inputRef={imgRef} accept=".png,.jpg,.jpeg,.tiff,.bmp,.webp" type="img"/>
-      <FileSection label="Video"     hint=".mp4"                                iconName="videocam"   accentBg="rgba(245,158,11,0.08)"         accentColor="#f59e0b"        files={vidFiles} setFiles={setVidFiles} inputRef={vidRef} accept=".mp4"                    type="vid"/>
-      <FileSection label="Audio"     hint=".mp3, .wav, .m4a"                    iconName="headphones" accentBg="rgba(20,184,166,0.08)"         accentColor="#14b8a6"        files={audFiles} setFiles={setAudFiles} inputRef={audRef} accept=".mp3,.wav,.m4a"          type="aud"/>
-
-      {/* XLSX */}
-      <Card style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-          <div style={{ width: 36, height: 36, borderRadius: "var(--r-md)", background: "rgba(78,222,163,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Icon name="table_chart" size={18} style={{ color: "#4edea3" }}/>
+          <div className="drop-zone" onClick={() => xlsxRef.current?.click()}
+            onDragOver={handleDrag("xlsx", true)}
+            onDragEnter={handleDrag("xlsx", true)}
+            onDragLeave={handleDrag("xlsx", false)}
+            onDrop={e => {
+              e.preventDefault();
+              setDragActive(p => ({ ...p, xlsx: false }));
+              const f = [...e.dataTransfer.files].find(f => f.name.endsWith(".xlsx"));
+              if (f) setXlsxFile(f);
+            }}
+            style={{
+              borderColor: xlsxFile ? "#4edea3" : (dragActive.xlsx ? "var(--blue)" : undefined),
+              background: xlsxFile ? "rgba(78,222,163,0.04)" : (dragActive.xlsx ? "rgba(0,176,244,0.06)" : undefined),
+              boxShadow: dragActive.xlsx ? "0 0 24px rgba(0,176,244,0.18)" : undefined,
+              transition: "all 0.25s ease"
+            }}>
+            <Icon name={xlsxFile ? "check_circle" : "table_chart"} size={36} style={{ color: xlsxFile ? "#4edea3" : "var(--outline)", opacity: 0.7 }}/>
+            <p style={{ fontSize: 14, color: xlsxFile ? "#4edea3" : "var(--on-surface-variant)", fontWeight: xlsxFile ? 600 : 400 }}>
+              {xlsxFile ? xlsxFile.name : <>Drop <strong>.xlsx</strong> or browse</>}
+            </p>
           </div>
-          <div><div style={{ fontSize: 14, fontWeight: 600 }}>Structured Data (.xlsx)</div><div style={{ fontSize: 12, color: "var(--on-surface-variant)" }}>Contacts / Faculty</div></div>
-        </div>
-        <div className="drop-zone" onClick={() => xlsxRef.current?.click()}
-          onDragOver={handleDrag("xlsx", true)}
-          onDragEnter={handleDrag("xlsx", true)}
-          onDragLeave={handleDrag("xlsx", false)}
-          onDrop={e => {
-            e.preventDefault();
-            setDragActive(p => ({ ...p, xlsx: false }));
-            const f = [...e.dataTransfer.files].find(f => f.name.endsWith(".xlsx"));
-            if (f) setXlsxFile(f);
-          }}
-          style={{
-            borderColor: xlsxFile ? "#4edea3" : (dragActive.xlsx ? "var(--blue)" : undefined),
-            background: xlsxFile ? "rgba(78,222,163,0.04)" : (dragActive.xlsx ? "rgba(0,176,244,0.06)" : undefined),
-            boxShadow: dragActive.xlsx ? "0 0 24px rgba(0,176,244,0.18)" : undefined,
-            transition: "all 0.25s ease"
-          }}>
-          <Icon name={xlsxFile ? "check_circle" : "table_chart"} size={36} style={{ color: xlsxFile ? "#4edea3" : "var(--outline)", opacity: 0.7 }}/>
-          <p style={{ fontSize: 14, color: xlsxFile ? "#4edea3" : "var(--on-surface-variant)", fontWeight: xlsxFile ? 600 : 400 }}>
-            {xlsxFile ? xlsxFile.name : <>Drop <strong>.xlsx</strong> or browse</>}
-          </p>
-        </div>
-        <input ref={xlsxRef} type="file" accept=".xlsx" style={{ display: "none" }} onChange={e => { if (e.target.files[0]) setXlsxFile(e.target.files[0]); }}/>
-      </Card>
+          <input ref={xlsxRef} type="file" accept=".xlsx" style={{ display: "none" }} onChange={e => { if (e.target.files[0]) setXlsxFile(e.target.files[0]); }}/>
+          {xlsxFile && (
+            <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+              <Btn onClick={doXlsxUpload} disabled={xlsxUploading} variant="success" style={{ flex: 1, justifyContent: "center" }}>
+                {xlsxUploading ? <><Spinner size={14}/> Uploading…</> : <><Icon name="cloud_upload" size={16}/> Upload to Vector Store</>}
+              </Btn>
+              <Btn onClick={() => setXlsxFile(null)} disabled={xlsxUploading} variant="ghost" style={{ justifyContent: "center", border: "1px solid rgba(255,255,255,0.1)" }}>
+                Cancel
+              </Btn>
+            </div>
+          )}
+        </Card>
 
-      {/* FAQ */}
-      <Card style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-          <div style={{ width: 36, height: 36, borderRadius: "var(--r-md)", background: "rgba(239,68,68,0.06)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Icon name="quiz" size={18} style={{ color: "#ef4444" }}/>
+        {/* FAQ */}
+        <Card style={{ margin: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 36, height: 36, borderRadius: "var(--r-md)", background: "rgba(239,68,68,0.06)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name="quiz" size={18} style={{ color: "#ef4444" }}/>
+            </div>
+            <div><div style={{ fontSize: 14, fontWeight: 600 }}>FAQ / Raw Text</div><div style={{ fontSize: 12, color: "var(--on-surface-variant)" }}>Paste a Q&A pair or any plain text to add directly to the vector store</div></div>
           </div>
-          <div><div style={{ fontSize: 14, fontWeight: 600 }}>FAQ / Raw Text</div><div style={{ fontSize: 12, color: "var(--on-surface-variant)" }}>Paste a Q&A pair or any plain text to add directly to the vector store</div></div>
-        </div>
-        <textarea className="kb-input kb-mono" value={faqText} onChange={e => setFaqText(e.target.value)} rows={5}
-          placeholder={"Q: What are your office hours?\nA: We are open Monday to Friday, 9 AM – 5 PM."}
-          style={{ resize: "vertical", lineHeight: 1.6, fontFamily: "monospace", fontSize: 13 }}/>
-        <Btn onClick={doFaqUpload} disabled={faqUploading}
-          style={{ marginTop: 10, width: "100%", justifyContent: "center", background: "rgba(239,68,68,0.08)", color: "#ff8b8b", border: "1px solid rgba(239,68,68,0.2)" }}>
-          {faqUploading ? <><Spinner size={14}/> Adding FAQ…</> : <><Icon name="add_circle" size={16}/> Add to Vector Store</>}
-        </Btn>
-      </Card>
-
-      {status && <div style={{ marginBottom: 14 }}><StatusBadge {...status}/></div>}
-
-      <div style={{ display: "flex", gap: 12, marginBottom: 32 }}>
-        <Btn onClick={doUpload} disabled={uploading} style={{ flex: 2, justifyContent: "center" }}>
-          {uploading ? <><Spinner size={14}/> Ingesting…</> : <><Icon name="cloud_upload" size={16}/> Upload to Vector Store</>}
-        </Btn>
-        <Btn onClick={doXlsxUpload} disabled={xlsxUploading} variant="success" style={{ flex: 1, justifyContent: "center" }}>
-          {xlsxUploading ? <><Spinner size={14}/> Uploading…</> : <><Icon name="table_chart" size={16}/> Upload .xlsx</>}
-        </Btn>
+          <textarea className="kb-input kb-mono" value={faqText} onChange={e => setFaqText(e.target.value)} rows={5}
+            placeholder={"Q: What are your office hours?\nA: We are open Monday to Friday, 9 AM – 5 PM."}
+            style={{ resize: "vertical", lineHeight: 1.6, fontFamily: "monospace", fontSize: 13 }}/>
+          <Btn onClick={doFaqUpload} disabled={faqUploading}
+            style={{ marginTop: 10, width: "100%", justifyContent: "center", background: "rgba(239,68,68,0.08)", color: "#ff8b8b", border: "1px solid rgba(239,68,68,0.2)" }}>
+            {faqUploading ? <><Spinner size={14}/> Adding FAQ…</> : <><Icon name="add_circle" size={16}/> Add to Vector Store</>}
+          </Btn>
+        </Card>
       </div>
 
       {/* Uploads list */}

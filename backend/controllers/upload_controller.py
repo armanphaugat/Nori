@@ -270,3 +270,58 @@ async def handle_delete_upload(
     except Exception as e:
         print(f"[handle_delete_upload] Error: {e}")
         raise HTTPException(status_code=500, detail="Failed to delete upload")
+
+
+async def handle_upload_contacts(
+    guild_id: str = Form(...),
+    file: UploadFile = File(...),
+    user: dict = Depends(require_guild_admin),
+) -> dict:
+    guild_id = guild_id.strip()
+    if not guild_id:
+        raise HTTPException(status_code=400, detail="'guild_id' cannot be empty")
+
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in {".xlsx", ".xls"}:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type '{ext}'. Allowed: .xlsx, .xls"
+        )
+
+    file.file.seek(0, 2)
+    if file.file.tell() > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="File must be smaller than 10 MB")
+    file.file.seek(0)
+
+    file_bytes = await file.read()
+    if not file_bytes:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty")
+
+    try:
+        from python.contacts.xlsx_contacts import ingest_contacts_to_vectorstore
+        res = ingest_contacts_to_vectorstore(BytesIO(file_bytes), guild_id)
+        if res["status"] == "error":
+            raise Exception(res["error"])
+
+        log_upload(
+            guild_id=guild_id,
+            user_id=user["discord_id"],
+            username=user["username"],
+            kind="contacts",
+            name=file.filename,
+            content_id=None,
+            status="ok",
+        )
+        return {"status": "success", "message": f"Ingested {res['chunks']} contact record(s) successfully"}
+    except Exception as e:
+        log_upload(
+            guild_id=guild_id,
+            user_id=user["discord_id"],
+            username=user["username"],
+            kind="contacts",
+            name=file.filename,
+            status="failed",
+            error=str(e),
+        )
+        print(f"[handle_upload_contacts] {file.filename} failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to process contacts: {e}")

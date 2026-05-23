@@ -177,7 +177,7 @@ function Dashboard({
 
         {/* Dynamic Main Workspace Content */}
         <div style={{ flex: 1, overflowY: "auto", padding: "32px 40px" }}>
-          <div style={{ maxWidth: 760 }}>
+          <div style={{ maxWidth: 1200, width: "100%", margin: "0 auto" }}>
             {tab === "channels" && (
               <ChannelsTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
             )}
