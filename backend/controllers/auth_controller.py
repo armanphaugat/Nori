@@ -122,8 +122,6 @@ async def _sync_guild_admins(discord_id: str, discord_access_token: str) -> None
             is_admin = is_owner or bool(int(g.get("permissions", 0)) & ADMINISTRATOR_PERMISSION)
             if not is_admin:
                 continue
-            if not get_server(g["id"]):
-                continue
             role = "owner" if is_owner else "admin"
             add_guild_admin(
                 guild_id=g["id"],

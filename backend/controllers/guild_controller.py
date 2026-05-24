@@ -26,12 +26,10 @@ async def handle_get_guilds(
             headers={"Authorization": f"Bearer {row['discord_access_token']}"},
             timeout=30,
         )
-
     if resp.status_code == 401:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Discord token expired")
     if resp.status_code != 200:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=f"Discord API error: {resp.status_code}")
-    admin_guild_ids = get_user_guild_ids(user["discord_id"])
     guilds = resp.json()
     return {
         "guilds": [
@@ -45,11 +43,9 @@ async def handle_get_guilds(
                 "owner": g.get("owner", False),
             }
             for g in guilds
-            if g["id"] in admin_guild_ids
-            and (g.get("owner") or (int(g.get("permissions", 0)) & ADMIN_PERMISSION))
+                if g.get("owner") or (int(g.get("permissions", 0)) & ADMIN_PERMISSION)
         ]
     }
-
 
 async def handle_get_guild_channels(
     guild_id: str,

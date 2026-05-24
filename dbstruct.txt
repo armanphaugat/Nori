@@ -1,3 +1,6 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
 CREATE TABLE public.admin_sessions (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   discord_id text NOT NULL,
@@ -58,20 +61,24 @@ CREATE TABLE public.guild_admins (
   CONSTRAINT guild_admins_discord_id_fkey FOREIGN KEY (discord_id) REFERENCES public.admin_users(discord_id),
   CONSTRAINT guild_admins_granted_by_fkey FOREIGN KEY (granted_by) REFERENCES public.admin_users(discord_id)
 );
+CREATE TABLE public.server_feeds (
+  server_id text,
+  feed_id text
+);
+CREATE TABLE public.server_uploads (
+  server_id text,
+  content_id text
+);
 CREATE TABLE public.servers (
   server_id text NOT NULL,
   server_name text NOT NULL,
   prefix text NOT NULL DEFAULT '-'::text,
   max_tokens integer NOT NULL DEFAULT 1024,
-  temperature double precision NOT NULL DEFAULT 0.0,
-  chunk_size integer NOT NULL DEFAULT 500,
-  chunk_overlap integer NOT NULL DEFAULT 100,
-  faiss_k integer NOT NULL DEFAULT 15,
-  bm25_k integer NOT NULL DEFAULT 10,
-  system_prompt text,
   added_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   mod_channel text,
+  kb_spec_id text,
+  web_spec_id text,
   CONSTRAINT servers_pkey PRIMARY KEY (server_id)
 );
 CREATE TABLE public.uploads (
@@ -81,10 +88,12 @@ CREATE TABLE public.uploads (
   username text NOT NULL,
   type text NOT NULL CHECK (type = ANY (ARRAY['url'::text, 'pdf'::text, 'contacts'::text])),
   name text NOT NULL,
-  chunks integer NOT NULL DEFAULT 0,
   status text NOT NULL DEFAULT 'ok'::text CHECK (status = ANY (ARRAY['ok'::text, 'failed'::text])),
   error text,
   uploaded_at timestamp with time zone NOT NULL DEFAULT now(),
+  content_id text,
+  deleted_at timestamp with time zone DEFAULT now(),
+  feed_id text,
   CONSTRAINT uploads_pkey PRIMARY KEY (id),
   CONSTRAINT uploads_server_id_fkey FOREIGN KEY (server_id) REFERENCES public.servers(server_id)
 );
