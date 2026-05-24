@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -11,9 +12,18 @@ from backend.routers.guild_router import *
 
 app = FastAPI(title="Q-ARAG API", version="1.0.0")
 
+frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3001")
+origins = [
+    frontend_url,
+    "http://localhost:3001",
+    "http://localhost:3000",
+    "http://localhost:80",
+    "http://localhost",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

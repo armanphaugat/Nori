@@ -8,7 +8,6 @@ export default function UtilsTab({ guildId, onGoToOverview }) {
   const subTabs = [
     { id: "crawler", label: "URL Crawler", icon: "travel_explore", status: "active" },
     { id: "webhooks", label: "Integrations & Webhooks", icon: "hub", status: "soon" },
-    { id: "autosync", label: "Automated Auto-Sync", icon: "sync", status: "soon" },
   ];
 
   return (

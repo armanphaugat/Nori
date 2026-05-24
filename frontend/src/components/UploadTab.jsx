@@ -12,15 +12,15 @@ import {
 } from "./Common.jsx";
 
 export default function UploadTab({ guildId, onGoToOverview }) {
-  const [urls, setUrls] = useState("");
+  const [docUrls, setDocUrls] = useState("");
+  const [websiteUrls, setWebsiteUrls] = useState("");
   const [docFiles, setDocFiles] = useState([]);
   const [imgFiles, setImgFiles] = useState([]);
   const [vidFiles, setVidFiles] = useState([]);
   const [audFiles, setAudFiles] = useState([]);
-  const [xlsxFile, setXlsxFile] = useState(null);
-  const [urlUploading, setUrlUploading] = useState(false);
+  const [docUrlUploading, setDocUrlUploading] = useState(false);
+  const [websiteUploading, setWebsiteUploading] = useState(false);
   const [sectionUploading, setSectionUploading] = useState({ doc: false, img: false, vid: false, aud: false });
-  const [xlsxUploading, setXlsxUploading] = useState(false);
   const [faqText, setFaqText] = useState("");
   const [faqUploading, setFaqUploading] = useState(false);
   const [status, setStatus] = useState(null);
@@ -33,7 +33,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
   const [inspectUpload, setInspectUpload] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
-  const [dragActive, setDragActive] = useState({ doc: false, img: false, vid: false, aud: false, xlsx: false });
+  const [dragActive, setDragActive] = useState({ doc: false, img: false, vid: false, aud: false });
 
   const handleDrag = (type, active) => (e) => {
     e.preventDefault();
@@ -44,7 +44,6 @@ export default function UploadTab({ guildId, onGoToOverview }) {
   const imgRef  = useRef(null);
   const vidRef  = useRef(null);
   const audRef  = useRef(null);
-  const xlsxRef = useRef(null);
 
   const ALLOWED_EXTENSIONS = {
     doc: [".pdf", ".docx"],
@@ -98,18 +97,32 @@ export default function UploadTab({ guildId, onGoToOverview }) {
     if (guildId) loadUploads(guildId);
   }, [guildId, loadUploads]);
 
-  const doUrlUpload = async () => {
+  const doDocUrlUpload = async () => {
     if (!guildId) { setStatus({ ok: false, msg: "No server selected" }); return; }
-    const urlList = urls.split("\n").map(u => u.trim()).filter(Boolean);
-    if (!urlList.length) { setStatus({ ok: false, msg: "Add URLs first" }); return; }
-    setUrlUploading(true); setStatus(null);
+    const urlList = docUrls.split("\n").map(u => u.trim()).filter(Boolean);
+    if (!urlList.length) { setStatus({ ok: false, msg: "Add Document URLs first" }); return; }
+    setDocUrlUploading(true); setStatus(null);
     try {
       await Promise.all(urlList.map(u => API.uploadUrl(guildId, u)));
-      setStatus({ ok: true, msg: `${urlList.length} URL(s) ingested successfully` });
-      setUrls("");
+      setStatus({ ok: true, msg: `${urlList.length} Document URL(s) ingested successfully` });
+      setDocUrls("");
       loadUploads(guildId);
     } catch (e) { setStatus({ ok: false, msg: e.message }); }
-    setUrlUploading(false);
+    setDocUrlUploading(false);
+  };
+
+  const doWebsiteUpload = async () => {
+    if (!guildId) { setStatus({ ok: false, msg: "No server selected" }); return; }
+    const urlList = websiteUrls.split("\n").map(u => u.trim()).filter(Boolean);
+    if (!urlList.length) { setStatus({ ok: false, msg: "Add Website URLs first" }); return; }
+    setWebsiteUploading(true); setStatus(null);
+    try {
+      await Promise.all(urlList.map(u => API.uploadWebsite(guildId, u)));
+      setStatus({ ok: true, msg: `${urlList.length} Website URL(s) ingested successfully` });
+      setWebsiteUrls("");
+      loadUploads(guildId);
+    } catch (e) { setStatus({ ok: false, msg: e.message }); }
+    setWebsiteUploading(false);
   };
 
   const doSectionUpload = async (type, files, setFiles, label) => {
@@ -123,15 +136,6 @@ export default function UploadTab({ guildId, onGoToOverview }) {
       loadUploads(guildId);
     } catch (e) { setStatus({ ok: false, msg: e.message }); }
     setSectionUploading(prev => ({ ...prev, [type]: false }));
-  };
-
-  const doXlsxUpload = async () => {
-    if (!guildId)   { setStatus({ ok: false, msg: "No server selected" }); return; }
-    if (!xlsxFile)  { setStatus({ ok: false, msg: "No .xlsx file selected" }); return; }
-    setXlsxUploading(true); setStatus(null);
-    try { const d = await API.uploadContacts(guildId, xlsxFile); setStatus({ ok: true, msg: d.message }); setXlsxFile(null); }
-    catch (e) { setStatus({ ok: false, msg: e.message }); }
-    setXlsxUploading(false);
   };
 
   const doFaqUpload = async () => {
@@ -225,7 +229,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
 
   return (
     <div style={{ width: "100%", boxSizing: "border-box" }}>
-      <SectionHeader label="Knowledge Base" title="Upload Content" subtitle="Ingest PDFs, documents, images, audio, video, structured data, and FAQ text into your vector store." />
+      <SectionHeader label="Knowledge Base" title="Upload Content" subtitle="Ingest PDFs, documents, images, audio, video, website crawler feeds, document URLs, and FAQ text into your vector store." />
 
       {status && <div style={{ marginBottom: 16 }}><StatusBadge {...status}/></div>}
 
@@ -235,27 +239,54 @@ export default function UploadTab({ guildId, onGoToOverview }) {
         gap: 16,
         marginBottom: 24
       }}>
-        {/* URL upload */}
+        {/* Document URLs upload */}
         <Card style={{ margin: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
             <div style={{ width: 36, height: 36, borderRadius: "var(--r-md)", background: "rgba(0, 176, 244, 0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Icon name="language" size={18} style={{ color: "var(--blue)" }}/>
+              <Icon name="link" size={18} style={{ color: "var(--blue)" }}/>
             </div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600 }}>Web URLs</div>
-              <div style={{ fontSize: 12, color: "var(--on-surface-variant)" }}>One per line</div>
+              <div style={{ fontSize: 14, fontWeight: 600 }}>Document URLs</div>
+              <div style={{ fontSize: 12, color: "var(--on-surface-variant)" }}>One specific page/doc URL per line</div>
             </div>
           </div>
-          <textarea className="kb-input kb-mono" value={urls} onChange={e => setUrls(e.target.value)} rows={4}
-            placeholder={"https://docs.example.com\nhttps://yoursite.com/about"}
+          <textarea className="kb-input kb-mono" value={docUrls} onChange={e => setDocUrls(e.target.value)} rows={4}
+            placeholder={"https://docs.example.com/getting-started\nhttps://yoursite.com/privacy-policy"}
             style={{ resize: "vertical", lineHeight: 1.6, fontFamily: "monospace", fontSize: 13 }}/>
-          {urls.trim() && (
+          {docUrls.trim() && (
             <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-              <Btn onClick={doUrlUpload} disabled={urlUploading}
+              <Btn onClick={doDocUrlUpload} disabled={docUrlUploading}
                 style={{ flex: 1, justifyContent: "center", background: "rgba(0, 176, 244, 0.08)", color: "var(--blue)", border: "1px solid rgba(0, 176, 244, 0.2)" }}>
-                {urlUploading ? <><Spinner size={14}/> Ingesting URL(s)…</> : <><Icon name="cloud_upload" size={16}/> Upload to Vector Store</>}
+                {docUrlUploading ? <><Spinner size={14}/> Ingesting URL(s)…</> : <><Icon name="cloud_upload" size={16}/> Upload to Vector Store</>}
               </Btn>
-              <Btn onClick={() => setUrls("")} disabled={urlUploading} variant="ghost" style={{ justifyContent: "center", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <Btn onClick={() => setDocUrls("")} disabled={docUrlUploading} variant="ghost" style={{ justifyContent: "center", border: "1px solid rgba(255,255,255,0.1)" }}>
+                Clear
+              </Btn>
+            </div>
+          )}
+        </Card>
+
+        {/* Website Auto-Crawler feeds upload */}
+        <Card style={{ margin: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 36, height: 36, borderRadius: "var(--r-md)", background: "rgba(16, 185, 129, 0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name="language" size={18} style={{ color: "#10b981" }}/>
+            </div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600 }}>Website Crawler</div>
+              <div style={{ fontSize: 12, color: "var(--on-surface-variant)" }}>One website root URL per line</div>
+            </div>
+          </div>
+          <textarea className="kb-input kb-mono" value={websiteUrls} onChange={e => setWebsiteUrls(e.target.value)} rows={4}
+            placeholder={"https://docs.example.com\nhttps://yoursite.com"}
+            style={{ resize: "vertical", lineHeight: 1.6, fontFamily: "monospace", fontSize: 13 }}/>
+          {websiteUrls.trim() && (
+            <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+              <Btn onClick={doWebsiteUpload} disabled={websiteUploading}
+                style={{ flex: 1, justifyContent: "center", background: "rgba(16, 185, 129, 0.08)", color: "#10b981", border: "1px solid rgba(16, 185, 129, 0.2)" }}>
+                {websiteUploading ? <><Spinner size={14}/> Starting Crawler…</> : <><Icon name="settings_input_antenna" size={16}/> Crawl Website</>}
+              </Btn>
+              <Btn onClick={() => setWebsiteUrls("")} disabled={websiteUploading} variant="ghost" style={{ justifyContent: "center", border: "1px solid rgba(255,255,255,0.1)" }}>
                 Clear
               </Btn>
             </div>
@@ -266,48 +297,6 @@ export default function UploadTab({ guildId, onGoToOverview }) {
         <FileSection label="Images"    hint=".png, .jpg, .jpeg, .tiff, .bmp, .webp" iconName="image"    accentBg="rgba(168,85,247,0.08)"         accentColor="#a855f7"        files={imgFiles} setFiles={setImgFiles} inputRef={imgRef} accept=".png,.jpg,.jpeg,.tiff,.bmp,.webp" type="img"/>
         <FileSection label="Video"     hint=".mp4"                                iconName="videocam"   accentBg="rgba(245,158,11,0.08)"         accentColor="#f59e0b"        files={vidFiles} setFiles={setVidFiles} inputRef={vidRef} accept=".mp4"                    type="vid"/>
         <FileSection label="Audio"     hint=".mp3, .wav, .m4a"                    iconName="headphones" accentBg="rgba(20,184,166,0.08)"         accentColor="#14b8a6"        files={audFiles} setFiles={setAudFiles} inputRef={audRef} accept=".mp3,.wav,.m4a"          type="aud"/>
-
-        {/* XLSX */}
-        <Card style={{ margin: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <div style={{ width: 36, height: 36, borderRadius: "var(--r-md)", background: "rgba(78,222,163,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Icon name="table_chart" size={18} style={{ color: "#4edea3" }}/>
-            </div>
-            <div><div style={{ fontSize: 14, fontWeight: 600 }}>Structured Data (.xlsx)</div><div style={{ fontSize: 12, color: "var(--on-surface-variant)" }}>Contacts / Faculty</div></div>
-          </div>
-          <div className="drop-zone" onClick={() => xlsxRef.current?.click()}
-            onDragOver={handleDrag("xlsx", true)}
-            onDragEnter={handleDrag("xlsx", true)}
-            onDragLeave={handleDrag("xlsx", false)}
-            onDrop={e => {
-              e.preventDefault();
-              setDragActive(p => ({ ...p, xlsx: false }));
-              const f = [...e.dataTransfer.files].find(f => f.name.endsWith(".xlsx"));
-              if (f) setXlsxFile(f);
-            }}
-            style={{
-              borderColor: xlsxFile ? "#4edea3" : (dragActive.xlsx ? "var(--blue)" : undefined),
-              background: xlsxFile ? "rgba(78,222,163,0.04)" : (dragActive.xlsx ? "rgba(0,176,244,0.06)" : undefined),
-              boxShadow: dragActive.xlsx ? "0 0 24px rgba(0,176,244,0.18)" : undefined,
-              transition: "all 0.25s ease"
-            }}>
-            <Icon name={xlsxFile ? "check_circle" : "table_chart"} size={36} style={{ color: xlsxFile ? "#4edea3" : "var(--outline)", opacity: 0.7 }}/>
-            <p style={{ fontSize: 14, color: xlsxFile ? "#4edea3" : "var(--on-surface-variant)", fontWeight: xlsxFile ? 600 : 400 }}>
-              {xlsxFile ? xlsxFile.name : <>Drop <strong>.xlsx</strong> or browse</>}
-            </p>
-          </div>
-          <input ref={xlsxRef} type="file" accept=".xlsx" style={{ display: "none" }} onChange={e => { if (e.target.files[0]) setXlsxFile(e.target.files[0]); }}/>
-          {xlsxFile && (
-            <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-              <Btn onClick={doXlsxUpload} disabled={xlsxUploading} variant="success" style={{ flex: 1, justifyContent: "center" }}>
-                {xlsxUploading ? <><Spinner size={14}/> Uploading…</> : <><Icon name="cloud_upload" size={16}/> Upload to Vector Store</>}
-              </Btn>
-              <Btn onClick={() => setXlsxFile(null)} disabled={xlsxUploading} variant="ghost" style={{ justifyContent: "center", border: "1px solid rgba(255,255,255,0.1)" }}>
-                Cancel
-              </Btn>
-            </div>
-          )}
-        </Card>
 
         {/* FAQ */}
         <Card style={{ margin: 0 }}>
@@ -355,7 +344,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
             />
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {["all", "pdf", "url", "faq", "xlsx"].map(t => (
+            {["all", "pdf", "url", "faq"].map(t => (
               <button
                 key={t}
                 onClick={() => setFilterType(t)}
@@ -380,14 +369,12 @@ export default function UploadTab({ guildId, onGoToOverview }) {
                 <th>Source Name</th>
                 <th>Type</th>
                 <th>Status</th>
-                <th>Chunks</th>
-                <th>Date</th>
                 <th style={{ textAlign: "right", paddingRight: 20 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {uploads.length === 0 ? (
-                <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--on-surface-variant)", padding: "28px" }}>No uploads yet</td></tr>
+                <tr><td colSpan={4} style={{ textAlign: "center", color: "var(--on-surface-variant)", padding: "28px" }}>No uploads yet</td></tr>
               ) : (
                 uploads.filter(u => {
                   const name = u.name || u.url || u.filename || u.source || "";
@@ -396,7 +383,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
                   return matchesSearch && matchesType;
                 }).map((u, i) => {
                   const displayStatus = (u.status || "completed").toLowerCase();
-                  const isIngested = displayStatus === "completed" || displayStatus === "processed";
+                  const isIngested = displayStatus === "completed" || displayStatus === "processed" || displayStatus === "ok";
                   const isFailed = displayStatus === "failed" || displayStatus === "error";
 
                   return (
@@ -434,10 +421,6 @@ export default function UploadTab({ guildId, onGoToOverview }) {
                             </span>
                           </Tag>
                         )}
-                      </td>
-                      <td style={{ fontWeight: 600, color: "#ffffff" }}>{u.chunks || 0}</td>
-                      <td style={{ color: "var(--on-surface-variant)", fontSize: 12 }}>
-                        {u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}
                       </td>
                       <td style={{ textAlign: "right", paddingRight: 16 }}>
                         <div style={{ display: "inline-flex", gap: 6 }}>
@@ -512,25 +495,19 @@ export default function UploadTab({ guildId, onGoToOverview }) {
                 </div>
                 <div>
                   <div style={{ fontSize: 11, color: "var(--on-surface-variant)", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Status</div>
-                  <div style={{ fontSize: 13, color: "#ffffff" }}>{inspectUpload.status || "Ingested"}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, color: "var(--on-surface-variant)", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Vector Index Chunks</div>
-                  <div style={{ fontSize: 13, color: "var(--blue)", fontWeight: 700 }}>{inspectUpload.chunks || 0} chunks</div>
+                  <div style={{ fontSize: 13, color: "#ffffff" }}>
+                    {(inspectUpload.status === "ok" || inspectUpload.status === "completed" || inspectUpload.status === "processed") ? "Ingested" : (inspectUpload.status || "Ingested")}
+                  </div>
                 </div>
                 <div>
                   <div style={{ fontSize: 11, color: "var(--on-surface-variant)", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Database Record ID</div>
                   <div style={{ fontSize: 11, color: "var(--on-surface-variant)", fontFamily: "monospace" }}>{inspectUpload.id}</div>
                 </div>
-                <div>
-                  <div style={{ fontSize: 11, color: "var(--on-surface-variant)", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Ingested At</div>
-                  <div style={{ fontSize: 13, color: "#ffffff" }}>{inspectUpload.created_at ? new Date(inspectUpload.created_at).toLocaleString() : "—"}</div>
-                </div>
               </div>
               <div style={{ background: "rgba(255,255,255,0.01)", padding: 14, borderRadius: 10, border: "1px solid rgba(255,255,255,0.04)" }}>
-                <div style={{ fontSize: 11, color: "var(--on-surface-variant)", textTransform: "uppercase", fontWeight: 700, marginBottom: 6 }}>Vector Embedding Status</div>
+                <div style={{ fontSize: 11, color: "var(--on-surface-variant)", textTransform: "uppercase", fontWeight: 700, marginBottom: 6 }}>Sync Status Info</div>
                 <div style={{ fontSize: 12.5, color: "var(--on-surface-variant)", lineHeight: 1.5 }}>
-                  This document has been fully cataloged by the **Graphlit AI Engine**. Semantic text fragments have been embedded using OpenAI text-embeddings-3-small and stored inside the **FAISS vector database** for precise context matching.
+                  Websites and URL feeds will take about <strong>3 to 5 minutes</strong> to fully sync and become searchable. All other file uploads (PDFs, images, audio, video) and FAQs are processed <strong>instantly</strong>.
                 </div>
               </div>
               <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 24 }}>
