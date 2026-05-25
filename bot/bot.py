@@ -213,5 +213,11 @@ async def on_command_error(ctx, error):
     else:
         print(f"[on_command_error] {type(error).__name__}: {error}")
 
-
+async def create_support_channel(server_id:int):
+    guild=bot.get_guild(server_id)
+    if guild is None:
+        return 0
+    category=await guild.create_category("Vault Bot")
+    text_channel=await guild.create_text_channel("Support",category=category)
+    return 1
 bot.run(DISCORD_BOT_KEY)
