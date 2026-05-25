@@ -54,3 +54,21 @@ async def handle_get_channels(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get channels: {e}")
+    
+async def handle_add_support_channel(guild_id:str=Form(...),user:dict=Depends(require_guild_admin)):
+    from bot.bot import create_support_channel
+    try:
+        guild_id_int=int(guild_id)
+        result=await create_support_channel(guild_id_int)
+        if(result==1):
+            return {
+            "status": "success",
+            "message": "Category Channel Created" 
+            }
+        else:
+            return {
+            "status": "Failed",
+            "message": "Unable to Add Category Channel" 
+            }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get channels: {e}")
