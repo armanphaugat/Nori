@@ -69,6 +69,9 @@ async def handle_add_support_channel(guild_id:str=Form(...),user:dict=Depends(re
             return {
             "status": "Failed",
             "message": "Unable to Add Category Channel" 
+            }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to Add Support channel: {e}")
 async def handle_add_support_channel(
     guild_id: str = Query(...),
     user: dict = Depends(require_guild_admin_query),

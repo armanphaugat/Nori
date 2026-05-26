@@ -3,10 +3,11 @@ import discord
 from dotenv import load_dotenv
 from discord.ext import commands
 import sys
+import asyncio
+import re
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from dbhelper.db_helper import get_channels, get_server, get_mod_channel
 from python.query import query_graphlit, query_graphlit_web
-import asyncio
 
 load_dotenv()
 
@@ -15,21 +16,78 @@ intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='-', intents=intents, help_command=None)
 
 pending_feedback: dict = {}
-watched_threads:dict ={}
+watched_threads: dict = {}
 
+class CloseTicketButton(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(
+        label="Close Ticket",
+        style=discord.ButtonStyle.red,
+        emoji="🔒",
+        custom_id="close_ticket_button"
+    )
+    async def close_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        thread = interaction.channel
+        if not isinstance(thread, discord.Thread):
+            await interaction.response.send_message("❌ This is not a ticket thread.", ephemeral=True)
+            return
+        await interaction.response.send_message("🔒 Closing your ticket...", ephemeral=True)
+        watched_threads.pop(str(thread.id), None)
+        try:
+            await thread.delete()
+        except discord.HTTPException as e:
+            print(f"[close_ticket] Failed to delete thread: {e}")
 def is_no_kb_response(answer: str) -> bool:
-    no_kb_phrases = [
+    if not answer or len(answer.strip()) < 10:
+        return True
+    answer_lower = answer.lower().strip()
+    no_answer_phrases = [
         "i don't have this information",
-        "i do not have this information",
-        "not in the provided documentation",
-        "not available in the provided",
+        "i don't have that information",
+        "this information is not available",
+        "that information is not available",
+        "i cannot find",
+        "i can't find",
+        "no information",
+        "no data",
+        "not found in knowledge base",
+        "outside my knowledge",
+        "outside of my knowledge",
+        "unable to answer",
+        "cannot answer",
+        "can't answer",
+        "not in my knowledge",
+        "no relevant",
+        "no matching",
+        "couldn't find",
+        "not available",
+        "beyond my scope",
+        "outside my expertise",
+        "don't have access",
+        "no results",
     ]
-    lower = answer.lower()
-    return any(phrase in lower for phrase in no_kb_phrases)
+    for phrase in no_answer_phrases:
+        if phrase in answer_lower:
+            return True
+    patterns = [
+        r"i\s+(?:don't|do not|cannot|can't)\s+(?:know|answer|help|assist)",
+        r"(?:apologize|sorry).*?(?:don't|do not|cannot|can't)\s+(?:know|have|find|provide)",
+        r"unfortunately.*?(?:don't|do not|cannot|can't)\s+(?:know|have|find|provide)",
+        r"no\s+(?:answer|information|data|results|matches?)",
+        r"not\s+(?:in|part of|covered|included).*?(?:knowledge|information|database|kb)",
+    ]
+    for pattern in patterns:
+        if re.search(pattern, answer_lower):
+            return True
+    if len(answer_lower) < 10 and any(word in answer_lower for word in ["no", "cannot", "can't", "don't"]):
+        return True
+    
+    return False
 
 
 async def get_answer(guild_id: str, question: str) -> str:
-    """Query KB first, fall back to web if no KB answer."""
     print(f"[get_answer] Querying KB for: {question[:60]}")
     try:
         answer = await asyncio.wait_for(query_graphlit(guild_id, question), timeout=30.0)
@@ -44,12 +102,9 @@ async def get_answer(guild_id: str, question: str) -> str:
         print("[get_answer] KB had no answer, falling back to web search")
         try:
             answer = await asyncio.wait_for(query_graphlit_web(guild_id, question), timeout=30.0)
-            print("[get_answer] Web search returned an answer")
         except asyncio.TimeoutError:
-            print("[get_answer] Web search timed out")
             return "Web search timed out. Please try again."
         except Exception as e:
-            print(f"[get_answer] Web search error: {e}")
             return f"Error during web search: {str(e)}"
     else:
         print("[get_answer] KB returned a valid answer")
@@ -58,7 +113,6 @@ async def get_answer(guild_id: str, question: str) -> str:
 
 
 async def send_answer_with_feedback(channel, user, guild_id: str, question: str, answer: str):
-    """Send answer and attach 👍/👎 reactions for feedback."""
     print(f"[send_answer_with_feedback] Sending answer to channel: {channel.name}")
     answer_msg = await channel.send(answer)
 
@@ -88,8 +142,6 @@ async def send_answer_with_feedback(channel, user, guild_id: str, question: str,
 
 
 async def notify_mod_channel(guild, channel, user, question: str):
-    """Alert mod channel about an unanswered question."""
-    print(f"[notify_mod_channel] Notifying mods about unanswered question from {user.name}")
     try:
         row = get_mod_channel(str(guild.id))
         if not row:
@@ -106,6 +158,12 @@ async def notify_mod_channel(guild, channel, user, question: str):
         print(f"[notify_mod_channel] Error: {e}")
 
 
+@bot.event
+async def on_ready():
+    bot.add_view(TicketButton())
+    bot.add_view(CloseTicketButton())
+    print(f"[on_ready] Logged in as {bot.user}")
+    print(f"[on_ready] Connected to {len(bot.guilds)} server(s)")
 
 
 @bot.event
@@ -117,7 +175,7 @@ async def on_message(message):
 
     channels = get_channels(str(message.guild.id))
     watch_ids = [c["channel_id"] for c in channels]
-    
+
     if str(message.channel.id) in watch_ids or str(message.channel.id) in watched_threads:
         print(f"[on_message] Message in watched channel '{message.channel.name}' from {message.author.name}")
         info = get_server(str(message.guild.id))
@@ -209,25 +267,35 @@ async def on_command_error(ctx, error):
     else:
         print(f"[on_command_error] {type(error).__name__}: {error}")
 
-async def get_user_thread(channel:discord.TextChannel,user:discord.Member):
+
+async def get_user_thread(channel: discord.TextChannel, user: discord.Member):
     for thread in channel.threads:
-        if thread.name==f"ticket-{user.name.lower()}":
+        if thread.name == f"ticket-{user.name.lower()}":
             return thread
     return None
-async def create_user_thread(channel:discord.TextChannel,user:discord.Member):
-    thread=await channel.create_thread(name=f"ticket-{user.name.lower()}",type=discord.ChannelType.private_thread,invitable=False,reason=f"Support Ticket For {user}")
-    watched_threads[str(thread.id)]=thread
+
+
+async def create_user_thread(channel: discord.TextChannel, user: discord.Member):
+    thread = await channel.create_thread(
+        name=f"ticket-{user.name.lower()}",
+        type=discord.ChannelType.private_thread,
+        invitable=False,
+        reason=f"Support Ticket For {user}"
+    )
+    watched_threads[str(thread.id)] = thread
     await thread.add_user(user)
+    await thread.send(embed=ticket_welcome_embed(user), view=CloseTicketButton())
     return thread
+
+
 async def delete_user_thread(channel: discord.TextChannel, user: discord.Member):
-    thread=await get_user_thread(channel,user)
+    thread = await get_user_thread(channel, user)
     if not thread:
         return None
     watched_threads.pop(str(thread.id), None)
-    if thread:
-        await thread.delete()
-        return True
-    return False
+    await thread.delete()
+    return True
+
 
 def ticket_panel_embed():
     embed = discord.Embed(
@@ -241,17 +309,19 @@ def ticket_panel_embed():
     embed.set_footer(text="Vault Bot • Support System")
     return embed
 
+
 def ticket_welcome_embed(user: discord.Member) -> discord.Embed:
     embed = discord.Embed(
         title="🎫 Ticket Opened",
         description=(
             f"Hello {user.mention}! Support will be with you shortly.\n"
-            "Describe your issue and a staff member will assist you."
+            "Describe your issue and a Our ChatBot will assist you."
         ),
         color=discord.Color.green()
     )
     embed.set_footer(text=f"Ticket by {user}", icon_url=user.display_avatar.url)
     return embed
+
 
 class TicketButton(discord.ui.View):
     def __init__(self):
@@ -263,138 +333,35 @@ class TicketButton(discord.ui.View):
         emoji="🎫",
         custom_id="ticket_button"
     )
-    async def create_query(
-        self,
-        interaction: discord.Interaction,
-        button: discord.ui.Button
-    ):
-        user    = interaction.user
+    async def create_query(self, interaction: discord.Interaction, button: discord.ui.Button):
+        user = interaction.user
         channel = interaction.channel
         existing_thread = await get_user_thread(channel, user)
+
         if existing_thread:
             await delete_user_thread(channel, user)
-            await interaction.response.send_message(
-                "🔒 Your ticket has been closed.", ephemeral=True
-            )
+            await interaction.response.send_message("🔒 Your ticket has been closed.", ephemeral=True)
             return
+
         thread = await create_user_thread(channel, user)
-        await thread.send(embed=ticket_welcome_embed(user))
-        await interaction.response.send_message(
-            f"✅ Your ticket is ready: {thread.mention}", ephemeral=True
-        )  
+        await interaction.response.send_message(f"✅ Your ticket is ready: {thread.mention}", ephemeral=True)
+
+
 async def create_support_channel(server_id: int):
     guild = bot.get_guild(server_id)
     if guild is None:
         return None
+
     category = discord.utils.get(guild.categories, name="Vault Bot")
     if not category:
         category = await guild.create_category("Vault Bot")
-    text_channel = discord.utils.get(
-        guild.text_channels, name="support", category=category
-    )
-    if not text_channel:
-        text_channel = await guild.create_text_channel(
-            "support", category=category
-        )
-    await text_channel.send(embed=ticket_panel_embed(), view=TicketButton())
 
+    text_channel = discord.utils.get(guild.text_channels, name="support", category=category)
+    if not text_channel:
+        text_channel = await guild.create_text_channel("support", category=category)
+
+    await text_channel.send(embed=ticket_panel_embed(), view=TicketButton())
     return text_channel
 
-@bot.event
-async def on_ready():
-    bot.add_view(TicketButton())
-    print(f"[on_ready] Logged in as {bot.user}")
-    print(f"[on_ready] Connected to {len(bot.guilds)} server(s)")
-
-async def create_user_thread(channel:discord.TextChannel,user:discord.Member):
-    thread=await channel.create_thread(name=f"ticket-{user.name.lower()}",type=discord.ChannelType.private_thread,invitable=False,reason=f"Support Ticket For {user}")
-    watched_threads[str(thread.id)]=thread
-    await thread.add_user(user)
-    return thread
-async def delete_user_thread(channel: discord.TextChannel, user: discord.Member):
-    thread=await get_user_thread(channel,user)
-    if not thread:
-        return None
-    watched_threads.pop(str(thread.id), None)
-    if thread:
-        await thread.delete()
-        return True
-    return False
-
-def ticket_panel_embed():
-    embed = discord.Embed(
-        title="🎫 Support Center",
-        description=(
-            "Click Create Query to open a private ticket.\n"
-            "Click again on the same button to close it."
-        ),
-        color=discord.Color.blurple()
-    )
-    embed.set_footer(text="Vault Bot • Support System")
-    return embed
-
-def ticket_welcome_embed(user: discord.Member) -> discord.Embed:
-    embed = discord.Embed(
-        title="🎫 Ticket Opened",
-        description=(
-            f"Hello {user.mention}! Support will be with you shortly.\n"
-            "Describe your issue and a staff member will assist you."
-        ),
-        color=discord.Color.green()
-    )
-    embed.set_footer(text=f"Ticket by {user}", icon_url=user.display_avatar.url)
-    return embed
-
-class TicketButton(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
-
-    @discord.ui.button(
-        label="Create Query",
-        style=discord.ButtonStyle.gray,
-        emoji="🎫",
-        custom_id="ticket_button"
-    )
-    async def create_query(
-        self,
-        interaction: discord.Interaction,
-        button: discord.ui.Button
-    ):
-        user    = interaction.user
-        channel = interaction.channel
-        existing_thread = await get_user_thread(channel, user)
-        if existing_thread:
-            await delete_user_thread(channel, user)
-            await interaction.response.send_message(
-                "🔒 Your ticket has been closed.", ephemeral=True
-            )
-            return
-        thread = await create_user_thread(channel, user)
-        await thread.send(embed=ticket_welcome_embed(user))
-        await interaction.response.send_message(
-            f"✅ Your ticket is ready: {thread.mention}", ephemeral=True
-        )  
-async def create_support_channel(server_id: int):
-    guild = bot.get_guild(server_id)
-    if guild is None:
-        return None
-    category = discord.utils.get(guild.categories, name="Vault Bot")
-    if not category:
-        category = await guild.create_category("Vault Bot")
-    text_channel = discord.utils.get(
-        guild.text_channels, name="support", category=category
-    )
-    if not text_channel:
-        text_channel = await guild.create_text_channel(
-            "support", category=category
-        )
-    await text_channel.send(embed=ticket_panel_embed(), view=TicketButton())
-
-    return text_channel
 
 bot.run(DISCORD_BOT_KEY)
-@bot.event
-async def on_ready():
-    bot.add_view(TicketButton())
-    print(f"[on_ready] Logged in as {bot.user}")
-    print(f"[on_ready] Connected to {len(bot.guilds)} server(s)")
