@@ -32,6 +32,8 @@ function Dashboard({
 }) {
   const [tab, setTab] = useState("channels"); // Default to Channels tab as first of 3 tabs
 
+  const inviteUrl = `${API_BASE}/auth/invite`;
+
   const activeGuild = guilds.find(g => g.id === activeGuildId) || null;
 
   const tabLabels = {
@@ -87,7 +89,7 @@ function Dashboard({
             <span style={{ height: 16, width: 1, background: "rgba(255,255,255,0.08)" }} />
             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
               <a href="#" style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.45)", textDecoration: "none", transition: "color var(--tr)" }} onMouseEnter={e => e.target.style.color = "#ffffff"} onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.45)"}>Docs</a>
-              <a href="#" style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.45)", textDecoration: "none", transition: "color var(--tr)" }} onMouseEnter={e => e.target.style.color = "#ffffff"} onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.45)"}>Invite</a>
+              <a href={inviteUrl} style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.45)", textDecoration: "none", transition: "color var(--tr)" }} onMouseEnter={e => e.target.style.color = "#ffffff"} onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.45)"}>Invite</a>
               <a href="#" style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.45)", textDecoration: "none", transition: "color var(--tr)" }} onMouseEnter={e => e.target.style.color = "#ffffff"} onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.45)"}>Discord</a>
               <a href="#" style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.45)", textDecoration: "none", transition: "color var(--tr)" }} onMouseEnter={e => e.target.style.color = "#ffffff"} onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.45)"}>Status</a>
               <a href="#" style={{ fontSize: 13, fontWeight: 600, color: "var(--blue)", textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }} onMouseEnter={e => e.target.style.textShadow = "0 0 8px rgba(0,176,244,0.4)"} onMouseLeave={e => e.target.style.textShadow = "none"}>
@@ -207,9 +209,16 @@ export default function App() {
 
   useEffect(() => {
     const hash = window.location.hash;
+    const hashParams = new URLSearchParams(hash.startsWith("#") ? hash.slice(1) : hash);
     const params = new URLSearchParams(window.location.search);
-    const hashToken = hash.startsWith("#token=") ? hash.slice(7) : hash.startsWith("#access_token=") ? hash.slice(14) : null;
-    const token = hashToken || params.get("token") || params.get("access_token");
+    const token = hashParams.get("token") || hashParams.get("access_token") || params.get("token") || params.get("access_token");
+    
+    let redirectedGuildId = hashParams.get("guild_id") || params.get("guild_id");
+    if (redirectedGuildId) {
+      sessionStorage.setItem("pending_guild_redirect", redirectedGuildId);
+    } else {
+      redirectedGuildId = sessionStorage.getItem("pending_guild_redirect");
+    }
 
     (async () => {
       const activeToken = token || getToken();
@@ -223,6 +232,7 @@ export default function App() {
           setUser(u); 
           LS.set("wb_user", u);
           
+          let activated = false;
           try { 
             const [guildsRes, statusRes] = await Promise.all([
               API.getGuilds(),
@@ -244,11 +254,40 @@ export default function App() {
                 has_custom_prompt: s.has_custom_prompt,
               };
             });
-            setGuilds(mappedConfigured);
-            LS.set("wb_guilds", mappedConfigured);
+
+            let finalConfigured = mappedConfigured;
+            if (redirectedGuildId) {
+              const targetGuild = allGuilds.find(g => g.id === redirectedGuildId);
+              if (targetGuild) {
+                try {
+                  await API.addServer(redirectedGuildId, targetGuild.name);
+                  const newServer = {
+                    id: redirectedGuildId,
+                    name: targetGuild.name,
+                    icon: targetGuild.icon || null,
+                    config_status: "configured",
+                    channel_count: 0,
+                    has_custom_prompt: false,
+                  };
+                  finalConfigured = [...mappedConfigured.filter(g => g.id !== redirectedGuildId), newServer];
+                  activated = true;
+                  sessionStorage.removeItem("pending_guild_redirect");
+                } catch (e) {
+                  console.error("Auto add server failed:", e);
+                }
+              }
+            }
+
+            setGuilds(finalConfigured);
+            LS.set("wb_guilds", finalConfigured);
           } catch (_) {}
           
-          setView("servers");
+          if (activated && redirectedGuildId) {
+            sessionStorage.removeItem("pending_guild_redirect");
+            handleActivateServer(redirectedGuildId);
+          } else {
+            setView("servers");
+          }
         } catch (_) {
           setView("servers");
         }

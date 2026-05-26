@@ -27,6 +27,26 @@ export default function ChannelsTab({ guildId, onGoToOverview }) {
   const [selectedChansToAdd, setSelectedChansToAdd] = useState([]);
   const [selectedModChanToAdd, setSelectedModChanToAdd] = useState(null);
   const [guildName, setGuildName] = useState("");
+  const [creatingCategory, setCreatingCategory] = useState(false);
+
+  const handleCreateSupportCategory = async () => {
+    if (!guildId) return;
+    setCreatingCategory(true);
+    setStatus(null);
+    try {
+      const res = await API.addSupportCategory(guildId);
+      if (res.status === "success") {
+        setStatus({ ok: true, msg: "Support category and 🎫 ticket channel created successfully!" });
+        await load(guildId);
+      } else {
+        setStatus({ ok: false, msg: res.message || "Failed to create support category" });
+      }
+    } catch (e) {
+      setStatus({ ok: false, msg: e.message || "Failed to create support category" });
+    } finally {
+      setCreatingCategory(false);
+    }
+  };
 
   const load = useCallback(async (id) => {
     if (!id) { setLoaded(false); return; }
@@ -201,7 +221,7 @@ export default function ChannelsTab({ guildId, onGoToOverview }) {
 
       {!loading && loaded && (
         <>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16, position: "relative", zIndex: 10 }}>
             {/* LEFT SIDE - ACTIVE BOT CHANNELS */}
             <Card>
               <div style={{ fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
@@ -497,6 +517,60 @@ export default function ChannelsTab({ guildId, onGoToOverview }) {
                   )}
                 </div>
                 <Btn onClick={setMod} variant="outline" style={{ flexShrink: 0, minHeight: 40 }} disabled={!selectedModChanToAdd}>Set</Btn>
+              </div>
+            </Card>
+          </div>
+
+          {/* Automated Ticket & Support System Setup */}
+          <div style={{ marginTop: 20, marginBottom: 20 }}>
+            <Card style={{
+              background: "linear-gradient(135deg, rgba(88, 101, 242, 0.08) 0%, rgba(78, 222, 163, 0.08) 100%)",
+              border: "1px solid rgba(88, 101, 242, 0.2)",
+              boxSizing: "border-box"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14, textAlign: "left", flex: 1, minWidth: 280 }}>
+                  <div style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: "10px",
+                    background: "linear-gradient(135deg, var(--discord) 0%, var(--secondary) 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 4px 14px rgba(88, 101, 242, 0.3)",
+                    flexShrink: 0
+                  }}>
+                    <Icon name="confirmation_number" size={24} style={{ color: "#fff" }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 2 }}>
+                      Automated Ticket & Support System
+                    </div>
+                    <div style={{ fontSize: 12.5, color: "var(--on-surface-variant)", lineHeight: 1.4 }}>
+                      Create a dedicated support category channel with a 🎫 support ticket generator widget inside your server.
+                    </div>
+                  </div>
+                </div>
+                
+                <Btn
+                  onClick={handleCreateSupportCategory}
+                  disabled={creatingCategory}
+                  variant="success"
+                  style={{ minHeight: 40 }}
+                >
+                  {creatingCategory ? (
+                    <>
+                      <Spinner size={16} color="#fff" />
+                      <span>Creating Category...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="add_box" size={16} />
+                      <span>Create Support Category</span>
+                    </>
+                  )}
+                </Btn>
               </div>
             </Card>
           </div>

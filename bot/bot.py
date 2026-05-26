@@ -213,5 +213,96 @@ async def on_command_error(ctx, error):
     else:
         print(f"[on_command_error] {type(error).__name__}: {error}")
 
+async def create_user_thread(channel:discord.TextChannel,user:discord.Member):
+    thread=await channel.create_thread(name=f"ticket-{user.name.lower()}",type=discord.ChannelType.private_thread,invitable=False,reason=f"Support Ticket For {user}")
+    watched_threads[str(thread.id)]=thread
+    await thread.add_user(user)
+    return thread
+async def delete_user_thread(channel: discord.TextChannel, user: discord.Member):
+    thread=await get_user_thread(channel,user)
+    if not thread:
+        return None
+    watched_threads.pop(str(thread.id), None)
+    if thread:
+        await thread.delete()
+        return True
+    return False
+
+def ticket_panel_embed():
+    embed = discord.Embed(
+        title="🎫 Support Center",
+        description=(
+            "Click Create Query to open a private ticket.\n"
+            "Click again on the same button to close it."
+        ),
+        color=discord.Color.blurple()
+    )
+    embed.set_footer(text="Vault Bot • Support System")
+    return embed
+
+def ticket_welcome_embed(user: discord.Member) -> discord.Embed:
+    embed = discord.Embed(
+        title="🎫 Ticket Opened",
+        description=(
+            f"Hello {user.mention}! Support will be with you shortly.\n"
+            "Describe your issue and a staff member will assist you."
+        ),
+        color=discord.Color.green()
+    )
+    embed.set_footer(text=f"Ticket by {user}", icon_url=user.display_avatar.url)
+    return embed
+
+class TicketButton(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(
+        label="Create Query",
+        style=discord.ButtonStyle.gray,
+        emoji="🎫",
+        custom_id="ticket_button"
+    )
+    async def create_query(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
+        user    = interaction.user
+        channel = interaction.channel
+        existing_thread = await get_user_thread(channel, user)
+        if existing_thread:
+            await delete_user_thread(channel, user)
+            await interaction.response.send_message(
+                "🔒 Your ticket has been closed.", ephemeral=True
+            )
+            return
+        thread = await create_user_thread(channel, user)
+        await thread.send(embed=ticket_welcome_embed(user))
+        await interaction.response.send_message(
+            f"✅ Your ticket is ready: {thread.mention}", ephemeral=True
+        )  
+async def create_support_channel(server_id: int):
+    guild = bot.get_guild(server_id)
+    if guild is None:
+        return None
+    category = discord.utils.get(guild.categories, name="Vault Bot")
+    if not category:
+        category = await guild.create_category("Vault Bot")
+    text_channel = discord.utils.get(
+        guild.text_channels, name="support", category=category
+    )
+    if not text_channel:
+        text_channel = await guild.create_text_channel(
+            "support", category=category
+        )
+    await text_channel.send(embed=ticket_panel_embed(), view=TicketButton())
+
+    return text_channel
+
+@bot.event
+async def on_ready():
+    bot.add_view(TicketButton())
+    print(f"[on_ready] Logged in as {bot.user}")
+    print(f"[on_ready] Connected to {len(bot.guilds)} server(s)")
 
 bot.run(DISCORD_BOT_KEY)

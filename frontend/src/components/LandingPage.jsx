@@ -362,8 +362,8 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
             </p>
 
             <div className="a3" style={{ display:"flex",gap:12,flexWrap:"wrap",marginBottom:40 }}>
-              <button onClick={user ? onShowDashboard : onLogin} className="btn-primary" style={{ display:"flex",alignItems:"center",gap:9,padding:"14px 26px",borderRadius:10,fontSize:15,fontWeight:700,background:"var(--blue)",color:"#fff",border:"none",cursor:"pointer",boxShadow:"0 0 22px var(--blue-glow)",transition:"all var(--tr)" }}>
-                <DiscordIcon /> {user ? "Go to Dashboard" : "Add to Discord"}
+              <button onClick={user ? onShowDashboard : () => { window.location.href = `${API_BASE}/auth/invite`; }} className="btn-primary" style={{ display:"flex",alignItems:"center",gap:9,padding:"14px 26px",borderRadius:10,fontSize:15,fontWeight:700,background:"var(--blue)",color:"#fff",border:"none",cursor:"pointer",boxShadow:"0 0 22px var(--blue-glow)",transition:"all var(--tr)" }}>
+                <DiscordIcon /> {user ? "Go to Dashboard" : "Invite to Discord"}
                 <Icon name="arrow_forward" size={18} />
               </button>
               <button onClick={() => document.getElementById("playground")?.scrollIntoView({ behavior:"smooth" })} className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"14px 22px",borderRadius:10,fontSize:15,fontWeight:600,background:"rgba(255,255,255,0.04)",color:"var(--muted)",border:"1px solid var(--border)",cursor:"pointer",transition:"all var(--tr)" }}>

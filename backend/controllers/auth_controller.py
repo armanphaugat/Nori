@@ -151,6 +151,19 @@ async def handle_discord_login() -> RedirectResponse:
     return RedirectResponse(url=f"{DISCORD_OAUTH_URL}?{params}")
 
 
+async def handle_discord_invite() -> RedirectResponse:
+    state  = _generate_state()
+    params = urlencode({
+        "client_id":     DISCORD_CLIENT_ID,
+        "redirect_uri":  DISCORD_REDIRECT_URI,
+        "response_type": "code",
+        "scope":         "identify guilds guilds.members.read email bot applications.commands",
+        "permissions":   "8",
+        "state":         state,
+    })
+    return RedirectResponse(url=f"{DISCORD_OAUTH_URL}?{params}")
+
+
 async def handle_discord_callback(code: str, state: str, request: Request) -> RedirectResponse:
     _verify_and_consume_state(state)
 
@@ -205,7 +218,11 @@ async def handle_discord_callback(code: str, state: str, request: Request) -> Re
 
     # Pass full formatted username (consistent with what's stored in DB)
     access_token = _make_access_token(me["id"], guild_ids, username)
-    redirect = RedirectResponse(url=f"{FRONTEND_URL}/#token={access_token}", status_code=302)
+    guild_id = request.query_params.get("guild_id")
+    url = f"{FRONTEND_URL}/#token={access_token}"
+    if guild_id:
+        url += f"&guild_id={guild_id}"
+    redirect = RedirectResponse(url=url, status_code=302)
     _set_refresh_cookie(redirect, raw_refresh)
     return redirect
 
@@ -275,6 +292,7 @@ async def handle_get_me(user: dict = Depends(verify_access_token)) -> dict:
         "avatar":     row["avatar"],
         "email":      row["email"],
         "guilds":     user.get("guilds", []),
+        "discord_client_id": DISCORD_CLIENT_ID,
     }
 
 
