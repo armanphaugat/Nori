@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { API } from "../utils/api.js";
-import { Spinner, StatusBadge, Btn, Icon, Tag } from "./Common.jsx";
+import { API, API_BASE } from "../utils/api.js";
+import { Spinner, StatusBadge, Btn, Icon, Tag, DiscordIcon } from "./Common.jsx";
 
 export default function ServerSelect({ user, guilds, discordGuilds, onActivate, onAdd, onLogout }) {
   const [search, setSearch] = useState("");
@@ -9,6 +9,10 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
   const [addableServers, setAddableServers] = useState(discordGuilds || []);
   const [addingId, setAddingId] = useState(null);
   const [errorStatus, setErrorStatus] = useState(null);
+
+  const handleInviteNewServer = () => {
+    window.location.href = `${API_BASE}/auth/invite`;
+  };
 
   // Fetch configured and addable servers from backend
   const loadStatuses = async () => {
@@ -401,6 +405,73 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
                   style={{ cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: 12, fontWeight: 700 }}
                 >✕</span>
               )}
+            </div>
+
+            {/* Premium Invite Banner */}
+            <div style={{
+              width: "100%",
+              maxWidth: 680,
+              background: "linear-gradient(135deg, rgba(88, 101, 242, 0.12) 0%, rgba(0, 176, 244, 0.12) 100%)",
+              border: "1px solid rgba(88, 101, 242, 0.25)",
+              borderRadius: "12px",
+              padding: "16px 20px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "16px",
+              boxShadow: "0 8px 32px rgba(0, 0, 0, 0.25)",
+              marginTop: "8px",
+              flexWrap: "wrap",
+              boxSizing: "border-box"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, textAlign: "left", flex: 1, minWidth: 280 }}>
+                <div style={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: "10px",
+                  background: "var(--discord)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 4px 12px rgba(88, 101, 242, 0.35)",
+                  flexShrink: 0
+                }}>
+                  <DiscordIcon size={22} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 14.5, fontWeight: 700, color: "#fff", marginBottom: 2 }}>
+                    Want to add VaultBot to a new server?
+                  </div>
+                  <div style={{ fontSize: 12.5, color: "rgba(255, 255, 255, 0.65)", lineHeight: 1.4 }}>
+                    Invite the bot to any Discord server where you have administrative access.
+                  </div>
+                </div>
+              </div>
+              
+              <button
+                onClick={handleInviteNewServer}
+                style={{
+                  background: "var(--discord)",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "10px 18px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  boxShadow: "0 4px 12px rgba(88, 101, 242, 0.25)",
+                  transition: "all var(--tr)",
+                  whiteSpace: "nowrap"
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(88, 101, 242, 0.4)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(88, 101, 242, 0.25)'; }}
+              >
+                <Icon name="add" size={16} />
+                <span>Invite to Discord</span>
+              </button>
             </div>
 
             {/* Configured & Unconfigured Server Row List */}

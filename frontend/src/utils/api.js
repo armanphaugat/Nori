@@ -66,6 +66,7 @@ export const API = {
   addChannel:        (gid, cid)   => apiFetch("/channel/add",     { method: "PUT",    body: fd({ guild_id: gid, channel_id: cid }), isForm: true }),
   deleteChannel:     (gid, cid)   => apiFetch("/channel/delete",  { method: "DELETE", body: fd({ guild_id: gid, channel_id: cid }), isForm: true }),
   addModChannel:     (gid, cid)   => apiFetch("/channel/add-mod", { method: "PUT",    body: fd({ guild_id: gid, channel_id: cid }), isForm: true }),
+  addSupportCategory: (gid)        => apiFetch(`/channel/add-support-category?guild_id=${encodeURIComponent(gid)}`),
   upload: (gid, files, urls) => {
     const f = new FormData();
     f.append("guild_id", gid);
