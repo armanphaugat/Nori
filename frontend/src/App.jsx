@@ -28,9 +28,22 @@ function Dashboard({
   discordGuilds, 
   activeGuildId, 
   onSwitchServer, 
+  onActivate,
   onLogout 
 }) {
   const [tab, setTab] = useState("channels"); // Default to Channels tab as first of 3 tabs
+  const [showServerDropdown, setShowServerDropdown] = useState(false);
+
+  // Close server dropdown on click outside
+  useEffect(() => {
+    const handleOutside = (e) => {
+      if (!e.target.closest('[data-dropdown="server-select"]')) {
+        setShowServerDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
 
   const inviteUrl = `${API_BASE}/auth/invite`;
 
@@ -98,36 +111,145 @@ function Dashboard({
             </div>
           </div>
           
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, position: "relative" }} data-dropdown="server-select">
             {activeGuild ? (
-              <div 
-                onClick={onSwitchServer}
-                style={{ 
-                  display: "flex", 
-                  alignItems: "center", 
-                  gap: 8, 
-                  padding: "5px 12px", 
-                  borderRadius: "var(--r-full)", 
-                  background: "rgba(34,197,94,0.06)", 
-                  border: "1px solid rgba(34,197,94,0.15)",
-                  cursor: "pointer",
-                  transition: "all var(--tr)"
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(34,197,94,0.12)"; e.currentTarget.style.borderColor = "rgba(34,197,94,0.35)"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(34,197,94,0.06)"; e.currentTarget.style.borderColor = "rgba(34,197,94,0.15)"; }}
-              >
-                {getServerIconUrl(activeGuild) ? (
-                  <img 
-                    src={getServerIconUrl(activeGuild)} 
-                    alt={activeGuild.name} 
-                    style={{ width: 18, height: 18, borderRadius: "50%", objectFit: "cover" }} 
-                  />
-                ) : (
-                  <Icon name="dns" size={14} style={{ color: "#22c55e" }} />
+              <>
+                <div 
+                  onClick={() => setShowServerDropdown(!showServerDropdown)}
+                  style={{ 
+                    display: "flex", 
+                    alignItems: "center", 
+                    gap: 8, 
+                    padding: "5px 12px", 
+                    borderRadius: "var(--r-full)", 
+                    background: "rgba(34,197,94,0.06)", 
+                    border: "1px solid rgba(34,197,94,0.15)",
+                    cursor: "pointer",
+                    transition: "all var(--tr)",
+                    userSelect: "none"
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(34,197,94,0.12)"; e.currentTarget.style.borderColor = "rgba(34,197,94,0.35)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(34,197,94,0.06)"; e.currentTarget.style.borderColor = "rgba(34,197,94,0.15)"; }}
+                >
+                  {getServerIconUrl(activeGuild) ? (
+                    <img 
+                      src={getServerIconUrl(activeGuild)} 
+                      alt={activeGuild.name} 
+                      style={{ width: 18, height: 18, borderRadius: "50%", objectFit: "cover" }} 
+                    />
+                  ) : (
+                    <Icon name="dns" size={14} style={{ color: "#22c55e" }} />
+                  )}
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "#22c55e" }}>{activeGuild.name}</span>
+                  <OnlineDot />
+                  <Icon name="expand_more" size={14} style={{ color: "#22c55e", marginLeft: 2, transform: showServerDropdown ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+                </div>
+
+                {showServerDropdown && (
+                  <div style={{
+                    position: "absolute",
+                    top: "100%",
+                    right: 0,
+                    marginTop: 8,
+                    width: 240,
+                    background: "rgba(18, 20, 32, 0.95)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    borderRadius: "var(--r-md)",
+                    boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
+                    zIndex: 100,
+                    overflow: "hidden",
+                    display: "flex",
+                    flexDirection: "column",
+                    backdropFilter: "blur(12px)",
+                    WebkitBackdropFilter: "blur(12px)"
+                  }}>
+                    <div style={{ 
+                      padding: "10px 14px", 
+                      fontSize: 10.5, 
+                      fontWeight: 700, 
+                      color: "rgba(255,255,255,0.4)", 
+                      borderBottom: "1px solid rgba(255,255,255,0.06)", 
+                      textTransform: "uppercase", 
+                      letterSpacing: "0.8px" 
+                    }}>
+                      Switch Server
+                    </div>
+                    <div style={{ maxHeight: 240, overflowY: "auto" }}>
+                      {guilds.map(g => {
+                        const isSelected = g.id === activeGuildId;
+                        return (
+                          <div
+                            key={g.id}
+                            onClick={() => {
+                              onActivate(g.id);
+                              setShowServerDropdown(false);
+                            }}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 10,
+                              padding: "10px 14px",
+                              cursor: "pointer",
+                              background: isSelected ? "rgba(34,197,94,0.08)" : "transparent",
+                              transition: "background 0.2s"
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.06)"}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = isSelected ? "rgba(34,197,94,0.08)" : "transparent"}
+                          >
+                            {getServerIconUrl(g) ? (
+                              <img 
+                                src={getServerIconUrl(g)} 
+                                alt={g.name} 
+                                style={{ width: 18, height: 18, borderRadius: "50%", objectFit: "cover" }} 
+                              />
+                            ) : (
+                              <Icon name="dns" size={14} style={{ color: isSelected ? "#22c55e" : "var(--on-surface-variant)" }} />
+                            )}
+                            <span style={{ 
+                              fontSize: 12.5, 
+                              fontWeight: isSelected ? 600 : 500, 
+                              color: isSelected ? "#22c55e" : "#fff", 
+                              flex: 1, 
+                              whiteSpace: "nowrap", 
+                              overflow: "hidden", 
+                              textOverflow: "ellipsis" 
+                            }}>
+                              {g.name}
+                            </span>
+                            {isSelected && (
+                              <Icon name="check" size={12} style={{ color: "#22c55e" }} />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div 
+                      onClick={() => {
+                        onSwitchServer();
+                        setShowServerDropdown(false);
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        padding: "10px 14px",
+                        borderTop: "1px solid rgba(255,255,255,0.06)",
+                        cursor: "pointer",
+                        background: "rgba(255,255,255,0.02)",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: "var(--blue)",
+                        transition: "background 0.2s"
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.06)"}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.02)"}
+                    >
+                      <Icon name="dns" size={14} style={{ color: "var(--blue)" }} />
+                      <span>Manage Servers...</span>
+                    </div>
+                  </div>
                 )}
-                <span style={{ fontSize: 12, fontWeight: 600, color: "#22c55e" }}>{activeGuild.name}</span>
-                <OnlineDot />
-              </div>
+              </>
             ) : (
               <div style={{ 
                 display: "flex", 
@@ -181,7 +303,7 @@ function Dashboard({
         <div style={{ flex: 1, overflowY: "auto", padding: "32px 40px" }}>
           <div style={{ maxWidth: 1200, width: "100%", margin: "0 auto" }}>
             {tab === "channels" && (
-              <ChannelsTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
+              <ChannelsTab guildId={activeGuildId} guildName={activeGuild?.name} onGoToOverview={onSwitchServer} />
             )}
             {tab === "upload" && (
               <UploadTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
@@ -444,6 +566,7 @@ export default function App() {
           discordGuilds={discordGuilds} 
           activeGuildId={activeGuildId}
           onSwitchServer={() => setView("servers")}
+          onActivate={handleActivateServer}
           onLogout={handleLogout}
         />
       )}
