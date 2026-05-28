@@ -6,6 +6,7 @@ import docx2txt
 from PIL import Image
 import pytesseract
 import whisper
+import asyncio
 import tempfile
 from graphlit import Graphlit
 from dbhelper.db_helper import *
@@ -59,6 +60,10 @@ def read_ocr(file):
         raise
     except Exception as e:
         raise ValueError(f"Failed to read image via OCR: {e}")
+    
+async def read_ocr_async(file):
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, read_ocr, file)
 
 def read_video(file):
     tmp_path = None

@@ -5,10 +5,11 @@ from discord.ext import commands
 import sys
 import asyncio
 import re
+from io import BytesIO
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from dbhelper.db_helper import get_channels, get_server, get_mod_channel
 from python.query import query_graphlit, query_graphlit_web
-
+from python.ingest import read_ocr_async
 load_dotenv()
 
 DISCORD_BOT_KEY = os.getenv("DISCORD_BOT_KEY")
@@ -241,6 +242,16 @@ async def on_reaction_add(reaction, user):
 @bot.command()
 @commands.cooldown(4, 60, commands.BucketType.user)
 async def ask(ctx, *, question: str = None):
+    if ctx.message.attachments:
+        attachment=ctx.message.attachments[0]
+        bytes_size=attachment.size 
+        mb_size=bytes_size/(1024 * 1024)
+        if mb_size>10:
+            await ctx.send("Please Upload Less Than 10 Mb image")
+            return
+        if attachment.content_type and attachment.content_type.startswith('image'):
+            image_bytes=BytesIO(await attachment.read())
+            question+=await read_ocr_async(image_bytes)
     if not question:
         await ctx.send("No question provided. Usage: `-ask <your question>`")
         return
