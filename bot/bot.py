@@ -359,18 +359,72 @@ class TicketButton(discord.ui.View):
         await interaction.response.send_message(f"✅ Your ticket is ready: {thread.mention}", ephemeral=True)
 
 
-async def create_support_channel(server_id: int):
+async def create_support_channel(server_id: int, channel_id: int = None):
+    # Fetch full guild object first to ensure roles cache is fully populated
     guild = bot.get_guild(server_id)
     if guild is None:
+        try:
+            guild = await bot.fetch_guild(server_id)
+        except Exception as e:
+            print(f"[create_support_channel] Failed to fetch guild {server_id}: {e}")
+            return None
+
+    if not guild:
         return None
 
-    category = discord.utils.get(guild.categories, name="Vault Bot")
-    if not category:
-        category = await guild.create_category("Vault Bot")
+    # Fetch channel next
+    text_channel = None
+    if channel_id:
+        try:
+            text_channel = await bot.fetch_channel(channel_id)
+        except Exception as e:
+            print(f"[create_support_channel] Failed to fetch channel {channel_id}: {e}")
+            return None
+    else:
+        category = discord.utils.get(guild.categories, name="Vault Bot")
+        if not category:
+            category = await guild.create_category("Vault Bot")
 
-    text_channel = discord.utils.get(guild.text_channels, name="support", category=category)
+        text_channel = discord.utils.get(guild.text_channels, name="support", category=category)
+        if not text_channel:
+            text_channel = await guild.create_text_channel("support", category=category)
+
     if not text_channel:
-        text_channel = await guild.create_text_channel("support", category=category)
+        return None
+
+    if channel_id:
+        try:
+            print(f"[create_support_channel] Purging messages in preexisting channel {text_channel.name}")
+            await text_channel.purge(limit=None)
+        except Exception as pe:
+            print(f"[create_support_channel] Failed to purge messages: {pe}")
+    try:
+        overwrites = text_channel.overwrites
+        default_role = guild.default_role
+        default_overwrite = overwrites.get(default_role) or discord.PermissionOverwrite()
+        default_overwrite.send_messages = False
+        overwrites[default_role] = default_overwrite
+
+        me = None
+        if bot.user:
+            try:
+                me = await guild.fetch_member(bot.user.id)
+            except Exception:
+                me = getattr(guild, "me", None)
+
+        if me:
+            bot_overwrite = overwrites.get(me) or discord.PermissionOverwrite()
+            bot_overwrite.send_messages = True
+            bot_overwrite.read_messages = True
+            bot_overwrite.manage_threads = True
+            bot_overwrite.create_public_threads = True
+            bot_overwrite.create_private_threads = True
+            bot_overwrite.send_messages_in_threads = True
+            overwrites[me] = bot_overwrite
+
+        await text_channel.edit(overwrites=overwrites)
+    except Exception as pe:
+        print(f"[create_support_channel] Failed to set permissions: {pe}")
 
     await text_channel.send(embed=ticket_panel_embed(), view=TicketButton())
     return text_channel

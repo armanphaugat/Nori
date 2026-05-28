@@ -11,7 +11,7 @@ import {
   NoServerSelected
 } from "./Common.jsx";
 
-export default function ChannelsTab({ guildId, onGoToOverview }) {
+export default function ChannelsTab({ guildId, guildName: initialGuildName = "", onGoToOverview }) {
   const [channels, setChannels] = useState([]);
   const [modChannel, setModChannel] = useState(null);
   const [loaded, setLoaded] = useState(false);
@@ -26,23 +26,35 @@ export default function ChannelsTab({ guildId, onGoToOverview }) {
   const [showModDropdown, setShowModDropdown] = useState(false);
   const [selectedChansToAdd, setSelectedChansToAdd] = useState([]);
   const [selectedModChanToAdd, setSelectedModChanToAdd] = useState(null);
-  const [guildName, setGuildName] = useState("");
+  const [guildName, setGuildName] = useState(initialGuildName || "Discord Server");
   const [creatingCategory, setCreatingCategory] = useState(false);
+  const [supportSetupMode, setSupportSetupMode] = useState("new"); // 'new' | 'existing'
+  const [selectedSupportChan, setSelectedSupportChan] = useState("");
 
   const handleCreateSupportCategory = async () => {
     if (!guildId) return;
+    if (supportSetupMode === "existing" && !selectedSupportChan) {
+      setStatus({ ok: false, msg: "Please select an existing channel first!" });
+      return;
+    }
     setCreatingCategory(true);
     setStatus(null);
     try {
-      const res = await API.addSupportCategory(guildId);
+      const res = await API.addSupportCategory(guildId, supportSetupMode === "existing" ? selectedSupportChan : null);
       if (res.status === "success") {
-        setStatus({ ok: true, msg: "Support category and 🎫 ticket channel created successfully!" });
+        setStatus({ 
+          ok: true, 
+          msg: supportSetupMode === "existing"
+            ? "Support system configured in the channel successfully! Permissions updated."
+            : "Support category and 🎫 ticket channel created successfully! Permissions updated."
+        });
+        setSelectedSupportChan("");
         await load(guildId);
       } else {
-        setStatus({ ok: false, msg: res.message || "Failed to create support category" });
+        setStatus({ ok: false, msg: res.message || "Failed to configure support system" });
       }
     } catch (e) {
-      setStatus({ ok: false, msg: e.message || "Failed to create support category" });
+      setStatus({ ok: false, msg: e.message || "Failed to configure support system" });
     } finally {
       setCreatingCategory(false);
     }
@@ -56,7 +68,7 @@ export default function ChannelsTab({ guildId, onGoToOverview }) {
       if (d.status === "fulfilled")  { 
         setChannels(d.value.channel_ids || []); 
         setModChannel(d.value.mod_channel || null); 
-        setGuildName(d.value.guild_name || "Unknown Server");
+        setGuildName(d.value.guild_name || initialGuildName || "Discord Server");
         setLoaded(true); 
       }
       if (dc.status === "fulfilled") {
@@ -76,13 +88,15 @@ export default function ChannelsTab({ guildId, onGoToOverview }) {
       }
     } catch (e) { setStatus({ ok: false, msg: e.message }); }
     setLoading(false);
-  }, []);
-
+  }, [initialGuildName]);
+ 
   // Auto-load when active guild changes
   useEffect(() => {
     setLoaded(false); setChannels([]); setDiscordChannels([]); setModChannel(null); setStatus(null);
+    setSupportSetupMode("new"); setSelectedSupportChan("");
+    setGuildName(initialGuildName || "Discord Server");
     if (guildId) load(guildId);
-  }, [guildId, load]);
+  }, [guildId, load, initialGuildName]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -207,13 +221,6 @@ export default function ChannelsTab({ guildId, onGoToOverview }) {
               Server ID: {guildId}
             </div>
           </div>
-          <Btn 
-            onClick={onGoToOverview}
-            variant="outline" 
-            style={{ flexShrink: 0, fontSize: 13 }}
-          >
-            Change Server
-          </Btn>
         </div>
       )}
 
@@ -519,62 +526,139 @@ export default function ChannelsTab({ guildId, onGoToOverview }) {
                 <Btn onClick={setMod} variant="outline" style={{ flexShrink: 0, minHeight: 40 }} disabled={!selectedModChanToAdd}>Set</Btn>
               </div>
             </Card>
-          </div>
-
-          {/* Automated Ticket & Support System Setup */}
+          </div>          {/* Automated Ticket & Support System Setup */}
           <div style={{ marginTop: 20, marginBottom: 20 }}>
             <Card style={{
               background: "linear-gradient(135deg, rgba(88, 101, 242, 0.08) 0%, rgba(78, 222, 163, 0.08) 100%)",
               border: "1px solid rgba(88, 101, 242, 0.2)",
               boxSizing: "border-box"
             }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 14, textAlign: "left", flex: 1, minWidth: 280 }}>
-                  <div style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: "10px",
-                    background: "linear-gradient(135deg, var(--discord) 0%, var(--secondary) 100%)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: "0 4px 14px rgba(88, 101, 242, 0.3)",
-                    flexShrink: 0
-                  }}>
-                    <Icon name="confirmation_number" size={24} style={{ color: "#fff" }} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 2 }}>
-                      Automated Ticket & Support System
+              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                {/* Header Row */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 14, textAlign: "left", flex: 1, minWidth: 280 }}>
+                    <div style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: "10px",
+                      background: "linear-gradient(135deg, var(--discord) 0%, var(--secondary) 100%)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 4px 14px rgba(88, 101, 242, 0.3)",
+                      flexShrink: 0
+                    }}>
+                      <Icon name="confirmation_number" size={24} style={{ color: "#fff" }} />
                     </div>
-                    <div style={{ fontSize: 12.5, color: "var(--on-surface-variant)", lineHeight: 1.4 }}>
-                      Create a dedicated support category channel with a 🎫 support ticket generator widget inside your server.
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 2 }}>
+                        Automated Ticket & Support System
+                      </div>
+                      <div style={{ fontSize: 12.5, color: "var(--on-surface-variant)", lineHeight: 1.4 }}>
+                        Configure a read-only channel with a 🎫 support ticket generator widget. Users can open private ticket threads, but cannot chat directly in the channel.
+                      </div>
                     </div>
                   </div>
                 </div>
-                
-                <Btn
-                  onClick={handleCreateSupportCategory}
-                  disabled={creatingCategory}
-                  variant="success"
-                  style={{ minHeight: 40 }}
-                >
-                  {creatingCategory ? (
-                    <>
-                      <Spinner size={16} color="#fff" />
-                      <span>Creating Category...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Icon name="add_box" size={16} />
-                      <span>Create Support Category</span>
-                    </>
+
+                {/* Selection & Options area */}
+                <div style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 16,
+                  padding: "16px 20px",
+                  background: "rgba(255, 255, 255, 0.02)",
+                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                  borderRadius: "var(--r-md)"
+                }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--on-surface-variant)" }}>Setup Method:</div>
+                    <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13.5, color: "#fff" }}>
+                        <input
+                          type="radio"
+                          name="supportSetupMode"
+                          value="new"
+                          checked={supportSetupMode === "new"}
+                          onChange={() => setSupportSetupMode("new")}
+                          style={{ accentColor: "var(--secondary)" }}
+                        />
+                        Create a dedicated new channel
+                      </label>
+                      <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13.5, color: "#fff" }}>
+                        <input
+                          type="radio"
+                          name="supportSetupMode"
+                          value="existing"
+                          checked={supportSetupMode === "existing"}
+                          onChange={() => setSupportSetupMode("existing")}
+                          style={{ accentColor: "var(--secondary)" }}
+                        />
+                        Use an existing channel
+                      </label>
+                    </div>
+                  </div>
+
+                  {supportSetupMode === "existing" && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 16 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--on-surface-variant)" }}>Select Target Channel:</div>
+                      <select
+                        className="kb-input"
+                        value={selectedSupportChan}
+                        onChange={e => setSelectedSupportChan(e.target.value)}
+                        style={{
+                          width: "100%",
+                          maxWidth: 340,
+                          height: 40,
+                          padding: "0 12px",
+                          fontSize: 13.5,
+                          background: "var(--surface)",
+                          border: "1px solid var(--outline-variant)",
+                          borderRadius: "var(--r-sm)",
+                          color: "#fff",
+                          outline: "none",
+                          cursor: "pointer"
+                        }}
+                      >
+                        <option value="">-- Select Channel --</option>
+                        {discordChannels.map(c => (
+                          <option key={c.id} value={c.id}>
+                            #{c.name} {c.categoryName ? `(${c.categoryName})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   )}
-                </Btn>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 16 }}>
+                    <Btn
+                      onClick={handleCreateSupportCategory}
+                      disabled={creatingCategory || (supportSetupMode === "existing" && !selectedSupportChan)}
+                      variant="success"
+                      style={{ minHeight: 40, padding: "0 20px" }}
+                    >
+                      {creatingCategory ? (
+                        <>
+                          <Spinner size={16} color="#fff" />
+                          <span>Configuring Support...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Icon name={supportSetupMode === "new" ? "add_box" : "settings"} size={18} />
+                          <span>{supportSetupMode === "new" ? "Create Support Category & Channel" : "Setup Support in Selected Channel"}</span>
+                        </>
+                      )}
+                    </Btn>
+
+                    <div style={{ fontSize: 12, color: "var(--on-surface-variant)", display: "flex", alignItems: "center", gap: 6 }}>
+                      <Icon name="info" size={14} style={{ color: "var(--blue)" }} />
+                      <span>Note: This channel will be made read-only for normal users automatically.</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </Card>
           </div>
-
           {status && <StatusBadge {...status}/>}
         </>
       )}

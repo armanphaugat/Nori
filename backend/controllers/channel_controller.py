@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import Form, HTTPException
 from backend.middleware.auth import *
@@ -55,25 +55,9 @@ async def handle_get_channels(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get channels: {e}")
     
-async def handle_add_support_channel(guild_id:str=Form(...),user:dict=Depends(require_guild_admin)):
-    from bot.bot import create_support_channel
-    try:
-        guild_id_int=int(guild_id)
-        result=await create_support_channel(guild_id_int)
-        if(result==1):
-            return {
-            "status": "success",
-            "message": "Category Channel Created" 
-            }
-        else:
-            return {
-            "status": "Failed",
-            "message": "Unable to Add Category Channel" 
-            }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to Add Support channel: {e}")
 async def handle_add_support_channel(
     guild_id: str = Query(...),
+    channel_id: Optional[str] = Query(None),
     user: dict = Depends(require_guild_admin_query),
 ) -> dict:
     # 1. Mock commands.Bot.run BEFORE importing bot.bot
@@ -87,6 +71,7 @@ async def handle_add_support_channel(
 
     try:
         guild_id_int = int(guild_id)
+        channel_id_int = int(channel_id) if channel_id else None
 
         # 3. Log the bot in via REST if not already logged in
         if not bot.http.token:
@@ -104,22 +89,51 @@ async def handle_add_support_channel(
         for chan in channels:
             guild._add_channel(chan)
 
-        # 6. Check if the "Vault Bot" category and "support" channel already exist
-        category = discord.utils.get(guild.categories, name="Vault Bot")
-        text_channel = None
-        if category:
-            text_channel = discord.utils.get(
-                guild.text_channels, name="support", category=category
-            )
+        # 6. Check if we are creating a new support channel, and if it already exists
+        if not channel_id_int:
+            category = discord.utils.get(guild.categories, name="Vault Bot")
+            text_channel = None
+            if category:
+                text_channel = discord.utils.get(
+                    guild.text_channels, name="support", category=category
+                )
 
-        if category and text_channel:
-            return {
-                "status": "success",
-                "message": "Category Channel Created"
-            }
+            if category and text_channel:
+                # Update permissions to make it read-only for users if it already exists
+                try:
+                    overwrites = text_channel.overwrites
+                    default_overwrite = overwrites.get(guild.default_role) or discord.PermissionOverwrite()
+                    default_overwrite.send_messages = False
+                    overwrites[guild.default_role] = default_overwrite
+
+                    me = None
+                    if bot.user:
+                        try:
+                            me = await guild.fetch_member(bot.user.id)
+                        except Exception:
+                            me = getattr(guild, "me", None)
+
+                    if me:
+                        bot_overwrite = overwrites.get(me) or discord.PermissionOverwrite()
+                        bot_overwrite.send_messages = True
+                        bot_overwrite.read_messages = True
+                        bot_overwrite.manage_threads = True
+                        bot_overwrite.create_public_threads = True
+                        bot_overwrite.create_private_threads = True
+                        bot_overwrite.send_messages_in_threads = True
+                        overwrites[me] = bot_overwrite
+
+                    await text_channel.edit(overwrites=overwrites)
+                except Exception as pe:
+                    print(f"[handle_add_support_channel] Failed to update permissions for existing support channel: {pe}")
+
+                return {
+                    "status": "success",
+                    "message": "Category Channel Created"
+                }
 
         # 7. Execute the original create_support_channel function from bot.py
-        result = await create_support_channel(guild_id_int)
+        result = await create_support_channel(guild_id_int, channel_id_int)
 
         if result:
             return {
@@ -132,4 +146,4 @@ async def handle_add_support_channel(
                 "message": "Unable to Add Category Channel"
             }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get channels: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to configure support channel: {e}")
