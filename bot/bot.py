@@ -173,7 +173,8 @@ async def on_message(message):
         return
     if message.guild is None:
         return
-
+    #if message.author.guild_permissions.administrator: #For Later Use
+        #return
     channels = get_channels(str(message.guild.id))
     watch_ids = [c["channel_id"] for c in channels]
 
