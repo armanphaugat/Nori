@@ -430,15 +430,25 @@ async def get_message_from_channel(server_id:int,channel_id:int,days:int):
     guild=bot.get_guild(server_id)
     if not guild:
         print("No Guild Found")
-        return ""
+        return []
     channel=guild.get_channel(channel_id)
     if not channel:
         print("No Channel Found")
-        return ""
+        return []
     after_time=datetime.now(timezone.utc)-timedelta(days=days)
     messages=[]
-    async for msg in channel.history(limit=None,after=after_time,oldest_first=True):
-        messages.append(msg.content)
+    chunks=""
+    count=0
+    async for msg in channel.history(limit=5000,after=after_time,oldest_first=True):
+        chunks+=msg.content
+        chunks+=" "
+        count+=1
+        if count==10:
+            messages.append(chunks)
+            chunks=""
+            count=0
+        if chunks:
+            messages.append(chunks)
     return messages
         
 bot.run(DISCORD_BOT_KEY)
