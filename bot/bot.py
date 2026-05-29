@@ -10,6 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from dbhelper.db_helper import get_channels, get_server, get_mod_channel
 from python.query import query_graphlit, query_graphlit_web
 from python.ingest import read_ocr_async
+from datetime import datetime, timedelta, timezone
 load_dotenv()
 
 DISCORD_BOT_KEY = os.getenv("DISCORD_BOT_KEY")
@@ -359,7 +360,6 @@ class TicketButton(discord.ui.View):
 
 
 async def create_support_channel(server_id: int, channel_id: int = None):
-    # Fetch full guild object first to ensure roles cache is fully populated
     guild = bot.get_guild(server_id)
     if guild is None:
         try:
@@ -370,8 +370,6 @@ async def create_support_channel(server_id: int, channel_id: int = None):
 
     if not guild:
         return None
-
-    # Fetch channel next
     text_channel = None
     if channel_id:
         try:
@@ -428,5 +426,19 @@ async def create_support_channel(server_id: int, channel_id: int = None):
     await text_channel.send(embed=ticket_panel_embed(), view=TicketButton())
     return text_channel
 
-
+async def get_message_from_channel(server_id:int,channel_id:int,days:int):
+    guild=bot.get_guild(server_id)
+    if not guild:
+        print("No Guild Found")
+        return ""
+    channel=guild.get_channel(channel_id)
+    if not channel:
+        print("No Channel Found")
+        return ""
+    after_time=datetime.now(timezone.utc)-timedelta(days=days)
+    messages=[]
+    async for msg in channel.history(limit=None,after=after_time,oldest_first=True):
+        messages.append(msg.content)
+    return messages
+        
 bot.run(DISCORD_BOT_KEY)
