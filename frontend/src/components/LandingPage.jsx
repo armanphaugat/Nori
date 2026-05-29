@@ -27,13 +27,12 @@ function DiscordIcon({ size = 16 }) {
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
 
   :root {
-    /* Cool Coastal Vibes palette */
     --navy:        #2B2D42;
     --navy-mid:    #3d3f58;
     --slate:       #8D99AE;
@@ -46,7 +45,6 @@ const CSS = `
     --red-dim:     rgba(239,35,60,0.12);
     --red-glow:    rgba(239,35,60,0.22);
 
-    /* Semantic mappings */
     --bg:          var(--light);
     --surface1:    #ffffff;
     --surface2:    #f4f7f9;
@@ -86,7 +84,6 @@ const CSS = `
     border-color: var(--border2) !important;
   }
 
-  /* Subtle grid texture for bg depth */
   .water-bg {
     position: fixed; top:0; left:0; width:100%; height:100%;
     opacity: 0.04; z-index: 0; pointer-events: none;
@@ -162,7 +159,6 @@ const CSS = `
     animation:scroll-mouse 1.6s cubic-bezier(0.4,0,0.2,1) infinite;
   }
 
-  /* Red shimmer text */
   .shimmer-text {
     background: linear-gradient(90deg, var(--red-deep) 0%, var(--red) 30%, #ff6b7a 50%, var(--red) 70%, var(--red-deep) 100%);
     background-size: 200% auto;
@@ -190,6 +186,11 @@ const CSS = `
   }
   .ripple-dot { position: relative; }
 
+  /* Playfair Display for all headings */
+  h1, h2, h3, h4 {
+    font-family: 'Playfair Display', serif;
+  }
+
   @media(max-width:900px){
     .hide900{display:none!important;}
     .feats-grid{grid-template-columns:repeat(2,1fr)!important;}
@@ -203,18 +204,18 @@ const CSS = `
 `;
 
 const FEATS = [
-  { icon:"robot_2",        fill:1, color:"red",   title:"Your Own AI Discord Bot",      desc:"Create a custom AI chatbot for your Discord server trained on your own documents and websites." },
-  { icon:"picture_as_pdf", fill:1, color:"slate",  title:"Upload PDFs & Files",          desc:"Upload PDFs, notes, Excel sheets, or text files and let the AI learn from them instantly." },
-  { icon:"language",       fill:1, color:"red",   title:"Website Ingestion & Crawler",  desc:"Import any website URL or auto-crawl entire documentation folders in one click." },
-  { icon:"question_answer",fill:1, color:"slate",  title:"Answers From Your Data",       desc:"The bot answers questions using your uploaded content instead of random internet guesses." },
-  { icon:"tune",           fill:1, color:"red",   title:"Custom Bot Personality",       desc:"Change how the bot talks, behaves, and responds with your own custom system prompt instructions." },
-  { icon:"forum",          fill:1, color:"slate",  title:"Choose Bot Channels",          desc:"Select exactly which Discord channels the bot can read and reply in." },
-  { icon:"bar_chart",      fill:1, color:"red",   title:"Server Analytics",             desc:"Track usage, uploads, questions asked, and overall bot activity from a dashboard." },
-  { icon:"sync",           fill:1, color:"slate",  title:"Auto URL Updation",            desc:"Automatically monitor and sync URLs to refresh the knowledge base with the latest updates." },
-  { icon:"image_search",   fill:1, color:"red",   title:"Image & Screenshot OCR",       desc:"Upload screenshots or images and the bot extracts and indexes text from them automatically." },
-  { icon:"translate",      fill:1, color:"slate",  title:"Auto Language Detection",      desc:"The bot automatically detects the user's language and replies in the same language every time." },
-  { icon:"link",           fill:1, color:"red",   title:"Source Citations",             desc:"Every answer references the exact document or section it came from." },
-  { icon:"search",         fill:1, color:"slate",  title:"Web Search Fallback",          desc:"When your docs don't have the answer, the bot searches the web and labels the result." },
+  { icon:"robot_2",        fill:1, color:"red",   title:"Your Own AI Discord Bot",      desc:"Stop answering the same questions over and over. Your bot handles them 24/7 so you don't have to." },
+  { icon:"picture_as_pdf", fill:1, color:"slate",  title:"Upload Any Document",          desc:"Drop in your PDFs, notes, or spreadsheets. The bot reads them instantly and starts answering questions from them." },
+  { icon:"language",       fill:1, color:"red",   title:"Import Entire Websites",       desc:"Paste a URL and watch it crawl your whole documentation site or knowledge base in one click." },
+  { icon:"question_answer",fill:1, color:"slate",  title:"Answers From Your Content",   desc:"Every reply comes directly from what you've uploaded — not random internet guesses or hallucinations." },
+  { icon:"tune",           fill:1, color:"red",   title:"Make It Sound Like You",       desc:"Give your bot a name, a personality, and a tone that matches your community. It's your brand, not ours." },
+  { icon:"forum",          fill:1, color:"slate",  title:"Pick Which Channels It Uses",  desc:"The bot only shows up where you want it. Keep it focused, on-topic, and out of your off-topic channels." },
+  { icon:"bar_chart",      fill:1, color:"red",   title:"See What's Being Asked",       desc:"A clean dashboard shows you the most common questions so you can fill gaps and improve over time." },
+  { icon:"sync",           fill:1, color:"slate",  title:"Always Up to Date",            desc:"Set it and forget it. VaultBot checks your URLs regularly and pulls in any new content automatically." },
+  { icon:"image_search",   fill:1, color:"red",   title:"Works on Screenshots Too",     desc:"Upload an image or screenshot and the bot reads the text inside it — no retyping anything by hand." },
+  { icon:"translate",      fill:1, color:"slate",  title:"Speaks Your Members' Language","desc":"No matter what language someone asks in, the bot detects it and responds in kind. Every time." },
+  { icon:"link",           fill:1, color:"red",   title:"Always Shows Its Sources",     desc:"Every answer links back to the exact document or page it came from. Full transparency, no mystery." },
+  { icon:"search",         fill:1, color:"slate",  title:"Falls Back to Web Search",    desc:"If your docs don't cover it, the bot searches the web and clearly marks that the answer came from outside." },
 ];
 
 const colorMap = {
@@ -223,40 +224,40 @@ const colorMap = {
 };
 
 const STEPS = [
-  { n:"01", color:"red",   icon:"shield_lock",  fill:1, title:"Login with Discord",    desc:"OAuth login verifies you're a server admin. No passwords, no extra signups." },
-  { n:"02", color:"slate", icon:"upload_file",  fill:1, title:"Upload Your Knowledge", desc:"Drag in PDFs, paste website URLs, or import Excel sheets. The crawler handles entire doc sites." },
-  { n:"03", color:"red",   icon:"tune",         fill:1, title:"Tune & Configure",      desc:"Set which channels the bot watches, customize its persona, and dial in retrieval parameters." },
-  { n:"04", color:"slate", icon:"smart_toy",    fill:1, title:"Bot Goes Live",         desc:"Members ask questions in Discord and get precise answers pulled from your own documents." },
+  { n:"01", color:"red",   icon:"shield_lock",  fill:1, title:"Sign In with Discord",    desc:"One click with your Discord account. No forms, no passwords, no setup headaches." },
+  { n:"02", color:"slate", icon:"upload_file",  fill:1, title:"Add Your Content",        desc:"Drag in files, paste URLs, or point it at your documentation site. It handles the rest." },
+  { n:"03", color:"red",   icon:"tune",         fill:1, title:"Customise How It Behaves", desc:"Choose which channels it joins, set its personality, and configure how it searches your content." },
+  { n:"04", color:"slate", icon:"smart_toy",    fill:1, title:"Watch It Go to Work",     desc:"Your members ask questions. The bot answers instantly from your own content, every single time." },
 ];
 
 const USE_CASES = [
-  { tag:"Education", icon:"school",         fill:1, title:"Universities & Colleges", desc:"Answer student questions about timetables, syllabi, exam schedules, and campus policies — 24/7." },
-  { tag:"Support",   icon:"support_agent",  fill:1, title:"Product Support Servers", desc:"Train the bot on your docs and let it handle tier-1 support. Fewer repeated questions." },
-  { tag:"Gaming",    icon:"sports_esports", fill:1, title:"Gaming Communities",      desc:"Upload game wikis, patch notes, and guides. Let players ask strategy questions and get instant answers." },
-  { tag:"Business",  icon:"business_center",fill:1, title:"Business Workspaces",     desc:"Internal knowledge base on Discord. HR policies, onboarding docs, SOPs — all queryable." },
+  { tag:"Education", icon:"school",         fill:1, title:"Universities & Colleges", desc:"Students stop emailing staff about timetables and deadlines. The bot has the answers at 2am when you don't." },
+  { tag:"Support",   icon:"support_agent",  fill:1, title:"Product & Customer Support", desc:"Train it on your help docs and let it handle the repetitive questions your team gets tired of answering." },
+  { tag:"Gaming",    icon:"sports_esports", fill:1, title:"Gaming Communities",      desc:"Game wikis, patch notes, item stats — players get instant answers without digging through dozens of pages." },
+  { tag:"Business",  icon:"business_center",fill:1, title:"Internal Team Servers",   desc:"Onboarding docs, HR policies, SOPs — new hires can ask anything and get an answer in seconds." },
 ];
 
 const COMP = [
-  ["RAG / Document Q&A",         "yes","no",      "No dynamic ingestion of PDFs or custom files; only static pre-programmed answers."],
-  ["PDF & File Ingestion",        "yes","no",      "Lack semantic vector pipelines to parse custom notes, text files, and server docs."],
-  ["Web Crawler & URL Ingestion", "yes","no",      "Cannot scan URL structures to crawl website hierarchies or sync online docs."],
-  ["Auto URL Updation",           "yes","no",      "Cannot automatically monitor and refresh links to keep knowledge bases updated."],
-  ["Custom Bot Personality",      "yes","partial", "Limited to basic prefix commands; cannot write fully flexible AI personalities."],
-  ["Analytics Dashboard",         "yes","partial", "No visual tracking of query accuracy, source distribution, or chunk density."],
+  ["Answers From Your Own Documents",    "yes","no",      "Generic bots guess or pull from the internet. VaultBot only uses what you give it."],
+  ["PDF & File Uploads",                 "yes","no",      "Most bots can't read your files at all, let alone answer questions from them."],
+  ["Crawl and Import Websites",          "yes","no",      "Other bots don't scan URLs or sync entire documentation sites automatically."],
+  ["Keeps Content Automatically Fresh",  "yes","no",      "No other bot monitors your URLs and pulls updates without you lifting a finger."],
+  ["Custom Bot Personality",             "yes","partial", "Others offer basic command prefixes. VaultBot lets you write full custom AI personas."],
+  ["Usage Analytics Dashboard",         "yes","partial", "No visual view of what questions are being asked or where answers are coming from."],
 ];
 
 const FAQS = [
-  { q:"Do I need to know coding to set it up?",           a:"No. Login with Discord, upload your files, and the bot is live. The dashboard handles everything visually." },
-  { q:"Where is my uploaded data stored?",                a:"All your documents and embeddings are stored on your own server infrastructure. We never access or share your data." },
-  { q:"What file types can I upload?",                    a:"PDF, TXT, DOCX, XLSX, images with OCR (.png, .jpg, .jpeg, .tiff, .bmp, .webp), and any public website URL or documentation site." },
-  { q:"What happens if the bot doesn't know the answer?", a:"VaultBot first searches your documents. If nothing is found, it falls back to a live web search and clearly labels the result." },
-  { q:"Can I use it on multiple Discord servers?",        a:"Yes. Each server gets its own isolated knowledge base and configuration. The architecture supports unlimited servers simultaneously." },
-  { q:"Is it free?",                                      a:"We offer a free tier to get started. Paid plans unlock higher query limits and priority support." },
+  { q:"Do I need any technical skills to set this up?",    a:"None whatsoever. You log in with Discord, upload your files, and the bot is live. Everything is managed through a clean visual dashboard — no code, no configuration files, no technical knowledge needed." },
+  { q:"Where does my uploaded content get stored?",        a:"Your documents and data stay on your own infrastructure. We never read, share, or use your content for anything other than powering your bot's answers." },
+  { q:"What kinds of files can I upload?",                 a:"PDFs, Word documents, Excel spreadsheets, plain text files, images and screenshots (the bot reads the text inside them), and any public website URL or documentation site." },
+  { q:"What happens when the bot doesn't know the answer?",a:"It first searches everything you've uploaded. If it can't find a good answer there, it falls back to a live web search — and clearly tells your members that the answer came from outside your documents." },
+  { q:"Can I use it across multiple Discord servers?",     a:"Yes. Each server gets its own completely separate knowledge base and settings. Add it to as many servers as you want — they never interfere with each other." },
+  { q:"How much does it cost?",                            a:"There's a free tier so you can try it out without any commitment. Paid plans unlock higher usage limits and priority support when you're ready to scale." },
 ];
 
 const MQ_ITEMS = [
-  "PDF & DOCX Upload","Web URL Ingestion","FAISS Vector Search","BM25 Keyword Search",
-  "OCR Image Ingestion","XLSX Structured Data","Website Auto-Crawler","Language Detection","Contextual Memory","Source Citations",
+  "PDF & DOCX Upload","Website Ingestion","Vector Search","Keyword Search",
+  "OCR Image Reading","Spreadsheet Support","Website Auto-Crawl","Language Detection","Conversation Memory","Source Citations",
 ];
 const MQ_ICONS = [
   "picture_as_pdf","language","hub","sort","image_search","table_chart",
@@ -306,7 +307,7 @@ function SectionLabel({ text }) {
 
 function H2({ children }) {
   return (
-    <h2 style={{ fontFamily:"'Cormorant Garamond',serif",fontWeight:400,fontSize:"clamp(28px,4vw,52px)",lineHeight:1.1,letterSpacing:"-0.01em",color:"var(--navy)",marginBottom:12 }}>{children}</h2>
+    <h2 style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:"clamp(28px,4vw,52px)",lineHeight:1.1,letterSpacing:"-0.01em",color:"var(--navy)",marginBottom:12 }}>{children}</h2>
   );
 }
 
@@ -322,7 +323,7 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
   const pageRef = useReveal();
 
   const [playgroundMessages, setPlaygroundMessages] = useState([
-    { sender:"bot", text:"Hello! I am **Vaulty** 🤖, your server's custom RAG knowledge brain. Choose one of the preset questions below to see how I search through uploaded documents and respond with accurate, source-cited information!", citations:[] }
+    { sender:"bot", text:"Hey there 👋 I'm **Vaulty**, your server's AI assistant. Pick one of the questions below to see how I pull answers directly from uploaded documents — and show you exactly where I got them.", citations:[] }
   ]);
   const [playgroundTyping, setPlaygroundTyping] = useState(false);
   const [activePreset, setActivePreset] = useState(null);
@@ -367,7 +368,7 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
           <div style={{ width:30,height:30,borderRadius:8,background:"var(--navy)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 0 16px rgba(43,45,66,0.25)",border:"1px solid rgba(43,45,66,0.2)" }}>
             <Icon name="shield_lock" size={16} fill={1} style={{ color:"white" }} />
           </div>
-          <span style={{ fontFamily:"'Cormorant Garamond',serif",fontWeight:400,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>VaultBot</span>
+          <span style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>VaultBot</span>
         </a>
         <div className="hide900" style={{ display:"flex",alignItems:"center",gap:2 }}>
           {[["Features","#features"],["How it Works","#howitworks"],["Compare","#compare"],["FAQ","#faq"]].map(([l,h],i) => (
@@ -396,32 +397,32 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
           <div style={{ flex:1,minWidth:0 }}>
             <div className="a0" style={{ display:"inline-flex",alignItems:"center",gap:8,padding:"6px 16px",borderRadius:99,background:"rgba(239,35,60,0.08)",border:"1px solid rgba(239,35,60,0.25)",fontSize:12,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--accent-deep)",marginBottom:28 }}>
               <span className="ripple-dot" style={{ width:7,height:7,borderRadius:"50%",background:"var(--accent)",display:"inline-block" }} />
-              RAG-Powered Discord AI
+              AI Assistant for Discord
             </div>
 
-            <h1 className="a1" style={{ fontFamily:"'Cormorant Garamond',serif",fontWeight:400,fontSize:"clamp(40px,5.5vw,76px)",lineHeight:1.04,letterSpacing:"-0.01em",color:"var(--navy)",marginBottom:22 }}>
-              Give Your Discord<br />
-              Server an{" "}
+            <h1 className="a1" style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:"clamp(40px,5.5vw,76px)",lineHeight:1.04,letterSpacing:"-0.01em",color:"var(--navy)",marginBottom:22 }}>
+              Your Discord Server<br />
+              Deserves an{" "}
               <span className="shimmer-text">AI Brain</span>
             </h1>
 
             <p className="a2" style={{ fontSize:18,lineHeight:1.8,color:"var(--muted)",maxWidth:500,marginBottom:38,fontWeight:300 }}>
-              VaultBot transforms your documents, PDFs, and websites into an intelligent Q&amp;A assistant that lives directly inside your Discord server.
+              Stop answering the same questions every day. VaultBot learns from your documents, PDFs, and websites — then handles member questions inside Discord, around the clock.
             </p>
 
             <div className="a3" style={{ display:"flex",gap:12,flexWrap:"wrap",marginBottom:40 }}>
               <button onClick={user ? onShowDashboard : onLogin} className="btn-primary" style={{ display:"flex",alignItems:"center",gap:10,padding:"14px 28px",borderRadius:10,fontSize:15,fontWeight:600,background:"var(--navy)",color:"white",border:"none",cursor:"pointer",boxShadow:"0 4px 24px rgba(43,45,66,0.2)",transition:"all var(--tr)" }}>
-                <DiscordIcon size={18} /> {user ? "Go to Dashboard" : "Invite to Discord"}
+                <DiscordIcon size={18} /> {user ? "Go to Dashboard" : "Add to Your Server"}
                 <Icon name="arrow_forward" size={18} />
               </button>
               <button onClick={() => document.getElementById("playground")?.scrollIntoView({ behavior:"smooth" })} className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"14px 22px",borderRadius:10,fontSize:15,fontWeight:500,background:"white",color:"var(--muted)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
-                View Live Demo
+                See It in Action
               </button>
             </div>
 
             <div className="a4" style={{ display:"flex",alignItems:"center",gap:8,fontSize:13,color:"var(--muted2)" }}>
               <Icon name="shield_lock" size={13} />
-              Secure OAuth · Free tier available · No credit card required
+              Free to get started · No credit card · Secure Discord login
             </div>
           </div>
 
@@ -497,12 +498,12 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
               </div>
 
               <div style={{ gridColumn:"1/4",gridRow:"5/7",borderRadius:12,padding:"20px 18px",display:"flex",flexDirection:"column",justifyContent:"center",background:"var(--navy)",border:"none",boxShadow:"0 8px 24px rgba(43,45,66,0.18)" }}>
-                <div style={{ fontFamily:"'Cormorant Garamond',serif",fontWeight:400,fontSize:32,color:"white",lineHeight:1 }}>1.2ms</div>
-                <div style={{ fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:6,fontWeight:600,letterSpacing:"0.04em",textTransform:"uppercase" }}>Avg Query Latency</div>
+                <div style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:32,color:"white",lineHeight:1 }}>1.2ms</div>
+                <div style={{ fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:6,fontWeight:600,letterSpacing:"0.04em",textTransform:"uppercase" }}>Avg Response Time</div>
               </div>
               <div style={{ gridColumn:"4/7",gridRow:"5/7",borderRadius:12,padding:"20px 18px",display:"flex",flexDirection:"column",justifyContent:"center",background:"var(--accent)",border:"none",boxShadow:"0 8px 24px rgba(239,35,60,0.3)" }}>
-                <div style={{ fontFamily:"'Cormorant Garamond',serif",fontWeight:400,fontSize:32,color:"white",lineHeight:1 }}>99.9%</div>
-                <div style={{ fontSize:11,color:"rgba(255,255,255,0.7)",marginTop:6,fontWeight:600,letterSpacing:"0.04em",textTransform:"uppercase" }}>Uptime SLA</div>
+                <div style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:32,color:"white",lineHeight:1 }}>99.9%</div>
+                <div style={{ fontSize:11,color:"rgba(255,255,255,0.7)",marginTop:6,fontWeight:600,letterSpacing:"0.04em",textTransform:"uppercase" }}>Uptime Guaranteed</div>
               </div>
             </div>
           </div>
@@ -520,21 +521,21 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
       <section id="playground" style={{ padding:"96px 64px",background:"var(--surface2)",borderTop:"1px solid var(--border)",position:"relative" }}>
         <div style={{ maxWidth:1200,margin:"0 auto" }}>
           <div style={{ textAlign:"center",marginBottom:48 }}>
-            <div className="rv"><SectionLabel text="Interactive Demo" /></div>
-            <div className="rv"><H2>Test Vaulty's RAG Brain Live</H2></div>
-            <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.8,maxWidth:600,margin:"0 auto",fontWeight:300 }}>
-              See how Vaulty instantly ingests diverse sources, performs vector searches, and cites exact references. Click a preset below to try!
+            <div className="rv"><SectionLabel text="Live Demo" /></div>
+            <div className="rv"><H2>See It Answer a Real Question</H2></div>
+            <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.8,maxWidth:560,margin:"0 auto",fontWeight:300 }}>
+              Click any question below and watch Vaulty pull the answer straight from an uploaded document — and show you exactly which line it came from.
             </p>
           </div>
 
           <div style={{ display:"flex",gap:32,flexWrap:"wrap",alignItems:"flex-start" }}>
             <div style={{ flex:"1 1 340px",display:"flex",flexDirection:"column",gap:12 }}>
-              <div style={{ fontSize:12,fontWeight:700,color:"var(--muted2)",letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:4 }}>Select a Preset Question</div>
+              <div style={{ fontSize:12,fontWeight:700,color:"var(--muted2)",letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:4 }}>Choose a Question</div>
               {PLAYGROUND_PRESETS.map((p,idx) => (
                 <button key={idx} onClick={() => handlePlaygroundRun(idx)} style={{ display:"flex",flexDirection:"column",gap:8,padding:"16px 20px",borderRadius:12,border:`1.5px solid ${activePreset===idx?"var(--accent)":"var(--border2)"}`,background:activePreset===idx?"rgba(239,35,60,0.05)":"white",color:"var(--navy)",cursor:"pointer",textAlign:"left",outline:"none",transition:"all var(--tr)",boxShadow:activePreset===idx?"0 4px 16px rgba(239,35,60,0.12)":"0 2px 8px rgba(43,45,66,0.06)" }}>
                   <div style={{ display:"flex",alignItems:"center",gap:8,fontSize:11,fontWeight:700,color:"var(--accent-deep)",textTransform:"uppercase",letterSpacing:"0.04em" }}>
                     <Icon name={p.citations[0].type==="pdf"?"picture_as_pdf":p.citations[0].type==="url"?"language":"description"} size={14} />
-                    Source: {p.citations[0].name}
+                    From: {p.citations[0].name}
                   </div>
                   <div style={{ fontSize:14,fontWeight:500,lineHeight:1.45,color:"var(--navy)" }}>"{p.question}"</div>
                 </button>
@@ -543,9 +544,9 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
               {selectedCitation && (
                 <div style={{ marginTop:16,padding:16,borderRadius:12,border:"1px solid rgba(239,35,60,0.25)",background:"rgba(239,35,60,0.04)" }}>
                   <div style={{ display:"flex",alignItems:"center",gap:6,fontSize:12,fontWeight:700,color:"var(--accent-deep)",marginBottom:8 }}>
-                    <Icon name="verified" size={14} /> Vector Semantic Match Details
+                    <Icon name="verified" size={14} /> Exact Source Chunk Retrieved
                   </div>
-                  <div style={{ fontSize:11,color:"var(--muted2)",marginBottom:6 }}>Source chunk retrieved by FAISS:</div>
+                  <div style={{ fontSize:11,color:"var(--muted2)",marginBottom:6 }}>This is the passage the answer was pulled from:</div>
                   <div style={{ fontSize:12.5,color:"var(--text)",fontStyle:"italic",lineHeight:1.6,background:"rgba(43,45,66,0.04)",padding:"8px 12px",borderRadius:6 }}>
                     "{selectedCitation.text}"
                   </div>
@@ -557,10 +558,10 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
               <div style={{ background:"var(--navy)",padding:"14px 20px",borderBottom:"1px solid rgba(0,0,0,0.15)",display:"flex",alignItems:"center",justifyContent:"space-between" }}>
                 <div style={{ display:"flex",alignItems:"center",gap:10 }}>
                   <Icon name="tag" size={20} style={{ color:"rgba(255,255,255,0.45)" }} />
-                  <span style={{ fontWeight:700,fontSize:14,color:"white" }}>#vaulty-playground</span>
+                  <span style={{ fontWeight:700,fontSize:14,color:"white" }}>#vaulty-demo</span>
                 </div>
                 <div style={{ fontSize:11,fontWeight:700,color:"white",background:"rgba(239,35,60,0.7)",padding:"4px 10px",borderRadius:6,border:"none" }}>
-                  PLAYGROUND RETRIEVAL SIMULATOR
+                  LIVE DEMO
                 </div>
               </div>
 
@@ -571,7 +572,7 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
                       <>
                         <div style={{ width:38,height:38,borderRadius:"50%",background:"linear-gradient(135deg,var(--slate),var(--navy))",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,color:"white",fontWeight:700 }}>U</div>
                         <div>
-                          <div style={{ fontSize:11,color:"var(--muted2)",marginBottom:4 }}>User · simulated</div>
+                          <div style={{ fontSize:11,color:"var(--muted2)",marginBottom:4 }}>You · just now</div>
                           <div style={{ color:"var(--navy)",fontSize:14,lineHeight:1.5 }}>{msg.text}</div>
                         </div>
                       </>
@@ -593,7 +594,7 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
                                 <button key={j} onClick={() => setSelectedCitation(c)} style={{ display:"flex",alignItems:"center",gap:6,background:"rgba(239,35,60,0.07)",border:"1px solid rgba(239,35,60,0.22)",borderRadius:8,padding:"6px 12px",fontSize:12,fontWeight:600,color:"var(--accent-deep)",cursor:"pointer",outline:"none",transition:"all var(--tr)" }}>
                                   <Icon name="link" size={12} />
                                   Source: {c.name}
-                                  <span style={{ fontSize:10,opacity:0.6 }}>(Click to view)</span>
+                                  <span style={{ fontSize:10,opacity:0.6 }}>(Click to see)</span>
                                 </button>
                               ))}
                             </div>
@@ -638,13 +639,13 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
       <div style={{ borderBottom:"1px solid var(--border)",background:"var(--navy)" }}>
         <div className="stats-grid" style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",maxWidth:1100,margin:"0 auto" }}>
           {[
-            { val:"9",  suf:"+", label:"Retrieval Modes",         col:"white" },
-            { val:"5",  suf:"+", label:"File Types Supported",    col:"var(--accent)" },
-            { val:"∞",  suf:"",  label:"Servers You Can Add",     col:"white" },
-            { val:"90", suf:"%", label:"Cheaper Than Other Bots", col:"var(--accent)" },
+            { val:"9",  suf:"+", label:"Ways to Search Your Content", col:"white" },
+            { val:"5",  suf:"+", label:"File Types Accepted",         col:"var(--accent)" },
+            { val:"∞",  suf:"",  label:"Servers You Can Add It To",   col:"white" },
+            { val:"90", suf:"%", label:"Cheaper Than Hiring Staff",   col:"var(--accent)" },
           ].map((s,i) => (
             <div key={i} style={{ padding:"36px 24px",textAlign:"center",borderRight:"1px solid rgba(255,255,255,0.08)" }}>
-              <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:52,fontWeight:400,lineHeight:1,marginBottom:8 }}>
+              <div style={{ fontFamily:"'Playfair Display',serif",fontSize:52,fontWeight:700,lineHeight:1,marginBottom:8 }}>
                 <span style={{ color:s.col }}>{s.val}</span>
                 <span style={{ color:"rgba(255,255,255,0.7)" }}>{s.suf}</span>
               </div>
@@ -657,9 +658,9 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
       {/* HOW IT WORKS */}
       <section id="howitworks" style={{ padding:"96px 64px",maxWidth:1200,margin:"0 auto" }}>
         <div style={{ textAlign:"center",marginBottom:60 }}>
-          <div className="rv"><SectionLabel text="Setup" /></div>
-          <div className="rv"><H2>Up and Running in Minutes</H2></div>
-          <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.8,maxWidth:520,margin:"0 auto",fontWeight:300 }}>Four steps from login to a live AI assistant on your Discord server.</p>
+          <div className="rv"><SectionLabel text="Getting Started" /></div>
+          <div className="rv"><H2>Live in Less Than 10 Minutes</H2></div>
+          <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.8,maxWidth:520,margin:"0 auto",fontWeight:300 }}>Four simple steps and your server has its own AI assistant. No developers needed.</p>
         </div>
         <div className="steps-grid" style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:0,position:"relative" }}>
           <div style={{ position:"absolute",top:44,left:"12.5%",right:"12.5%",height:1,background:"linear-gradient(90deg,transparent,rgba(43,45,66,0.12),rgba(43,45,66,0.12),transparent)",pointerEvents:"none" }} />
@@ -683,18 +684,18 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
       {/* FEATURES */}
       <section id="features" style={{ padding:"96px 64px",background:"var(--surface2)" }}>
         <div style={{ maxWidth:1200,margin:"0 auto" }}>
-          <div className="rv"><SectionLabel text="Capabilities" /></div>
-          <div className="rv"><H2>Everything Your Bot Can Do</H2></div>
-          <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.8,maxWidth:580,marginBottom:52,fontWeight:300 }}>A complete AI knowledge assistant built for Discord, with hybrid retrieval, deep customization, and multi-format ingestion.</p>
+          <div className="rv"><SectionLabel text="What It Does" /></div>
+          <div className="rv"><H2>Everything Included, Nothing Extra to Buy</H2></div>
+          <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.8,maxWidth:580,marginBottom:52,fontWeight:300 }}>Every plan includes the full feature set. No add-ons, no paywalls on core functionality, no nasty surprises.</p>
 
           <div className="rv feat-card" style={{ borderRadius:16,padding:"32px",marginBottom:20,display:"flex",flexDirection:"column",gap:20,position:"relative",overflow:"hidden",border:"1px solid var(--border2)",background:"white",boxShadow:"0 4px 24px rgba(43,45,66,0.08)" }}>
             <div className="feat-icon" style={{ width:52,height:52,borderRadius:14,background:"rgba(239,35,60,0.08)",border:"1px solid rgba(239,35,60,0.22)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent-deep)",transition:"all 0.3s ease" }}>
               <Icon name="dashboard_customize" size={26} fill={1} />
             </div>
-            <h3 style={{ fontFamily:"'Cormorant Garamond',serif",fontWeight:400,fontSize:30,color:"var(--navy)",letterSpacing:"-0.01em" }}>Live Admin Control & Auto-Sync Engine</h3>
-            <p style={{ fontSize:16,color:"var(--muted)",lineHeight:1.75,maxWidth:720,fontWeight:300 }}>Manage your server's entire knowledge base through a sleek admin dashboard. Instantly drag & drop files, crawl website URLs in real-time, monitor whitelisted channels, and auto-discover web architectures — all without writing a single line of code.</p>
+            <h3 style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:30,color:"var(--navy)",letterSpacing:"-0.01em" }}>One Dashboard. Total Control.</h3>
+            <p style={{ fontSize:16,color:"var(--muted)",lineHeight:1.75,maxWidth:720,fontWeight:300 }}>Everything your bot needs lives in one place. Upload new files, add URLs, choose which channels it listens in, and watch your usage stats update in real time. No terminal. No config files. No calling your developer friend.</p>
             <div style={{ display:"flex",gap:10,flexWrap:"wrap" }}>
-              {["Drag & Drop Ingestion","Auto-Sync Scheduler","Visual Analytics Panel","Zero-Code Setup","Per-Channel Controls"].map((t,i) => (
+              {["Drag & Drop Upload","Auto-Sync Scheduler","Usage Dashboard","Zero Code Required","Per-Channel Control"].map((t,i) => (
                 <span key={i} style={{ background:"var(--surface3)",border:"1px solid var(--border)",padding:"5px 12px",borderRadius:6,fontSize:12,fontWeight:500,color:"var(--muted)",letterSpacing:"0.02em" }}>{t}</span>
               ))}
             </div>
@@ -723,9 +724,9 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
       {/* USE CASES */}
       <section style={{ padding:"96px 64px" }}>
         <div style={{ maxWidth:1200,margin:"0 auto" }}>
-          <div className="rv"><SectionLabel text="Use Cases" /></div>
-          <div className="rv"><H2>Built for Every Community</H2></div>
-          <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.8,maxWidth:580,marginBottom:52,fontWeight:300 }}>Whether you're running a university server, product support hub, or gaming community, VaultBot adapts to your needs.</p>
+          <div className="rv"><SectionLabel text="Who It's For" /></div>
+          <div className="rv"><H2>Works for Any Kind of Community</H2></div>
+          <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.8,maxWidth:580,marginBottom:52,fontWeight:300 }}>Whether you run a study server, a help desk, a fan community, or a work team — VaultBot fits straight in.</p>
           <div className="use-grid" style={{ display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:20 }}>
             {USE_CASES.map((u,i) => (
               <div key={i} className="rv use-card" style={{ padding:32,borderRadius:16,transition:"all 0.25s ease",transitionDelay:`${i*0.05}s`,background:"white",border:"1px solid var(--border2)",boxShadow:"0 2px 12px rgba(43,45,66,0.06)" }}>
@@ -733,7 +734,7 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
                   <Icon name={u.icon} size={24} fill={u.fill} />
                 </div>
                 <span style={{ display:"inline-block",padding:"3px 10px",borderRadius:99,fontSize:11,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",background:"rgba(239,35,60,0.08)",color:"var(--accent-deep)",border:"1px solid rgba(239,35,60,0.2)",marginBottom:12 }}>{u.tag}</span>
-                <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:400,color:"var(--navy)",marginBottom:10 }}>{u.title}</div>
+                <div style={{ fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:600,color:"var(--navy)",marginBottom:10 }}>{u.title}</div>
                 <div style={{ fontSize:14,color:"var(--muted)",lineHeight:1.65,fontWeight:300 }}>{u.desc}</div>
               </div>
             ))}
@@ -745,8 +746,8 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
       <section style={{ padding:"80px 64px",background:"var(--surface2)" }}>
         <div style={{ maxWidth:1200,margin:"0 auto",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(420px,1fr))",gap:56 }}>
           {[
-            { label:"How VaultBot Helps", title:"Save time & money with 24/7 automated support", items:[["Reduce support costs","by automating answers to common questions"],["Free up staff time","for more complex issues and strategic tasks"],["Provide instant answers","to your users, no matter the time of day"],["Multilingual support","in the user's preferred language automatically"]] },
-            { label:"What Users Report",  title:"Real results from real Discord servers",         items:[["90% reduction","in repetitive support questions in active servers"],["24/7 coverage","without need for additional staff or overhead"],["10× faster responses","for common questions vs manual support"],["Improved satisfaction","through instant, source-cited answers"]] },
+            { label:"The Real Benefits", title:"What you actually get when you add VaultBot", items:[["Stop repeating yourself","— the bot handles the same questions so your team doesn't have to"],["Reclaim your evenings","— it answers questions at midnight so you don't need to"],["Give instant answers","— no more 'I'll check and get back to you' delays"],["Reach everyone","— it auto-detects language and responds in kind, no extra setup"]] },
+            { label:"What Members Say",  title:"The difference people notice straight away",       items:[["90% fewer repeated questions","from server members within the first week"],["Round-the-clock coverage","without paying for extra staff or stretching your team thin"],["10× faster replies","to common questions compared to waiting for a human response"],["Members feel heard","because they get a real answer, not a 'check the pinned posts' reply"]] },
           ].map((col,ci) => (
             <div key={ci} className="rv" style={{ transitionDelay:`${ci*0.12}s` }}>
               <SectionLabel text={col.label} />
@@ -758,7 +759,7 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
                       <Icon name="check" size={12} />
                     </div>
                     <span style={{ fontSize:15,color:"var(--muted)",lineHeight:1.6,fontWeight:300 }}>
-                      <strong style={{ color:ci===0?"var(--navy)":"var(--accent-deep)",fontWeight:600 }}>{b}</strong> {r}
+                      <strong style={{ color:ci===0?"var(--navy)":"var(--accent-deep)",fontWeight:600 }}>{b}</strong>{r}
                     </span>
                   </div>
                 ))}
@@ -772,16 +773,16 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
       <section id="compare" style={{ padding:"96px 64px" }}>
         <div style={{ maxWidth:1200,margin:"0 auto" }}>
           <div style={{ textAlign:"center",marginBottom:52 }}>
-            <div className="rv"><SectionLabel text="Why VaultBot" /></div>
-            <div className="rv"><H2>Built Different</H2></div>
-            <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.8,maxWidth:540,margin:"0 auto",fontWeight:300 }}>VaultBot brings enterprise-grade RAG capabilities that other Discord bots simply don't offer.</p>
+            <div className="rv"><SectionLabel text="How We Compare" /></div>
+            <div className="rv"><H2>Most Bots Can't Do This</H2></div>
+            <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.8,maxWidth:540,margin:"0 auto",fontWeight:300 }}>Other Discord bots give scripted replies. VaultBot actually reads your content and answers from it.</p>
           </div>
           <div className="rv" style={{ borderRadius:16,overflow:"hidden",border:"1px solid var(--border2)",boxShadow:"0 4px 24px rgba(43,45,66,0.08)" }}>
             <table style={{ width:"100%",borderCollapse:"collapse",fontSize:14 }}>
               <thead>
                 <tr style={{ background:"var(--navy)" }}>
-                  <th style={{ padding:"16px 24px",fontWeight:600,fontSize:11,letterSpacing:"0.06em",textTransform:"uppercase",color:"rgba(255,255,255,0.45)",borderBottom:"1px solid rgba(255,255,255,0.1)",textAlign:"left" }}>Feature</th>
-                  {["VaultBot AI","Other Bots","What's Missing?"].map((h,i) => (
+                  <th style={{ padding:"16px 24px",fontWeight:600,fontSize:11,letterSpacing:"0.06em",textTransform:"uppercase",color:"rgba(255,255,255,0.45)",borderBottom:"1px solid rgba(255,255,255,0.1)",textAlign:"left" }}>Capability</th>
+                  {["VaultBot","Other Bots","What's Missing"].map((h,i) => (
                     <th key={i} style={{ padding:"16px 24px",fontWeight:700,fontSize:11,letterSpacing:"0.06em",textTransform:"uppercase",borderBottom:i===0?"2px solid var(--accent)":"1px solid rgba(255,255,255,0.1)",textAlign:i===2?"left":"center",color:i===0?"var(--accent)":"rgba(255,255,255,0.45)",background:i===0?"rgba(239,35,60,0.1)":"transparent" }}>{h}</th>
                   ))}
                 </tr>
@@ -804,8 +805,8 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
       {/* FAQ */}
       <section id="faq" style={{ padding:"96px 64px",background:"var(--surface2)" }}>
         <div style={{ maxWidth:760,margin:"0 auto",textAlign:"center" }}>
-          <div className="rv"><SectionLabel text="FAQ" /></div>
-          <div className="rv"><H2>Common Questions</H2></div>
+          <div className="rv"><SectionLabel text="Questions" /></div>
+          <div className="rv"><H2>Things People Usually Ask First</H2></div>
           <div style={{ display:"flex",flexDirection:"column",gap:10,marginTop:44,textAlign:"left" }}>
             {FAQS.map((f,i) => (
               <div key={i} className="rv" onClick={() => setFaq(faq===i?null:i)} style={{ background:"white",border:`1px solid ${faq===i?"rgba(239,35,60,0.3)":"var(--border2)"}`,borderRadius:13,overflow:"hidden",cursor:"pointer",transition:"border-color var(--tr)",transitionDelay:`${i*0.04}s`,boxShadow:faq===i?"0 4px 16px rgba(239,35,60,0.08)":"0 2px 8px rgba(43,45,66,0.05)" }}>
@@ -830,18 +831,18 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
         <div style={{ position:"absolute",bottom:"10%",right:"-5%",width:500,height:500,background:"radial-gradient(circle, rgba(141,153,174,0.08) 0%, transparent 70%)",pointerEvents:"none",zIndex:0 }} />
         <div style={{ position:"relative",zIndex:1 }}>
           <div style={{ maxWidth:860,margin:"0 auto",borderRadius:28,padding:"80px 60px",display:"inline-block",width:"100%",border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.04)" }}>
-            <div className="rv"><SectionLabel text="Get Started" /></div>
-            <h2 className="rv" style={{ fontFamily:"'Cormorant Garamond',serif",fontWeight:400,fontSize:"clamp(30px,5vw,60px)",color:"white",letterSpacing:"-0.01em",lineHeight:1.08,marginBottom:16 }}>Ready to automate your support?</h2>
-            <p className="rv" style={{ fontSize:18,color:"rgba(255,255,255,0.55)",marginBottom:44,maxWidth:480,margin:"0 auto 40px",fontWeight:300 }}>Login with Discord and configure your server's AI bot in minutes. Free to get started.</p>
+            <div className="rv"><SectionLabel text="Get Started Free" /></div>
+            <h2 className="rv" style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:"clamp(30px,5vw,60px)",color:"white",letterSpacing:"-0.01em",lineHeight:1.08,marginBottom:16 }}>Ready to stop answering the same question twice?</h2>
+            <p className="rv" style={{ fontSize:18,color:"rgba(255,255,255,0.55)",marginBottom:44,maxWidth:480,margin:"0 auto 40px",fontWeight:300 }}>Add VaultBot to your server in minutes. It's free to start and your members will notice the difference immediately.</p>
             <div className="rv" style={{ display:"flex",justifyContent:"center",gap:14,flexWrap:"wrap" }}>
               <button onClick={onLogin} className="btn-primary glow-red" style={{ display:"flex",alignItems:"center",gap:10,padding:"16px 32px",borderRadius:14,fontSize:16,fontWeight:600,background:"var(--accent)",color:"white",border:"none",cursor:"pointer",boxShadow:"0 0 28px var(--red-glow)",transition:"all var(--tr)" }}>
                 <DiscordIcon size={18} /> Add VaultBot to Discord
               </button>
               <a href="#features" className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"16px 26px",borderRadius:14,fontSize:16,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",textDecoration:"none",transition:"all var(--tr)" }}>
-                Browse Features →
+                See All Features →
               </a>
             </div>
-            <p className="rv" style={{ marginTop:24,fontSize:13,color:"rgba(255,255,255,0.3)" }}>Free tier available with free trial query credits included for every server.</p>
+            <p className="rv" style={{ marginTop:24,fontSize:13,color:"rgba(255,255,255,0.3)" }}>Free tier available. No credit card required to get started.</p>
           </div>
         </div>
       </section>
@@ -854,15 +855,15 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
               <div style={{ width:30,height:30,borderRadius:8,background:"var(--navy)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 12px rgba(43,45,66,0.2)" }}>
                 <Icon name="shield_lock" size={15} fill={1} style={{ color:"white" }} />
               </div>
-              <span style={{ fontFamily:"'Cormorant Garamond',serif",fontWeight:400,fontSize:22,color:"var(--navy)" }}>VaultBot</span>
+              <span style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:22,color:"var(--navy)" }}>VaultBot</span>
             </div>
-            <p style={{ fontSize:14,color:"var(--muted)",lineHeight:1.75,maxWidth:340,marginBottom:24,fontWeight:300 }}>VaultBot is an advanced RAG knowledge base assistant designed for Discord servers. Securely crawl, parse, index, and query your documentation, manuals, sheets, and images in real-time.</p>
+            <p style={{ fontSize:14,color:"var(--muted)",lineHeight:1.75,maxWidth:340,marginBottom:24,fontWeight:300 }}>VaultBot is an AI assistant for Discord communities. Upload your documents, point it at your website, and let it answer your members' questions around the clock — accurately, instantly, and always with a source.</p>
           </div>
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:24 }}>
             <div>
-              <h4 style={{ fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:700,color:"var(--navy)",marginBottom:16,letterSpacing:"0.06em",textTransform:"uppercase" }}>Supported Ingestion</h4>
+              <h4 style={{ fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:700,color:"var(--navy)",marginBottom:16,letterSpacing:"0.06em",textTransform:"uppercase" }}>Accepts These Formats</h4>
               <ul style={{ display:"flex",flexDirection:"column",gap:10,listStyle:"none",padding:0 }}>
-                {["PDF Documents","Websites & URLs","Excel Sheets (XLSX)","OCR Images (PNG/JPG)"].map((l,i) => (
+                {["PDF Documents","Websites & URLs","Excel Spreadsheets","Images & Screenshots"].map((l,i) => (
                   <li key={i} style={{ fontSize:13.5,color:"var(--muted)",display:"flex",alignItems:"center",gap:8,fontWeight:300 }}>
                     <span style={{ width:4,height:4,borderRadius:"50%",background:"var(--accent)" }} />
                     {l}
@@ -871,9 +872,9 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
               </ul>
             </div>
             <div>
-              <h4 style={{ fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:700,color:"var(--navy)",marginBottom:16,letterSpacing:"0.06em",textTransform:"uppercase" }}>Built With</h4>
+              <h4 style={{ fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:700,color:"var(--navy)",marginBottom:16,letterSpacing:"0.06em",textTransform:"uppercase" }}>Links</h4>
               <ul style={{ display:"flex",flexDirection:"column",gap:10,listStyle:"none",padding:0 }}>
-                {["FastAPI Framework","React Dashboard","PostgreSQL Storage","Graphlit Integration"].map((l,i) => (
+                {["Add to Discord","Features","Pricing","Support"].map((l,i) => (
                   <li key={i} style={{ fontSize:13.5,color:"var(--muted)",display:"flex",alignItems:"center",gap:8,fontWeight:300 }}>
                     <span style={{ width:4,height:4,borderRadius:"50%",background:"var(--slate)" }} />
                     {l}
@@ -884,8 +885,8 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
           </div>
         </div>
         <div style={{ maxWidth:1200,margin:"32px auto 0",paddingTop:24,borderTop:"1px solid var(--border2)",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap" }}>
-          <span style={{ fontSize:12,color:"var(--muted2)" }}>© 2026 VaultBot · Q-ARAG · Not affiliated with Discord Inc.</span>
-          <span style={{ fontSize:12,color:"var(--muted2)" }}>Securely indexing the future.</span>
+          <span style={{ fontSize:12,color:"var(--muted2)" }}>© 2026 VaultBot · Not affiliated with Discord Inc.</span>
+          <span style={{ fontSize:12,color:"var(--muted2)" }}>Your docs. Your bot. Your community.</span>
         </div>
       </footer>
     </div>
