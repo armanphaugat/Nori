@@ -4,7 +4,7 @@ import sys
 import os
 from io import BytesIO
 from typing import List, Optional
-
+from bot.bot import get_message_from_channel
 URL_PATTERN = r"(https?://[^\s]+)"
 MAX_FILE_SIZE = 10 * 1024 * 1024
 ALLOWED_EXTENSIONS = {
@@ -225,7 +225,7 @@ async def handle_upload_faq(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
-            kind="pdf",
+            kind="text",
             name=faq_text[:80],
             status="failed",
             error=str(e),
@@ -325,3 +325,23 @@ async def handle_upload_contacts(
         )
         print(f"[handle_upload_contacts] {file.filename} failed: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to process contacts: {e}")
+    
+async def handle_upload_channel_messages(guild_id:str=Form(...),channel_id:str=Form(...),time:int=Form(...),user: dict=Depends(require_guild_admin),):
+    try:
+        server_id_int=int(guild_id)
+        channel_id_int=int(channel_id)
+        messages=await get_message_from_channel(server_id_int,channel_id_int,time)
+        for m in messages:
+            content_id=await add_text_graphlit(guild_id,m)
+            log_upload(
+            guild_id=guild_id,
+            user_id=user["discord_id"],
+            username=user["username"],
+            kind="text",
+            name=m[:80],
+            content_id=content_id,
+            status="ok",
+        )
+        return {"status": "success", "message": "Messages ingested"}
+    except Exception as e:
+        raise HTTPException(status_code=500,detail=f"Failed to process Messages From Channel: {e}")
