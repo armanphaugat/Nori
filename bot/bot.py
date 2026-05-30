@@ -169,7 +169,7 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    if pause_server[f"{message.guild.id}"]==1:
+    if pause_server.get(str(message.guild.id), 0)==1:
         await message.channel.send("The Bot is Paused By The Admin/Owner Of The Servers")
         return
     if message.author.bot:
@@ -246,7 +246,7 @@ async def on_reaction_add(reaction, user):
 @bot.command()
 @commands.cooldown(4, 60, commands.BucketType.user)
 async def ask(ctx, *, question: str = None):
-    if pause_server[f"{ctx.guild.id}"]==1:
+    if pause_server.get(str(ctx.guild.id), 0)==1:
         await ctx.send("The Bot is Paused By The Admin/Owner Of The Servers")
         return
     if ctx.message.attachments:
