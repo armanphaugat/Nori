@@ -27,6 +27,14 @@ export default function UploadTab({ guildId, onGoToOverview }) {
   const [uploads, setUploads] = useState([]);
   const [loadingUploads, setLoadingUploads] = useState(false);
 
+  // Channel messages states
+  const [discordChannels, setDiscordChannels] = useState([]);
+  const [loadingChannels, setLoadingChannels] = useState(false);
+  const [selectedChannelId, setSelectedChannelId] = useState("");
+  const [timeRange, setTimeRange] = useState("7");
+  const [customDays, setCustomDays] = useState(7);
+  const [channelMessagesUploading, setChannelMessagesUploading] = useState(false);
+
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState("all");
@@ -94,7 +102,34 @@ export default function UploadTab({ guildId, onGoToOverview }) {
   // Auto-load when active guild changes
   useEffect(() => {
     setUploads([]); setStatus(null);
-    if (guildId) loadUploads(guildId);
+    setSelectedChannelId("");
+    setDiscordChannels([]);
+    if (guildId) {
+      loadUploads(guildId);
+      const fetchChannels = async () => {
+        setLoadingChannels(true);
+        try {
+          const dc = await API.getGuildChannels(guildId);
+          const categories = dc.categories || [];
+          const flatChannels = [];
+          categories.forEach(category => {
+            category.channels?.forEach(ch => {
+              flatChannels.push({
+                ...ch,
+                categoryName: category.name,
+                categoryId: category.id
+              });
+            });
+          });
+          setDiscordChannels(flatChannels);
+        } catch (e) {
+          console.error("Failed to load guild channels:", e);
+        } finally {
+          setLoadingChannels(false);
+        }
+      };
+      fetchChannels();
+    }
   }, [guildId, loadUploads]);
 
   const doDocUrlUpload = async () => {
@@ -148,6 +183,22 @@ export default function UploadTab({ guildId, onGoToOverview }) {
       setFaqText(""); loadUploads(guildId);
     } catch (e) { setStatus({ ok: false, msg: e.message }); }
     setFaqUploading(false);
+  };
+
+  const doChannelMessagesUpload = async () => {
+    if (!guildId) { setStatus({ ok: false, msg: "No server selected" }); return; }
+    if (!selectedChannelId) { setStatus({ ok: false, msg: "Please select a channel first" }); return; }
+    const days = timeRange === "custom" ? parseInt(customDays) : parseInt(timeRange);
+    if (isNaN(days) || days <= 0) { setStatus({ ok: false, msg: "Please specify a valid number of days" }); return; }
+
+    setChannelMessagesUploading(true); setStatus(null);
+    try {
+      const res = await API.uploadChannelMessages(guildId, selectedChannelId, days);
+      setStatus({ ok: true, msg: res.message || "Channel messages ingested successfully" });
+      setSelectedChannelId("");
+      loadUploads(guildId);
+    } catch (e) { setStatus({ ok: false, msg: e.message }); }
+    setChannelMessagesUploading(false);
   };
 
   const doDelete = async () => {
@@ -314,6 +365,105 @@ export default function UploadTab({ guildId, onGoToOverview }) {
             {faqUploading ? <><Spinner size={14}/> Adding FAQ…</> : <><Icon name="add_circle" size={16}/> Add to Vector Store</>}
           </Btn>
         </Card>
+
+        {/* Discord Channel Messages */}
+        <Card style={{ margin: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 36, height: 36, borderRadius: "var(--r-md)", background: "rgba(88, 101, 242, 0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name="forum" size={18} style={{ color: "var(--discord)" }}/>
+            </div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600 }}>Discord Channel History</div>
+              <div style={{ fontSize: 12, color: "var(--on-surface-variant)" }}>Ingest recent history from a Discord channel</div>
+            </div>
+          </div>
+          
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--on-surface-variant)", marginBottom: 6 }}>Target Channel</label>
+            {loadingChannels ? (
+              <div style={{ fontSize: 13, color: "var(--on-surface-variant)", display: "flex", alignItems: "center", gap: 6, height: 40 }}>
+                <Spinner size={14}/> Loading channels...
+              </div>
+            ) : (
+              <select
+                className="kb-input"
+                value={selectedChannelId}
+                onChange={e => setSelectedChannelId(e.target.value)}
+                style={{ height: 40, cursor: "pointer" }}
+              >
+                <option value="">-- Select Channel --</option>
+                {(() => {
+                  const grouped = {};
+                  discordChannels.forEach(ch => {
+                    const cat = ch.categoryName || "Text Channels";
+                    if (!grouped[cat]) grouped[cat] = [];
+                    grouped[cat].push(ch);
+                  });
+                  return Object.entries(grouped).map(([category, chans]) => (
+                    <optgroup key={category} label={category}>
+                      {chans.map(ch => (
+                        <option key={ch.id} value={ch.id}>
+                          #{ch.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ));
+                })()}
+              </select>
+            )}
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--on-surface-variant)", marginBottom: 6 }}>Timeframe</label>
+            <select
+              className="kb-input"
+              value={timeRange}
+              onChange={e => setTimeRange(e.target.value)}
+              style={{ height: 40, cursor: "pointer" }}
+            >
+              <option value="1">Last 24 Hours (1 Day)</option>
+              <option value="3">Last 3 Days</option>
+              <option value="7">Last 7 Days</option>
+              <option value="30">Last 30 Days</option>
+              <option value="90">Last 90 Days</option>
+              <option value="custom">Custom Timeframe...</option>
+            </select>
+          </div>
+
+          {timeRange === "custom" && (
+            <div style={{ marginBottom: 12, animation: "fadeIn 0.2s ease" }}>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--on-surface-variant)", marginBottom: 6 }}>Custom Days</label>
+              <input
+                type="number"
+                className="kb-input"
+                min="1"
+                value={customDays}
+                onChange={e => setCustomDays(e.target.value)}
+                placeholder="Enter number of days..."
+                style={{ height: 40 }}
+              />
+            </div>
+          )}
+
+          <Btn
+            onClick={doChannelMessagesUpload}
+            disabled={channelMessagesUploading || !selectedChannelId}
+            style={{
+              marginTop: 10,
+              width: "100%",
+              justifyContent: "center",
+              background: "rgba(88, 101, 242, 0.08)",
+              color: "#9eb5ff",
+              border: "1px solid rgba(88, 101, 242, 0.2)"
+            }}
+          >
+            {channelMessagesUploading ? (
+              <><Spinner size={14}/> Ingesting Channel History...</>
+            ) : (
+              <><Icon name="cloud_upload" size={16}/> Ingest Channel History</>
+            )}
+          </Btn>
+        </Card>
       </div>
 
       {/* Uploads list */}
@@ -344,7 +494,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
             />
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {["all", "pdf", "url", "faq"].map(t => (
+            {["all", "pdf", "url", "faq", "text"].map(t => (
               <button
                 key={t}
                 onClick={() => setFilterType(t)}
@@ -391,7 +541,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
                       <td style={{ maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <Icon
-                            name={u.type === "pdf" ? "picture_as_pdf" : (u.type === "url" ? "language" : (u.type === "faq" ? "quiz" : "description"))}
+                            name={u.type === "pdf" ? "picture_as_pdf" : (u.type === "url" ? "language" : (u.type === "faq" ? "quiz" : (u.type === "text" ? "forum" : "description")))}
                             size={16}
                             style={{ color: "var(--blue)" }}
                           />

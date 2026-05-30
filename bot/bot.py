@@ -435,5 +435,35 @@ async def create_support_channel(server_id: int, channel_id: int = None):
     await text_channel.send(embed=ticket_panel_embed(), view=TicketButton())
     return text_channel
 
+<<<<<<< Updated upstream
 
 bot.run(DISCORD_BOT_KEY)
+=======
+async def get_message_from_channel(server_id:int,channel_id:int,days:int):
+    guild=bot.get_guild(server_id)
+    if not guild:
+        print("No Guild Found")
+        return []
+    channel=guild.get_channel(channel_id)
+    if not channel:
+        print("No Channel Found")
+        return []
+    after_time=datetime.now(timezone.utc)-timedelta(days=days)
+    messages=[]
+    chunks=""
+    count=0
+    async for msg in channel.history(limit=5000,after=after_time,oldest_first=True):
+        chunks+=msg.content
+        chunks+=" "
+        count+=1
+        if count==10:
+            messages.append(chunks)
+            chunks=""
+            count=0
+        if chunks:
+            messages.append(chunks)
+    return messages
+        
+if __name__ == "__main__":
+    bot.run(DISCORD_BOT_KEY)
+>>>>>>> Stashed changes

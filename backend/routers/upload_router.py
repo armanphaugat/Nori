@@ -11,4 +11,4 @@ upload_router.add_api_route("/file",        handle_upload_file,       methods=["
 upload_router.add_api_route("/faq",         handle_upload_faq,        methods=["POST"],   dependencies=[Depends(require_guild_admin)])
 upload_router.add_api_route("/contacts",    handle_upload_contacts,   methods=["POST"],   dependencies=[Depends(require_guild_admin)])
 upload_router.add_api_route("/delete-content/{upload_id}",handle_delete_upload,     methods=["DELETE"], dependencies=[Depends(require_guild_admin_query)])
-upload_router.add_api_route("/channel-messages",handle_upload_channel_messages,methods=["POST"],dependencies=Depends(require_guild_admin))
+upload_router.add_api_route("/channel-messages",handle_upload_channel_messages,methods=["POST"],dependencies=[Depends(require_guild_admin)])
