@@ -19,6 +19,7 @@ import ServerSelect from "./components/ServerSelect.jsx";
 import Sidebar from "./components/Sidebar.jsx";
 import ChannelsTab from "./components/ChannelsTab.jsx";
 import UploadTab from "./components/UploadTab.jsx";
+import SourcesTab from "./components/SourcesTab.jsx";
 import UtilsTab from "./components/UtilsTab.jsx";
 import ChatWidget from "./components/ChatWidget.jsx";
 
@@ -74,6 +75,7 @@ function Dashboard({
   const tabLabels = {
     channels: "Channel Management",
     upload: "Knowledge Base",
+    sources: "Ingested Sources",
     utils: "Server Utilities"
   };
 
@@ -134,58 +136,6 @@ function Dashboard({
           </div>
           
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            {activeGuild && (
-              <button
-                onClick={handleTogglePause}
-                disabled={togglingPause}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "5px 14px",
-                  borderRadius: "var(--r-full)",
-                  background: activeGuild.is_paused ? "rgba(239, 68, 68, 0.08)" : "rgba(78, 222, 163, 0.08)",
-                  border: `1.5px solid ${activeGuild.is_paused ? "rgba(239, 68, 68, 0.25)" : "rgba(78, 222, 163, 0.25)"}`,
-                  cursor: "pointer",
-                  transition: "all var(--tr)",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: activeGuild.is_paused ? "#ff8b8b" : "#4edea3",
-                  boxShadow: activeGuild.is_paused ? "none" : "0 2px 10px rgba(78, 222, 163, 0.1)",
-                  userSelect: "none"
-                }}
-                onMouseEnter={e => {
-                  if (!togglingPause) {
-                    e.currentTarget.style.transform = "translateY(-1px)";
-                    e.currentTarget.style.background = activeGuild.is_paused ? "rgba(239, 68, 68, 0.15)" : "rgba(78, 222, 163, 0.15)";
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (!togglingPause) {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.background = activeGuild.is_paused ? "rgba(239, 68, 68, 0.08)" : "rgba(78, 222, 163, 0.08)";
-                  }
-                }}
-              >
-                {togglingPause ? (
-                  <>
-                    <Spinner size={12} color={activeGuild.is_paused ? "#ff8b8b" : "#4edea3"} />
-                    <span>Updating...</span>
-                  </>
-                ) : activeGuild.is_paused ? (
-                  <>
-                    <Icon name="pause_circle" size={15} style={{ color: "#ef4444" }} />
-                    <span>Bot Paused</span>
-                  </>
-                ) : (
-                  <>
-                    <Icon name="play_circle" size={15} style={{ color: "#22c55e" }} />
-                    <span>Bot Active</span>
-                  </>
-                )}
-              </button>
-            )}
-
             <div style={{ display: "flex", alignItems: "center", gap: 16, position: "relative" }} data-dropdown="server-select">
               {activeGuild ? (
                 <>
@@ -379,10 +329,20 @@ function Dashboard({
         <div style={{ flex: 1, overflowY: "auto", padding: "32px 40px" }}>
           <div style={{ maxWidth: 1200, width: "100%", margin: "0 auto" }}>
             {tab === "channels" && (
-              <ChannelsTab guildId={activeGuildId} guildName={activeGuild?.name} onGoToOverview={onSwitchServer} />
+              <ChannelsTab 
+                guildId={activeGuildId} 
+                guildName={activeGuild?.name} 
+                onGoToOverview={onSwitchServer}
+                isPaused={activeGuild?.is_paused}
+                togglingPause={togglingPause}
+                onTogglePause={handleTogglePause}
+              />
             )}
             {tab === "upload" && (
               <UploadTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
+            )}
+            {tab === "sources" && (
+              <SourcesTab guildId={activeGuildId} onGoToOverview={onSwitchServer} user={user} />
             )}
             {tab === "utils" && (
               <UtilsTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
@@ -450,6 +410,7 @@ export default function App() {
                 config_status: s.config_status,
                 channel_count: s.channel_count,
                 has_custom_prompt: s.has_custom_prompt,
+                is_paused: s.is_paused,
               };
             });
 

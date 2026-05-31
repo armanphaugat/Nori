@@ -109,6 +109,7 @@ export const API = {
     return apiFetch("/upload/faq", { method: "POST", body: f, isForm: true });
   },
   getAllUploads: (gid)  => apiFetch(`/upload/all?guild_id=${encodeURIComponent(gid)}`),
+  getMyUploads:  ()     => apiFetch("/upload/my-uploads"),
   deleteUpload:  (gid, uid) => apiFetch(`/upload/delete-content/${encodeURIComponent(uid)}?guild_id=${encodeURIComponent(gid)}`, { method: "DELETE" }),
   getSubUrls:   (url)  => apiFetch(`/upload/sub-urls?url=${encodeURIComponent(url)}`),
   query:        (question, server) => apiFetch("/query", { method: "POST", body: { question, server } }),
