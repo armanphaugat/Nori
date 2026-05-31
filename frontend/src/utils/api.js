@@ -120,5 +120,11 @@ export const API = {
     f.append("time", time);
     return apiFetch("/upload/channel-messages", { method: "POST", body: f, isForm: true });
   },
+  updatePauseStatus: (gid, isPaused) => {
+    const f = new FormData();
+    f.append("guild_id", gid);
+    f.append("is_paused", isPaused);
+    return apiFetch("/server/update-pause", { method: "PATCH", body: f, isForm: true });
+  },
 };
 

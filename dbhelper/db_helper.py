@@ -464,6 +464,7 @@ def get_user_servers_with_config_status(discord_id: str) -> list[dict]:
                     s.web_spec_id,
                     s.added_at,
                     s.updated_at,
+                    s.is_paused,
                     COUNT(DISTINCT c.channel_id)::integer AS channel_count,
                     (COUNT(DISTINCT c.channel_id) > 0)::boolean AS has_channels,
                     (s.mod_channel IS NOT NULL)::boolean AS has_mod_channel,
@@ -486,7 +487,7 @@ def get_user_servers_with_config_status(discord_id: str) -> list[dict]:
                 WHERE ga.discord_id = :discord_id
                 GROUP BY s.server_id, s.server_name, s.prefix, s.max_tokens,
                          s.mod_channel, s.kb_spec_id, s.web_spec_id,
-                         s.added_at, s.updated_at
+                         s.added_at, s.updated_at, s.is_paused
                 ORDER BY s.added_at DESC
             """),
             {"discord_id": discord_id},
@@ -501,6 +502,7 @@ def get_user_servers_with_config_status(discord_id: str) -> list[dict]:
                 "mod_channel":    row["mod_channel"],
                 "kb_spec_id":     row["kb_spec_id"],
                 "web_spec_id":    row["web_spec_id"],
+                "is_paused":      row["is_paused"],
                 "config_status":  row["config_status"],
                 "has_channels":   row["has_channels"],
                 "has_mod_channel": row["has_mod_channel"],
@@ -531,6 +533,7 @@ def get_all_servers_with_config_status() -> list[dict]:
                     s.web_spec_id,
                     s.added_at,
                     s.updated_at,
+                    s.is_paused,
                     COUNT(DISTINCT c.channel_id)::integer AS channel_count,
                     (COUNT(DISTINCT c.channel_id) > 0)::boolean AS has_channels,
                     (s.mod_channel IS NOT NULL)::boolean AS has_mod_channel,
@@ -551,7 +554,7 @@ def get_all_servers_with_config_status() -> list[dict]:
                 LEFT JOIN channels c ON s.server_id = c.server_id
                 GROUP BY s.server_id, s.server_name, s.prefix, s.max_tokens,
                          s.mod_channel, s.kb_spec_id, s.web_spec_id,
-                         s.added_at, s.updated_at
+                         s.added_at, s.updated_at, s.is_paused
                 ORDER BY s.added_at DESC
             """),
         ).mappings().all()
@@ -565,6 +568,7 @@ def get_all_servers_with_config_status() -> list[dict]:
                 "mod_channel":    row["mod_channel"],
                 "kb_spec_id":     row["kb_spec_id"],
                 "web_spec_id":    row["web_spec_id"],
+                "is_paused":      row["is_paused"],
                 "config_status":  row["config_status"],
                 "has_channels":   row["has_channels"],
                 "has_mod_channel": row["has_mod_channel"],
@@ -705,3 +709,12 @@ def get_user_guild_ids(discord_id: str) -> set:
             {"uid": discord_id},
         ).mappings().all()
     return {row["guild_id"] for row in rows}
+
+def update_pause_status(guild_id: str, is_paused: bool) -> int:
+    with DB() as s:
+        result = s.execute(
+            text("UPDATE servers SET is_paused = :is_paused, updated_at = NOW() WHERE server_id = :id"),
+            {"is_paused": is_paused, "id": str(guild_id)},
+        )
+        s.commit()
+        return result.rowcount
