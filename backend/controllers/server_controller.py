@@ -31,6 +31,14 @@ async def handle_update_max_token(
     return {"status": "success", "message": "Max tokens updated successfully"}
 
 
+async def handle_update_pause(
+    guild_id: str = Form(...),
+    is_paused: bool = Form(...),
+) -> dict:
+    _require_server_updated(update_pause_status(guild_id, is_paused), "pause status")
+    return {"status": "success", "message": "Bot pause status updated successfully"}
+
+
 async def handle_get_server_config(
     guild_id: str = Query(...),
     user: dict = Depends(require_guild_admin_query),
@@ -46,6 +54,7 @@ async def handle_get_server_config(
         "mod_channel": row["mod_channel"],
         "kb_spec_id":  row["kb_spec_id"],
         "web_spec_id": row["web_spec_id"],
+        "is_paused":   row.get("is_paused", False),
         "added_at":    row["added_at"].isoformat() if row.get("added_at") else None,
         "updated_at":  row["updated_at"].isoformat() if row.get("updated_at") else None,
     }

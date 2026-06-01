@@ -7,6 +7,7 @@ export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user,
       items: [
         { id: "channels", label: "Channels", icon: "forum" },
         { id: "upload", label: "Knowledge Base", icon: "storage" },
+        { id: "sources", label: "Ingested Sources", icon: "folder_open" },
       ]
     },
     {

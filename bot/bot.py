@@ -10,12 +10,13 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from dbhelper.db_helper import get_channels, get_server, get_mod_channel
 from python.query import query_graphlit, query_graphlit_web
 from python.ingest import read_ocr_async
+from datetime import datetime, timedelta, timezone
 load_dotenv()
 
 DISCORD_BOT_KEY = os.getenv("DISCORD_BOT_KEY")
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='-', intents=intents, help_command=None)
-
+pause_server:dict={}
 pending_feedback: dict = {}
 watched_threads: dict = {}
 
@@ -173,8 +174,10 @@ async def on_message(message):
         return
     if message.guild is None:
         return
-    #if message.author.guild_permissions.administrator: #For Later Use
-        #return
+    info = get_server(str(message.guild.id))
+    if info and info.get("is_paused"):
+        await message.channel.send("The Bot is Paused By The Admin/Owner Of The Servers")
+        return
     channels = get_channels(str(message.guild.id))
     watch_ids = [c["channel_id"] for c in channels]
 
@@ -243,6 +246,11 @@ async def on_reaction_add(reaction, user):
 @bot.command()
 @commands.cooldown(4, 60, commands.BucketType.user)
 async def ask(ctx, *, question: str = None):
+    if ctx.guild:
+        info = get_server(str(ctx.guild.id))
+        if info and info.get("is_paused"):
+            await ctx.send("The Bot is Paused By The Admin/Owner Of The Servers")
+            return
     if ctx.message.attachments:
         attachment=ctx.message.attachments[0]
         bytes_size=attachment.size 
@@ -429,5 +437,30 @@ async def create_support_channel(server_id: int, channel_id: int = None):
     await text_channel.send(embed=ticket_panel_embed(), view=TicketButton())
     return text_channel
 
-
-bot.run(DISCORD_BOT_KEY)
+async def get_message_from_channel(server_id:int,channel_id:int,days:int):
+    guild=bot.get_guild(server_id)
+    if not guild:
+        print("No Guild Found")
+        return []
+    channel=guild.get_channel(channel_id)
+    if not channel:
+        print("No Channel Found")
+        return []
+    after_time=datetime.now(timezone.utc)-timedelta(days=days)
+    messages=[]
+    chunks=""
+    count=0
+    async for msg in channel.history(limit=5000,after=after_time,oldest_first=True):
+        chunks+=msg.content
+        chunks+=" "
+        count+=1
+        if count==10:
+            messages.append(chunks)
+            chunks=""
+            count=0
+    if chunks:
+        messages.append(chunks)
+    return messages
+        
+if __name__ == "__main__":
+    bot.run(DISCORD_BOT_KEY)

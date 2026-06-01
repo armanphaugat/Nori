@@ -11,7 +11,14 @@ import {
   NoServerSelected
 } from "./Common.jsx";
 
-export default function ChannelsTab({ guildId, guildName: initialGuildName = "", onGoToOverview }) {
+export default function ChannelsTab({ 
+  guildId, 
+  guildName: initialGuildName = "", 
+  onGoToOverview,
+  isPaused,
+  togglingPause,
+  onTogglePause
+}) {
   const [channels, setChannels] = useState([]);
   const [modChannel, setModChannel] = useState(null);
   const [loaded, setLoaded] = useState(false);
@@ -188,7 +195,68 @@ export default function ChannelsTab({ guildId, guildName: initialGuildName = "",
 
   return (
     <div>
-      <SectionHeader label="Bot Configuration" title="Channel Management" subtitle="Control which Discord channels the bot responds in." />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 24, marginBottom: 28 }}>
+        <div style={{ flex: 1 }}>
+          <SectionHeader label="Bot Configuration" title="Channel Management" subtitle="Control which Discord channels the bot responds in." />
+        </div>
+        {guildId && loaded && (
+          <button
+            onClick={onTogglePause}
+            disabled={togglingPause}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "8px 20px",
+              borderRadius: "var(--r-full)",
+              background: isPaused ? "rgba(239, 68, 68, 0.14)" : "rgba(78, 222, 163, 0.14)",
+              border: `1.5px solid ${isPaused ? "rgba(239, 68, 68, 0.45)" : "rgba(78, 222, 163, 0.45)"}`,
+              cursor: "pointer",
+              transition: "all var(--tr)",
+              fontSize: 13.5,
+              fontWeight: 700,
+              color: isPaused ? "#ff7878" : "#5cf2b4",
+              boxShadow: isPaused ? "none" : "0 3px 14px rgba(78, 222, 163, 0.2)",
+              userSelect: "none",
+              marginTop: 4,
+              flexShrink: 0
+            }}
+            onMouseEnter={e => {
+              if (!togglingPause) {
+                e.currentTarget.style.transform = "translateY(-1px)";
+                e.currentTarget.style.background = isPaused ? "rgba(239, 68, 68, 0.22)" : "rgba(78, 222, 163, 0.22)";
+                e.currentTarget.style.borderColor = isPaused ? "rgba(239, 68, 68, 0.65)" : "rgba(78, 222, 163, 0.65)";
+                e.currentTarget.style.boxShadow = isPaused ? "0 6px 16px rgba(239, 68, 68, 0.2)" : "0 6px 20px rgba(78, 222, 163, 0.35)";
+              }
+            }}
+            onMouseLeave={e => {
+              if (!togglingPause) {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.background = isPaused ? "rgba(239, 68, 68, 0.14)" : "rgba(78, 222, 163, 0.14)";
+                e.currentTarget.style.borderColor = isPaused ? "rgba(239, 68, 68, 0.45)" : "rgba(78, 222, 163, 0.45)";
+                e.currentTarget.style.boxShadow = isPaused ? "none" : "0 3px 14px rgba(78, 222, 163, 0.2)";
+              }
+            }}
+          >
+            {togglingPause ? (
+              <>
+                <Spinner size={14} color={isPaused ? "#ff7878" : "#5cf2b4"} />
+                <span>Updating...</span>
+              </>
+            ) : isPaused ? (
+              <>
+                <Icon name="pause_circle" size={18} style={{ color: "#ef4444" }} />
+                <span>Bot Paused</span>
+              </>
+            ) : (
+              <>
+                <Icon name="play_circle" size={18} style={{ color: "#22c55e" }} />
+                <span>Bot Active</span>
+              </>
+            )}
+          </button>
+        )}
+      </div>
 
       {guildId && loaded && (
         <div style={{

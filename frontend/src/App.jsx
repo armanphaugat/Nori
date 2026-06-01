@@ -13,12 +13,13 @@ import {
   Spinner 
 } from "./components/Common.jsx";
 
-// Import modular pages and components
+
 import LandingPage from "./components/LandingPage.jsx";
 import ServerSelect from "./components/ServerSelect.jsx";
 import Sidebar from "./components/Sidebar.jsx";
 import ChannelsTab from "./components/ChannelsTab.jsx";
 import UploadTab from "./components/UploadTab.jsx";
+import SourcesTab from "./components/SourcesTab.jsx";
 import UtilsTab from "./components/UtilsTab.jsx";
 import ChatWidget from "./components/ChatWidget.jsx";
 
@@ -29,10 +30,32 @@ function Dashboard({
   activeGuildId, 
   onSwitchServer, 
   onActivate,
-  onLogout 
+  onLogout,
+  onGuildsChange
 }) {
   const [tab, setTab] = useState("channels"); // Default to Channels tab as first of 3 tabs
   const [showServerDropdown, setShowServerDropdown] = useState(false);
+  const [togglingPause, setTogglingPause] = useState(false);
+
+  const handleTogglePause = async () => {
+    const activeGuild = guilds.find(g => g.id === activeGuildId) || null;
+    if (!activeGuild) return;
+    setTogglingPause(true);
+    const nextPauseState = !activeGuild.is_paused;
+    try {
+      await API.updatePauseStatus(activeGuild.id, nextPauseState);
+      const updatedGuilds = guilds.map(g => 
+        g.id === activeGuild.id ? { ...g, is_paused: nextPauseState } : g
+      );
+      if (onGuildsChange) {
+        onGuildsChange(updatedGuilds);
+      }
+    } catch (e) {
+      alert("Failed to update bot pause status: " + e.message);
+    } finally {
+      setTogglingPause(false);
+    }
+  };
 
   // Close server dropdown on click outside
   useEffect(() => {
@@ -52,6 +75,7 @@ function Dashboard({
   const tabLabels = {
     channels: "Channel Management",
     upload: "Knowledge Base",
+    sources: "Ingested Sources",
     utils: "Server Utilities"
   };
 
@@ -111,9 +135,10 @@ function Dashboard({
             </div>
           </div>
           
-          <div style={{ display: "flex", alignItems: "center", gap: 16, position: "relative" }} data-dropdown="server-select">
-            {activeGuild ? (
-              <>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, position: "relative" }} data-dropdown="server-select">
+              {activeGuild ? (
+                <>
                 <div 
                   onClick={() => setShowServerDropdown(!showServerDropdown)}
                   style={{ 
@@ -297,16 +322,27 @@ function Dashboard({
               </div>
             )}
           </div>
-        </header>
+        </div>
+      </header>
 
         {/* Dynamic Main Workspace Content */}
         <div style={{ flex: 1, overflowY: "auto", padding: "32px 40px" }}>
           <div style={{ maxWidth: 1200, width: "100%", margin: "0 auto" }}>
             {tab === "channels" && (
-              <ChannelsTab guildId={activeGuildId} guildName={activeGuild?.name} onGoToOverview={onSwitchServer} />
+              <ChannelsTab 
+                guildId={activeGuildId} 
+                guildName={activeGuild?.name} 
+                onGoToOverview={onSwitchServer}
+                isPaused={activeGuild?.is_paused}
+                togglingPause={togglingPause}
+                onTogglePause={handleTogglePause}
+              />
             )}
             {tab === "upload" && (
               <UploadTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
+            )}
+            {tab === "sources" && (
+              <SourcesTab guildId={activeGuildId} onGoToOverview={onSwitchServer} user={user} />
             )}
             {tab === "utils" && (
               <UtilsTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
@@ -374,6 +410,7 @@ export default function App() {
                 config_status: s.config_status,
                 channel_count: s.channel_count,
                 has_custom_prompt: s.has_custom_prompt,
+                is_paused: s.is_paused,
               };
             });
 
@@ -568,6 +605,7 @@ export default function App() {
           onSwitchServer={() => setView("servers")}
           onActivate={handleActivateServer}
           onLogout={handleLogout}
+          onGuildsChange={handleGuildsChange}
         />
       )}
     </>
