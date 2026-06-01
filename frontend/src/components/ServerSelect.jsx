@@ -1,59 +1,38 @@
 import { useState, useEffect } from "react";
 import { API, API_BASE } from "../utils/api.js";
-import { Spinner, StatusBadge, Btn, Icon, Tag, DiscordIcon } from "./Common.jsx";
+import { Spinner, StatusBadge, Btn, Icon, DiscordIcon } from "./Common.jsx";
 
 export default function ServerSelect({ user, guilds, discordGuilds, onActivate, onAdd, onLogout }) {
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [search, setSearch]                   = useState("");
+  const [loading, setLoading]                 = useState(false);
   const [configuredServers, setConfiguredServers] = useState(guilds || []);
-  const [addableServers, setAddableServers] = useState(discordGuilds || []);
-  const [addingId, setAddingId] = useState(null);
-  const [errorStatus, setErrorStatus] = useState(null);
+  const [addableServers, setAddableServers]   = useState(discordGuilds || []);
+  const [addingId, setAddingId]               = useState(null);
+  const [errorStatus, setErrorStatus]         = useState(null);
 
-  const handleInviteNewServer = () => {
-    window.location.href = `${API_BASE}/auth/invite`;
+  const handleInviteNewServer = () => { window.location.href = `${API_BASE}/auth/invite`; };
+
+  const loadStatuses = async () => {
+    try {
+      setLoading(true);
+      const res = await API.getEligibleGuilds();
+      const g   = res.guilds || [];
+      setConfiguredServers(g.filter(x => x.registered).map(x => ({ id: x.id, name: x.name, icon: x.icon })));
+      setAddableServers(g.filter(x => !x.registered));
+    } catch (e) {
+      setErrorStatus({ ok: false, msg: e.message || "Failed to load servers" });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Fetch configured and addable servers from backend
-  const loadStatuses = async () => {
-  try {
-    setLoading(true);
-    const res = await API.getEligibleGuilds();
-    const guilds = res.guilds || [];
+  useEffect(() => { loadStatuses(); }, []);
 
-    const configured = guilds
-      .filter(g => g.registered)
-      .map(g => ({
-        id: g.id,
-        name: g.name,
-        icon: g.icon,
-      }));
-
-    const addable = guilds.filter(g => !g.registered);
-
-    setConfiguredServers(configured);
-    setAddableServers(addable);
-  } catch (e) {
-    console.error("Failed to load servers:", e);
-    setErrorStatus({ ok: false, msg: e.message || "Failed to load servers" });
-  } finally {
-    setLoading(false);
-  }
-};
-
-  useEffect(() => {
-    loadStatuses();
-  }, []);
-
-  // Handle instant add bot & activate
   const handleSetupBot = async (g) => {
-    setAddingId(g.id);
-    setErrorStatus(null);
+    setAddingId(g.id); setErrorStatus(null);
     try {
       await API.addServer(g.id, g.name);
-      // Inform App.jsx of new registered server
       onAdd({ id: g.id, name: g.name, icon: g.icon });
-      // Instantly open the dashboard
       onActivate(g.id);
     } catch (e) {
       setErrorStatus({ ok: false, msg: e.message || "Failed to add bot to server" });
@@ -62,506 +41,312 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
     }
   };
 
-  // Filter lists by search query
-  const filteredConfigured = configuredServers.filter(s =>
-    s.name.toLowerCase().includes(search.toLowerCase())
-  );
-  const filteredAddable = addableServers.filter(s =>
-    s.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const getAvatarUrl  = (u)    => u?.avatar && u?.id ? `https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.png` : null;
+  const getServerIcon = (id, h) => id && h ? (h.startsWith("http") ? h : `https://cdn.discordapp.com/icons/${id}/${h}.png`) : null;
 
-  const getStatusBadgeProps = (status) => {
-    switch (status) {
-      case "configured":
-        return { variant: "success", text: "Active" };
-      case "partial":
-        return { variant: "warn", text: "Partial" };
-      case "unconfigured":
-        return { variant: "neutral", text: "Unconfigured" };
-      default:
-        return { variant: "neutral", text: status };
-    }
-  };
+  const filteredConfigured = configuredServers.filter(s => s.name.toLowerCase().includes(search.toLowerCase()));
+  const filteredAddable    = addableServers.filter(s    => s.name.toLowerCase().includes(search.toLowerCase()));
 
-  // Get Discord Avatar or standard placeholder
-  const getAvatarUrl = (user) => {
-    if (user?.avatar && user?.id) {
-      return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+  const GRID_CSS = `
+    @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:none} }
+    .vb-server-card {
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      width: 116px; text-align: center; cursor: pointer; animation: fadeUp .4s ease both;
     }
-    return null;
-  };
+    .vb-server-avatar {
+      width: 88px; height: 88px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .25s cubic-bezier(0.4,0,0.2,1);
+      position: relative; overflow: hidden;
+    }
+    .vb-server-avatar.configured {
+      border: 3px solid var(--accent);
+      box-shadow: 0 0 0 4px var(--red-dim), 0 4px 16px rgba(43,45,66,0.1);
+    }
+    .vb-server-avatar.addable {
+      border: 2px dashed var(--border2);
+      box-shadow: 0 2px 10px rgba(43,45,66,0.07);
+      background: var(--surface-2);
+    }
+    .vb-server-card:hover .vb-server-avatar.configured {
+      transform: translateY(-3px) scale(1.04);
+      box-shadow: 0 0 0 4px var(--red-dim), 0 12px 28px rgba(239,35,60,0.22);
+    }
+    .vb-server-card:hover .vb-server-avatar.addable {
+      transform: translateY(-3px) scale(1.04);
+      border-color: var(--border2);
+      box-shadow: 0 8px 20px rgba(43,45,66,0.1);
+    }
+    .vb-server-label {
+      font-size: 13px; font-weight: 500; color: var(--muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      width: 100%; transition: color .2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .vb-server-card:hover .vb-server-label { color: var(--navy); }
+    .vb-server-label.configured { color: var(--navy); font-weight: 600; }
 
-  // Get Discord Server Icon or standard placeholder
-  const getServerIconUrl = (guildId, iconHash) => {
-    if (guildId && iconHash) {
-      if (iconHash.startsWith("http")) return iconHash;
-      return `https://cdn.discordapp.com/icons/${guildId}/${iconHash}.png`;
+    .vb-search-pill {
+      background: var(--surface);
+      border: 1.5px solid var(--border2);
+      border-radius: 99px; padding: 9px 18px;
+      display: flex; align-items: center; gap: 10px;
+      width: 100%; max-width: 340px;
+      transition: all .2s;
     }
-    return null;
-  };
+    .vb-search-pill:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--red-dim);
+    }
+
+    .water-bg {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      opacity: 0.035; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(43,45,66,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(43,45,66,0.07) 1px, transparent 1px);
+      background-size: 44px 44px;
+    }
+    .bloom-red {
+      position: fixed; top: -80px; left: 25%;
+      width: 700px; height: 600px; pointer-events: none; z-index: 0;
+      background: radial-gradient(circle, rgba(239,35,60,0.06) 0%, transparent 70%);
+    }
+  `;
 
   return (
     <div style={{
       minHeight: "100vh",
-      background: "radial-gradient(circle at 50% 50%, rgba(88, 101, 242, 0.08) 0%, rgba(7, 8, 13, 1) 100%)",
-      color: "#e3e1ed",
-      fontFamily: "'Inter', sans-serif",
-      display: "flex",
-      flexDirection: "column",
+      background: "var(--bg)",
+      color: "var(--text)",
+      fontFamily: "'DM Sans', sans-serif",
+      display: "flex", flexDirection: "column",
       alignItems: "center",
-      boxSizing: "border-box",
       position: "relative",
-      overflowX: "hidden"
+      overflowX: "hidden",
     }}>
-      {/* Dynamic CSS injections for premium transitions and hover animations */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        .picker-card {
-          width: 100%;
-          max-width: 820px;
-          background: rgba(28, 29, 38, 0.85);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 14px;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
-          margin: auto;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-          animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
-        .picker-header {
-          background: rgba(0, 0, 0, 0.2);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-          padding: 12px 24px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-        .picker-header-title {
-          font-size: 13px;
-          font-weight: 600;
-          color: rgba(255, 255, 255, 0.6);
-          letter-spacing: 0.02em;
-          text-transform: capitalize;
-        }
-        .picker-body {
-          padding: 48px 32px 56px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 36px;
-        }
-        .picker-greeting {
-          font-size: 24px;
-          font-weight: 700;
-          color: #ffffff;
-          text-align: center;
-          letter-spacing: -0.01em;
-        }
-        .server-avatar-circle {
-          width: 90px;
-          height: 90px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justifyContent: center;
-          position: relative;
-          cursor: pointer;
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-          background: rgba(0, 0, 0, 0.3);
-          user-select: none;
-        }
-        .server-avatar-circle.configured {
-          border: 3.5px solid #22c55e;
-          box-shadow: 0 0 14px rgba(34, 197, 94, 0.3);
-        }
-        .server-avatar-circle.addable {
-          border: 3.5px solid rgba(255, 255, 255, 0.2);
-          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-        }
-        .server-avatar-circle:hover {
-          transform: scale(1.1);
-        }
-        .server-avatar-circle.configured:hover {
-          box-shadow: 0 0 24px rgba(34, 197, 94, 0.6), 0 4px 12px rgba(0,0,0,0.5);
-          border-color: #26d96a;
-        }
-        .server-avatar-circle.addable:hover {
-          box-shadow: 0 0 20px rgba(255, 255, 255, 0.3), 0 4px 12px rgba(0,0,0,0.5);
-          border-color: rgba(255, 255, 255, 0.5);
-        }
-        .server-item {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 12px;
-          width: 120px;
-          text-align: center;
-        }
-        .server-label {
-          font-size: 13.5px;
-          font-weight: 600;
-          color: rgba(255, 255, 255, 0.85);
-          transition: color 0.2s;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          width: 100%;
-        }
-        .server-item:hover .server-label {
-          color: #ffffff;
-        }
-        .picker-grid {
-          display: flex;
-          flex-wrap: wrap;
-          justify-content: center;
-          gap: 32px;
-          width: 100%;
-          max-width: 680px;
-          margin-top: 8px;
-        }
-        .top-nav {
-          width: 100%;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-          background: rgba(10, 11, 18, 0.6);
-          backdrop-filter: blur(12px);
-          padding: 16px 40px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          box-sizing: border-box;
-          z-index: 10;
-        }
-        .nav-links {
-          display: flex;
-          align-items: center;
-          gap: 28px;
-        }
-        .nav-link {
-          font-size: 14px;
-          color: rgba(255, 255, 255, 0.5);
-          text-decoration: none;
-          font-weight: 600;
-          transition: color 0.2s;
-        }
-        .nav-link:hover {
-          color: #ffffff;
-        }
-        .search-pill {
-          background: rgba(0, 0, 0, 0.25);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 99px;
-          padding: 8px 18px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          width: 100%;
-          max-width: 320px;
-          transition: all 0.25s;
-        }
-        .search-pill:focus-within {
-          border-color: var(--blue);
-          box-shadow: 0 0 12px rgba(0, 176, 244, 0.2);
-          background: rgba(0, 0, 0, 0.35);
-        }
-      `}} />
+      <style dangerouslySetInnerHTML={{ __html: GRID_CSS }} />
+      <div className="water-bg" />
+      <div className="bloom-red" />
 
-      {/* Top Navbar */}
-      <nav className="top-nav">
-        {/* Logo */}
+      {/* ── Top Nav ── */}
+      <nav style={{
+        width: "100%", borderBottom: "1px solid var(--border)",
+        background: "rgba(237,242,244,0.92)",
+        backdropFilter: "blur(20px)",
+        padding: "16px 48px",
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        boxSizing: "border-box", zIndex: 10, position: "relative",
+      }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{
-            width: 34,
-            height: 34,
-            borderRadius: "8px",
-            background: "linear-gradient(135deg, var(--primary) 0%, var(--blue) 100%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 4px 16px rgba(88, 101, 242, 0.3)"
+            width: 32, height: 32, borderRadius: 8,
+            background: "var(--navy)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 4px 14px rgba(43,45,66,0.25)",
           }}>
-            <Icon name="hub" size={18} fill style={{ color: "#fff" }} />
+            <Icon name="shield_lock" size={16} fill style={{ color: "#fff" }} />
           </div>
-          <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-0.02em", color: "#fff" }}>
-            Vault<span style={{ color: "var(--blue)" }}>Bot</span>
-          </span>
+          <span style={{
+            fontFamily: "'Playfair Display', serif",
+            fontWeight: 600, fontSize: 21, color: "var(--navy)",
+          }}>VaultBot</span>
         </div>
 
-
-
-        {/* User profile / Log out */}
         {user && (
           <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            background: "rgba(255, 255, 255, 0.03)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "99px",
-            padding: "5px 6px 5px 12px",
-            backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
+            display: "flex", alignItems: "center", gap: 10,
+            background: "var(--surface)", border: "1px solid var(--border2)",
+            borderRadius: 99, padding: "5px 6px 5px 14px",
           }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              {getAvatarUrl(user) ? (
-                <img
-                  src={getAvatarUrl(user)}
-                  alt={user.username}
-                  style={{ width: 28, height: 28, borderRadius: "50%", border: "1.5px solid rgba(255,255,255,0.15)", objectFit: "cover" }}
-                />
-              ) : (
-                <div style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: "50%",
-                  background: "linear-gradient(135deg, var(--blue) 0%, var(--primary) 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 11,
-                  fontWeight: 750,
-                  color: "#ffffff",
-                  boxShadow: "0 0 10px rgba(0, 176, 244, 0.2)",
-                  textShadow: "0 1px 2px rgba(0,0,0,0.2)"
-                }} title="User Avatar Fallback">
-                  {user.username.slice(0, 2).toUpperCase()}
-                </div>
-              )}
-              <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.85)", marginRight: 4 }}>
-                {user.username}
-              </span>
-            </div>
-            <span style={{ width: 1, height: 18, background: "rgba(255,255,255,0.1)" }} />
-            <button
-              onClick={onLogout}
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "rgba(255,255,255,0.5)",
-                padding: "6px 14px 6px 10px",
-                borderRadius: "99px",
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: "pointer",
-                transition: "all var(--tr)",
-                display: "flex",
-                alignItems: "center",
-                gap: 6
-              }}
-              onMouseEnter={e => { e.currentTarget.style.color = "#ffb4ab"; e.currentTarget.style.background = "rgba(239, 68, 68, 0.15)"; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.5)"; e.currentTarget.style.background = "transparent"; }}
+            {getAvatarUrl(user) ? (
+              <img src={getAvatarUrl(user)} alt={user.username}
+                style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", border: "1.5px solid var(--border2)" }} />
+            ) : (
+              <div style={{
+                width: 28, height: 28, borderRadius: "50%", background: "var(--navy)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 11, fontWeight: 700, color: "#fff",
+              }}>
+                {user.username.slice(0, 2).toUpperCase()}
+              </div>
+            )}
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--navy)", marginRight: 4 }}>
+              {user.username}
+            </span>
+            <span style={{ width: 1, height: 16, background: "var(--border2)" }} />
+            <button onClick={onLogout} style={{
+              background: "transparent", border: "none",
+              color: "var(--muted)", padding: "6px 12px 6px 8px",
+              borderRadius: 99, fontSize: 12, fontWeight: 600,
+              cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
+              transition: "all var(--tr)", fontFamily: "'DM Sans', sans-serif",
+            }}
+              onMouseEnter={e => { e.currentTarget.style.color = "var(--accent-deep)"; e.currentTarget.style.background = "var(--red-dim)"; }}
+              onMouseLeave={e => { e.currentTarget.style.color = "var(--muted)"; e.currentTarget.style.background = "transparent"; }}
             >
-              <Icon name="logout" size={14} />
-              <span>Sign Out</span>
+              <Icon name="logout" size={14} /> Sign Out
             </button>
           </div>
         )}
       </nav>
 
-      {/* Main Server Picker Content Layout */}
-      <div style={{ flex: 1, display: "flex", alignItems: "center", padding: "40px 24px 80px", width: "100%" }}>
-        
-        <div className="picker-card">
-          {/* Card Top Strip */}
-          <div className="picker-header">
+      {/* ── Main card ── */}
+      <div style={{
+        flex: 1, display: "flex", alignItems: "center",
+        justifyContent: "center", padding: "48px 24px 80px",
+        width: "100%", position: "relative", zIndex: 1,
+      }}>
+        <div style={{
+          width: "100%", maxWidth: 820,
+          background: "var(--surface)",
+          border: "1px solid var(--border2)",
+          borderRadius: 20,
+          boxShadow: "0 20px 60px rgba(43,45,66,0.12)",
+          overflow: "hidden",
+          animation: "fadeUp .5s cubic-bezier(0.16,1,0.3,1) both",
+        }}>
+          {/* Card header strip */}
+          <div style={{
+            background: "var(--navy)", padding: "14px 28px",
+            display: "flex", alignItems: "center", gap: 10,
+          }}>
             <Icon name="dns" size={16} style={{ color: "rgba(255,255,255,0.4)" }} />
-            <span className="picker-header-title">Server picker</span>
+            <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>
+              Server picker
+            </span>
           </div>
 
-          <div className="picker-body">
-            {/* Greeting Header */}
-            <h1 className="picker-greeting">
-              Hello, <span style={{ color: "var(--blue)" }}>{user?.username || "blaze"}</span>! Please select a server to get started
+          <div style={{
+            padding: "48px 40px 56px",
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 32,
+          }}>
+            {/* Greeting */}
+            <h1 style={{
+              fontFamily: "'Playfair Display', serif",
+              fontWeight: 700, fontSize: "clamp(22px,3.5vw,34px)",
+              color: "var(--navy)", textAlign: "center", letterSpacing: "-0.01em",
+            }}>
+              Hello, <span style={{ color: "var(--accent)" }}>{user?.username || "there"}</span>!
+              <br />
+              <span style={{ fontSize: "0.72em", fontWeight: 400, color: "var(--muted)" }}>
+                Select a server to get started
+              </span>
             </h1>
 
-            {/* Error notifications */}
             {errorStatus && (
-              <div style={{ width: "100%", maxWidth: 680 }}>
+              <div style={{ width: "100%", maxWidth: 640 }}>
                 <StatusBadge {...errorStatus} />
               </div>
             )}
 
-            {/* Search Filter Bar */}
-            <div className="search-pill">
-              <Icon name="search" size={18} style={{ color: "rgba(255,255,255,0.3)" }} />
-              <input
-                type="text"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Filter servers..."
+            {/* Search */}
+            <div className="vb-search-pill">
+              <Icon name="search" size={17} style={{ color: "var(--muted2)" }} />
+              <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Filter servers…"
                 style={{
-                  background: "transparent",
-                  border: "none",
-                  outline: "none",
-                  color: "#fff",
-                  fontSize: 14,
-                  width: "100%"
-                }}
-              />
+                  background: "transparent", border: "none", outline: "none",
+                  color: "var(--text)", fontSize: 14, width: "100%",
+                  fontFamily: "'DM Sans', sans-serif",
+                }} />
               {search && (
-                <span
-                  onClick={() => setSearch("")}
-                  style={{ cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: 12, fontWeight: 700 }}
-                >✕</span>
+                <span onClick={() => setSearch("")}
+                  style={{ cursor: "pointer", color: "var(--muted2)", fontSize: 13, fontWeight: 700 }}>✕</span>
               )}
             </div>
 
-            {/* Premium Invite Banner */}
+            {/* Invite banner */}
             <div style={{
-              width: "100%",
-              maxWidth: 680,
-              background: "linear-gradient(135deg, rgba(88, 101, 242, 0.12) 0%, rgba(0, 176, 244, 0.12) 100%)",
-              border: "1px solid rgba(88, 101, 242, 0.25)",
-              borderRadius: "12px",
-              padding: "16px 20px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "16px",
-              boxShadow: "0 8px 32px rgba(0, 0, 0, 0.25)",
-              marginTop: "8px",
-              flexWrap: "wrap",
-              boxSizing: "border-box"
+              width: "100%", maxWidth: 680,
+              background: "var(--red-dim)", border: "1px solid var(--red-border)",
+              borderRadius: "var(--r-lg)", padding: "18px 22px",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              gap: 16, flexWrap: "wrap",
             }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 14, textAlign: "left", flex: 1, minWidth: 280 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 260 }}>
                 <div style={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: "10px",
-                  background: "var(--discord)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "0 4px 12px rgba(88, 101, 242, 0.35)",
-                  flexShrink: 0
+                  width: 44, height: 44, borderRadius: 12,
+                  background: "var(--navy)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0, boxShadow: "0 4px 12px rgba(43,45,66,0.2)",
                 }}>
                   <DiscordIcon size={22} />
                 </div>
                 <div>
-                  <div style={{ fontSize: 14.5, fontWeight: 700, color: "#fff", marginBottom: 2 }}>
-                    Want to add VaultBot to a new server?
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--navy)", marginBottom: 2 }}>
+                    Add VaultBot to a new server
                   </div>
-                  <div style={{ fontSize: 12.5, color: "rgba(255, 255, 255, 0.65)", lineHeight: 1.4 }}>
-                    Invite the bot to any Discord server where you have administrative access.
+                  <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.4, fontWeight: 300 }}>
+                    Invite the bot where you have admin access.
                   </div>
                 </div>
               </div>
-              
-              <button
-                onClick={handleInviteNewServer}
-                style={{
-                  background: "var(--discord)",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "8px",
-                  padding: "10px 18px",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  boxShadow: "0 4px 12px rgba(88, 101, 242, 0.25)",
-                  transition: "all var(--tr)",
-                  whiteSpace: "nowrap"
-                }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(88, 101, 242, 0.4)'; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(88, 101, 242, 0.25)'; }}
-              >
-                <Icon name="add" size={16} />
-                <span>Invite to Discord</span>
-              </button>
+              <Btn variant="primary" onClick={handleInviteNewServer} style={{ flexShrink: 0 }}>
+                <Icon name="add" size={16} /> Invite to Discord
+              </Btn>
             </div>
 
-            {/* Configured & Unconfigured Server Row List */}
+            {/* Server grid */}
             {loading ? (
               <div style={{ padding: "32px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
                 <Spinner size={24} />
-                <span style={{ fontSize: 13, color: "rgba(255,255,255,0.4)" }}>Syncing Discord servers...</span>
+                <span style={{ fontSize: 13, color: "var(--muted)" }}>Syncing Discord servers…</span>
               </div>
             ) : filteredConfigured.length === 0 && filteredAddable.length === 0 ? (
               <div style={{
-                padding: "36px",
-                textAlign: "center",
-                background: "rgba(0,0,0,0.15)",
-                border: "1px dashed rgba(255,255,255,0.06)",
-                borderRadius: 10,
-                color: "rgba(255,255,255,0.4)",
-                fontSize: 13.5,
-                width: "100%",
-                maxWidth: 480
+                padding: "40px", textAlign: "center",
+                background: "var(--surface-2)", border: "1px dashed var(--border2)",
+                borderRadius: "var(--r-lg)", color: "var(--muted)", fontSize: 14, maxWidth: 420,
               }}>
-                <Icon name="sentiment_dissatisfied" size={32} style={{ opacity: 0.3, marginBottom: 8 }} />
-                <div>No servers match your filter. Make sure you own or manage a server.</div>
+                <Icon name="sentiment_dissatisfied" size={32} style={{ opacity: .35, marginBottom: 8 }} />
+                <div>No servers match your filter.</div>
               </div>
             ) : (
-              <div className="picker-grid">
-                
-                {/* 1. Configured Servers First */}
-                {filteredConfigured.map(server => {
-                  const hasIcon = server.icon !== null;
-                  const iconUrl = getServerIconUrl(server.id, server.icon);
-
+              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 28, width: "100%", maxWidth: 680 }}>
+                {filteredConfigured.map((server, idx) => {
+                  const iconUrl = getServerIcon(server.id, server.icon);
                   return (
-                    <div key={server.id} className="server-item" onClick={() => onActivate(server.id)}>
-                      <div className="server-avatar-circle configured" title={`Manage ${server.name}`}>
-                        {hasIcon && iconUrl ? (
-                          <img
-                            src={iconUrl}
-                            alt={server.name}
-                            style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
-                          />
+                    <div key={server.id} className="vb-server-card"
+                      style={{ animationDelay: `${idx * 0.05}s` }}
+                      onClick={() => onActivate(server.id)}>
+                      <div className="vb-server-avatar configured">
+                        {iconUrl ? (
+                          <img src={iconUrl} alt={server.name}
+                            style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
                         ) : (
-                          <div style={{
-                            fontSize: 22,
-                            fontWeight: 800,
-                            color: "#ffffff"
-                          }}>
+                          <span style={{ fontSize: 22, fontWeight: 800, color: "#fff", fontFamily: "'Playfair Display',serif" }}>
                             {server.name.slice(0, 2).toUpperCase()}
-                          </div>
+                          </span>
                         )}
                       </div>
-                      <div className="server-label">{server.name}</div>
+                      <div className="vb-server-label configured">{server.name}</div>
                     </div>
                   );
                 })}
-
-                {/* 2. Addable Servers Second */}
-                {filteredAddable.map(guild => {
-                  const hasIcon = guild.icon !== null;
-                  const iconUrl = getServerIconUrl(guild.id, guild.icon);
-                  const isAdding = addingId === guild.id;
-
+                {filteredAddable.map((guild, idx) => {
+                  const iconUrl     = getServerIcon(guild.id, guild.icon);
+                  const isAdding    = addingId === guild.id;
                   return (
-                    <div key={guild.id} className="server-item" onClick={() => !isAdding && handleSetupBot(guild)}>
-                      <div className="server-avatar-circle addable" title={isAdding ? "Setting up bot..." : `Setup VaultBot in ${guild.name}`}>
-                        {isAdding ? (
-                          <Spinner size={24} color="#fff" />
-                        ) : hasIcon && iconUrl ? (
-                          <img
-                            src={iconUrl}
-                            alt={guild.name}
-                            style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover", opacity: 0.8 }}
-                          />
+                    <div key={guild.id} className="vb-server-card"
+                      style={{ animationDelay: `${(filteredConfigured.length + idx) * 0.05}s` }}
+                      onClick={() => !isAdding && handleSetupBot(guild)}>
+                      <div className="vb-server-avatar addable">
+                        {isAdding ? <Spinner size={22} /> : iconUrl ? (
+                          <img src={iconUrl} alt={guild.name}
+                            style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover", opacity: .75 }} />
                         ) : (
-                          <div style={{
-                            fontSize: 22,
-                            fontWeight: 800,
-                            color: "rgba(255,255,255,0.7)"
-                          }}>
+                          <span style={{ fontSize: 20, fontWeight: 700, color: "var(--muted)", fontFamily: "'Playfair Display',serif" }}>
                             {guild.name.slice(0, 2).toUpperCase()}
-                          </div>
+                          </span>
                         )}
                       </div>
-                      <div className="server-label" style={{ color: "rgba(255,255,255,0.6)" }}>{guild.name}</div>
+                      <div className="vb-server-label">{guild.name}</div>
                     </div>
                   );
                 })}
-
               </div>
             )}
-
           </div>
         </div>
       </div>
