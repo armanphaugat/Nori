@@ -6,19 +6,23 @@ import sys
 import asyncio
 import re
 from io import BytesIO
+from datetime import datetime, timezone, timedelta  # ✅ missing imports added
+import time
+
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-from dbhelper.db_helper import get_channels, get_server, get_mod_channel,log_question_event
+from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event
 from python.query import query_graphlit, query_graphlit_web
 from python.ingest import read_ocr_async
-import time
+
 load_dotenv()
 
 DISCORD_BOT_KEY = os.getenv("DISCORD_BOT_KEY")
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='-', intents=intents, help_command=None)
-pause_server:dict={}
+# ✅ removed unused pause_server dict
 pending_feedback: dict = {}
 watched_threads: dict = {}
+
 
 class CloseTicketButton(discord.ui.View):
     def __init__(self):
@@ -41,6 +45,8 @@ class CloseTicketButton(discord.ui.View):
             await thread.delete()
         except discord.HTTPException as e:
             print(f"[close_ticket] Failed to delete thread: {e}")
+
+
 def is_no_kb_response(answer: str) -> bool:
     if not answer or len(answer.strip()) < 10:
         return True
@@ -85,7 +91,6 @@ def is_no_kb_response(answer: str) -> bool:
             return True
     if len(answer_lower) < 10 and any(word in answer_lower for word in ["no", "cannot", "can't", "don't"]):
         return True
-    
     return False
 
 
@@ -185,15 +190,22 @@ async def on_message(message):
             await message.channel.send("Please configure the bot on the dashboard.")
             return
 
+        start_time = time.time()  # ✅ track latency in on_message too
+
         async with message.channel.typing():
             answer = await get_answer(str(message.guild.id), message.content)
+
+        latency_ms = round((time.time() - start_time) * 1000, 2)  # ✅
 
         await send_answer_with_feedback(
             message.channel, message.author, str(message.guild.id), message.content, answer
         )
 
         if is_no_kb_response(answer):
+            log_question_event(str(message.guild.id), str(message.author.id), False, latency_ms)  # ✅ sync, no await
             await notify_mod_channel(message.guild, message.channel, message.author, message.content)
+        else:
+            log_question_event(str(message.guild.id), str(message.author.id), True, latency_ms)   # ✅ sync, no await
 
         return
 
@@ -243,30 +255,36 @@ async def on_reaction_add(reaction, user):
 @bot.command()
 @commands.cooldown(4, 60, commands.BucketType.user)
 async def ask(ctx, *, question: str = None):
+    start_time = time.time()
+
     if ctx.message.attachments:
-        attachment=ctx.message.attachments[0]
-        bytes_size=attachment.size 
-        mb_size=bytes_size/(1024 * 1024)
-        if mb_size>10:
-            await ctx.send("Please Upload Less Than 10 Mb image")
+        attachment = ctx.message.attachments[0]
+        mb_size = attachment.size / (1024 * 1024)  # ✅ inlined bytes_size, it was unused
+        if mb_size > 10:
+            await ctx.send("Please upload an image smaller than 10 MB.")
             return
-        if attachment.content_type and attachment.content_type.startswith('image'):
-            image_bytes=BytesIO(await attachment.read())
-            question=(question or "")+await read_ocr_async(image_bytes)
+        if attachment.content_type and attachment.content_type.startswith("image"):
+            image_bytes = BytesIO(await attachment.read())
+            question = (question or "") + await read_ocr_async(image_bytes)
+
     if not question:
         await ctx.send("No question provided. Usage: `-ask <your question>`")
         return
 
     print(f"[ask] {ctx.author.name} asked: {question[:60]}")
+
     async with ctx.typing():
         answer = await get_answer(str(ctx.guild.id), question)
-    latency_ms = round((time.time() - start_time)*1000,2)
+
+    latency_ms = round((time.time() - start_time) * 1000, 2)
+
     await send_answer_with_feedback(ctx.channel, ctx.author, str(ctx.guild.id), question, answer)
+
     if is_no_kb_response(answer):
-        await log_question_event(str(ctx.guild.id),str(ctx.author.id),False,latency_ms)
+        log_question_event(str(ctx.guild.id), str(ctx.author.id), False, latency_ms)  # ✅ sync, no await
         await notify_mod_channel(ctx.guild, ctx.channel, ctx.author, question)
-        return
-    await log_question_event(str(ctx.guild.id),str(ctx.author.id),True,latency_ms)
+    else:
+        log_question_event(str(ctx.guild.id), str(ctx.author.id), True, latency_ms)   # ✅ sync, no await
 
 
 @bot.event
@@ -362,7 +380,6 @@ class TicketButton(discord.ui.View):
 
 
 async def create_support_channel(server_id: int, channel_id: int = None):
-    # Fetch full guild object first to ensure roles cache is fully populated
     guild = bot.get_guild(server_id)
     if guild is None:
         try:
@@ -374,7 +391,6 @@ async def create_support_channel(server_id: int, channel_id: int = None):
     if not guild:
         return None
 
-    # Fetch channel next
     text_channel = None
     if channel_id:
         try:
@@ -431,30 +447,31 @@ async def create_support_channel(server_id: int, channel_id: int = None):
     await text_channel.send(embed=ticket_panel_embed(), view=TicketButton())
     return text_channel
 
-async def get_message_from_channel(server_id:int,channel_id:int,days:int):
-    guild=bot.get_guild(server_id)
+
+async def get_message_from_channel(server_id: int, channel_id: int, days: int):
+    guild = bot.get_guild(server_id)
     if not guild:
         print("No Guild Found")
         return []
-    channel=guild.get_channel(channel_id)
+    channel = guild.get_channel(channel_id)
     if not channel:
         print("No Channel Found")
         return []
-    after_time=datetime.now(timezone.utc)-timedelta(days=days)
-    messages=[]
-    chunks=""
-    count=0
-    async for msg in channel.history(limit=5000,after=after_time,oldest_first=True):
-        chunks+=msg.content
-        chunks+=" "
-        count+=1
-        if count==10:
+    after_time = datetime.now(timezone.utc) - timedelta(days=days)
+    messages = []
+    chunks = ""
+    count = 0
+    async for msg in channel.history(limit=5000, after=after_time, oldest_first=True):
+        chunks += msg.content + " "
+        count += 1
+        if count == 10:
             messages.append(chunks)
-            chunks=""
-            count=0
+            chunks = ""
+            count = 0
     if chunks:
         messages.append(chunks)
     return messages
-        
+
+
 if __name__ == "__main__":
     bot.run(DISCORD_BOT_KEY)
