@@ -142,63 +142,26 @@ def remove_upload(upload_id: str, guild_id: str) -> bool:
         s.commit()
         return result.fetchone() is not None
 
-def log_analytics(
+def log_question_event(
     guild_id: str,
-    answered: int = 0,
-    failed: int = 0,
-    no_kb: int = 0,
-    latency: Optional[float] = None,
-    uploads: int = 0,
-    chunks: int = 0,
-    unique_users: int = 0,
-    top_topic: Optional[str] = None,
+    user_id: str,
+    answered: bool,
+    latency_ms: Optional[float] = None,
 ) -> None:
     with DB() as s:
         s.execute(
             text("""
-                INSERT INTO analytics (
-                    server_id, day,
-                    total_questions, answered, failed, no_kb,
-                    avg_latency_ms,
-                    unique_users,
-                    total_uploads, chunks_added,
-                    top_topic
-                )
-                VALUES (
-                    :sid, :day,
-                    :total, :ans, :fail, :nokb,
-                    :lat,
-                    :unique_users,
-                    :upl, :chunks,
-                    :top_topic
-                )
-                ON CONFLICT (server_id, day) DO UPDATE SET
-                    total_questions = analytics.total_questions + :total,
-                    answered        = analytics.answered        + :ans,
-                    failed          = analytics.failed          + :fail,
-                    no_kb           = analytics.no_kb           + :nokb,
-                    avg_latency_ms  = :lat,
-                    unique_users    = analytics.unique_users    + :unique_users,
-                    total_uploads   = analytics.total_uploads   + :upl,
-                    chunks_added    = analytics.chunks_added    + :chunks,
-                    top_topic       = COALESCE(:top_topic, analytics.top_topic)
+                INSERT INTO question_events (server_id, user_id, answered, latency_ms)
+                VALUES (:sid, :uid, :answered, :latency_ms)
             """),
             {
-                "sid": str(guild_id),
-                "day": date.today(),
-                "total": answered + failed + no_kb,
-                "ans": answered,
-                "fail": failed,
-                "nokb": no_kb,
-                "lat": latency,
-                "unique_users": unique_users,
-                "upl": uploads,
-                "chunks": chunks,
-                "top_topic": top_topic,
+                "sid":        str(guild_id),
+                "uid":        str(user_id),
+                "answered":   answered,
+                "latency_ms": latency_ms,
             },
         )
         s.commit()
-
 
 def get_analytics(
     guild_id: str,
@@ -209,18 +172,15 @@ def get_analytics(
         rows = s.execute(
             text("""
                 SELECT
-                    day,
-                    total_questions,
-                    answered,
-                    failed,
-                    no_kb,
-                    avg_latency_ms,
-                    unique_users,
-                    total_uploads,
-                    chunks_added,
-                    top_topic
-                FROM analytics
+                    (asked_at AT TIME ZONE 'UTC')::date          AS day,
+                    COUNT(*)                                      AS total,
+                    COUNT(*) FILTER (WHERE answered = true)       AS answered,
+                    COUNT(*) FILTER (WHERE answered = false)      AS unanswered,
+                    ROUND(AVG(latency_ms)::numeric, 2)            AS avg_latency_ms,
+                    COUNT(DISTINCT user_id)                       AS unique_users
+                FROM question_events
                 WHERE server_id = :guild_id
+                GROUP BY day
                 ORDER BY day DESC
                 LIMIT :limit OFFSET :offset
             """),
@@ -228,28 +188,51 @@ def get_analytics(
         ).mappings().all()
         return [dict(r) for r in rows]
 
-
 def get_analytics_summary(guild_id: str) -> Optional[dict]:
     with DB() as s:
         row = s.execute(
             text("""
                 SELECT
-                    COUNT(*)                                    AS total_days,
-                    SUM(total_questions)                        AS total_questions,
-                    SUM(answered)                               AS answered,
-                    SUM(failed)                                 AS failed,
-                    SUM(no_kb)                                  AS no_kb,
-                    ROUND(AVG(avg_latency_ms)::numeric, 2)      AS avg_latency_ms,
-                    SUM(unique_users)                           AS unique_users,
-                    SUM(total_uploads)                          AS total_uploads,
-                    SUM(chunks_added)                           AS chunks_added
-                FROM analytics
+                    COUNT(DISTINCT (asked_at AT TIME ZONE 'UTC')::date)   AS total_days,
+                    COUNT(*)                                               AS total_questions,
+                    COUNT(*) FILTER (WHERE answered = true)               AS answered,
+                    COUNT(*) FILTER (WHERE answered = false)              AS unanswered,
+                    ROUND(
+                        100.0 * COUNT(*) FILTER (WHERE answered = true)
+                        / NULLIF(COUNT(*), 0),
+                        1
+                    )                                                      AS answer_rate_pct,
+                    ROUND(AVG(latency_ms)::numeric, 2)                    AS avg_latency_ms,
+                    COUNT(DISTINCT user_id)                               AS unique_users
+                FROM question_events
                 WHERE server_id = :guild_id
             """),
             {"guild_id": str(guild_id)},
         ).mappings().first()
         return dict(row) if row else None
 
+def get_recent_events(
+    guild_id: str,
+    limit: int = 50,
+    offset: int = 0,
+) -> list[dict]:
+    with DB() as s:
+        rows = s.execute(
+            text("""
+                SELECT
+                    id,
+                    user_id,
+                    asked_at,
+                    answered,
+                    latency_ms
+                FROM question_events
+                WHERE server_id = :guild_id
+                ORDER BY asked_at DESC
+                LIMIT :limit OFFSET :offset
+            """),
+            {"guild_id": str(guild_id), "limit": limit, "offset": offset},
+        ).mappings().all()
+        return [dict(r) for r in rows]
 
 
 def upsert_admin_user(

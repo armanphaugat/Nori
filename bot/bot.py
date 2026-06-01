@@ -7,9 +7,10 @@ import asyncio
 import re
 from io import BytesIO
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-from dbhelper.db_helper import get_channels, get_server, get_mod_channel
+from dbhelper.db_helper import get_channels, get_server, get_mod_channel,log_question_event
 from python.query import query_graphlit, query_graphlit_web
 from python.ingest import read_ocr_async
+import time
 load_dotenv()
 
 DISCORD_BOT_KEY = os.getenv("DISCORD_BOT_KEY")
@@ -243,6 +244,7 @@ async def on_reaction_add(reaction, user):
 @bot.command()
 @commands.cooldown(4, 60, commands.BucketType.user)
 async def ask(ctx, *, question: str = None):
+    start_time=time.time()
     if ctx.message.attachments:
         attachment=ctx.message.attachments[0]
         bytes_size=attachment.size 
@@ -252,7 +254,7 @@ async def ask(ctx, *, question: str = None):
             return
         if attachment.content_type and attachment.content_type.startswith('image'):
             image_bytes=BytesIO(await attachment.read())
-            question+=await read_ocr_async(image_bytes)
+            question=(question or "")+await read_ocr_async(image_bytes)
     if not question:
         await ctx.send("No question provided. Usage: `-ask <your question>`")
         return
@@ -260,11 +262,13 @@ async def ask(ctx, *, question: str = None):
     print(f"[ask] {ctx.author.name} asked: {question[:60]}")
     async with ctx.typing():
         answer = await get_answer(str(ctx.guild.id), question)
-
+    latency_ms = round((time.time() - start_time)*1000,2)
     await send_answer_with_feedback(ctx.channel, ctx.author, str(ctx.guild.id), question, answer)
-
     if is_no_kb_response(answer):
+        await log_question_event(str(ctx.guild.id),str(ctx.author.id),False,latency_ms)
         await notify_mod_channel(ctx.guild, ctx.channel, ctx.author, question)
+        return
+    await log_question_event(str(ctx.guild.id),str(ctx.author.id),True,latency_ms)
 
 
 @bot.event

@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends
 from backend.middleware.auth import *
-from backend.controllers.analytics_controller import handle_get_analytics_summary
+from backend.controllers.analytics_controller import handle_get_analytics_summary,handle_get_all_analytics,handle_get_recent_events
 
 analytics_router = APIRouter()
 
 analytics_router.add_api_route("/summary", handle_get_analytics_summary,methods=["GET"],dependencies=[Depends(require_guild_admin_query)])
+analytics_router.add_api_route("/recent-analytics",handle_get_recent_events,methods=["GET"],dependencies=[Depends(require_guild_admin_query)])
+analytics_router.add_api_route("/all-analytics", handle_get_all_analytics,methods=["GET"],dependencies=[Depends(require_guild_admin_query)])
