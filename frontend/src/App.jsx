@@ -19,7 +19,7 @@ import Sidebar from "./components/Sidebar.jsx";
 import ChannelsTab from "./components/ChannelsTab.jsx";
 import UploadTab from "./components/UploadTab.jsx";
 import SourcesTab from "./components/SourcesTab.jsx";
-import UtilsTab from "./components/UtilsTab.jsx";
+import CrawlerTab from "./components/CrawlerTab.jsx";
 import ChatWidget from "./components/ChatWidget.jsx";
 
 function Dashboard({ 
@@ -264,7 +264,7 @@ function Dashboard({
               <SourcesTab guildId={activeGuildId} onGoToOverview={onSwitchServer} user={user} />
             )}
             {tab === "utils" && (
-              <UtilsTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
+              <CrawlerTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
             )}
           </div>
         </div>
