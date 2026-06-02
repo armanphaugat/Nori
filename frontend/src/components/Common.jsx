@@ -45,9 +45,16 @@ export const GLOBAL_CSS = `
     --border:        rgba(43,45,66,0.10);
     --border2:       rgba(43,45,66,0.22);
 
-    /* ── Accent ── */
+    /* ── Accent (red) ── */
     --accent:        #EF233C;
     --accent-deep:   #D90429;
+
+    /* ── Alias tokens used in App.jsx / Dashboard dark-header ──
+       These let the header & booting screen work without separate dark CSS vars */
+    --primary:       #EF233C;
+    --blue:          #8D99AE;
+    --on-surface-variant: #5a5d78;
+    --outline-variant:    rgba(43,45,66,0.18);
 
     /* ── Misc ── */
     --r-sm:   6px;
