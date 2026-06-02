@@ -179,7 +179,10 @@ async def on_message(message):
         return
     if message.guild is None:
         return
-
+    info = get_server(str(message.guild.id))
+    if info and info.get("is_paused"):
+        await message.channel.send("The Bot is Paused By The Admin/Owner Of The Servers")
+        return
     channels = get_channels(str(message.guild.id))
     watch_ids = [c["channel_id"] for c in channels]
 
@@ -190,22 +193,22 @@ async def on_message(message):
             await message.channel.send("Please configure the bot on the dashboard.")
             return
 
-        start_time = time.time()  # ✅ track latency in on_message too
+        start_time = time.time()
 
         async with message.channel.typing():
             answer = await get_answer(str(message.guild.id), message.content)
 
-        latency_ms = round((time.time() - start_time) * 1000, 2)  # ✅
+        latency_ms = round((time.time() - start_time) * 1000, 2)
 
         await send_answer_with_feedback(
             message.channel, message.author, str(message.guild.id), message.content, answer
         )
 
         if is_no_kb_response(answer):
-            log_question_event(str(message.guild.id), str(message.author.id), False, latency_ms)  # ✅ sync, no await
+            log_question_event(str(message.guild.id), str(message.author.id), False, latency_ms)
             await notify_mod_channel(message.guild, message.channel, message.author, message.content)
         else:
-            log_question_event(str(message.guild.id), str(message.author.id), True, latency_ms)   # ✅ sync, no await
+            log_question_event(str(message.guild.id), str(message.author.id), True, latency_ms)
 
         return
 
@@ -259,7 +262,7 @@ async def ask(ctx, *, question: str = None):
 
     if ctx.message.attachments:
         attachment = ctx.message.attachments[0]
-        mb_size = attachment.size / (1024 * 1024)  # ✅ inlined bytes_size, it was unused
+        mb_size = attachment.size / (1024 * 1024)
         if mb_size > 10:
             await ctx.send("Please upload an image smaller than 10 MB.")
             return
@@ -281,10 +284,10 @@ async def ask(ctx, *, question: str = None):
     await send_answer_with_feedback(ctx.channel, ctx.author, str(ctx.guild.id), question, answer)
 
     if is_no_kb_response(answer):
-        log_question_event(str(ctx.guild.id), str(ctx.author.id), False, latency_ms)  # ✅ sync, no await
+        log_question_event(str(ctx.guild.id), str(ctx.author.id), False, latency_ms)
         await notify_mod_channel(ctx.guild, ctx.channel, ctx.author, question)
     else:
-        log_question_event(str(ctx.guild.id), str(ctx.author.id), True, latency_ms)   # ✅ sync, no await
+        log_question_event(str(ctx.guild.id), str(ctx.author.id), True, latency_ms)
 
 
 @bot.event
@@ -293,7 +296,7 @@ async def on_command_error(ctx, error):
         print(f"[on_command_error] Cooldown hit by {ctx.author.name}")
         await ctx.send(f"Slow down! Try again in {error.retry_after:.1f} seconds.")
     elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("❌ Missing argument. Use `-ask <question>`.")
+        await ctx.send("Missing argument. Use `-ask <question>`.")
     elif isinstance(error, commands.CommandNotFound):
         return
     else:

@@ -3,22 +3,21 @@ import { Icon, OnlineDot } from "./Common.jsx";
 export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user, onLogout }) {
   const NAV_GROUPS = [
     {
-      title: "Settings",
+      title: "Configuration",
       items: [
-        { id: "channels", label: "Channels", icon: "forum" },
-        { id: "upload", label: "Knowledge Base", icon: "storage" },
-        { id: "sources", label: "Ingested Sources", icon: "folder_open" },
-      ]
+        { id: "channels",  label: "Channels",        icon: "forum" },
+        { id: "upload",    label: "Knowledge Base",   icon: "storage" },
+        { id: "sources",   label: "Ingested Sources", icon: "folder_open" },
+      ],
     },
     {
       title: "Utility",
       items: [
         { id: "utils", label: "URL Crawler", icon: "travel_explore" },
-      ]
-    }
+      ],
+    },
   ];
 
-  // Get Discord Server Icon or initials placeholder
   const getServerIconUrl = (guild) => {
     if (guild?.id && guild?.icon) {
       return `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`;
@@ -30,110 +29,119 @@ export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user,
 
   return (
     <aside style={{
-      width: 250,
+      width: 256,
       flexShrink: 0,
-      background: "#1e1f22",
-      borderRight: "1px solid rgba(255,255,255,0.05)",
+      background: "#ffffff",
+      borderRight: "1px solid rgba(43,45,66,0.1)",
       display: "flex",
       flexDirection: "column",
       height: "100vh",
-      padding: "16px 12px",
+      padding: "20px 14px",
       gap: 4,
-      boxSizing: "border-box"
+      boxSizing: "border-box",
+      boxShadow: "2px 0 12px rgba(43,45,66,0.06)",
     }}>
-      {/* ── Switch Server Back Navigation ── */}
+
+      {/* ── Logo ── */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 10,
+        padding: "4px 6px 20px", borderBottom: "1px solid rgba(43,45,66,0.08)",
+        marginBottom: 8,
+      }}>
+        <div style={{
+          width: 32, height: 32, borderRadius: 8,
+          background: "var(--navy)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 4px 12px rgba(43,45,66,0.25)",
+        }}>
+          <Icon name="shield_lock" size={17} fill style={{ color: "#fff" }} />
+        </div>
+        <span style={{
+          fontFamily: "'Playfair Display', serif",
+          fontWeight: 600, fontSize: 20,
+          color: "var(--navy)", letterSpacing: "0.01em",
+        }}>VaultBot</span>
+      </div>
+
+      {/* ── Switch server button ── */}
       <button
         onClick={onSwitchServer}
         style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "8px 12px",
-          borderRadius: "6px",
-          border: "none",
-          background: "rgba(255, 255, 255, 0.03)",
-          color: "rgba(255, 255, 255, 0.6)",
-          fontSize: 12.5,
-          fontWeight: 600,
-          cursor: "pointer",
-          width: "100%",
-          textAlign: "left",
-          transition: "all var(--tr)",
-          marginBottom: 16,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+          display: "inline-flex", alignItems: "center", gap: 8,
+          padding: "8px 12px", borderRadius: "var(--r-md)",
+          border: "1.5px solid var(--border2)",
+          background: "transparent",
+          color: "var(--muted)",
+          fontSize: 12.5, fontWeight: 600,
+          cursor: "pointer", width: "100%", textAlign: "left",
+          transition: "all var(--tr)", marginBottom: 12,
+          fontFamily: "'DM Sans', sans-serif",
         }}
-        onMouseEnter={e => { e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
-        onMouseLeave={e => { e.currentTarget.style.color = "rgba(255, 255, 255, 0.6)"; e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)"; }}
+        onMouseEnter={e => {
+          e.currentTarget.style.color = "var(--navy)";
+          e.currentTarget.style.background = "var(--surface-2)";
+          e.currentTarget.style.borderColor = "var(--border2)";
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.color = "var(--muted)";
+          e.currentTarget.style.background = "transparent";
+          e.currentTarget.style.borderColor = "var(--border2)";
+        }}
       >
-        <Icon name="arrow_back" size={16} style={{ color: "var(--blue)" }} />
+        <Icon name="arrow_back" size={15} style={{ color: "var(--accent)" }} />
         <span>Switch Server</span>
       </button>
 
-      {/* ── Active Server Info Block ── */}
+      {/* ── Active server pill ── */}
       {activeGuild && (
         <div style={{
-          padding: "12px",
-          borderRadius: "8px",
-          background: "rgba(0, 0, 0, 0.2)",
-          border: "1px solid rgba(255, 255, 255, 0.04)",
+          padding: "12px 14px",
+          borderRadius: "var(--r-lg)",
+          background: "var(--red-dim)",
+          border: "1px solid var(--red-border)",
           marginBottom: 20,
-          display: "flex",
-          alignItems: "center",
-          gap: 12
+          display: "flex", alignItems: "center", gap: 12,
         }}>
           {serverIconUrl ? (
             <img
               src={serverIconUrl}
               alt={activeGuild.name}
-              style={{ width: 34, height: 34, borderRadius: "50%", border: "1.5px solid rgba(255,255,255,0.1)" }}
+              style={{ width: 36, height: 36, borderRadius: "50%", border: "1.5px solid var(--red-border)", flexShrink: 0 }}
             />
           ) : (
             <div style={{
-              width: 34,
-              height: 34,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, var(--primary), var(--blue))",
-              color: "#fff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 12,
-              fontWeight: 700
+              width: 36, height: 36, borderRadius: "50%",
+              background: "var(--navy)",
+              color: "#fff", display: "flex", alignItems: "center",
+              justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0,
             }}>
               {(activeGuild.name || "SV").slice(0, 2).toUpperCase()}
             </div>
           )}
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{
-              fontSize: 13,
-              fontWeight: 700,
-              color: "#ffffff",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis"
+              fontSize: 13, fontWeight: 600, color: "var(--navy)",
+              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
             }} title={activeGuild.name}>
               {activeGuild.name}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
               <OnlineDot />
-              <span style={{ fontSize: 10.5, color: "rgba(255, 255, 255, 0.4)" }}>Connected</span>
+              <span style={{ fontSize: 10.5, color: "var(--muted)", fontFamily: "'DM Sans', sans-serif" }}>Connected</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Navigation Groups */}
-      <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: 18 }}>
+      {/* ── Navigation groups ── */}
+      <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: 20, overflow: "auto" }}>
         {NAV_GROUPS.map(group => (
           <div key={group.title} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <div style={{
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: ".08em",
-              textTransform: "uppercase",
-              color: "rgba(255, 255, 255, 0.3)",
-              marginBottom: 4,
-              paddingLeft: 8
+              fontSize: 10, fontWeight: 700, letterSpacing: ".1em",
+              textTransform: "uppercase", color: "var(--muted2)",
+              marginBottom: 4, paddingLeft: 10,
+              fontFamily: "'DM Sans', sans-serif",
             }}>
               {group.title}
             </div>
@@ -143,55 +151,21 @@ export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user,
                 <button
                   key={n.id}
                   onClick={() => onTab(n.id)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    padding: "9px 12px",
-                    borderRadius: "6px",
-                    fontSize: 13.5,
-                    fontWeight: isActive ? 600 : 500,
-                    color: isActive ? "#ffffff" : "rgba(255, 255, 255, 0.5)",
-                    cursor: "pointer",
-                    border: "none",
-                    background: isActive ? "rgba(255, 255, 255, 0.05)" : "transparent",
-                    fontFamily: "'Inter', sans-serif",
-                    transition: "all var(--tr)",
-                    whiteSpace: "nowrap",
-                    width: "100%",
-                    textAlign: "left",
-                    position: "relative"
-                  }}
-                  onMouseEnter={e => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = "rgba(255,255,255,0.02)";
-                      e.currentTarget.style.color = "rgba(255,255,255,0.85)";
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.color = "rgba(255,255,255,0.5)";
-                    }
-                  }}
+                  className={`nav-item${isActive ? " active" : ""}`}
+                  style={{ position: "relative" }}
                 >
-                  {/* Glowing left edge selection line */}
                   {isActive && (
-                    <div style={{
-                      position: "absolute",
-                      left: 0,
-                      top: "20%",
-                      height: "60%",
-                      width: 3.5,
-                      background: "var(--blue)",
-                      borderRadius: "0 4px 4px 0",
-                      boxShadow: "0 0 8px var(--blue)"
+                    <span style={{
+                      position: "absolute", left: 0, top: "18%",
+                      height: "64%", width: 3,
+                      background: "var(--accent)",
+                      borderRadius: "0 3px 3px 0",
                     }} />
                   )}
                   <Icon
                     name={n.icon}
-                    size={18}
-                    style={{ color: isActive ? "var(--blue)" : "rgba(255,255,255,0.4)" }}
+                    size={17}
+                    style={{ color: isActive ? "var(--accent-deep)" : "var(--slate)" }}
                   />
                   <span>{n.label}</span>
                 </button>
@@ -201,64 +175,51 @@ export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user,
         ))}
       </nav>
 
-      {/* Footer Profile Details */}
-      <div style={{ paddingTop: 12, borderTop: "1px solid rgba(255, 255, 255, 0.05)" }}>
+      {/* ── Footer ── */}
+      <div style={{
+        paddingTop: 14,
+        borderTop: "1px solid rgba(43,45,66,0.08)",
+      }}>
         {user && (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 8px", marginBottom: 8 }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 10,
+            padding: "8px 10px", marginBottom: 6,
+          }}>
             <div style={{
-              width: 30,
-              height: 30,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, var(--primary), var(--blue))",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 12,
-              fontWeight: 700,
-              color: "#fff",
-              flexShrink: 0,
+              width: 32, height: 32, borderRadius: "50%",
+              background: "var(--navy)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0,
             }}>
               {(user.username || "U").slice(0, 1).toUpperCase()}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#ffffff",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap"
+                fontSize: 13, fontWeight: 600, color: "var(--navy)",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
               }}>
                 {user.username || "Admin"}
               </div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>Server Manager</div>
+              <div style={{ fontSize: 11, color: "var(--muted2)" }}>Server Manager</div>
             </div>
           </div>
         )}
         <button
           onClick={onLogout}
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "9px 12px",
-            borderRadius: "6px",
-            fontSize: 13,
-            fontWeight: 600,
-            color: "var(--error)",
-            cursor: "pointer",
-            border: "none",
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "9px 12px", borderRadius: "var(--r-md)",
+            fontSize: 13, fontWeight: 600, color: "var(--accent-deep)",
+            cursor: "pointer", border: "none",
             background: "transparent",
-            fontFamily: "'Inter', sans-serif",
-            transition: "all var(--tr)",
-            width: "100%",
-            textAlign: "left"
+            fontFamily: "'DM Sans', sans-serif",
+            transition: "all var(--tr)", width: "100%", textAlign: "left",
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,180,171,0.06)"; }}
+          onMouseEnter={e => { e.currentTarget.style.background = "var(--red-dim)"; }}
           onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
         >
-          <Icon name="logout" size={18} style={{ color: "var(--error)" }} />
-          <span>Sign out</span>
+          <Icon name="logout" size={16} style={{ color: "var(--accent-deep)" }} />
+          Sign out
         </button>
       </div>
     </aside>
