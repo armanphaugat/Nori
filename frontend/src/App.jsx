@@ -20,6 +20,7 @@ import ChannelsTab from "./components/ChannelsTab.jsx";
 import UploadTab from "./components/UploadTab.jsx";
 import SourcesTab from "./components/SourcesTab.jsx";
 import CrawlerTab from "./components/CrawlerTab.jsx";
+import AnalyticsTab from "./components/AnalyticsTab.jsx";
 import ChatWidget from "./components/ChatWidget.jsx";
 
 function Dashboard({ 
@@ -71,6 +72,7 @@ function Dashboard({
     channels: "Channel Management",
     upload: "Knowledge Base",
     sources: "Ingested Sources",
+    analytics: "Server Analytics",
     utils: "URL Crawler",
   };
 
@@ -247,7 +249,7 @@ function Dashboard({
         {/* ── Main Workspace ── */}
         <div style={{ flex: 1, overflowY: "auto", padding: "32px 40px", background: "var(--bg)" }}>
           <div style={{ maxWidth: 1200, width: "100%", margin: "0 auto" }}>
-            {tab === "channels" && (
+            <div style={{ display: tab === "channels" ? "block" : "none" }}>
               <ChannelsTab
                 guildId={activeGuildId}
                 guildName={activeGuild?.name}
@@ -256,16 +258,19 @@ function Dashboard({
                 togglingPause={togglingPause}
                 onTogglePause={handleTogglePause}
               />
-            )}
-            {tab === "upload" && (
+            </div>
+            <div style={{ display: tab === "upload" ? "block" : "none" }}>
               <UploadTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
-            )}
-            {tab === "sources" && (
+            </div>
+            <div style={{ display: tab === "sources" ? "block" : "none" }}>
               <SourcesTab guildId={activeGuildId} onGoToOverview={onSwitchServer} user={user} />
-            )}
-            {tab === "utils" && (
+            </div>
+            <div style={{ display: tab === "analytics" ? "block" : "none" }}>
+              <AnalyticsTab guildId={activeGuildId} onGoToOverview={onSwitchServer} user={user} />
+            </div>
+            <div style={{ display: tab === "utils" ? "block" : "none" }}>
               <CrawlerTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
-            )}
+            </div>
           </div>
         </div>
       </div>

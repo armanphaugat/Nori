@@ -114,6 +114,8 @@ export const API = {
   getSubUrls:   (url)  => apiFetch(`/upload/sub-urls?url=${encodeURIComponent(url)}`),
   query:        (question, server) => apiFetch("/query", { method: "POST", body: { question, server } }),
   getAnalytics: (gid)  => apiFetch(`/analytics/summary?guild_id=${encodeURIComponent(gid)}`),
+  getRecentAnalytics: (gid, limit = 50) => apiFetch(`/analytics/recent-analytics?guild_id=${encodeURIComponent(gid)}&limit=${limit}`),
+  getAllAnalytics: (gid, limit = 30) => apiFetch(`/analytics/all-analytics?guild_id=${encodeURIComponent(gid)}&limit=${limit}`),
   uploadChannelMessages: (gid, channelId, time) => {
     const f = new FormData();
     f.append("guild_id", gid);
