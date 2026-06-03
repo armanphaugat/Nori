@@ -22,7 +22,7 @@ import SourcesTab from "./components/SourcesTab.jsx";
 import CrawlerTab from "./components/CrawlerTab.jsx";
 import ChatWidget from "./components/ChatWidget.jsx";
 import PricingPage from "./components/PricingPage.jsx";
-
+import AnalyticsTab from "./components/AnalyticsTab.jsx";
 function Dashboard({ 
   user, 
   guilds, 
@@ -72,6 +72,7 @@ function Dashboard({
     channels: "Channel Management",
     upload: "Knowledge Base",
     sources: "Ingested Sources",
+    analytics: "Analytics",
     utils: "URL Crawler",
   };
 
@@ -263,6 +264,9 @@ function Dashboard({
             )}
             {tab === "sources" && (
               <SourcesTab guildId={activeGuildId} onGoToOverview={onSwitchServer} user={user} />
+            )}
+            {tab === "analytics" && (
+              <AnalyticsTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
             )}
             {tab === "utils" && (
               <CrawlerTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />

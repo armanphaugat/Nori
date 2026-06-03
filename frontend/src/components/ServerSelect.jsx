@@ -12,19 +12,23 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
 
   const handleInviteNewServer = () => { window.location.href = `${API_BASE}/auth/invite`; };
 
-  const loadStatuses = async () => {
-    try {
-      setLoading(true);
-      const res = await API.getEligibleGuilds();
-      const g   = res.guilds || [];
-      setConfiguredServers(g.filter(x => x.registered).map(x => ({ id: x.id, name: x.name, icon: x.icon })));
-      setAddableServers(g.filter(x => !x.registered));
-    } catch (e) {
-      setErrorStatus({ ok: false, msg: e.message || "Failed to load servers" });
-    } finally {
-      setLoading(false);
+  const loadStatuses = async (retries = 3, delay = 1500) => {
+  try {
+    setLoading(true);
+    const res = await API.getEligibleGuilds();
+    const g   = res.guilds || [];
+    setConfiguredServers(g.filter(x => x.registered).map(x => ({ id: x.id, name: x.name, icon: x.icon })));
+    setAddableServers(g.filter(x => !x.registered));
+  } catch (e) {
+    if (e.message.includes("429") && retries > 0) {
+      await new Promise(r => setTimeout(r, delay));
+      return loadStatuses(retries - 1, delay * 2);
     }
-  };
+    setErrorStatus({ ok: false, msg: e.message || "Failed to load servers" });
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => { loadStatuses(); }, []);
 
