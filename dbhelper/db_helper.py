@@ -701,3 +701,37 @@ def update_pause_status(guild_id: str, is_paused: bool) -> int:
         )
         s.commit()
         return result.rowcount
+    
+def get_channel_all_config(guild_id:str,channel_id:str):
+    with DB() as s:
+        result=s.execute(text("Select language,tone From channel_config Where guild_id=:guild_id ANd channel_id=:channel_id"),{"guild_id":guild_id,"channel_id":channel_id})
+        row = result.mappings().fetchone()
+        return dict(row) if row else None
+    
+def update_channel_config(guild_id: str, channel_id: str, language: str = None, tone: str = None):
+    with DB() as s:
+        if language and tone:
+            s.execute(
+                text("UPDATE channel_config SET language=:language, tone=:tone WHERE guild_id=:guild_id AND channel_id=:channel_id"),
+                {"guild_id": guild_id, "channel_id": channel_id, "language": language, "tone": tone}
+            )
+        elif language:
+            s.execute(
+                text("UPDATE channel_config SET language=:language WHERE guild_id=:guild_id AND channel_id=:channel_id"),
+                {"guild_id": guild_id, "channel_id": channel_id, "language": language}
+            )
+        elif tone:
+            s.execute(
+                text("UPDATE channel_config SET tone=:tone WHERE guild_id=:guild_id AND channel_id=:channel_id"),
+                {"guild_id": guild_id, "channel_id": channel_id, "tone": tone}
+            )
+        s.commit()
+
+
+def delete_channel_config(guild_id: str, channel_id: str):
+    with DB() as s:
+        s.execute(
+            text("DELETE FROM channel_config WHERE guild_id=:guild_id AND channel_id=:channel_id"),
+            {"guild_id": guild_id, "channel_id": channel_id}
+        )
+        s.commit()

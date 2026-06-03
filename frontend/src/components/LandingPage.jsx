@@ -317,7 +317,7 @@ function Tick({ v }) {
   return                  <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:26,height:26,borderRadius:"50%",background:"rgba(141,153,174,0.15)",color:"var(--slate)",fontSize:14 }}>~</span>;
 }
 
-export default function LandingPage({ user, onLogin, onShowDashboard }) {
+export default function LandingPage({ user, onLogin, onShowDashboard ,onShowPricing}) {
   const [faq, setFaq] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const pageRef = useReveal();
@@ -374,6 +374,15 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
           {[["Features","#features"],["How it Works","#howitworks"],["Compare","#compare"],["FAQ","#faq"]].map(([l,h],i) => (
             <a key={i} href={h} className="nav-link" style={{ padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,letterSpacing:"0.02em",color:"var(--muted)",textDecoration:"none",transition:"all var(--tr)" }}>{l}</a>
           ))}
+          <button
+            onClick={onShowPricing}
+            className="nav-link"
+            style={{ padding:"7px 15px", borderRadius:8, fontSize:13, fontWeight:500,
+            letterSpacing:"0.02em", color:"var(--muted)", background:"none",
+            border:"none", cursor:"pointer", transition:"all var(--tr)" }}
+          >
+          Pricing
+          </button>
           {user ? (
             <button onClick={onShowDashboard} className="btn-sm" style={{ marginLeft:12,display:"flex",alignItems:"center",gap:8,padding:"8px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:"var(--surface1)",color:"var(--navy)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
               <Icon name="grid_view" size={15} /> Dashboard
@@ -875,10 +884,16 @@ export default function LandingPage({ user, onLogin, onShowDashboard }) {
               <h4 style={{ fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:700,color:"var(--navy)",marginBottom:16,letterSpacing:"0.06em",textTransform:"uppercase" }}>Links</h4>
               <ul style={{ display:"flex",flexDirection:"column",gap:10,listStyle:"none",padding:0 }}>
                 {["Add to Discord","Features","Pricing","Support"].map((l,i) => (
-                  <li key={i} style={{ fontSize:13.5,color:"var(--muted)",display:"flex",alignItems:"center",gap:8,fontWeight:300 }}>
-                    <span style={{ width:4,height:4,borderRadius:"50%",background:"var(--slate)" }} />
-                    {l}
-                  </li>
+                <li
+                key={i}
+                onClick={l === "Pricing" ? onShowPricing : undefined}
+                style={{ fontSize:13.5, color: l === "Pricing" ? "var(--accent-deep)" : "var(--muted)",
+                display:"flex", alignItems:"center", gap:8, fontWeight:300,
+                cursor: l === "Pricing" ? "pointer" : "default" }}
+                >
+                <span style={{ width:4,height:4,borderRadius:"50%",background:"var(--slate)" }} />
+                {l}
+                </li>
                 ))}
               </ul>
             </div>
