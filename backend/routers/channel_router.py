@@ -8,7 +8,11 @@ channel_router.add_api_route("/add",handle_add_channel,methods=["PUT"],dependenc
 channel_router.add_api_route("/delete",handle_delete_channel,methods=["DELETE"],dependencies=[Depends(require_guild_admin)])
 channel_router.add_api_route("/add-mod",handle_add_mod_channel,methods=["PUT"],dependencies=[Depends(require_guild_admin)])
 channel_router.add_api_route("/list",handle_get_channels,methods=["GET"],dependencies=[Depends(require_guild_admin_query)],)
-channel_router.add_api_route("/add-support-category",handle_get_channels,methods=["GET"],dependencies=[Depends(require_guild_admin_query)],)
+channel_router.add_api_route("/add-support-category",handle_get_channels,methods=["PUT"],dependencies=[Depends(require_guild_admin_query)],)
 channel_router.add_api_route("/list",handle_get_channels,methods=["GET"],dependencies=[Depends(require_guild_admin_query)],)
-channel_router.add_api_route("/add-support-category",handle_add_support_channel,methods=["GET"],dependencies=[Depends(require_guild_admin_query)],)
+channel_router.add_api_route("/add-support-category",handle_add_support_channel,methods=["PUT"],dependencies=[Depends(require_guild_admin_query)],)
+channel_router.add_api_route("/add-channel-config",handle_add_channel_config,methods=["POST"],dependencies=[Depends(require_guild_admin)],)
+channel_router.add_api_route("/list-all-channel-config",handle_get_all_channel_configs,methods=["GET"],dependencies=[Depends(require_guild_admin_query)],)
+channel_router.add_api_route("/update-channel-config",handle_update_channel_config,methods=["PATCH"],dependencies=[Depends(require_guild_admin)],)
+channel_router.add_api_route("/delete-channel-config",handle_delete_channel_config,methods=["DELETE"],dependencies=[Depends(require_guild_admin)],)
 

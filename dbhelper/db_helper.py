@@ -702,12 +702,22 @@ def update_pause_status(guild_id: str, is_paused: bool) -> int:
         s.commit()
         return result.rowcount
     
-def get_channel_all_config(guild_id:str,channel_id:str):
+def get_channel_config(guild_id:str,channel_id:str):
     with DB() as s:
         result=s.execute(text("Select language,tone From channel_config Where guild_id=:guild_id ANd channel_id=:channel_id"),{"guild_id":guild_id,"channel_id":channel_id})
         row = result.mappings().fetchone()
         return dict(row) if row else None
-    
+
+def insert_channel_config(guild_id: str, channel_id: str, language: str = "english", tone: str = "professional"):
+    with DB() as s:
+        s.execute(
+            text("INSERT INTO channel_config (guild_id, channel_id, language, tone) VALUES (:guild_id, :channel_id, :language, :tone)"),
+            {"guild_id": guild_id, "channel_id": channel_id, "language": language, "tone": tone}
+        )
+        s.commit()
+        return 1
+    return 0
+
 def update_channel_config(guild_id: str, channel_id: str, language: str = None, tone: str = None):
     with DB() as s:
         if language and tone:
@@ -726,6 +736,8 @@ def update_channel_config(guild_id: str, channel_id: str, language: str = None, 
                 {"guild_id": guild_id, "channel_id": channel_id, "tone": tone}
             )
         s.commit()
+        return 1
+    return 0
 
 
 def delete_channel_config(guild_id: str, channel_id: str):
@@ -735,3 +747,17 @@ def delete_channel_config(guild_id: str, channel_id: str):
             {"guild_id": guild_id, "channel_id": channel_id}
         )
         s.commit()
+        return 1
+    return 0
+
+def get_all_channel_configs(guild_id: str):
+    try:
+        with DB() as s:
+            result = s.execute(
+                text("SELECT channel_id, language, tone FROM channel_config WHERE guild_id=:guild_id"),
+                {"guild_id": guild_id}
+            )
+            rows = result.mappings().fetchall()
+            return [dict(row) for row in rows] if rows else []
+    except Exception:
+        return []
