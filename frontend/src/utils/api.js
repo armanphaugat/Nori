@@ -46,31 +46,35 @@ export async function apiFetch(path, opts = {}, _retry = true, _token = null) {
 const fd = (obj) => { const f = new FormData(); Object.entries(obj).forEach(([k, v]) => f.append(k, v)); return f; };
 
 export const API = {
-  getMe:             ()           => apiFetch("/auth/me"),
-  logout:            ()           => apiFetch("/auth/logout", { method: "POST" }),
-  getGuilds:         ()           => apiFetch("/guilds/"),
-  getEligibleGuilds: ()           => apiFetch("/guilds/eligible"),
-  getGuildChannels:  (gid)        => apiFetch(`/guilds/${encodeURIComponent(gid)}/channels`),
-  addServer:         (gid, name)  => apiFetch("/server/add", { method: "POST", body: fd({ guild_id: gid, name }), isForm: true }),
-  getConfig:         (gid)        => apiFetch(`/server/config?guild_id=${encodeURIComponent(gid)}`),
-  updateFaissK:      (gid, k)     => apiFetch("/server/update-faiss-k",     { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
-  updateBm25K:       (gid, k)     => apiFetch("/server/update-bm25-k",      { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
-  updateTemp:        (gid, k)     => apiFetch("/server/update-temperature",  { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
-  updateChunkSize:   (gid, k)     => apiFetch("/server/update-chunk-size",   { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
-  updateChunkOverlap:(gid, k)     => apiFetch("/server/update-chunk-overlap",{ method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
-  updateMaxToken:    (gid, k)     => apiFetch("/server/update-max-token",    { method: "PATCH", body: fd({ guild_id: gid, k }), isForm: true }),
-  updateSystemPrompt:(gid, text)  => apiFetch("/server/update-system-prompt",{ method: "PUT",   body: fd({ guild_id: gid, text }), isForm: true }),
-  listChannels:      (gid)        => apiFetch(`/channel/list?guild_id=${encodeURIComponent(gid)}`),
-  listServersWithStatus:    ()    => apiFetch("/server/list"),
-  listAllServersWithStatus: ()    => apiFetch("/server/list-all"),
-  addChannel:        (gid, cid)   => apiFetch("/channel/add",     { method: "PUT",    body: fd({ guild_id: gid, channel_id: cid }), isForm: true }),
-  deleteChannel:     (gid, cid)   => apiFetch("/channel/delete",  { method: "DELETE", body: fd({ guild_id: gid, channel_id: cid }), isForm: true }),
-  addModChannel:     (gid, cid)   => apiFetch("/channel/add-mod", { method: "PUT",    body: fd({ guild_id: gid, channel_id: cid }), isForm: true }),
+  getMe:                    ()                        => apiFetch("/auth/me"),
+  logout:                   ()                        => apiFetch("/auth/logout", { method: "POST" }),
+  getGuilds:                ()                        => apiFetch("/guilds/"),
+  getEligibleGuilds:        ()                        => apiFetch("/guilds/eligible"),
+  getGuildChannels:         (gid)                     => apiFetch(`/guilds/${encodeURIComponent(gid)}/channels`),
+  addServer:                (gid, name)               => apiFetch("/server/add",                  { method: "POST",   body: fd({ guild_id: gid, name }),                          isForm: true }),
+  getConfig:                (gid)                     => apiFetch(`/server/config?guild_id=${encodeURIComponent(gid)}`),
+  updateFaissK:             (gid, k)                  => apiFetch("/server/update-faiss-k",        { method: "PATCH",  body: fd({ guild_id: gid, k }),                             isForm: true }),
+  updateBm25K:              (gid, k)                  => apiFetch("/server/update-bm25-k",         { method: "PATCH",  body: fd({ guild_id: gid, k }),                             isForm: true }),
+  updateTemp:               (gid, k)                  => apiFetch("/server/update-temperature",    { method: "PATCH",  body: fd({ guild_id: gid, k }),                             isForm: true }),
+  updateChunkSize:          (gid, k)                  => apiFetch("/server/update-chunk-size",     { method: "PATCH",  body: fd({ guild_id: gid, k }),                             isForm: true }),
+  updateChunkOverlap:       (gid, k)                  => apiFetch("/server/update-chunk-overlap",  { method: "PATCH",  body: fd({ guild_id: gid, k }),                             isForm: true }),
+  updateMaxToken:           (gid, k)                  => apiFetch("/server/update-max-token",      { method: "PATCH",  body: fd({ guild_id: gid, k }),                             isForm: true }),
+  updateSystemPrompt:       (gid, text)               => apiFetch("/server/update-system-prompt",  { method: "PUT",    body: fd({ guild_id: gid, text }),                          isForm: true }),
+  updatePauseStatus:        (gid, isPaused)           => apiFetch("/server/update-pause",          { method: "PATCH",  body: fd({ guild_id: gid, is_paused: isPaused }),           isForm: true }),
+  listServersWithStatus:    ()                        => apiFetch("/server/list"),
+  listAllServersWithStatus: ()                        => apiFetch("/server/list-all"),
+  listChannels:             (gid)                     => apiFetch(`/channel/list?guild_id=${encodeURIComponent(gid)}`),
+  addChannel:               (gid, cid)               => apiFetch("/channel/add",                  { method: "PUT",    body: fd({ guild_id: gid, channel_id: cid }),               isForm: true }),
+  deleteChannel:            (gid, cid)               => apiFetch("/channel/delete",               { method: "DELETE", body: fd({ guild_id: gid, channel_id: cid }),               isForm: true }),
+  addModChannel:            (gid, cid)               => apiFetch("/channel/add-mod",              { method: "PUT",    body: fd({ guild_id: gid, channel_id: cid }),               isForm: true }),
   addSupportCategory: (gid, cid = null) => apiFetch(
-    cid 
-      ? `/channel/add-support-category?guild_id=${encodeURIComponent(gid)}&channel_id=${encodeURIComponent(cid)}`
-      : `/channel/add-support-category?guild_id=${encodeURIComponent(gid)}`
-  ),
+  "/channel/add-support-category",
+  { method: "PUT", body: fd({ guild_id: gid, ...(cid ? { channel_id: cid } : {}) }), isForm: true }
+),
+  addChannelConfig:         (gid, cid, language, tone) => apiFetch("/channel/add-channel-config",    { method: "POST",   body: fd({ guild_id: gid, channel_id: cid, language, tone }), isForm: true }),
+  updateChannelConfig:      (gid, cid, language, tone) => apiFetch("/channel/update-channel-config", { method: "PATCH",  body: fd({ guild_id: gid, channel_id: cid, language, tone }), isForm: true }),
+  deleteChannelConfig:      (gid, cid)               => apiFetch("/channel/delete-channel-config", { method: "DELETE", body: fd({ guild_id: gid, channel_id: cid }),               isForm: true }),
+  listAllChannelConfigs:    (gid)                     => apiFetch(`/channel/list-all-channel-config?guild_id=${encodeURIComponent(gid)}`),
   upload: (gid, files, urls) => {
     const f = new FormData();
     f.append("guild_id", gid);
@@ -108,14 +112,14 @@ export const API = {
     f.append("faq_text", text);
     return apiFetch("/upload/faq", { method: "POST", body: f, isForm: true });
   },
-  getAllUploads: (gid)  => apiFetch(`/upload/all?guild_id=${encodeURIComponent(gid)}`),
-  getMyUploads:  ()     => apiFetch("/upload/my-uploads"),
-  deleteUpload:  (gid, uid) => apiFetch(`/upload/delete-content/${encodeURIComponent(uid)}?guild_id=${encodeURIComponent(gid)}`, { method: "DELETE" }),
-  getSubUrls:   (url)  => apiFetch(`/upload/sub-urls?url=${encodeURIComponent(url)}`),
-  query:        (question, server) => apiFetch("/query", { method: "POST", body: { question, server } }),
-  getAnalytics: (gid)  => apiFetch(`/analytics/summary?guild_id=${encodeURIComponent(gid)}`),
-  getRecentAnalytics: (gid, limit = 50) => apiFetch(`/analytics/recent-analytics?guild_id=${encodeURIComponent(gid)}&limit=${limit}`),
-  getAllAnalytics: (gid, limit = 30) => apiFetch(`/analytics/all-analytics?guild_id=${encodeURIComponent(gid)}&limit=${limit}`),
+  getAllUploads:          (gid)         => apiFetch(`/upload/all?guild_id=${encodeURIComponent(gid)}`),
+  getMyUploads:          ()            => apiFetch("/upload/my-uploads"),
+  deleteUpload:          (gid, uid)    => apiFetch(`/upload/delete-content/${encodeURIComponent(uid)}?guild_id=${encodeURIComponent(gid)}`, { method: "DELETE" }),
+  getSubUrls:            (url)         => apiFetch(`/upload/sub-urls?url=${encodeURIComponent(url)}`),
+  query:                 (question, server) => apiFetch("/query", { method: "POST", body: { question, server } }),
+  getAnalytics:          (gid)         => apiFetch(`/analytics/summary?guild_id=${encodeURIComponent(gid)}`),
+  getRecentAnalytics:    (gid, limit = 50) => apiFetch(`/analytics/recent-analytics?guild_id=${encodeURIComponent(gid)}&limit=${limit}`),
+  getAllAnalytics:        (gid, limit = 30) => apiFetch(`/analytics/all-analytics?guild_id=${encodeURIComponent(gid)}&limit=${limit}`),
   uploadChannelMessages: (gid, channelId, time) => {
     const f = new FormData();
     f.append("guild_id", gid);
@@ -123,11 +127,4 @@ export const API = {
     f.append("time", time);
     return apiFetch("/upload/channel-messages", { method: "POST", body: f, isForm: true });
   },
-  updatePauseStatus: (gid, isPaused) => {
-    const f = new FormData();
-    f.append("guild_id", gid);
-    f.append("is_paused", isPaused);
-    return apiFetch("/server/update-pause", { method: "PATCH", body: f, isForm: true });
-  },
 };
-
