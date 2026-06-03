@@ -5,26 +5,61 @@ import {
   Card, SectionHeader, NoServerSelected,
 } from "./Common.jsx";
 
+const LANGUAGES = [
+  { value: "english",    label: "English" },
+  { value: "hindi",      label: "Hindi" },
+  { value: "german",     label: "German" },
+  { value: "chinese",    label: "Chinese" },
+  { value: "spanish",    label: "Spanish" },
+  { value: "french",     label: "French" },
+  { value: "arabic",     label: "Arabic" },
+  { value: "portuguese", label: "Portuguese" },
+  { value: "japanese",   label: "Japanese" },
+  { value: "russian",    label: "Russian" },
+];
+
+const TONES = [
+  { value: "professional", label: "Professional" },
+  { value: "formal",       label: "Formal" },
+  { value: "casual",       label: "Casual" },
+  { value: "friendly",     label: "Friendly" },
+  { value: "sarcastic",    label: "Sarcastic" },
+];
+
 export default function ChannelsTab({
   guildId, guildName: initialGuildName = "",
   onGoToOverview, isPaused, togglingPause, onTogglePause,
 }) {
-  const [channels, setChannels]             = useState([]);
-  const [modChannel, setModChannel]         = useState(null);
-  const [loaded, setLoaded]                 = useState(false);
+  const [channels, setChannels]               = useState([]);
+  const [modChannel, setModChannel]           = useState(null);
+  const [loaded, setLoaded]                   = useState(false);
   const [discordChannels, setDiscordChannels] = useState([]);
-  const [status, setStatus]                 = useState(null);
-  const [loading, setLoading]               = useState(false);
+  const [status, setStatus]                   = useState(null);
+  const [loading, setLoading]                 = useState(false);
   const [searchChanInput, setSearchChanInput] = useState("");
   const [searchModInput, setSearchModInput]   = useState("");
   const [showChanDropdown, setShowChanDropdown] = useState(false);
   const [showModDropdown, setShowModDropdown]   = useState(false);
   const [selectedChansToAdd, setSelectedChansToAdd] = useState([]);
   const [selectedModChanToAdd, setSelectedModChanToAdd] = useState(null);
-  const [guildName, setGuildName]           = useState(initialGuildName || "Discord Server");
+  const [guildName, setGuildName]             = useState(initialGuildName || "Discord Server");
   const [creatingCategory, setCreatingCategory] = useState(false);
   const [supportSetupMode, setSupportSetupMode] = useState("new");
   const [selectedSupportChan, setSelectedSupportChan] = useState("");
+
+  // ── Channel Config State ──
+  const [channelConfigs, setChannelConfigs]       = useState([]);
+  const [configStatus, setConfigStatus]           = useState(null);
+  const [configLoading, setConfigLoading]         = useState(false);
+  const [showAddConfig, setShowAddConfig]         = useState(false);
+  const [newConfigChanId, setNewConfigChanId]     = useState("");
+  const [newConfigLang, setNewConfigLang]         = useState("english");
+  const [newConfigTone, setNewConfigTone]         = useState("professional");
+  const [addingConfig, setAddingConfig]           = useState(false);
+  const [editingConfigId, setEditingConfigId]     = useState(null);
+  const [editLang, setEditLang]                   = useState("");
+  const [editTone, setEditTone]                   = useState("");
+  const [deletingConfigId, setDeletingConfigId]   = useState(null);
 
   const handleCreateSupportCategory = async () => {
     if (!guildId) return;
@@ -66,12 +101,23 @@ export default function ChannelsTab({
     setLoading(false);
   }, [initialGuildName]);
 
+  const loadChannelConfigs = useCallback(async (id) => {
+    if (!id) return;
+    setConfigLoading(true); setConfigStatus(null);
+    try {
+      const res = await API.listAllChannelConfigs(id);
+      if (res.status === "success") setChannelConfigs(res.data || []);
+    } catch (e) { setConfigStatus({ ok: false, msg: e.message }); }
+    setConfigLoading(false);
+  }, []);
+
   useEffect(() => {
     setLoaded(false); setChannels([]); setDiscordChannels([]); setModChannel(null); setStatus(null);
     setSupportSetupMode("new"); setSelectedSupportChan("");
     setGuildName(initialGuildName || "Discord Server");
-    if (guildId) load(guildId);
-  }, [guildId, load, initialGuildName]);
+    setChannelConfigs([]); setConfigStatus(null); setShowAddConfig(false);
+    if (guildId) { load(guildId); loadChannelConfigs(guildId); }
+  }, [guildId, load, initialGuildName, loadChannelConfigs]);
 
   useEffect(() => {
     const h = (e) => {
@@ -115,6 +161,61 @@ export default function ChannelsTab({
       setStatus({ ok: true, msg: "Mod channel set" });
       setSelectedModChanToAdd(null); setSearchModInput(""); setShowModDropdown(false);
     } catch (e) { setStatus({ ok: false, msg: e.message }); }
+  };
+
+  // ── Channel Config Handlers ──
+  const handleAddConfig = async () => {
+    if (!guildId || !newConfigChanId) {
+      setConfigStatus({ ok: false, msg: "Please select a channel first" }); return;
+    }
+    setAddingConfig(true); setConfigStatus(null);
+    try {
+      const res = await API.addChannelConfig(guildId, newConfigChanId, newConfigLang, newConfigTone);
+      if (res.status === "success") {
+        setConfigStatus({ ok: true, msg: "Channel config added successfully" });
+        setShowAddConfig(false); setNewConfigChanId(""); setNewConfigLang("english"); setNewConfigTone("professional");
+        await loadChannelConfigs(guildId);
+      } else { setConfigStatus({ ok: false, msg: res.message || "Failed to add config" }); }
+    } catch (e) { setConfigStatus({ ok: false, msg: e.message }); }
+    setAddingConfig(false);
+  };
+
+  const handleEditConfig = (cfg) => {
+    setEditingConfigId(cfg.channel_id);
+    setEditLang(cfg.language);
+    setEditTone(cfg.tone);
+  };
+
+  const handleUpdateConfig = async (channelId) => {
+    setConfigStatus(null);
+    try {
+      const res = await API.updateChannelConfig(guildId, channelId, editLang, editTone);
+      if (res.status === "success") {
+        setConfigStatus({ ok: true, msg: "Config updated successfully" });
+        setEditingConfigId(null);
+        await loadChannelConfigs(guildId);
+      } else { setConfigStatus({ ok: false, msg: res.message || "Failed to update config" }); }
+    } catch (e) { setConfigStatus({ ok: false, msg: e.message }); }
+  };
+
+  const handleDeleteConfig = async (channelId) => {
+    setDeletingConfigId(channelId); setConfigStatus(null);
+    try {
+      const res = await API.deleteChannelConfig(guildId, channelId);
+      if (res.status === "success") {
+        setConfigStatus({ ok: true, msg: "Config deleted successfully" });
+        await loadChannelConfigs(guildId);
+      } else { setConfigStatus({ ok: false, msg: res.message || "Failed to delete config" }); }
+    } catch (e) { setConfigStatus({ ok: false, msg: e.message }); }
+    setDeletingConfigId(null);
+  };
+
+  const SelectStyle = {
+    height: 36, padding: "0 10px", fontSize: 13,
+    background: "var(--surface)", border: "1.5px solid var(--border2)",
+    borderRadius: "var(--r-md)", color: "var(--navy)",
+    cursor: "pointer", outline: "none",
+    fontFamily: "'DM Sans', sans-serif",
   };
 
   const DropdownMenu = ({ list, selected, onSelect, multi }) => {
@@ -412,6 +513,184 @@ export default function ChannelsTab({
           </Card>
 
           {status && <StatusBadge {...status} />}
+
+          {/* ── Channel Language & Tone Config ── */}
+          <Card style={{ marginTop: 16 }}>
+            {/* Card Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Icon name="translate" size={17} style={{ color: "var(--accent)" }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--navy)" }}>Channel Language & Tone</span>
+                {channelConfigs.length > 0 && (
+                  <Tag variant="info">{channelConfigs.length}</Tag>
+                )}
+              </div>
+              <Btn
+                variant="outline"
+                style={{ fontSize: 12, padding: "5px 12px", minHeight: 32, display: "flex", alignItems: "center", gap: 6 }}
+                onClick={() => { setShowAddConfig(v => !v); setConfigStatus(null); }}
+              >
+                <Icon name={showAddConfig ? "remove" : "add"} size={14} />
+                {showAddConfig ? "Cancel" : "Add Config"}
+              </Btn>
+            </div>
+
+            {/* Add Config Form */}
+            {showAddConfig && (
+              <div style={{
+                padding: "16px", marginBottom: 16,
+                background: "var(--surface-2)", border: "1px solid var(--border2)",
+                borderRadius: "var(--r-md)",
+                display: "flex", flexDirection: "column", gap: 12,
+              }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 2 }}>New Channel Config</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: 10, alignItems: "end" }}>
+                  {/* Channel select */}
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 5 }}>Channel</div>
+                    <select
+                      style={{ ...SelectStyle, width: "100%" }}
+                      value={newConfigChanId}
+                      onChange={e => setNewConfigChanId(e.target.value)}
+                    >
+                      <option value="">-- Select Channel --</option>
+                      {discordChannels.map(c => (
+                        <option key={c.id} value={c.id}>#{c.name}{c.categoryName ? ` (${c.categoryName})` : ""}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {/* Language select */}
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 5 }}>Language</div>
+                    <select
+                      style={{ ...SelectStyle, width: "100%" }}
+                      value={newConfigLang}
+                      onChange={e => setNewConfigLang(e.target.value)}
+                    >
+                      {LANGUAGES.map(l => (
+                        <option key={l.value} value={l.value}>{l.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {/* Tone select */}
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 5 }}>Tone</div>
+                    <select
+                      style={{ ...SelectStyle, width: "100%" }}
+                      value={newConfigTone}
+                      onChange={e => setNewConfigTone(e.target.value)}
+                    >
+                      {TONES.map(t => (
+                        <option key={t.value} value={t.value}>{t.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {/* Add button */}
+                  <Btn
+                    variant="primary"
+                    style={{ minHeight: 36, padding: "0 16px", fontSize: 13 }}
+                    onClick={handleAddConfig}
+                    disabled={addingConfig || !newConfigChanId}
+                  >
+                    {addingConfig ? <Spinner size={13} color="#fff" /> : <><Icon name="add" size={14} /><span>Add</span></>}
+                  </Btn>
+                </div>
+              </div>
+            )}
+
+            {/* Config List */}
+            {configLoading ? (
+              <div style={{ display: "flex", gap: 10, alignItems: "center", padding: "12px 0", color: "var(--muted)", fontSize: 13 }}>
+                <Spinner size={14} /> Loading configs…
+              </div>
+            ) : channelConfigs.length === 0 ? (
+              <div style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", padding: "18px 0" }}>
+                No channel configs yet. Add one above.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {/* Table header */}
+                <div style={{
+                  display: "grid", gridTemplateColumns: "1fr 140px 140px 80px",
+                  padding: "6px 12px", gap: 10,
+                  fontSize: 11, fontWeight: 700, color: "var(--muted2)",
+                  textTransform: "uppercase", letterSpacing: ".05em",
+                }}>
+                  <span>Channel</span>
+                  <span>Language</span>
+                  <span>Tone</span>
+                  <span>Actions</span>
+                </div>
+
+                {channelConfigs.map(cfg => (
+                  <div key={cfg.channel_id} style={{
+                    display: "grid", gridTemplateColumns: "1fr 140px 140px 80px",
+                    alignItems: "center", gap: 10,
+                    padding: "10px 12px",
+                    background: editingConfigId === cfg.channel_id ? "var(--red-dim)" : "var(--surface-2)",
+                    border: `1px solid ${editingConfigId === cfg.channel_id ? "var(--red-border)" : "var(--border)"}`,
+                    borderRadius: "var(--r-md)",
+                    transition: "all var(--tr)",
+                  }}>
+                    {/* Channel name */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 7, overflow: "hidden" }}>
+                      <Icon name="tag" size={13} style={{ color: "var(--accent)", flexShrink: 0 }} />
+                      <span style={{ fontSize: 13, color: "var(--navy)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {chanName(cfg.channel_id)}
+                      </span>
+                    </div>
+
+                    {/* Language */}
+                    {editingConfigId === cfg.channel_id ? (
+                      <select style={{ ...SelectStyle, width: "100%" }} value={editLang} onChange={e => setEditLang(e.target.value)}>
+                        {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+                      </select>
+                    ) : (
+                      <Tag variant="info" style={{ fontSize: 12 }}>
+                        {LANGUAGES.find(l => l.value === cfg.language)?.label || cfg.language}
+                      </Tag>
+                    )}
+
+                    {/* Tone */}
+                    {editingConfigId === cfg.channel_id ? (
+                      <select style={{ ...SelectStyle, width: "100%" }} value={editTone} onChange={e => setEditTone(e.target.value)}>
+                        {TONES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                      </select>
+                    ) : (
+                      <Tag variant="success" style={{ fontSize: 12 }}>
+                        {TONES.find(t => t.value === cfg.tone)?.label || cfg.tone}
+                      </Tag>
+                    )}
+
+                    {/* Actions */}
+                    <div style={{ display: "flex", gap: 6 }}>
+                      {editingConfigId === cfg.channel_id ? (
+                        <>
+                          <Btn variant="primary" style={{ padding: "3px 8px", fontSize: 11, minHeight: 26 }} onClick={() => handleUpdateConfig(cfg.channel_id)}>
+                            <Icon name="check" size={12} />
+                          </Btn>
+                          <Btn variant="outline" style={{ padding: "3px 8px", fontSize: 11, minHeight: 26 }} onClick={() => setEditingConfigId(null)}>
+                            <Icon name="close" size={12} />
+                          </Btn>
+                        </>
+                      ) : (
+                        <>
+                          <Btn variant="outline" style={{ padding: "3px 8px", fontSize: 11, minHeight: 26 }} onClick={() => handleEditConfig(cfg)}>
+                            <Icon name="edit" size={12} />
+                          </Btn>
+                          <Btn variant="danger" style={{ padding: "3px 8px", fontSize: 11, minHeight: 26 }} onClick={() => handleDeleteConfig(cfg.channel_id)} disabled={deletingConfigId === cfg.channel_id}>
+                            {deletingConfigId === cfg.channel_id ? <Spinner size={11} /> : <Icon name="delete" size={12} />}
+                          </Btn>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {configStatus && <div style={{ marginTop: 12 }}><StatusBadge {...configStatus} /></div>}
+          </Card>
         </>
       )}
     </div>

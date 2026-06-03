@@ -6,11 +6,10 @@ import sys
 import asyncio
 import re
 from io import BytesIO
-from datetime import datetime, timezone, timedelta  # ✅ missing imports added
+from datetime import datetime, timezone, timedelta
 import time
-
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event
+from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event,get_channel_config
 from python.query import query_graphlit, query_graphlit_web
 from python.ingest import read_ocr_async
 
@@ -19,7 +18,6 @@ load_dotenv()
 DISCORD_BOT_KEY = os.getenv("DISCORD_BOT_KEY")
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='-', intents=intents, help_command=None)
-# ✅ removed unused pause_server dict
 pending_feedback: dict = {}
 watched_threads: dict = {}
 
@@ -94,10 +92,10 @@ def is_no_kb_response(answer: str) -> bool:
     return False
 
 
-async def get_answer(guild_id: str, question: str) -> str:
+async def get_answer(guild_id: str, question: str,language:str,tone:str) -> str:
     print(f"[get_answer] Querying KB for: {question[:60]}")
     try:
-        answer = await asyncio.wait_for(query_graphlit(guild_id, question), timeout=30.0)
+        answer = await asyncio.wait_for(query_graphlit(guild_id, question,language,tone), timeout=30.0)
     except asyncio.TimeoutError:
         print("[get_answer] KB query timed out")
         return "Query timed out. Please try again."
@@ -108,7 +106,7 @@ async def get_answer(guild_id: str, question: str) -> str:
     if is_no_kb_response(answer):
         print("[get_answer] KB had no answer, falling back to web search")
         try:
-            answer = await asyncio.wait_for(query_graphlit_web(guild_id, question), timeout=30.0)
+            answer = await asyncio.wait_for(query_graphlit_web(guild_id, question,language,tone), timeout=30.0)
         except asyncio.TimeoutError:
             return "Web search timed out. Please try again."
         except Exception as e:
@@ -185,25 +183,22 @@ async def on_message(message):
         return
     channels = get_channels(str(message.guild.id))
     watch_ids = [c["channel_id"] for c in channels]
-
     if str(message.channel.id) in watch_ids or str(message.channel.id) in watched_threads:
         print(f"[on_message] Message in watched channel '{message.channel.name}' from {message.author.name}")
         info = get_server(str(message.guild.id))
         if info is None:
             await message.channel.send("Please configure the bot on the dashboard.")
             return
-
+        channel_info=get_channel_config(str(message.guild.id),str(message.channel.id)) or {}
+        language = channel_info.get("language", "english")
+        tone = channel_info.get("tone", "professional")
         start_time = time.time()
-
         async with message.channel.typing():
-            answer = await get_answer(str(message.guild.id), message.content)
-
+            answer = await get_answer(str(message.guild.id), message.content,language,tone)
         latency_ms = round((time.time() - start_time) * 1000, 2)
-
         await send_answer_with_feedback(
             message.channel, message.author, str(message.guild.id), message.content, answer
         )
-
         if is_no_kb_response(answer):
             log_question_event(str(message.guild.id), str(message.author.id), False, latency_ms)
             await notify_mod_channel(message.guild, message.channel, message.author, message.content)
@@ -259,7 +254,6 @@ async def on_reaction_add(reaction, user):
 @commands.cooldown(4, 60, commands.BucketType.user)
 async def ask(ctx, *, question: str = None):
     start_time = time.time()
-
     if ctx.message.attachments:
         attachment = ctx.message.attachments[0]
         mb_size = attachment.size / (1024 * 1024)
@@ -269,20 +263,17 @@ async def ask(ctx, *, question: str = None):
         if attachment.content_type and attachment.content_type.startswith("image"):
             image_bytes = BytesIO(await attachment.read())
             question = (question or "") + await read_ocr_async(image_bytes)
-
     if not question:
         await ctx.send("No question provided. Usage: `-ask <your question>`")
         return
-
+    channel_info=get_channel_config(str(ctx.guild.id),str(ctx.channel.id)) or {}
+    language = channel_info.get("language", "english")
+    tone = channel_info.get("tone", "professional")
     print(f"[ask] {ctx.author.name} asked: {question[:60]}")
-
     async with ctx.typing():
-        answer = await get_answer(str(ctx.guild.id), question)
-
+        answer = await get_answer(str(ctx.guild.id), question,language,tone)
     latency_ms = round((time.time() - start_time) * 1000, 2)
-
     await send_answer_with_feedback(ctx.channel, ctx.author, str(ctx.guild.id), question, answer)
-
     if is_no_kb_response(answer):
         log_question_event(str(ctx.guild.id), str(ctx.author.id), False, latency_ms)
         await notify_mod_channel(ctx.guild, ctx.channel, ctx.author, question)

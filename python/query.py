@@ -20,51 +20,53 @@ graphlit = Graphlit(
     jwt_secret=jwt_secret,
 )
 
-KB_SYSTEM_PROMPT = (
-    """
+
+def build_kb_system_prompt(language: str = "english", tone: str = "professional") -> str:
+    return f"""
 You are a helpful AI assistant for a support knowledge base.
- 
+Always respond in {language}.
+Your tone should be {tone}.
+
 CRITICAL INSTRUCTION:
 If the answer cannot be found in the provided documents or knowledge base, 
 you MUST respond with EXACTLY this phrase (no variations):
 "I don't have this information"
- 
+
 Do NOT add any explanation, apology, or additional text.
 Just respond with: I don't have this information
- 
+
 If you DO have the answer in the knowledge base:
 1. Provide a clear, accurate answer
 2. Cite the source document/page where the information comes from
 3. Keep your answer concise and under 1800 characters
 4. Use bullet points or numbered lists for clarity if appropriate
- 
+
 RULES:
-- Be helpful and professional
+- Be helpful and {tone}
 - Always cite your sources
 - Never make up information
 - Never provide generic advice when specific KB content exists
 - Stick to the knowledge base content only
+- Always respond in {language}
 """
-)
 
-WEB_SYSTEM_PROMPT = (
-    "You are a helpful assistant. Search the web and answer clearly. "
-    "Always cite your sources. "
-    "Keep your answer concise and under 1800 characters."
-)
-async def _get_or_create_kb_spec(server_id: str) -> str:
-    try:
-        spec_id = get_kb_spec_id(server_id)
-        if spec_id:
-            return spec_id
-    except Exception as e:
-        print(f"[WARN] DB lookup kb_spec failed: {e}")
+
+def build_web_system_prompt(language: str = "english", tone: str = "professional") -> str:
+    return (
+        f"You are a helpful assistant. Search the web and answer clearly. "
+        f"Always respond in {language} with a {tone} tone. "
+        "Always cite your sources. "
+        "Keep your answer concise and under 1800 characters."
+    )
+
+
+async def _get_or_create_kb_spec(server_id: str, language: str, tone: str) -> str:
     spec_response = await graphlit.client.create_specification(
         specification=SpecificationInput(
             name=f"{server_id}_kb_spec",
             type=SpecificationTypes.COMPLETION,
             service_type=ModelServiceTypes.OPEN_AI,
-            system_prompt=KB_SYSTEM_PROMPT,
+            system_prompt=build_kb_system_prompt(language, tone),
             retrieval_strategy=RetrievalStrategyInput(
                 type=RetrievalStrategyTypes.CONTENT,
                 content_limit=10,
@@ -76,15 +78,27 @@ async def _get_or_create_kb_spec(server_id: str) -> str:
             ),
         )
     )
-    spec_id = spec_response.create_specification.id
-    try:
-        save_spec_id(server_id, "kb_spec", spec_id)
-    except Exception as e:
-        print(f"[WARN] DB save kb_spec failed: {e}")
-    return spec_id
+    return spec_response.create_specification.id
 
 
-async def query_graphlit(server_id: str, question: str) -> str:
+async def _get_or_create_web_spec(server_id: str, language: str, tone: str) -> str:
+    spec_response = await graphlit.client.create_specification(
+        specification=SpecificationInput(
+            name=f"{server_id}_web_spec",
+            type=SpecificationTypes.COMPLETION,
+            service_type=ModelServiceTypes.OPEN_AI,
+            system_prompt=build_web_system_prompt(language, tone),
+            open_ai=OpenAIModelPropertiesInput(
+                model=OpenAIModels.GPT4O_128K,
+                temperature=0.3,
+                completion_token_limit=500,
+            ),
+        )
+    )
+    return spec_response.create_specification.id
+
+
+async def query_graphlit(server_id: str, question: str, language: str = "english", tone: str = "professional") -> str:
     print("Query Graphlit Called")
     try:
         content_ids = get_content_ids(server_id)
@@ -92,9 +106,11 @@ async def query_graphlit(server_id: str, question: str) -> str:
     except Exception as e:
         print(f"[WARN] DB fetch content/feed ids failed: {e}")
         content_ids, feed_ids = [], []
+
     if not content_ids and not feed_ids:
         return "No knowledge base found for this server."
-    spec_id = await _get_or_create_kb_spec(server_id)
+
+    spec_id = await _get_or_create_kb_spec(server_id, language, tone)
     conv_response = await graphlit.client.create_conversation(
         conversation=ConversationInput(
             name=f"{server_id}_kb_query",
@@ -130,35 +146,8 @@ async def query_graphlit(server_id: str, question: str) -> str:
         except Exception as e:
             print(f"[WARN] Failed to delete KB conversation {conversation_id}: {e}")
 
-async def _get_or_create_web_spec(server_id: str) -> str:
-    try:
-        spec_id = get_spec_id(server_id, "web_spec")
-        if spec_id:
-            return spec_id
-    except Exception as e:
-        print(f"[WARN] DB lookup web_spec failed: {e}")
-    spec_response = await graphlit.client.create_specification(
-        specification=SpecificationInput(
-            name=f"{server_id}_web_spec",
-            type=SpecificationTypes.COMPLETION,
-            service_type=ModelServiceTypes.OPEN_AI,
-            system_prompt=WEB_SYSTEM_PROMPT,
-            open_ai=OpenAIModelPropertiesInput(
-                model=OpenAIModels.GPT4O_128K,
-                temperature=0.3,
-                completion_token_limit=500,
-            ),
-        )
-    )
-    spec_id = spec_response.create_specification.id
-    try:
-        save_spec_id(server_id, "web_spec", spec_id)
-    except Exception as e:
-        print(f"[WARN] DB save web_spec failed: {e}")
-    return spec_id
 
-
-async def query_graphlit_web(server_id: str, question: str) -> str:
+async def query_graphlit_web(server_id: str, question: str, language: str = "english", tone: str = "professional") -> str:
     print("Query Web-Graphlit Called")
     try:
         response = await graphlit.client.search_web(
@@ -174,6 +163,7 @@ async def query_graphlit_web(server_id: str, question: str) -> str:
                 limit=5
             )
             result = response.search_web
+
         if result is None or result.results is None or len(result.results) == 0:
             return "I don't know"
         context = ""
@@ -188,8 +178,7 @@ async def query_graphlit_web(server_id: str, question: str) -> str:
             f"Search Results:\n{context}\n\n"
             f"Give a clear, concise answer under 1800 characters. Cite sources by number e.g. [1], [2]."
         )
-
-        spec_id = await _get_or_create_web_spec(server_id)
+        spec_id = await _get_or_create_web_spec(server_id, language, tone)
         conv_response = await graphlit.client.create_conversation(
             conversation=ConversationInput(
                 name=f"{server_id}_web_query",
