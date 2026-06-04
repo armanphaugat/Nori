@@ -60,6 +60,8 @@ export const API = {
   updateChunkOverlap:       (gid, k)                  => apiFetch("/server/update-chunk-overlap",  { method: "PATCH",  body: fd({ guild_id: gid, k }),                             isForm: true }),
   updateMaxToken:           (gid, k)                  => apiFetch("/server/update-max-token",      { method: "PATCH",  body: fd({ guild_id: gid, k }),                             isForm: true }),
   updateSystemPrompt:       (gid, text)               => apiFetch("/server/update-system-prompt",  { method: "PUT",    body: fd({ guild_id: gid, text }),                          isForm: true }),
+  jsgetWebSearch:   (gid)          => apiFetch(`/server/get-web-search?guild_id=${encodeURIComponent(gid)}`),
+  updateWebSearch:(gid, trigger) => apiFetch("/server/update-websearch", { method: "PATCH", body: fd({ guild_id: gid, trigger }), isForm: true }),
   updatePauseStatus:        (gid, isPaused)           => apiFetch("/server/update-pause",          { method: "PATCH",  body: fd({ guild_id: gid, is_paused: isPaused }),           isForm: true }),
   listServersWithStatus:    ()                        => apiFetch("/server/list"),
   listAllServersWithStatus: ()                        => apiFetch("/server/list-all"),

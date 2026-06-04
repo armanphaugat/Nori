@@ -9,7 +9,7 @@ from io import BytesIO
 from datetime import datetime, timezone, timedelta
 import time
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event,get_channel_config
+from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event,get_channel_config,get_web_search
 from python.query import query_graphlit, query_graphlit_web
 from python.ingest import read_ocr_async
 
@@ -92,10 +92,10 @@ def is_no_kb_response(answer: str) -> bool:
     return False
 
 
-async def get_answer(guild_id: str, question: str,language:str,tone:str) -> str:
+async def get_answer(guild_id: str, question: str,language:str,tone:str,prv_messages:str) -> str:
     print(f"[get_answer] Querying KB for: {question[:60]}")
     try:
-        answer = await asyncio.wait_for(query_graphlit(guild_id, question,language,tone), timeout=30.0)
+        answer = await asyncio.wait_for(query_graphlit(guild_id, question,language,tone,prv_messages), timeout=30.0)
     except asyncio.TimeoutError:
         print("[get_answer] KB query timed out")
         return "Query timed out. Please try again."
@@ -105,8 +105,11 @@ async def get_answer(guild_id: str, question: str,language:str,tone:str) -> str:
 
     if is_no_kb_response(answer):
         print("[get_answer] KB had no answer, falling back to web search")
+        web_search_info=get_web_search(guild_id)
+        if not web_search_info:
+            return "I don't Have Information(Web Search Is Paused By Admin)"
         try:
-            answer = await asyncio.wait_for(query_graphlit_web(guild_id, question,language,tone), timeout=30.0)
+            answer = await asyncio.wait_for(query_graphlit_web(guild_id, question,language,tone,prv_messages), timeout=30.0)
         except asyncio.TimeoutError:
             return "Web search timed out. Please try again."
         except Exception as e:
@@ -170,6 +173,16 @@ async def on_ready():
     print(f"[on_ready] Logged in as {bot.user}")
     print(f"[on_ready] Connected to {len(bot.guilds)} server(s)")
 
+async def get_user_message_from_channel(channel_id: int) -> str:
+    channel = bot.get_channel(channel_id)
+    if not channel:
+        print("No Channel Found")
+        return ""
+    messages = []
+    async for msg in channel.history(limit=7, oldest_first=False):
+        if msg.content:
+            messages.append(msg.content)
+    return "   ".join(messages)
 
 @bot.event
 async def on_message(message):
@@ -192,9 +205,10 @@ async def on_message(message):
         channel_info=get_channel_config(str(message.guild.id),str(message.channel.id)) or {}
         language = channel_info.get("language", "english")
         tone = channel_info.get("tone", "professional")
+        prv_messages=await get_user_message_from_channel(message.channel.id)
         start_time = time.time()
         async with message.channel.typing():
-            answer = await get_answer(str(message.guild.id), message.content,language,tone)
+            answer = await get_answer(str(message.guild.id), message.content,language,tone,prv_messages)
         latency_ms = round((time.time() - start_time) * 1000, 2)
         await send_answer_with_feedback(
             message.channel, message.author, str(message.guild.id), message.content, answer
@@ -269,9 +283,10 @@ async def ask(ctx, *, question: str = None):
     channel_info=get_channel_config(str(ctx.guild.id),str(ctx.channel.id)) or {}
     language = channel_info.get("language", "english")
     tone = channel_info.get("tone", "professional")
+    prv_messages=await get_user_message_from_channel(ctx.channel.id)
     print(f"[ask] {ctx.author.name} asked: {question[:60]}")
     async with ctx.typing():
-        answer = await get_answer(str(ctx.guild.id), question,language,tone)
+        answer = await get_answer(str(ctx.guild.id), question,language,tone,prv_messages)
     latency_ms = round((time.time() - start_time) * 1000, 2)
     await send_answer_with_feedback(ctx.channel, ctx.author, str(ctx.guild.id), question, answer)
     if is_no_kb_response(answer):

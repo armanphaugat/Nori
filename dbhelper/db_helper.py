@@ -761,3 +761,29 @@ def get_all_channel_configs(guild_id: str):
             return [dict(row) for row in rows] if rows else []
     except Exception:
         return []
+    
+def get_web_search(server_id: str) -> bool:
+    try:
+        with DB() as s:
+            result = s.execute(
+                text("SELECT web_search FROM servers WHERE server_id = :server_id"),
+                {"server_id": server_id}
+            ).fetchone()
+            return bool(result.web_search) if result else False
+    except Exception as e:
+        print(f"[get_web_search] Error: {e}")
+        return False
+
+
+def update_web_search(server_id: str, enabled: bool) -> int:
+    try:
+        with DB() as s:
+            s.execute(
+                text("UPDATE servers SET web_search = :enabled WHERE server_id = :server_id"),
+                {"server_id": server_id, "enabled": enabled}
+            )
+            s.commit()
+            return 1
+    except Exception as e:
+        print(f"[update_web_search] Error: {e}")
+    return 0

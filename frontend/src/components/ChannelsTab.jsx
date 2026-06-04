@@ -47,6 +47,10 @@ export default function ChannelsTab({
   const [supportSetupMode, setSupportSetupMode] = useState("new");
   const [selectedSupportChan, setSelectedSupportChan] = useState("");
 
+  // ── Web Search State ──
+  const [webSearchEnabled, setWebSearchEnabled]   = useState(false);
+  const [togglingWebSearch, setTogglingWebSearch] = useState(false);
+
   // ── Channel Config State ──
   const [channelConfigs, setChannelConfigs]       = useState([]);
   const [configStatus, setConfigStatus]           = useState(null);
@@ -83,7 +87,11 @@ export default function ChannelsTab({
     if (!id) { setLoaded(false); return; }
     setLoading(true); setStatus(null);
     try {
-      const [d, dc] = await Promise.allSettled([API.listChannels(id), API.getGuildChannels(id)]);
+      const [d, dc, ws] = await Promise.allSettled([
+        API.listChannels(id),
+        API.getGuildChannels(id),
+        API.getWebSearch(id),
+      ]);
       if (d.status === "fulfilled") {
         setChannels(d.value.channel_ids || []);
         setModChannel(d.value.mod_channel || null);
@@ -96,6 +104,9 @@ export default function ChannelsTab({
           cat.channels?.forEach(ch => flat.push({ ...ch, categoryName: cat.name, categoryId: cat.id }))
         );
         setDiscordChannels(flat);
+      }
+      if (ws.status === "fulfilled") {
+        setWebSearchEnabled(ws.value.on ?? false);
       }
     } catch (e) { setStatus({ ok: false, msg: e.message }); }
     setLoading(false);
@@ -116,6 +127,7 @@ export default function ChannelsTab({
     setSupportSetupMode("new"); setSelectedSupportChan("");
     setGuildName(initialGuildName || "Discord Server");
     setChannelConfigs([]); setConfigStatus(null); setShowAddConfig(false);
+    setWebSearchEnabled(false);
     if (guildId) { load(guildId); loadChannelConfigs(guildId); }
   }, [guildId, load, initialGuildName, loadChannelConfigs]);
 
@@ -127,6 +139,18 @@ export default function ChannelsTab({
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
+
+  const handleToggleWebSearch = async () => {
+    if (!guildId) return;
+    setTogglingWebSearch(true);
+    try {
+      await API.updateWebSearch(guildId, !webSearchEnabled);
+      setWebSearchEnabled(v => !v);
+    } catch (e) {
+      setStatus({ ok: false, msg: e.message });
+    }
+    setTogglingWebSearch(false);
+  };
 
   const chanName = (id) => { const f = discordChannels.find(c => c.id === id); return f ? `#${f.name}` : id; };
   const filterChannels    = (q) => discordChannels.filter(c => !channels.includes(c.id) && (c.name.toLowerCase().includes(q.toLowerCase()) || (c.categoryName?.toLowerCase().includes(q.toLowerCase()))));
@@ -280,29 +304,77 @@ export default function ChannelsTab({
       {/* ── Header row ── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 20, marginBottom: 28 }}>
         <SectionHeader label="Bot Configuration" title="Channel Management" subtitle="Control which Discord channels the bot responds in." />
+
         {guildId && loaded && (
-          <button onClick={onTogglePause} disabled={togglingPause} style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            padding: "9px 20px", borderRadius: "var(--r-full)",
-            background: isPaused ? "var(--red-dim)" : "var(--surface)",
-            border: `1.5px solid ${isPaused ? "var(--red-border)" : "var(--border2)"}`,
-            cursor: "pointer", transition: "all var(--tr)",
-            fontSize: 13.5, fontWeight: 600,
-            color: isPaused ? "var(--accent-deep)" : "var(--muted)",
-            flexShrink: 0, marginTop: 4,
-            fontFamily: "'DM Sans', sans-serif",
-          }}
-            onMouseEnter={e => { if (!togglingPause) { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(43,45,66,0.1)"; } }}
-            onMouseLeave={e => { if (!togglingPause) { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; } }}
-          >
-            {togglingPause ? (
-              <><Spinner size={14} /><span>Updating…</span></>
-            ) : isPaused ? (
-              <><Icon name="pause_circle" size={17} style={{ color: "var(--accent-deep)" }} /><span>Bot Paused</span></>
-            ) : (
-              <><Icon name="play_circle" size={17} style={{ color: "var(--muted)" }} /><span>Bot Active</span></>
-            )}
-          </button>
+          <div style={{ display: "flex", gap: 12, flexShrink: 0, marginTop: 4 }}>
+
+            {/* ── Pause Button ── */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+              <button
+                onClick={onTogglePause}
+                disabled={togglingPause}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  padding: "9px 20px", borderRadius: "var(--r-full)",
+                  background: isPaused ? "var(--red-dim)" : "var(--surface)",
+                  border: `1.5px solid ${isPaused ? "var(--red-border)" : "var(--border2)"}`,
+                  cursor: togglingPause ? "not-allowed" : "pointer",
+                  transition: "all var(--tr)",
+                  fontSize: 13.5, fontWeight: 600,
+                  color: isPaused ? "var(--accent-deep)" : "var(--muted)",
+                  fontFamily: "'DM Sans', sans-serif",
+                  opacity: togglingPause ? 0.7 : 1,
+                }}
+                onMouseEnter={e => { if (!togglingPause) { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(43,45,66,0.1)"; } }}
+                onMouseLeave={e => { if (!togglingPause) { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; } }}
+              >
+                {togglingPause ? (
+                  <><Spinner size={14} /><span>Updating…</span></>
+                ) : isPaused ? (
+                  <><Icon name="pause_circle" size={17} style={{ color: "var(--accent-deep)" }} /><span>Bot Paused</span></>
+                ) : (
+                  <><Icon name="play_circle" size={17} style={{ color: "var(--muted)" }} /><span>Bot Active</span></>
+                )}
+              </button>
+              <span style={{ fontSize: 11, color: "var(--muted)", textAlign: "center" }}>
+                {isPaused ? "Click to resume the bot" : "Click to pause the bot"}
+              </span>
+            </div>
+
+            {/* ── Web Search Button ── */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+              <button
+                onClick={handleToggleWebSearch}
+                disabled={togglingWebSearch}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  padding: "9px 20px", borderRadius: "var(--r-full)",
+                  background: webSearchEnabled ? "rgba(59,130,246,0.1)" : "var(--surface)",
+                  border: `1.5px solid ${webSearchEnabled ? "rgba(59,130,246,0.45)" : "var(--border2)"}`,
+                  cursor: togglingWebSearch ? "not-allowed" : "pointer",
+                  transition: "all var(--tr)",
+                  fontSize: 13.5, fontWeight: 600,
+                  color: webSearchEnabled ? "rgb(37,99,235)" : "var(--muted)",
+                  fontFamily: "'DM Sans', sans-serif",
+                  opacity: togglingWebSearch ? 0.7 : 1,
+                }}
+                onMouseEnter={e => { if (!togglingWebSearch) { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(59,130,246,0.12)"; } }}
+                onMouseLeave={e => { if (!togglingWebSearch) { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; } }}
+              >
+                {togglingWebSearch ? (
+                  <><Spinner size={14} /><span>Updating…</span></>
+                ) : webSearchEnabled ? (
+                  <><Icon name="travel_explore" size={17} style={{ color: "rgb(37,99,235)" }} /><span>Web Search On</span></>
+                ) : (
+                  <><Icon name="search_off" size={17} style={{ color: "var(--muted)" }} /><span>Web Search Off</span></>
+                )}
+              </button>
+              <span style={{ fontSize: 11, color: "var(--muted)", textAlign: "center" }}>
+                {webSearchEnabled ? "Fallback to web enabled" : "KB only, no web fallback"}
+              </span>
+            </div>
+
+          </div>
         )}
       </div>
 
@@ -326,9 +398,14 @@ export default function ChannelsTab({
             <div style={{ fontSize: 14, fontWeight: 600, color: "var(--navy)", marginBottom: 2 }}>{guildName}</div>
             <div style={{ fontSize: 12, color: "var(--muted)" }}>Server ID: {guildId}</div>
           </div>
-          <Tag variant={isPaused ? "warn" : "success"}>
-            {isPaused ? "Paused" : "Active"}
-          </Tag>
+          <div style={{ display: "flex", gap: 8 }}>
+            <Tag variant={isPaused ? "warn" : "success"}>
+              {isPaused ? "Paused" : "Active"}
+            </Tag>
+            <Tag variant={webSearchEnabled ? "info" : "default"}>
+              {webSearchEnabled ? "Web Search On" : "Web Search Off"}
+            </Tag>
+          </div>
         </div>
       )}
 

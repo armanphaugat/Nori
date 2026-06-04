@@ -97,3 +97,29 @@ async def handle_get_all_servers_with_status(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+async def handle_get_web_search(
+    guild_id: str = Query(...),
+    user: dict = Depends(require_guild_admin_query),
+) -> dict:
+    row = get_web_search(guild_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Server not found — register it first via /server/add")
+    return {
+            "status": "success",
+            "on":row
+        }
+
+async def handle_update_web_search(
+    guild_id: str = Form(...),
+    trigger:bool=Form(...),
+    user: dict = Depends(require_guild_admin),
+) -> dict:
+    row = update_web_search(guild_id,trigger)
+    if not row:
+        raise HTTPException(status_code=404, detail="Server not found — register it first via /server/add")
+    return {
+            "status": "success",
+            "on":trigger,
+            "message":"Web Search Updated SuccessFully"
+        }
