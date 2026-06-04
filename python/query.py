@@ -287,3 +287,79 @@ async def query_graphlit_web(server_id: str, question: str, language: str = "eng
                 await graphlit.client.delete_conversation(id=conversation_id)
         except Exception as e:
             print(f"[WARN] Failed to delete web conversation: {e}")
+
+async def query_with_temp_kb_spec(
+    server_id: str, question: str, language: str, tone: str,
+    prv_messages: str
+) -> str:
+    spec_id = None
+    conversation_id = None
+    try:
+        content_ids = get_content_ids(server_id)
+        feed_ids = get_feed_ids(server_id)
+    except Exception as e:
+        print(f"[WARN] DB fetch content/feed ids failed: {e}")
+        content_ids, feed_ids = [], []
+    try:
+        spec_response = await graphlit.client.create_specification(
+            specification=SpecificationInput(
+                name=f"{server_id}_kb_temp_{language}_{tone}",
+                type=SpecificationTypes.COMPLETION,
+                service_type=ModelServiceTypes.OPEN_AI,
+                system_prompt=build_kb_system_prompt(language, tone),
+                retrieval_strategy=RetrievalStrategyInput(
+                    type=RetrievalStrategyTypes.CONTENT,
+                    content_limit=5,
+                ),
+                open_ai=OpenAIModelPropertiesInput(
+                    model=OpenAIModels.GPT4O_MINI_128K,
+                    temperature=0.2,
+                    completion_token_limit=1000,
+                ),
+            )
+        )
+        spec_id = spec_response.create_specification.id
+        print(f"[temp_kb_spec] Created temp spec {spec_id} for {language}/{tone}")
+ 
+        conv_response = await graphlit.client.create_conversation(
+            conversation=ConversationInput(
+                name=f"{server_id}_kb_temp_query",
+                specification=EntityReferenceInput(id=spec_id),
+                filter=ContentCriteriaInput(
+                    contents=[EntityReferenceInput(id=cid) for cid in content_ids] if content_ids else None,
+                    feeds=[EntityReferenceInput(id=fid) for fid in feed_ids] if feed_ids else None
+                )
+            )
+        )
+        conversation_id = conv_response.create_conversation.id
+ 
+        prompt = question
+        if prv_messages:
+            prompt = f"Conversation context:\n{prv_messages}\n\nQuestion: {question}"
+ 
+        response = await graphlit.client.prompt_conversation(
+            prompt=prompt,
+            mime_type=None, data=None, id=conversation_id,
+            persona=None, system_prompt=None, tools=None,
+            require_tool=None, include_details=True, correlation_id=None
+        )
+        result = response.prompt_conversation
+        if result is None or result.message is None or result.message.message is None:
+            return "I don't know"
+        return result.message.message[:1800]
+ 
+    finally:
+        if conversation_id:
+            try:
+                await graphlit.client.delete_conversation(id=conversation_id)
+            except Exception as e:
+                print(f"[WARN] Failed to delete temp KB conversation: {e}")
+        if spec_id:
+            try:
+                await graphlit.client.delete_specification(id=spec_id)
+                print(f"[temp_kb_spec] Deleted temp spec {spec_id}")
+            except Exception as e:
+                print(f"[WARN] Failed to delete temp KB spec: {e}")
+ 
+
+ 

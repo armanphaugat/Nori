@@ -9,8 +9,8 @@ from io import BytesIO
 from datetime import datetime, timezone, timedelta
 import time
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event,get_channel_config,get_web_search
-from python.query import query_graphlit, query_graphlit_web
+from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event, get_channel_config, get_web_search
+from python.query import query_graphlit, query_graphlit_web, query_with_temp_kb_spec
 from python.ingest import read_ocr_async
 
 load_dotenv()
@@ -92,10 +92,10 @@ def is_no_kb_response(answer: str) -> bool:
     return False
 
 
-async def get_answer(guild_id: str, question: str,language:str,tone:str,prv_messages:str) -> str:
+async def get_answer(guild_id: str, question: str, language: str, tone: str, prv_messages: str) -> str:
     print(f"[get_answer] Querying KB for: {question[:60]}")
     try:
-        answer = await asyncio.wait_for(query_graphlit(guild_id, question,language,tone,prv_messages), timeout=30.0)
+        answer = await asyncio.wait_for(query_graphlit(guild_id, question, language, tone, prv_messages), timeout=30.0)
     except asyncio.TimeoutError:
         print("[get_answer] KB query timed out")
         return "Query timed out. Please try again."
@@ -105,11 +105,11 @@ async def get_answer(guild_id: str, question: str,language:str,tone:str,prv_mess
 
     if is_no_kb_response(answer):
         print("[get_answer] KB had no answer, falling back to web search")
-        web_search_info=get_web_search(guild_id)
+        web_search_info = get_web_search(guild_id)
         if not web_search_info:
             return "I don't Have Information(Web Search Is Paused By Admin)"
         try:
-            answer = await asyncio.wait_for(query_graphlit_web(guild_id, question,language,tone,prv_messages), timeout=30.0)
+            answer = await asyncio.wait_for(query_graphlit_web(guild_id, question, language, tone, prv_messages), timeout=30.0)
         except asyncio.TimeoutError:
             return "Web search timed out. Please try again."
         except Exception as e:
@@ -173,6 +173,7 @@ async def on_ready():
     print(f"[on_ready] Logged in as {bot.user}")
     print(f"[on_ready] Connected to {len(bot.guilds)} server(s)")
 
+
 async def get_user_message_from_channel(channel_id: int) -> str:
     channel = bot.get_channel(channel_id)
     if not channel:
@@ -187,8 +188,9 @@ async def get_user_message_from_channel(channel_id: int) -> str:
     async for msg in channel.history(limit=7, oldest_first=False):
         if msg.content:
             messages.append(msg.content)
-    messages=messages[1:]
+    messages = messages[1:]
     return "   ".join(messages)
+
 
 @bot.event
 async def on_message(message):
@@ -208,23 +210,38 @@ async def on_message(message):
         if info is None:
             await message.channel.send("Please configure the bot on the dashboard.")
             return
-        channel_info=get_channel_config(str(message.guild.id),str(message.channel.id)) or {}
-        language = channel_info.get("language", "english")
-        tone = channel_info.get("tone", "professional")
-        prv_messages=await get_user_message_from_channel(message.channel.id)
+        channel_info = get_channel_config(str(message.guild.id), str(message.channel.id))
+        language = channel_info.get("language", "english") if channel_info else "english"
+        tone = channel_info.get("tone", "professional") if channel_info else "professional"
+        prv_messages = await get_user_message_from_channel(message.channel.id)
+        if channel_info:
+            start_time = time.time()
+            async with message.channel.typing():
+                result = await query_with_temp_kb_spec(str(message.guild.id), message.content, language, tone, prv_messages)
+                if is_no_kb_response(result):
+                    web_search_info = get_web_search(str(message.guild.id))
+                    if web_search_info:
+                        result = await query_graphlit_web(str(message.guild.id), message.content, language, tone, prv_messages)
+                    else:
+                        result = "I don't Have Information(Web Search Is Paused By Admin)"
+            latency_ms = round((time.time() - start_time) * 1000, 2)
+            await send_answer_with_feedback(message.channel, message.author, str(message.guild.id), message.content, result)
+            if is_no_kb_response(result):
+                log_question_event(str(message.guild.id), str(message.author.id), False, latency_ms)
+                await notify_mod_channel(message.guild, message.channel, message.author, message.content)
+            else:
+                log_question_event(str(message.guild.id), str(message.author.id), True, latency_ms)
+            return
         start_time = time.time()
         async with message.channel.typing():
-            answer = await get_answer(str(message.guild.id), message.content,language,tone,prv_messages)
+            answer = await get_answer(str(message.guild.id), message.content, language, tone, prv_messages)
         latency_ms = round((time.time() - start_time) * 1000, 2)
-        await send_answer_with_feedback(
-            message.channel, message.author, str(message.guild.id), message.content, answer
-        )
+        await send_answer_with_feedback(message.channel, message.author, str(message.guild.id), message.content, answer)
         if is_no_kb_response(answer):
             log_question_event(str(message.guild.id), str(message.author.id), False, latency_ms)
             await notify_mod_channel(message.guild, message.channel, message.author, message.content)
         else:
             log_question_event(str(message.guild.id), str(message.author.id), True, latency_ms)
-
         return
 
     await bot.process_commands(message)
@@ -286,13 +303,31 @@ async def ask(ctx, *, question: str = None):
     if not question:
         await ctx.send("No question provided. Usage: `-ask <your question>`")
         return
-    channel_info=get_channel_config(str(ctx.guild.id),str(ctx.channel.id)) or {}
-    language = channel_info.get("language", "english")
-    tone = channel_info.get("tone", "professional")
-    prv_messages=await get_user_message_from_channel(ctx.channel.id)
+    channel_info = get_channel_config(str(ctx.guild.id), str(ctx.channel.id))
+    language = channel_info.get("language", "english") if channel_info else "english"
+    tone = channel_info.get("tone", "professional") if channel_info else "professional"
+    prv_messages = await get_user_message_from_channel(ctx.channel.id)
+    if channel_info:
+        start_time = time.time()
+        async with ctx.typing():
+            result = await query_with_temp_kb_spec(str(ctx.guild.id), question, language, tone, prv_messages)
+            if is_no_kb_response(result):
+                web_search_info = get_web_search(str(ctx.guild.id))
+                if web_search_info:
+                    result = await query_graphlit_web(str(ctx.guild.id), question, language, tone, prv_messages)
+                else:
+                    result = "I don't Have Information(Web Search Is Paused By Admin)"
+        latency_ms = round((time.time() - start_time) * 1000, 2)
+        await send_answer_with_feedback(ctx.channel, ctx.author, str(ctx.guild.id), question, result)
+        if is_no_kb_response(result):
+            log_question_event(str(ctx.guild.id), str(ctx.author.id), False, latency_ms)
+            await notify_mod_channel(ctx.guild, ctx.channel, ctx.author, question)
+        else:
+            log_question_event(str(ctx.guild.id), str(ctx.author.id), True, latency_ms)
+        return
     print(f"[ask] {ctx.author.name} asked: {question[:60]}")
     async with ctx.typing():
-        answer = await get_answer(str(ctx.guild.id), question,language,tone,prv_messages)
+        answer = await get_answer(str(ctx.guild.id), question, language, tone, prv_messages)
     latency_ms = round((time.time() - start_time) * 1000, 2)
     await send_answer_with_feedback(ctx.channel, ctx.author, str(ctx.guild.id), question, answer)
     if is_no_kb_response(answer):
