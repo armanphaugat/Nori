@@ -801,7 +801,8 @@ def get_spec_id(server_id: str, spec_type: str) -> str | None:
         print(f"[get_spec_id] Error: {e}")
         return None
 
-def save_spec_id(server_id: str, spec_type: str, spec_id: str):
+
+def save_spec_id(server_id: str, spec_type: str, spec_id: str | None):
     col = "kb_spec_id" if spec_type == "kb" else "web_spec_id"
     try:
         with DB() as s:

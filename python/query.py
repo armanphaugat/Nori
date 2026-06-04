@@ -7,6 +7,7 @@ from dbhelper.db_helper import *
 from graphlit import Graphlit
 from graphlit_api import *
 from utils.apikeyrotation import *
+
 env_id = os.getenv("GRAPHLIT_ENVIRONMENT_ID")
 org_key = os.getenv("GRAPHLIT_ORGANIZATION_KEY")
 jwt_secret = os.getenv("GRAPHLIT_JWT_SECRET")
@@ -20,19 +21,19 @@ graphlit = Graphlit(
     jwt_secret=jwt_secret,
 )
 
+SMALL_TALK = {"hi", "hello", "hey", "thanks", "thank you", "bye", "goodbye", "ok", "okay"}
 
-def build_kb_system_prompt(language: str = "english", tone: str = "professional", prv_messages: str = "") -> str:
-    context_block = f"""
-CONVERSATION CONTEXT (last messages in this channel):
-{prv_messages}
-Use this context to better understand follow-up questions or references to earlier messages.
-""" if prv_messages else ""
+def is_small_talk(question: str) -> bool:
+    return question.strip().lower() in SMALL_TALK
 
+
+
+def build_kb_system_prompt(language: str = "english", tone: str = "professional") -> str:
     return f"""
 You are a helpful AI assistant for a support knowledge base.
 Always respond in {language}.
 Your tone should be {tone}.
-{context_block}
+
 CONVERSATION HANDLING:
 - For greetings (e.g. "hi", "hello", "hey"): respond warmly and invite the user to ask a question
 - For thanks or farewells (e.g. "thank you", "bye", "that's all"): respond naturally and {tone}ly
@@ -64,18 +65,12 @@ RULES:
 """
 
 
-def build_web_system_prompt(language: str = "english", tone: str = "professional", prv_messages: str = "") -> str:
-    context_block = f"""
-CONVERSATION CONTEXT (last messages in this channel):
-{prv_messages}
-Use this context to better understand follow-up questions or references to earlier messages.
-""" if prv_messages else ""
-
+def build_web_system_prompt(language: str = "english", tone: str = "professional") -> str:
     return f"""
 You are a helpful AI assistant with access to real-time web search.
 Always respond in {language}.
 Your tone should be {tone}.
-{context_block}
+
 CONVERSATION HANDLING:
 - For greetings (e.g. "hi", "hello", "hey"): respond warmly and invite the user to ask a question
 - For thanks or farewells (e.g. "thank you", "bye", "that's all"): respond naturally and {tone}ly
@@ -105,17 +100,19 @@ RULES:
 - Always respond in {language}
 """
 
-
-async def _create_kb_spec(server_id: str, language: str, tone: str, prv_messages: str = "") -> str:
+async def get_or_create_kb_spec(server_id: str, language: str, tone: str) -> str:
+    existing_spec_id = get_kb_spec_id(server_id)
+    if existing_spec_id:
+        return existing_spec_id
     spec_response = await graphlit.client.create_specification(
         specification=SpecificationInput(
             name=f"{server_id}_kb_spec",
             type=SpecificationTypes.COMPLETION,
             service_type=ModelServiceTypes.GROQ,
-            system_prompt=build_kb_system_prompt(language, tone, prv_messages),
+            system_prompt=build_kb_system_prompt(language, tone),
             retrieval_strategy=RetrievalStrategyInput(
                 type=RetrievalStrategyTypes.CONTENT,
-                content_limit=10,
+                content_limit=5,
             ),
             groq=GroqModelPropertiesInput(
                 model=GroqModels.LLAMA_3_3_70B,
@@ -125,16 +122,22 @@ async def _create_kb_spec(server_id: str, language: str, tone: str, prv_messages
             ),
         )
     )
-    return spec_response.create_specification.id
+    spec_id = spec_response.create_specification.id
+    save_spec_id(server_id, "kb", spec_id)
+    return spec_id
 
 
-async def _create_web_spec(server_id: str, language: str, tone: str, prv_messages: str = "") -> str:
+async def get_or_create_web_spec(server_id: str, language: str, tone: str) -> str:
+    existing_spec_id = get_web_spec_id(server_id)
+    if existing_spec_id:
+        return existing_spec_id
+
     spec_response = await graphlit.client.create_specification(
         specification=SpecificationInput(
             name=f"{server_id}_web_spec",
             type=SpecificationTypes.COMPLETION,
             service_type=ModelServiceTypes.GROQ,
-            system_prompt=build_web_system_prompt(language, tone, prv_messages),
+            system_prompt=build_web_system_prompt(language, tone),
             groq=GroqModelPropertiesInput(
                 model=GroqModels.LLAMA_3_3_70B,
                 temperature=0.3,
@@ -143,22 +146,23 @@ async def _create_web_spec(server_id: str, language: str, tone: str, prv_message
             ),
         )
     )
-    return spec_response.create_specification.id
-
+    spec_id = spec_response.create_specification.id
+    save_spec_id(server_id, "web", spec_id)
+    return spec_id
 
 async def query_graphlit(server_id: str, question: str, language: str = "english", tone: str = "professional", prv_messages: str = "") -> str:
     print("Query Graphlit Called")
+    if is_small_talk(question):
+        return "Hello! How can I help you today?"
     try:
         content_ids = get_content_ids(server_id)
         feed_ids = get_feed_ids(server_id)
     except Exception as e:
         print(f"[WARN] DB fetch content/feed ids failed: {e}")
         content_ids, feed_ids = [], []
-
     if not content_ids and not feed_ids:
         return "No knowledge base found for this server."
-
-    spec_id = await _create_kb_spec(server_id, language, tone, prv_messages)
+    spec_id = await get_or_create_kb_spec(server_id, language, tone)
     conversation_id = None
     try:
         conv_response = await graphlit.client.create_conversation(
@@ -172,8 +176,11 @@ async def query_graphlit(server_id: str, question: str, language: str = "english
             )
         )
         conversation_id = conv_response.create_conversation.id
+        prompt = question
+        if prv_messages:
+            prompt = f"Conversation context:\n{prv_messages}\n\nQuestion: {question}"
         response = await graphlit.client.prompt_conversation(
-            prompt=question,
+            prompt=prompt,
             mime_type=None,
             data=None,
             id=conversation_id,
@@ -188,51 +195,51 @@ async def query_graphlit(server_id: str, question: str, language: str = "english
         if result is None or result.message is None or result.message.message is None:
             return "I don't know"
         return result.message.message[:1800]
+
     finally:
         try:
             if conversation_id:
                 await graphlit.client.delete_conversation(id=conversation_id)
-            await graphlit.client.delete_specification(id=spec_id)
         except Exception as e:
-            print(f"[WARN] Failed to delete KB conversation/spec: {e}")
+            print(f"[WARN] Failed to delete KB conversation: {e}")
 
 
 async def query_graphlit_web(server_id: str, question: str, language: str = "english", tone: str = "professional", prv_messages: str = "") -> str:
     print("Query Web-Graphlit Called")
-    spec_id = None
+    if is_small_talk(question):
+        return "Hello! How can I help you today?"
     conversation_id = None
     try:
         response = await graphlit.client.search_web(
             text=question,
             service=SearchServiceTypes.TAVILY,
-            limit=5
+            limit=3
         )
         result = response.search_web
-        if result is None or result.results is None or len(result.results) == 0:
+        if result is None:
             response = await graphlit.client.search_web(
                 text=question,
                 service=SearchServiceTypes.EXA,
-                limit=5
+                limit=3
             )
             result = response.search_web
-
         if result is None or result.results is None or len(result.results) == 0:
-            return "I don't know"
-
+            return "I don't have this information"
         context = ""
         for i, r in enumerate(result.results, 1):
             title = getattr(r, 'title', '')
             uri = getattr(r, 'uri', '')
             text = getattr(r, 'text', '')
             context += f"[{i}] {title}\nURL: {uri}\n{text}\n\n"
-
-        prompt = (
-            f"Using the following search results, answer this question: {question}\n\n"
+        prompt = f"Question: {question}\n\n"
+        if prv_messages:
+            prompt = f"Conversation context:\n{prv_messages}\n\nQuestion: {question}\n\n"
+        prompt += (
+            f"Using the following search results, answer the question above.\n\n"
             f"Search Results:\n{context}\n\n"
             f"Give a clear, concise answer under 1800 characters. Cite sources by number e.g. [1], [2]."
         )
-
-        spec_id = await _create_web_spec(server_id, language, tone, prv_messages)
+        spec_id = await get_or_create_web_spec(server_id, language, tone)
         conv_response = await graphlit.client.create_conversation(
             conversation=ConversationInput(
                 name=f"{server_id}_web_query",
@@ -260,11 +267,10 @@ async def query_graphlit_web(server_id: str, question: str, language: str = "eng
     except Exception as exc:
         print(f"[ERROR] query_graphlit_web: {exc}")
         return "Sorry, web search is temporarily unavailable. Please try again."
+
     finally:
         try:
             if conversation_id:
                 await graphlit.client.delete_conversation(id=conversation_id)
-            if spec_id:
-                await graphlit.client.delete_specification(id=spec_id)
         except Exception as e:
-            print(f"[WARN] Failed to delete web conversation/spec: {e}")
+            print(f"[WARN] Failed to delete web conversation: {e}")
