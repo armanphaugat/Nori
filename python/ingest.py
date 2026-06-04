@@ -16,13 +16,14 @@ from dotenv import load_dotenv
 from graphlit_api import FeedTypes, WebFeedPropertiesInput,FeedInput
 load_dotenv()
 env_id = os.getenv("GRAPHLIT_ENVIRONMENT_ID")
-org_key = os.getenv("GRAPHLIT_ORGANIZATION_KEY")
+org_key = os.getenv("GRAPHLIT_ORGANIZATION_ID")
 jwt_secret = os.getenv("GRAPHLIT_JWT_SECRET")
 graphlit = Graphlit(
     environment_id=env_id,
     organization_id=org_key,
     jwt_secret=jwt_secret,
 )
+
 whisper_model = whisper.load_model("base")
 def read_word(file):
     try:

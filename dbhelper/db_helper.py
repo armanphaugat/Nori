@@ -813,3 +813,35 @@ def save_spec_id(server_id: str, spec_type: str, spec_id: str | None):
             s.commit()
     except Exception as e:
         print(f"[save_spec_id] Error: {e}")
+
+def sync_guild_admins(guild_id: str, guild_name: str, discord_id: str, role: str, granted_by: str):
+    try:
+        with DB() as s:
+            s.execute(
+                text("INSERT INTO servers (server_id, server_name) VALUES (:id, :name) ON CONFLICT DO NOTHING"),
+                {"id": str(guild_id), "name": guild_name}
+            )
+            s.commit()
+        with DB() as s:
+            s.execute(
+                text("""
+                    INSERT INTO guild_admins (guild_id, discord_id, role, granted_by, granted_at)
+                    VALUES (:guild_id, :discord_id, :role, :granted_by, NOW())
+                    ON CONFLICT (guild_id, discord_id) DO UPDATE SET
+                        role = CASE
+                            WHEN guild_admins.role = 'owner' THEN 'owner'
+                            ELSE EXCLUDED.role
+                        END,
+                        granted_by = EXCLUDED.granted_by
+                """),
+                {
+                    "guild_id": str(guild_id),
+                    "discord_id": discord_id,
+                    "role": role,
+                    "granted_by": granted_by
+                }
+            )
+            s.commit()
+
+    except Exception as e:
+        print(f"[sync_guild_admins] Non-fatal error for {discord_id}: {e}")

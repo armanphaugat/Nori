@@ -6,14 +6,15 @@ load_dotenv(override=True)
 from dbhelper.db_helper import *
 from graphlit import Graphlit
 from graphlit_api import *
-from utils.apikeyrotation import *
 
 env_id = os.getenv("GRAPHLIT_ENVIRONMENT_ID")
-org_key = os.getenv("GRAPHLIT_ORGANIZATION_KEY")
+org_key = os.getenv("GRAPHLIT_ORGANIZATION_ID")
 jwt_secret = os.getenv("GRAPHLIT_JWT_SECRET")
+
 
 if not all([env_id, org_key, jwt_secret]):
     raise ValueError(f"Missing Graphlit config — env_id={env_id}, org_key={org_key}, jwt_secret={'set' if jwt_secret else 'MISSING'}")
+
 
 graphlit = Graphlit(
     environment_id=env_id,
@@ -27,12 +28,10 @@ def is_small_talk(question: str) -> bool:
     return question.strip().lower() in SMALL_TALK
 
 
-
 def build_kb_system_prompt(language: str = "english", tone: str = "professional") -> str:
     return f"""
-You are a helpful AI assistant for a support knowledge base.
-Always respond in {language}.
-Your tone should be {tone}.
+You are a STRICT knowledge base assistant. You ONLY answer from provided documents.
+Always respond in {language}. Your tone should be {tone}.
 
 CONVERSATION HANDLING:
 - For greetings (e.g. "hi", "hello", "hey"): respond warmly and invite the user to ask a question
@@ -41,64 +40,77 @@ CONVERSATION HANDLING:
 - For compliments or feedback: acknowledge them graciously
 These conversational responses do NOT require citing sources.
 
-CRITICAL INSTRUCTION (for knowledge base questions only):
-If the answer cannot be found in the provided documents or knowledge base,
-you MUST respond with EXACTLY this phrase (no variations):
-"I don't have this information"
+STRICT RULE - ZERO EXCEPTIONS - HIGHEST PRIORITY:
+If the answer is NOT explicitly found word-for-word in the provided knowledge base documents,
+you MUST output ONLY this exact phrase and NOTHING else:
+I don't have this information
 
-Do NOT add any explanation, apology, or additional text to that phrase.
-Just respond with: I don't have this information
+FORBIDDEN when answer is not in documents:
+- DO NOT guess
+- DO NOT say "it's possible that..."
+- DO NOT say "assuming that..."
+- DO NOT ask for clarification
+- DO NOT provide generic advice
+- DO NOT use your own training knowledge
+- DO NOT add any text before or after the phrase
 
-If you DO have the answer in the knowledge base:
+You are NOT a general assistant.
+You CANNOT use knowledge outside the provided documents.
+
+If the answer IS explicitly in the documents:
 1. Provide a clear, accurate answer
-2. Cite the source document/page where the information comes from
-3. Keep your answer concise and under 1800 characters
-4. Use bullet points or numbered lists for clarity if appropriate
+2. Do not mention source IDs or document references
+3. Keep answer under 1800 characters
+4. Use bullet points or numbered lists if appropriate
 
 RULES:
-- Be helpful and {tone}
-- Always cite your sources when answering from the knowledge base
+- Be helpful and {tone} ONLY when answering from documents
+- Always cite sources
 - Never make up information
-- Never provide generic advice when specific KB content exists
-- Stick to the knowledge base content only for factual/support questions
 - Always respond in {language}
 """
 
 
 def build_web_system_prompt(language: str = "english", tone: str = "professional") -> str:
     return f"""
-You are a helpful AI assistant with access to real-time web search.
-Always respond in {language}.
-Your tone should be {tone}.
+You are a web search assistant. You ONLY answer from provided search results.
+Always respond in {language}. Your tone should be {tone}.
 
 CONVERSATION HANDLING:
 - For greetings (e.g. "hi", "hello", "hey"): respond warmly and invite the user to ask a question
 - For thanks or farewells (e.g. "thank you", "bye", "that's all"): respond naturally and {tone}ly
 - For small talk or non-question statements: engage briefly and redirect toward how you can help
 - For compliments or feedback: acknowledge them graciously
-These conversational responses do NOT require web searches or citations.
+These conversational responses do NOT require citations.
 
-CRITICAL INSTRUCTION (for informational questions only):
-If the web search returns no relevant results or the query cannot be answered,
-you MUST respond with EXACTLY this phrase (no variations):
-"I don't have this information"
+STRICT RULE - ZERO EXCEPTIONS - HIGHEST PRIORITY:
+If the search results do NOT contain a relevant answer,
+you MUST output ONLY this exact phrase and NOTHING else:
+I don't have this information
 
-Do NOT add any explanation, apology, or additional text to that phrase.
-Just respond with: I don't have this information
+FORBIDDEN when answer is not in search results:
+- DO NOT guess
+- DO NOT say "it's possible that..."
+- DO NOT say "assuming that..."
+- DO NOT ask for clarification
+- DO NOT use your own training knowledge
+- DO NOT fabricate URLs or sources
+- DO NOT add any text before or after the phrase
 
-If you DO find relevant results from the web:
-1. Provide a clear, accurate answer based on search results
-2. Cite your sources with the URL or site name
-3. Keep your answer concise and under 1800 characters
-4. Use bullet points or numbered lists for clarity if appropriate
+If the answer IS in the search results:
+1. Provide a clear, accurate answer
+2. Cite sources with URL or site name
+3. Keep answer under 1800 characters
+4. Use bullet points or numbered lists if appropriate
 
 RULES:
-- Be helpful and {tone}
-- Always cite your sources when answering from web search
-- Never make up information or fabricate URLs
+- Only answer from search results provided
+- Always cite sources
+- Never make up information
 - Prefer recent and authoritative sources
 - Always respond in {language}
 """
+
 
 async def get_or_create_kb_spec(server_id: str, language: str, tone: str) -> str:
     existing_spec_id = get_kb_spec_id(server_id)
@@ -108,17 +120,17 @@ async def get_or_create_kb_spec(server_id: str, language: str, tone: str) -> str
         specification=SpecificationInput(
             name=f"{server_id}_kb_spec",
             type=SpecificationTypes.COMPLETION,
-            service_type=ModelServiceTypes.GROQ,
+            service_type=ModelServiceTypes.OPEN_AI,
             system_prompt=build_kb_system_prompt(language, tone),
             retrieval_strategy=RetrievalStrategyInput(
                 type=RetrievalStrategyTypes.CONTENT,
                 content_limit=5,
             ),
-            groq=GroqModelPropertiesInput(
-                model=GroqModels.LLAMA_3_3_70B,
+            open_ai=OpenAIModelPropertiesInput(
+                model=OpenAIModels.GPT4O_MINI_128K,
                 temperature=0.2,
                 completion_token_limit=1000,
-                api_key=get_key(),
+                
             ),
         )
     )
@@ -136,19 +148,20 @@ async def get_or_create_web_spec(server_id: str, language: str, tone: str) -> st
         specification=SpecificationInput(
             name=f"{server_id}_web_spec",
             type=SpecificationTypes.COMPLETION,
-            service_type=ModelServiceTypes.GROQ,
+            service_type=ModelServiceTypes.OPEN_AI,
             system_prompt=build_web_system_prompt(language, tone),
-            groq=GroqModelPropertiesInput(
-                model=GroqModels.LLAMA_3_3_70B,
+            open_ai=OpenAIModelPropertiesInput(
+                model=OpenAIModels.GPT4O_MINI_128K,
                 temperature=0.3,
                 completion_token_limit=500,
-                api_key=get_key(),
+                
             ),
         )
     )
     spec_id = spec_response.create_specification.id
     save_spec_id(server_id, "web", spec_id)
     return spec_id
+
 
 async def query_graphlit(server_id: str, question: str, language: str = "english", tone: str = "professional", prv_messages: str = "") -> str:
     print("Query Graphlit Called")
@@ -220,7 +233,7 @@ async def query_graphlit_web(server_id: str, question: str, language: str = "eng
             response = await graphlit.client.search_web(
                 text=question,
                 service=SearchServiceTypes.EXA,
-                limit=3
+                limit=5
             )
             result = response.search_web
         if result is None or result.results is None or len(result.results) == 0:

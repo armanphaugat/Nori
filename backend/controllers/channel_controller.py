@@ -56,9 +56,9 @@ async def handle_get_channels(
         raise HTTPException(status_code=500, detail=f"Failed to get channels: {e}")
     
 async def handle_add_support_channel(
-    guild_id: str = Query(...),
-    channel_id: Optional[str] = Query(None),
-    user: dict = Depends(require_guild_admin_query),
+    guild_id: str = Form(...),
+    channel_id: Optional[str] = Form(None),
+    user: dict = Depends(require_guild_admin),
 ) -> dict:
     # 1. Mock commands.Bot.run BEFORE importing bot.bot
     from discord.ext import commands
