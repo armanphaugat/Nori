@@ -370,7 +370,7 @@ export default function ChannelsTab({
                 )}
               </button>
               <span style={{ fontSize: 11, color: "var(--muted)", textAlign: "center" }}>
-                {webSearchEnabled ? "Fallback to web enabled" : "KB only, no web fallback"}
+                {webSearchEnabled ? "Web Searches The Question" : "Do Not Web Searches The Question"}
               </span>
             </div>
 

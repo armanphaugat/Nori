@@ -787,3 +787,28 @@ def update_web_search(server_id: str, enabled: bool) -> int:
     except Exception as e:
         print(f"[update_web_search] Error: {e}")
     return 0
+
+def get_spec_id(server_id: str, spec_type: str) -> str | None:
+    col = "kb_spec_id" if spec_type == "kb" else "web_spec_id"
+    try:
+        with DB() as s:
+            result = s.execute(
+                text(f"SELECT {col} FROM servers WHERE server_id = :server_id"),
+                {"server_id": server_id}
+            ).fetchone()
+            return result[0] if result and result[0] else None
+    except Exception as e:
+        print(f"[get_spec_id] Error: {e}")
+        return None
+
+def save_spec_id(server_id: str, spec_type: str, spec_id: str):
+    col = "kb_spec_id" if spec_type == "kb" else "web_spec_id"
+    try:
+        with DB() as s:
+            s.execute(
+                text(f"UPDATE servers SET {col} = :spec_id WHERE server_id = :server_id"),
+                {"spec_id": spec_id, "server_id": server_id}
+            )
+            s.commit()
+    except Exception as e:
+        print(f"[save_spec_id] Error: {e}")

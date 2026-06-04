@@ -176,12 +176,18 @@ async def on_ready():
 async def get_user_message_from_channel(channel_id: int) -> str:
     channel = bot.get_channel(channel_id)
     if not channel:
+        try:
+            channel = await bot.fetch_channel(channel_id)
+        except Exception as e:
+            print(f"[get_user_message_from_channel] Failed to fetch: {e}")
+            return ""
         print("No Channel Found")
         return ""
     messages = []
     async for msg in channel.history(limit=7, oldest_first=False):
         if msg.content:
             messages.append(msg.content)
+    messages=messages[1:]
     return "   ".join(messages)
 
 @bot.event

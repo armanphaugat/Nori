@@ -19,9 +19,7 @@ tavily_idx=0
 def rotate_key():
     global idx
     with _lock: 
-        key = keys[idx % len(keys)]
         idx+=1
-        return key
 
 def get_key():
     with _lock:
