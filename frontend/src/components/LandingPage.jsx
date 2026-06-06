@@ -186,9 +186,18 @@ const CSS = `
   }
   .ripple-dot { position: relative; }
 
-  /* Playfair Display for all headings */
   h1, h2, h3, h4 {
     font-family: 'Playfair Display', serif;
+  }
+
+  .carousel-dot {
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.3s ease;
+  }
+  .carousel-dot:hover {
+    background: rgba(239,35,60,0.5) !important;
   }
 
   @media(max-width:900px){
@@ -264,23 +273,131 @@ const MQ_ICONS = [
   "travel_explore","translate","history","link",
 ];
 
-const PLAYGROUND_PRESETS = [
-  {
-    question: "What is the final exam retake schedule?",
-    answer: "According to the official **Academic Regulations.pdf**, final retakes are scheduled from **June 15th to June 22nd, 2026**. All applications must be submitted by June 8th.",
-    citations: [{ name: "Academic Regulations.pdf", type: "pdf", text: "Section 4.2: Retake examinations for the Summer term will commence on June 15, 2026 and run through June 22, 2026. Deadlines for student registration are strictly enforced as June 8, 2026." }]
-  },
-  {
-    question: "What is the refund policy for digital assets?",
-    answer: "Per the **refund-policy URL**, digital assets can be refunded within **14 days** of purchase, provided the assets haven't been downloaded or imported into a project.",
-    citations: [{ name: "refund-policy.html (URL)", type: "url", text: "Article 2 — Digital goods are eligible for a 14-day refund window. This eligibility is immediately voided upon download, license activation, or project integration." }]
-  },
-  {
-    question: "Where do I find the Shadow Core in Chapter 3?",
-    answer: "In the **game_guide.docx**, the Shadow Core is located behind the **waterfall cavern in Chapter 3**. Equip the Fire Shield before entering to withstand the heat.",
-    citations: [{ name: "game_guide.docx", type: "docx", text: "Chapter 3: The Shadow Core lies hidden within the humid caverns behind the Great Waterfall. Fire protection (Shield or Potion) is required for traversal." }]
-  },
-];
+const TOTAL_SLIDES = 6;
+
+function CarouselSlider() {
+  const [current, setCurrent] = useState(0);
+  const [animating, setAnimating] = useState(false);
+  const timeoutRef = useRef(null);
+
+  const goTo = (idx) => {
+    if (animating) return;
+    setCurrent(idx);
+  };
+
+  const advance = () => {
+    setAnimating(true);
+    setCurrent(prev => (prev + 1) % TOTAL_SLIDES);
+    setTimeout(() => setAnimating(false), 650);
+  };
+
+  useEffect(() => {
+    timeoutRef.current = setInterval(advance, 3500);
+    return () => clearInterval(timeoutRef.current);
+  }, []);
+
+  return (
+    <div style={{ position:"relative", width:"100%", borderRadius:16, overflow:"hidden", background:"#1a1c2e", minHeight:420 }}>
+      {/* Slide strip */}
+      <div style={{
+        display:"flex",
+        width:`${TOTAL_SLIDES * 100}%`,
+        transform:`translateX(-${(current * 100) / TOTAL_SLIDES}%)`,
+        transition:"transform 0.65s cubic-bezier(0.77,0,0.18,1)",
+      }}>
+        {Array.from({ length: TOTAL_SLIDES }, (_, i) => (
+          <div
+            key={i}
+            style={{
+              width:`${100 / TOTAL_SLIDES}%`,
+              flexShrink:0,
+              position:"relative",
+            }}
+          >
+            <img
+              src={`/CHAT${i + 1}.png`}
+              alt={`Demo ${i + 1}`}
+              style={{
+                width:"100%",
+                height:"100%",
+                minHeight:420,
+                objectFit:"contain",
+                display:"block",
+              }}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Left arrow */}
+      <button
+        onClick={() => goTo((current - 1 + TOTAL_SLIDES) % TOTAL_SLIDES)}
+        style={{
+          position:"absolute", left:12, top:"50%", transform:"translateY(-50%)",
+          width:36, height:36, borderRadius:"50%",
+          background:"rgba(255,255,255,0.15)", backdropFilter:"blur(8px)",
+          border:"1px solid rgba(255,255,255,0.25)",
+          color:"white", cursor:"pointer", display:"flex", alignItems:"center",
+          justifyContent:"center", zIndex:10, transition:"all 0.2s ease",
+        }}
+        onMouseEnter={e => e.currentTarget.style.background="rgba(239,35,60,0.7)"}
+        onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.15)"}
+      >
+        <Icon name="chevron_left" size={20} style={{ color:"white" }} />
+      </button>
+
+      {/* Right arrow */}
+      <button
+        onClick={() => goTo((current + 1) % TOTAL_SLIDES)}
+        style={{
+          position:"absolute", right:12, top:"50%", transform:"translateY(-50%)",
+          width:36, height:36, borderRadius:"50%",
+          background:"rgba(255,255,255,0.15)", backdropFilter:"blur(8px)",
+          border:"1px solid rgba(255,255,255,0.25)",
+          color:"white", cursor:"pointer", display:"flex", alignItems:"center",
+          justifyContent:"center", zIndex:10, transition:"all 0.2s ease",
+        }}
+        onMouseEnter={e => e.currentTarget.style.background="rgba(239,35,60,0.7)"}
+        onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.15)"}
+      >
+        <Icon name="chevron_right" size={20} style={{ color:"white" }} />
+      </button>
+
+      {/* Dot indicators */}
+      <div style={{
+        position:"absolute", bottom:14, left:"50%", transform:"translateX(-50%)",
+        display:"flex", gap:6, zIndex:10,
+      }}>
+        {Array.from({ length: TOTAL_SLIDES }, (_, i) => (
+          <button
+            key={i}
+            className="carousel-dot"
+            onClick={() => goTo(i)}
+            style={{
+              width: current === i ? 22 : 7,
+              height:7,
+              borderRadius:99,
+              background: current === i ? "var(--accent)" : "rgba(255,255,255,0.4)",
+              border:"none",
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Counter badge */}
+      <div style={{
+        position:"absolute", top:12, right:12,
+        fontSize:11, fontWeight:700, color:"white",
+        background:"rgba(239,35,60,0.8)",
+        padding:"4px 10px", borderRadius:6,
+        letterSpacing:"0.05em", zIndex:10,
+        backdropFilter:"blur(4px)",
+      }}>
+        {current + 1} / {TOTAL_SLIDES}
+      </div>
+    </div>
+  );
+}
 
 function useReveal() {
   const ref = useRef(null);
@@ -317,31 +434,10 @@ function Tick({ v }) {
   return                  <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:26,height:26,borderRadius:"50%",background:"rgba(141,153,174,0.15)",color:"var(--slate)",fontSize:14 }}>~</span>;
 }
 
-export default function LandingPage({ user, onLogin, onShowDashboard ,onShowPricing}) {
+export default function LandingPage({ user, onLogin, onShowDashboard, onShowPricing }) {
   const [faq, setFaq] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const pageRef = useReveal();
-
-  const [playgroundMessages, setPlaygroundMessages] = useState([
-    { sender:"bot", text:"Hey there 👋 I'm **Vaulty**, your server's AI assistant. Pick one of the questions below to see how I pull answers directly from uploaded documents — and show you exactly where I got them.", citations:[] }
-  ]);
-  const [playgroundTyping, setPlaygroundTyping] = useState(false);
-  const [activePreset, setActivePreset] = useState(null);
-  const [selectedCitation, setSelectedCitation] = useState(null);
-
-  const handlePlaygroundRun = (idx) => {
-    if (playgroundTyping) return;
-    const preset = PLAYGROUND_PRESETS[idx];
-    setActivePreset(idx);
-    setSelectedCitation(null);
-    const updated = [...playgroundMessages, { sender:"user", text:preset.question, citations:[] }];
-    setPlaygroundMessages(updated);
-    setPlaygroundTyping(true);
-    setTimeout(() => {
-      setPlaygroundMessages([...updated, { sender:"bot", text:preset.answer, citations:preset.citations }]);
-      setPlaygroundTyping(false);
-    }, 1100);
-  };
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40);
@@ -365,9 +461,11 @@ export default function LandingPage({ user, onLogin, onShowDashboard ,onShowPric
         transition:"all 0.3s ease",
       }}>
         <a href="#" style={{ textDecoration:"none",display:"flex",alignItems:"center",gap:10 }}>
-          <div style={{ width:30,height:30,borderRadius:8,background:"var(--navy)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 0 16px rgba(43,45,66,0.25)",border:"1px solid rgba(43,45,66,0.2)" }}>
-            <Icon name="shield_lock" size={16} fill={1} style={{ color:"white" }} />
-          </div>
+          <img
+            src="/LOGO.png"
+            alt="VaultBot"
+            style={{ width:30,height:30,borderRadius:8,objectFit:"contain",mixBlendMode:"multiply" }}
+          />
           <span style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>VaultBot</span>
         </a>
         <div className="hide900" style={{ display:"flex",alignItems:"center",gap:2 }}>
@@ -377,11 +475,9 @@ export default function LandingPage({ user, onLogin, onShowDashboard ,onShowPric
           <button
             onClick={onShowPricing}
             className="nav-link"
-            style={{ padding:"7px 15px", borderRadius:8, fontSize:13, fontWeight:500,
-            letterSpacing:"0.02em", color:"var(--muted)", background:"none",
-            border:"none", cursor:"pointer", transition:"all var(--tr)" }}
+            style={{ padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,letterSpacing:"0.02em",color:"var(--muted)",background:"none",border:"none",cursor:"pointer",transition:"all var(--tr)" }}
           >
-          Pricing
+            Pricing
           </button>
           {user ? (
             <button onClick={onShowDashboard} className="btn-sm" style={{ marginLeft:12,display:"flex",alignItems:"center",gap:8,padding:"8px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:"var(--surface1)",color:"var(--navy)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
@@ -401,7 +497,7 @@ export default function LandingPage({ user, onLogin, onShowDashboard ,onShowPric
         <div className="bloom-slate" style={{ bottom:"10%",right:"-5%",width:500,height:500 }} />
         <div className="hero-line" />
 
-        <div className="hero-inner" style={{ width:"100%",maxWidth:1200,display:"flex",alignItems:"center",gap:72,paddingTop:64,position:"relative",zIndex:1 }}>
+        <div className="hero-inner" style={{ width:"100%",maxWidth:1300,display:"flex",alignItems:"center",gap:48,paddingTop:64,position:"relative",zIndex:1 }}>
           {/* LEFT */}
           <div style={{ flex:1,minWidth:0 }}>
             <div className="a0" style={{ display:"inline-flex",alignItems:"center",gap:8,padding:"6px 16px",borderRadius:99,background:"rgba(239,35,60,0.08)",border:"1px solid rgba(239,35,60,0.25)",fontSize:12,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--accent-deep)",marginBottom:28 }}>
@@ -435,86 +531,13 @@ export default function LandingPage({ user, onLogin, onShowDashboard ,onShowPric
             </div>
           </div>
 
-          {/* RIGHT — Discord mockup bento */}
-          <div className="a5 hide900" style={{ width:380,flexShrink:0,position:"relative" }}>
-            <div className="mascot-bounce" style={{ position:"absolute",top:-90,right:-30,zIndex:100,pointerEvents:"none",display:"flex",flexDirection:"column",alignItems:"center" }}>
-              <div style={{ background:"var(--navy)",padding:"7px 13px",borderRadius:"12px 12px 0 12px",color:"white",fontSize:10,fontWeight:700,boxShadow:"0 8px 20px rgba(43,45,66,0.25)",marginBottom:8,whiteSpace:"nowrap",border:"none" }}>
-                Hey! Try my live demo below! 🤖
-              </div>
-              <svg width="85" height="85" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter:"drop-shadow(0 8px 20px rgba(43,45,66,0.2))" }}>
-                <rect x="18" y="24" width="64" height="52" rx="20" fill="#EDF2F4" stroke="#2B2D42" strokeWidth="3" />
-                <rect x="23" y="29" width="54" height="42" rx="14" fill="white" />
-                <g className="mascot-antenna">
-                  <line x1="50" y1="24" x2="50" y2="12" stroke="#2B2D42" strokeWidth="3.5" strokeLinecap="round" />
-                  <circle cx="50" cy="9" r="5" fill="#EF233C" />
-                </g>
-                <g className="mascot-eye">
-                  <circle cx="38" cy="48" r="6" fill="#2B2D42" />
-                  <circle cx="38" cy="48" r="2.5" fill="white" />
-                  <path d="M 57 48 Q 62 44 67 48" stroke="#2B2D42" strokeWidth="3" strokeLinecap="round" fill="none" />
-                </g>
-                <ellipse cx="32" cy="58" rx="3.5" ry="1.5" fill="#8D99AE" opacity="0.6" />
-                <ellipse cx="68" cy="58" rx="3.5" ry="1.5" fill="#8D99AE" opacity="0.6" />
-                <path d="M 46 56 Q 50 59 54 56" stroke="#2B2D42" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-                <rect x="12" y="42" width="6" height="16" rx="3" fill="#8D99AE" />
-                <rect x="82" y="42" width="6" height="16" rx="3" fill="#8D99AE" />
-              </svg>
-            </div>
-
-            <div style={{ display:"grid",gridTemplateColumns:"repeat(6,1fr)",gridTemplateRows:"repeat(6,1fr)",gap:14,height:480 }}>
-              <div style={{ gridColumn:"1/7",gridRow:"1/5",borderRadius:14,overflow:"hidden",boxShadow:"0 20px 60px rgba(43,45,66,0.14)",border:"1px solid var(--border2)",background:"white" }}>
-                <div style={{ background:"var(--navy)",padding:"12px 16px",borderBottom:"1px solid rgba(0,0,0,0.15)",display:"flex",alignItems:"center",justifyContent:"space-between" }}>
-                  <div style={{ display:"flex",alignItems:"center",gap:8 }}>
-                    <Icon name="tag" size={18} style={{ color:"rgba(255,255,255,0.5)" }} />
-                    <span style={{ fontWeight:700,fontSize:13,color:"white" }}>general-support</span>
-                  </div>
-                  <div style={{ display:"flex",gap:14,color:"rgba(255,255,255,0.4)" }}>
-                    <Icon name="search" size={17} />
-                    <Icon name="inbox" size={17} />
-                  </div>
-                </div>
-                <div style={{ padding:16,background:"#f8fafc",height:"calc(100% - 45px)",display:"flex",flexDirection:"column",gap:14 }}>
-                  <div style={{ display:"flex",gap:10 }}>
-                    <div style={{ width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,var(--slate),var(--navy-mid))",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"white",fontWeight:700 }}>U</div>
-                    <div>
-                      <div style={{ fontSize:10,color:"var(--muted2)",marginBottom:3 }}>User · just now</div>
-                      <div style={{ color:"var(--text)",fontSize:13.5,lineHeight:1.5 }}>What are the office hours for support?</div>
-                    </div>
-                  </div>
-                  <div style={{ display:"flex",gap:10,background:"rgba(239,35,60,0.04)",padding:12,borderRadius:8,border:"1px solid rgba(239,35,60,0.15)" }}>
-                    <div style={{ width:36,height:36,borderRadius:"50%",background:"var(--navy)",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center" }}>
-                      <Icon name="robot_2" size={18} fill={1} style={{ color:"white" }} />
-                    </div>
-                    <div>
-                      <div style={{ display:"flex",gap:6,alignItems:"center",marginBottom:4 }}>
-                        <span style={{ fontWeight:700,fontSize:13,color:"var(--accent-deep)" }}>VaultBot</span>
-                      </div>
-                      <div style={{ color:"var(--text)",fontSize:13,lineHeight:1.6 }}>
-                        Based on your docs, support is <strong style={{ color:"var(--navy)" }}>Mon–Fri, 9 AM – 5 PM</strong>.
-                        <div style={{ marginTop:6,fontSize:11,color:"var(--accent)",display:"flex",alignItems:"center",gap:5 }}>
-                          <Icon name="link" size={11} /> Source: FAQ document
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ display:"flex",gap:10 }}>
-                    <div style={{ width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,var(--slate),var(--navy-mid))",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"white",fontWeight:700 }}>A</div>
-                    <div style={{ background:"rgba(0,0,0,0.05)",padding:"10px 14px",borderRadius:8,display:"flex",gap:5,alignItems:"center" }}>
-                      <span className="td"/><span className="td"/><span className="td"/>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ gridColumn:"1/4",gridRow:"5/7",borderRadius:12,padding:"20px 18px",display:"flex",flexDirection:"column",justifyContent:"center",background:"var(--navy)",border:"none",boxShadow:"0 8px 24px rgba(43,45,66,0.18)" }}>
-                <div style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:32,color:"white",lineHeight:1 }}>1.2ms</div>
-                <div style={{ fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:6,fontWeight:600,letterSpacing:"0.04em",textTransform:"uppercase" }}>Avg Response Time</div>
-              </div>
-              <div style={{ gridColumn:"4/7",gridRow:"5/7",borderRadius:12,padding:"20px 18px",display:"flex",flexDirection:"column",justifyContent:"center",background:"var(--accent)",border:"none",boxShadow:"0 8px 24px rgba(239,35,60,0.3)" }}>
-                <div style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:32,color:"white",lineHeight:1 }}>99.9%</div>
-                <div style={{ fontSize:11,color:"rgba(255,255,255,0.7)",marginTop:6,fontWeight:600,letterSpacing:"0.04em",textTransform:"uppercase" }}>Uptime Guaranteed</div>
-              </div>
-            </div>
+          {/* RIGHT — static image */}
+          <div className="a5 hide900" style={{ flex:"0 0 550px",display:"flex",alignItems:"center",justifyContent:"flex-end",marginRight:"-60px" }}>
+            <img
+              src="/CHAT.png"
+              alt="VaultBot in action"
+              style={{ width:"800px",objectFit:"contain",borderRadius:16,filter:"drop-shadow(0 24px 48px rgba(43,45,66,0.22))" }}
+            />
           </div>
         </div>
 
@@ -526,7 +549,7 @@ export default function LandingPage({ user, onLogin, onShowDashboard ,onShowPric
         </a>
       </section>
 
-      {/* PLAYGROUND */}
+      {/* PLAYGROUND — now with carousel */}
       <section id="playground" style={{ padding:"96px 64px",background:"var(--surface2)",borderTop:"1px solid var(--border)",position:"relative" }}>
         <div style={{ maxWidth:1200,margin:"0 auto" }}>
           <div style={{ textAlign:"center",marginBottom:48 }}>
@@ -538,93 +561,36 @@ export default function LandingPage({ user, onLogin, onShowDashboard ,onShowPric
           </div>
 
           <div style={{ display:"flex",gap:32,flexWrap:"wrap",alignItems:"flex-start" }}>
+            {/* LEFT — question selector */}
             <div style={{ flex:"1 1 340px",display:"flex",flexDirection:"column",gap:12 }}>
-              <div style={{ fontSize:12,fontWeight:700,color:"var(--muted2)",letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:4 }}>Choose a Question</div>
-              {PLAYGROUND_PRESETS.map((p,idx) => (
-                <button key={idx} onClick={() => handlePlaygroundRun(idx)} style={{ display:"flex",flexDirection:"column",gap:8,padding:"16px 20px",borderRadius:12,border:`1.5px solid ${activePreset===idx?"var(--accent)":"var(--border2)"}`,background:activePreset===idx?"rgba(239,35,60,0.05)":"white",color:"var(--navy)",cursor:"pointer",textAlign:"left",outline:"none",transition:"all var(--tr)",boxShadow:activePreset===idx?"0 4px 16px rgba(239,35,60,0.12)":"0 2px 8px rgba(43,45,66,0.06)" }}>
-                  <div style={{ display:"flex",alignItems:"center",gap:8,fontSize:11,fontWeight:700,color:"var(--accent-deep)",textTransform:"uppercase",letterSpacing:"0.04em" }}>
-                    <Icon name={p.citations[0].type==="pdf"?"picture_as_pdf":p.citations[0].type==="url"?"language":"description"} size={14} />
-                    From: {p.citations[0].name}
-                  </div>
-                  <div style={{ fontSize:14,fontWeight:500,lineHeight:1.45,color:"var(--navy)" }}>"{p.question}"</div>
-                </button>
-              ))}
+              <div style={{ fontSize:12,fontWeight:700,color:"var(--muted2)",letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:4 }}>What VaultBot Can Do</div>
 
-              {selectedCitation && (
-                <div style={{ marginTop:16,padding:16,borderRadius:12,border:"1px solid rgba(239,35,60,0.25)",background:"rgba(239,35,60,0.04)" }}>
-                  <div style={{ display:"flex",alignItems:"center",gap:6,fontSize:12,fontWeight:700,color:"var(--accent-deep)",marginBottom:8 }}>
-                    <Icon name="verified" size={14} /> Exact Source Chunk Retrieved
+              {[
+                { icon:"picture_as_pdf", label:"Reads your PDFs & documents",    sub:"Answers directly from uploaded files" },
+                { icon:"language",       label:"Crawls your websites & docs",    sub:"Auto-syncs new content automatically" },
+                { icon:"translate",      label:"Replies in any language",         sub:"Detects and matches member language" },
+                { icon:"link",           label:"Always cites its sources",        sub:"Every answer links back to the source" },
+                { icon:"image_search",   label:"Reads text from screenshots",    sub:"OCR on images — no retyping needed" },
+                { icon:"search",         label:"Falls back to web search",        sub:"Marks external answers clearly" },
+              ].map((item, idx) => (
+                <div key={idx} style={{ display:"flex",alignItems:"center",gap:12,padding:"14px 18px",borderRadius:12,border:"1px solid var(--border2)",background:"white",boxShadow:"0 2px 8px rgba(43,45,66,0.05)" }}>
+                  <div style={{ width:36,height:36,borderRadius:10,background:"rgba(239,35,60,0.08)",border:"1px solid rgba(239,35,60,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:"var(--accent-deep)" }}>
+                    <Icon name={item.icon} size={18} fill={1} />
                   </div>
-                  <div style={{ fontSize:11,color:"var(--muted2)",marginBottom:6 }}>This is the passage the answer was pulled from:</div>
-                  <div style={{ fontSize:12.5,color:"var(--text)",fontStyle:"italic",lineHeight:1.6,background:"rgba(43,45,66,0.04)",padding:"8px 12px",borderRadius:6 }}>
-                    "{selectedCitation.text}"
+                  <div>
+                    <div style={{ fontSize:13,fontWeight:600,color:"var(--navy)",marginBottom:2 }}>{item.label}</div>
+                    <div style={{ fontSize:12,color:"var(--muted2)",fontWeight:300 }}>{item.sub}</div>
                   </div>
                 </div>
-              )}
+              ))}
             </div>
 
-            <div style={{ flex:"2 2 500px",borderRadius:16,overflow:"hidden",boxShadow:"0 20px 50px rgba(43,45,66,0.14)",border:"1px solid var(--border2)",background:"white" }}>
-              <div style={{ background:"var(--navy)",padding:"14px 20px",borderBottom:"1px solid rgba(0,0,0,0.15)",display:"flex",alignItems:"center",justifyContent:"space-between" }}>
-                <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-                  <Icon name="tag" size={20} style={{ color:"rgba(255,255,255,0.45)" }} />
-                  <span style={{ fontWeight:700,fontSize:14,color:"white" }}>#vaulty-demo</span>
-                </div>
-                <div style={{ fontSize:11,fontWeight:700,color:"white",background:"rgba(239,35,60,0.7)",padding:"4px 10px",borderRadius:6,border:"none" }}>
-                  LIVE DEMO
-                </div>
-              </div>
-
-              <div style={{ padding:24,background:"#f8fafc",minHeight:340,display:"flex",flexDirection:"column",gap:20 }}>
-                {playgroundMessages.map((msg,i) => (
-                  <div key={i} style={{ display:"flex",gap:14,animation:"fadeUp 0.3s ease both" }}>
-                    {msg.sender==="user" ? (
-                      <>
-                        <div style={{ width:38,height:38,borderRadius:"50%",background:"linear-gradient(135deg,var(--slate),var(--navy))",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,color:"white",fontWeight:700 }}>U</div>
-                        <div>
-                          <div style={{ fontSize:11,color:"var(--muted2)",marginBottom:4 }}>You · just now</div>
-                          <div style={{ color:"var(--navy)",fontSize:14,lineHeight:1.5 }}>{msg.text}</div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div style={{ width:38,height:38,borderRadius:"50%",background:"var(--navy)",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 12px rgba(43,45,66,0.2)" }}>
-                          <Icon name="robot_2" size={20} fill={1} style={{ color:"white" }} />
-                        </div>
-                        <div style={{ flex:1 }}>
-                          <div style={{ display:"flex",alignItems:"center",gap:6,marginBottom:4 }}>
-                            <span style={{ fontWeight:700,fontSize:14,color:"var(--navy)" }}>Vaulty</span>
-                            <span style={{ fontSize:9,fontWeight:800,textTransform:"uppercase",background:"var(--navy)",color:"white",padding:"2px 6px",borderRadius:4,letterSpacing:"0.05em" }}>BOT</span>
-                            <span style={{ fontSize:11,color:"var(--muted2)" }}>· now</span>
-                          </div>
-                          <div style={{ color:"var(--text)",fontSize:13.5,lineHeight:1.65 }}>{msg.text}</div>
-                          {msg.citations.length > 0 && (
-                            <div style={{ display:"flex",flexWrap:"wrap",gap:8,marginTop:12 }}>
-                              {msg.citations.map((c,j) => (
-                                <button key={j} onClick={() => setSelectedCitation(c)} style={{ display:"flex",alignItems:"center",gap:6,background:"rgba(239,35,60,0.07)",border:"1px solid rgba(239,35,60,0.22)",borderRadius:8,padding:"6px 12px",fontSize:12,fontWeight:600,color:"var(--accent-deep)",cursor:"pointer",outline:"none",transition:"all var(--tr)" }}>
-                                  <Icon name="link" size={12} />
-                                  Source: {c.name}
-                                  <span style={{ fontSize:10,opacity:0.6 }}>(Click to see)</span>
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ))}
-
-                {playgroundTyping && (
-                  <div style={{ display:"flex",gap:14,alignItems:"center" }}>
-                    <div style={{ width:38,height:38,borderRadius:"50%",background:"var(--navy)",display:"flex",alignItems:"center",justifyContent:"center" }}>
-                      <Icon name="robot_2" size={20} fill={1} style={{ color:"white" }} />
-                    </div>
-                    <div style={{ background:"rgba(43,45,66,0.06)",padding:"12px 18px",borderRadius:12,display:"flex",gap:6,alignItems:"center" }}>
-                      <span className="td"/><span className="td"/><span className="td"/>
-                    </div>
-                  </div>
-                )}
-              </div>
+            {/* RIGHT — carousel */}
+            <div style={{ flex:"2 2 500px" }}>
+              <CarouselSlider />
+              <p style={{ textAlign:"center",fontSize:12,color:"var(--muted2)",marginTop:12,fontWeight:300 }}>
+                Auto-advances every 3.5s · Click arrows or dots to navigate
+              </p>
             </div>
           </div>
         </div>
@@ -861,9 +827,11 @@ export default function LandingPage({ user, onLogin, onShowDashboard ,onShowPric
         <div style={{ maxWidth:1200,margin:"0 auto",display:"grid",gridTemplateColumns:"1fr 1fr",gap:32 }}>
           <div>
             <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:16 }}>
-              <div style={{ width:30,height:30,borderRadius:8,background:"var(--navy)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 12px rgba(43,45,66,0.2)" }}>
-                <Icon name="shield_lock" size={15} fill={1} style={{ color:"white" }} />
-              </div>
+              <img
+                src="/LOGO.png"
+                alt="VaultBot"
+                style={{ width:30,height:30,borderRadius:8,objectFit:"contain",mixBlendMode:"multiply" }}
+              />
               <span style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:22,color:"var(--navy)" }}>VaultBot</span>
             </div>
             <p style={{ fontSize:14,color:"var(--muted)",lineHeight:1.75,maxWidth:340,marginBottom:24,fontWeight:300 }}>VaultBot is an AI assistant for Discord communities. Upload your documents, point it at your website, and let it answer your members' questions around the clock — accurately, instantly, and always with a source.</p>
@@ -884,16 +852,14 @@ export default function LandingPage({ user, onLogin, onShowDashboard ,onShowPric
               <h4 style={{ fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:700,color:"var(--navy)",marginBottom:16,letterSpacing:"0.06em",textTransform:"uppercase" }}>Links</h4>
               <ul style={{ display:"flex",flexDirection:"column",gap:10,listStyle:"none",padding:0 }}>
                 {["Add to Discord","Features","Pricing","Support"].map((l,i) => (
-                <li
-                key={i}
-                onClick={l === "Pricing" ? onShowPricing : undefined}
-                style={{ fontSize:13.5, color: l === "Pricing" ? "var(--accent-deep)" : "var(--muted)",
-                display:"flex", alignItems:"center", gap:8, fontWeight:300,
-                cursor: l === "Pricing" ? "pointer" : "default" }}
-                >
-                <span style={{ width:4,height:4,borderRadius:"50%",background:"var(--slate)" }} />
-                {l}
-                </li>
+                  <li
+                    key={i}
+                    onClick={l === "Pricing" ? onShowPricing : undefined}
+                    style={{ fontSize:13.5,color:l==="Pricing"?"var(--accent-deep)":"var(--muted)",display:"flex",alignItems:"center",gap:8,fontWeight:300,cursor:l==="Pricing"?"pointer":"default" }}
+                  >
+                    <span style={{ width:4,height:4,borderRadius:"50%",background:"var(--slate)" }} />
+                    {l}
+                  </li>
                 ))}
               </ul>
             </div>
