@@ -3,7 +3,6 @@ FROM python:3.12-slim AS builder
 
 WORKDIR /build
 
-# System packages needed to compile Python wheels
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc g++ \
     libpq-dev \
@@ -13,17 +12,11 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 
-# ─── Stage 2: Runtime image ────────────────────────────────────────────────────
+# ─── Stage 2: Runtime (API + Discord bot in one container) ────────────────────
 FROM python:3.12-slim
 
 WORKDIR /app
 
-# Runtime system deps:
-#   tesseract-ocr  → pytesseract (OCR uploads)
-#   ffmpeg         → openai-whisper (audio/video uploads)
-#   libglib2.0-0 libsm6 libxext6 libxrender1 → Pillow / OpenCV
-#   curl           → Docker healthcheck
-#   chromium + dependencies → Playwright headless browser (web scraping fallback)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     ffmpeg \
@@ -35,27 +28,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxfixes3 libxrandr2 libgbm1 libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
-# Tell Playwright to use the system Chromium instead of downloading its own
 ENV PLAYWRIGHT_BROWSERS_PATH=/usr/bin
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
+ENV UVICORN_WORKERS=1
 
-# Copy installed Python packages from builder stage
 COPY --from=builder /install /usr/local
 
-# Copy application source
-# NOTE: all five dirs are required — the old Dockerfile was missing dbhelper/ and utils/
 COPY backend/   ./backend/
+COPY bot/       ./bot/
 COPY python/    ./python/
 COPY dbhelper/  ./dbhelper/
 COPY utils/     ./utils/
 COPY prompt.txt ./prompt.txt
+COPY scripts/start-app.sh ./scripts/start-app.sh
+
+RUN chmod +x ./scripts/start-app.sh
 
 EXPOSE 8000
 
-# Health endpoint is GET /  → returns {"message": "RAG API running"}
-HEALTHCHECK --interval=30s --timeout=10s --start-period=25s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8000/ || exit 1
 
-# FIX: old CMD used backend.routes:app — that module doesn't exist.
-# The FastAPI app is defined in backend/app.py → backend.app:app
-CMD ["uvicorn", "backend.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+CMD ["./scripts/start-app.sh"]
