@@ -13,13 +13,13 @@ from backend.routers.guild_router import *
 app = FastAPI(title="Q-ARAG API", version="1.0.0")
 
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3001")
-origins = [
+origins = list({
     frontend_url,
     "http://localhost:3001",
     "http://localhost:3000",
     "http://localhost:80",
     "http://localhost",
-]
+})
 
 app.add_middleware(
     CORSMiddleware,
