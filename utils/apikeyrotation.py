@@ -7,7 +7,7 @@ import random
 load_dotenv()
 keys=os.getenv("GROQ_API_KEY","").split(",")
 exa_keys=os.getenv("EXA_API_KEY","").split(",")
-tavily_keys= os.getenv("TAVILY_API_KEY").split(",")
+tavily_keys = os.getenv("TAVILY_API_KEY", "").split(",")
 redis_client = redis.Redis(
     host=os.getenv("REDIS_HOST", "localhost"),
     port=int(os.getenv("REDIS_PORT", 6379)),
