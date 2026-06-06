@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 from graphlit_api import FeedTypes, WebFeedPropertiesInput,FeedInput
 load_dotenv()
 env_id = os.getenv("GRAPHLIT_ENVIRONMENT_ID")
-org_key = os.getenv("GRAPHLIT_ORGANIZATION_ID")
+org_key = os.getenv("GRAPHLIT_ORGANIZATION_ID") or os.getenv("GRAPHLIT_ORGANIZATION_KEY")
 jwt_secret = os.getenv("GRAPHLIT_JWT_SECRET")
 graphlit = Graphlit(
     environment_id=env_id,

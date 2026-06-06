@@ -8,7 +8,7 @@ from graphlit import Graphlit
 from graphlit_api import *
 
 env_id = os.getenv("GRAPHLIT_ENVIRONMENT_ID")
-org_key = os.getenv("GRAPHLIT_ORGANIZATION_ID")
+org_key = os.getenv("GRAPHLIT_ORGANIZATION_ID") or os.getenv("GRAPHLIT_ORGANIZATION_KEY")
 jwt_secret = os.getenv("GRAPHLIT_JWT_SECRET")
 
 
