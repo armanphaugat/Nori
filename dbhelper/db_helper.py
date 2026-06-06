@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
-print(DATABASE_URL)
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
@@ -17,7 +16,6 @@ engine = create_engine(
     max_overflow=10,
     pool_recycle=300,
 )
-print(engine)
 DB = sessionmaker(bind=engine)
 
 def add_server(guild_id: str, name: str) -> None:
