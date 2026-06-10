@@ -5,7 +5,13 @@ import httpx
 from fastapi import Depends, HTTPException, status
 
 from backend.middleware.auth import require_guild_admin_query, verify_access_token
-from dbhelper.db_helper import get_admin_user, get_server, get_user_guild_ids
+from dbhelper.db_helper import (
+    get_admin_user,
+    get_server,
+    get_user_guild_ids,
+    add_guild_admin,
+    remove_guild_admin,
+)
 
 DISCORD_API      = os.getenv("DISCORD_API", "https://discord.com/api/v10")
 ADMIN_PERMISSION = 0x8
@@ -140,6 +146,29 @@ async def handle_get_eligible_guilds(
     if resp.status_code != 200:
         raise HTTPException(status_code=502, detail=f"Discord API error: {resp.status_code}")
     guilds = resp.json()
+
+    try:
+        synced_ids = set()
+        for g in guilds:
+            is_owner = g.get("owner", False)
+            is_admin = is_owner or bool(int(g.get("permissions", 0)) & ADMIN_PERMISSION)
+            if not is_admin:
+                continue
+            role = "owner" if is_owner else "admin"
+            add_guild_admin(
+                guild_id=g["id"],
+                discord_id=uid,
+                role=role,
+                granted_by=uid,
+            )
+            synced_ids.add(g["id"])
+
+        current_db_guilds = get_user_guild_ids(uid)
+        for stale_guild_id in current_db_guilds - synced_ids:
+            remove_guild_admin(stale_guild_id, uid)
+    except Exception as e:
+        print(f"[handle_get_eligible_guilds] Admin sync failed: {e}")
+
     result = {
         "guilds": [
             {
