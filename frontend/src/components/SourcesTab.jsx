@@ -59,7 +59,7 @@ export default function SourcesTab({ guildId, onGoToOverview, user }) {
     color: active ? "var(--accent-deep)" : "var(--muted)",
     fontSize: 12.5, fontWeight: 600, cursor: "pointer",
     display: "inline-flex", alignItems: "center", gap: 6,
-    transition: "all var(--tr)", fontFamily: "'DM Sans', sans-serif",
+    transition: "all var(--tr)", fontFamily: "'Plus Jakarta Sans', sans-serif",
     letterSpacing: "0.02em",
   });
 
@@ -444,7 +444,7 @@ function ModalHeader({ icon, title, onClose, danger = false }) {
         <h3 style={{
           margin: 0, fontSize: 15, fontWeight: 600,
           color: danger ? "var(--accent-deep)" : "var(--navy)",
-          fontFamily: "'Playfair Display', serif",
+          fontFamily: "'Outfit', sans-serif",
         }}>{title}</h3>
       </div>
       <button
@@ -474,7 +474,7 @@ function MetaField({ label, children, mono = false }) {
       <div style={{
         fontSize: mono ? 12 : 13.5,
         color: "var(--text)",
-        fontFamily: mono ? "'DM Mono', monospace" : "'DM Sans', sans-serif",
+        fontFamily: mono ? "'DM Mono', monospace" : "'Plus Jakarta Sans', sans-serif",
         wordBreak: "break-all", lineHeight: 1.5,
       }}>
         {children}

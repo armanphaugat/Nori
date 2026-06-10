@@ -37,7 +37,7 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
     try {
       await API.addServer(g.id, g.name);
       onAdd({ id: g.id, name: g.name, icon: g.icon });
-      onActivate(g.id);
+      onActivate(g.id, g);
     } catch (e) {
       setErrorStatus({ ok: false, msg: e.message || "Failed to add bot to server" });
     } finally {
@@ -66,6 +66,7 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
     .vb-server-avatar.configured {
       border: 3px solid var(--accent);
       box-shadow: 0 0 0 4px var(--red-dim), 0 4px 16px rgba(43,45,66,0.1);
+      background: var(--navy);
     }
     .vb-server-avatar.addable {
       border: 2px dashed var(--border2);
@@ -85,7 +86,7 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
       font-size: 13px; font-weight: 500; color: var(--muted);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       width: 100%; transition: color .2s;
-      font-family: 'DM Sans', sans-serif;
+      font-family: 'Plus Jakarta Sans', sans-serif;
     }
     .vb-server-card:hover .vb-server-label { color: var(--navy); }
     .vb-server-label.configured { color: var(--navy); font-weight: 600; }
@@ -123,7 +124,7 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
       minHeight: "100vh",
       background: "var(--bg)",
       color: "var(--text)",
-      fontFamily: "'DM Sans', sans-serif",
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
       display: "flex", flexDirection: "column",
       alignItems: "center",
       position: "relative",
@@ -144,15 +145,20 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: "var(--navy)",
+            width: 32, height: 32,
             display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 4px 14px rgba(43,45,66,0.25)",
           }}>
-            <Icon name="shield_lock" size={16} fill style={{ color: "#fff" }} />
+            <img
+              src="/LOGO.png"
+              alt="VaultBot"
+              style={{
+                width: "100%", height: "100%",
+                objectFit: "contain",
+              }}
+            />
           </div>
           <span style={{
-            fontFamily: "'Playfair Display', serif",
+            fontFamily: "'Outfit', sans-serif",
             fontWeight: 600, fontSize: 21, color: "var(--navy)",
           }}>VaultBot</span>
         </div>
@@ -184,7 +190,7 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
               color: "var(--muted)", padding: "6px 12px 6px 8px",
               borderRadius: 99, fontSize: 12, fontWeight: 600,
               cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
-              transition: "all var(--tr)", fontFamily: "'DM Sans', sans-serif",
+              transition: "all var(--tr)", fontFamily: "'Plus Jakarta Sans', sans-serif",
             }}
               onMouseEnter={e => { e.currentTarget.style.color = "var(--accent-deep)"; e.currentTarget.style.background = "var(--red-dim)"; }}
               onMouseLeave={e => { e.currentTarget.style.color = "var(--muted)"; e.currentTarget.style.background = "transparent"; }}
@@ -227,7 +233,7 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
           }}>
             {/* Greeting */}
             <h1 style={{
-              fontFamily: "'Playfair Display', serif",
+              fontFamily: "'Outfit', sans-serif",
               fontWeight: 700, fontSize: "clamp(22px,3.5vw,34px)",
               color: "var(--navy)", textAlign: "center", letterSpacing: "-0.01em",
             }}>
@@ -252,7 +258,7 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
                 style={{
                   background: "transparent", border: "none", outline: "none",
                   color: "var(--text)", fontSize: 14, width: "100%",
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
                 }} />
               {search && (
                 <span onClick={() => setSearch("")}
@@ -274,6 +280,7 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
                   background: "var(--navy)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   flexShrink: 0, boxShadow: "0 4px 12px rgba(43,45,66,0.2)",
+                  color: "#fff",
                 }}>
                   <DiscordIcon size={22} />
                 </div>
@@ -313,13 +320,13 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
                   return (
                     <div key={server.id} className="vb-server-card"
                       style={{ animationDelay: `${idx * 0.05}s` }}
-                      onClick={() => onActivate(server.id)}>
+                      onClick={() => onActivate(server.id, server)}>
                       <div className="vb-server-avatar configured">
                         {iconUrl ? (
                           <img src={iconUrl} alt={server.name}
                             style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
                         ) : (
-                          <span style={{ fontSize: 22, fontWeight: 800, color: "#fff", fontFamily: "'Playfair Display',serif" }}>
+                          <span style={{ fontSize: 22, fontWeight: 800, color: "#fff", fontFamily: "'Outfit', sans-serif" }}>
                             {server.name.slice(0, 2).toUpperCase()}
                           </span>
                         )}
@@ -340,7 +347,7 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
                           <img src={iconUrl} alt={guild.name}
                             style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover", opacity: .75 }} />
                         ) : (
-                          <span style={{ fontSize: 20, fontWeight: 700, color: "var(--muted)", fontFamily: "'Playfair Display',serif" }}>
+                          <span style={{ fontSize: 20, fontWeight: 700, color: "var(--muted)", fontFamily: "'Outfit', sans-serif" }}>
                             {guild.name.slice(0, 2).toUpperCase()}
                           </span>
                         )}

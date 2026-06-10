@@ -23,6 +23,7 @@ import CrawlerTab from "./components/CrawlerTab.jsx";
 import ChatWidget from "./components/ChatWidget.jsx";
 import PricingPage from "./components/PricingPage.jsx";
 import AnalyticsTab from "./components/AnalyticsTab.jsx";
+import DocsTab from "./components/DocsTab.jsx";
 function Dashboard({ 
   user, 
   guilds, 
@@ -31,7 +32,8 @@ function Dashboard({
   onSwitchServer, 
   onActivate,
   onLogout,
-  onGuildsChange
+  onGuildsChange,
+  onShowPricing
 }) {
   const [tab, setTab] = useState("channels");
   const [showServerDropdown, setShowServerDropdown] = useState(false);
@@ -74,6 +76,7 @@ function Dashboard({
     sources: "Ingested Sources",
     analytics: "Analytics",
     utils: "URL Crawler",
+    docs: "Setup Documentation",
   };
 
   const getAvatarUrl = (u) => {
@@ -82,7 +85,9 @@ function Dashboard({
   };
 
   const getServerIconUrl = (g) => {
-    if (g?.id && g?.icon) return `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png`;
+    if (g?.id && g?.icon) {
+      return g.icon.startsWith("http") ? g.icon : `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png`;
+    }
     return null;
   };
 
@@ -114,21 +119,23 @@ function Dashboard({
           boxShadow: "0 1px 0 var(--border)",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-            <h1 style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-0.01em", color: "var(--navy)", fontFamily: "'DM Sans', sans-serif" }}>
+            <h1 style={{ fontSize: 16, fontWeight: 700, letterSpacing: "-0.015em", color: "var(--navy)", fontFamily: "'Outfit', sans-serif" }}>
               {tabLabels[tab] || "Dashboard"}
             </h1>
             <span style={{ height: 16, width: 1, background: "var(--border2)" }} />
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               {[
-                { label: "Docs", href: "#" },
-                { label: "Invite", href: inviteUrl },
-                { label: "Discord", href: "#" },
-                { label: "Status", href: "#" },
-              ].map(({ label, href }) => (
+                { label: "Docs", href: "#", onClick: (e) => { e.preventDefault(); setTab("docs"); } },
+                { label: "Invite", href: "https://discord.gg/H92wkB4X" },
+                { label: "Discord", href: activeGuild?.id ? `https://discord.com/channels/${activeGuild.id}` : "https://discord.com" },
+              ].map(({ label, href, onClick }) => (
                 <a
                   key={label}
                   href={href}
-                  style={{ fontSize: 13, fontWeight: 500, color: "var(--muted)", textDecoration: "none", padding: "4px 10px", borderRadius: "var(--r-sm)", transition: "all var(--tr)" }}
+                  onClick={onClick}
+                  target={href !== "#" ? "_blank" : undefined}
+                  rel={href !== "#" ? "noopener noreferrer" : undefined}
+                  style={{ fontSize: 13, fontWeight: 550, color: "var(--muted)", textDecoration: "none", padding: "4px 10px", borderRadius: "var(--r-sm)", transition: "all var(--tr)" }}
                   onMouseEnter={e => { e.currentTarget.style.color = "var(--navy)"; e.currentTarget.style.background = "var(--navy-light)"; }}
                   onMouseLeave={e => { e.currentTarget.style.color = "var(--muted)"; e.currentTarget.style.background = "transparent"; }}
                 >
@@ -137,11 +144,18 @@ function Dashboard({
               ))}
               <a
                 href="#"
-                style={{ fontSize: 13, fontWeight: 600, color: "var(--accent-deep)", textDecoration: "none", display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: "var(--r-sm)", background: "var(--red-dim)", border: "1px solid var(--red-border)", transition: "all var(--tr)" }}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,35,60,0.18)"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "var(--red-dim)"; }}
+                onClick={(e) => { e.preventDefault(); }}
+                style={{ 
+                  fontSize: 12, fontWeight: 700, color: "#fff", textDecoration: "none", 
+                  display: "flex", alignItems: "center", gap: 4, padding: "5px 12px", 
+                  borderRadius: "var(--r-full)", background: "linear-gradient(135deg, var(--accent-deep) 0%, var(--accent) 100%)", 
+                  boxShadow: "0 2px 10px rgba(239, 35, 60, 0.25)", transition: "all var(--tr)",
+                  textTransform: "uppercase", letterSpacing: "0.5px"
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(239, 35, 60, 0.45)"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(239, 35, 60, 0.25)"; }}
               >
-                <Icon name="verified" size={13} style={{ color: "var(--accent)" }} /> Premium
+                <Icon name="verified" size={13} style={{ color: "#fff" }} /> Premium
               </a>
             </div>
           </div>
@@ -155,21 +169,20 @@ function Dashboard({
                     onClick={() => setShowServerDropdown(!showServerDropdown)}
                     style={{
                       display: "flex", alignItems: "center", gap: 8, padding: "5px 12px",
-                      borderRadius: "var(--r-full)", background: "rgba(34,197,94,0.06)",
-                      border: "1px solid rgba(34,197,94,0.2)", cursor: "pointer",
+                      borderRadius: "var(--r-full)", background: "var(--navy-light)",
+                      border: "1px solid var(--border)", cursor: "pointer",
                       transition: "all var(--tr)", userSelect: "none",
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(34,197,94,0.12)"; e.currentTarget.style.borderColor = "rgba(34,197,94,0.4)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "rgba(34,197,94,0.06)"; e.currentTarget.style.borderColor = "rgba(34,197,94,0.2)"; }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(43,45,66,0.12)"; e.currentTarget.style.borderColor = "rgba(43,45,66,0.25)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "var(--navy-light)"; e.currentTarget.style.borderColor = "var(--border)"; }}
                   >
                     {getServerIconUrl(activeGuild) ? (
                       <img src={getServerIconUrl(activeGuild)} alt={activeGuild.name} style={{ width: 18, height: 18, borderRadius: "50%", objectFit: "cover" }} />
                     ) : (
-                      <Icon name="dns" size={14} style={{ color: "#16a34a" }} />
+                      <Icon name="dns" size={14} style={{ color: "var(--navy)" }} />
                     )}
-                    <span style={{ fontSize: 12, fontWeight: 600, color: "#16a34a" }}>{activeGuild.name}</span>
-                    <OnlineDot />
-                    <Icon name="expand_more" size={14} style={{ color: "#16a34a", marginLeft: 2, transform: showServerDropdown ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "var(--navy)" }}>{activeGuild.name}</span>
+                    <Icon name="expand_more" size={14} style={{ color: "var(--navy)", marginLeft: 2, transform: showServerDropdown ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
                   </div>
 
                   {showServerDropdown && (
@@ -190,7 +203,7 @@ function Dashboard({
                           return (
                             <div
                               key={g.id}
-                              onClick={() => { onActivate(g.id); setShowServerDropdown(false); }}
+                              onClick={() => { onActivate(g.id, g); setShowServerDropdown(false); }}
                               style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", cursor: "pointer", background: isSelected ? "var(--red-dim)" : "transparent", transition: "background 0.2s" }}
                               onMouseEnter={e => e.currentTarget.style.backgroundColor = isSelected ? "var(--red-dim)" : "var(--surface-2)"}
                               onMouseLeave={e => e.currentTarget.style.backgroundColor = isSelected ? "var(--red-dim)" : "transparent"}
@@ -271,6 +284,9 @@ function Dashboard({
             {tab === "utils" && (
               <CrawlerTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
             )}
+            {tab === "docs" && (
+              <DocsTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
+            )}
           </div>
         </div>
       </div>
@@ -286,7 +302,7 @@ function BootScreen() {
   return (
     <div style={{
       height: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
-      background: "var(--bg)", fontFamily: "'DM Sans', sans-serif",
+      background: "var(--bg)", fontFamily: "'Plus Jakarta Sans', sans-serif",
     }}>
       <div style={{
         display: "flex", flexDirection: "column", alignItems: "center", gap: 24,
@@ -294,22 +310,27 @@ function BootScreen() {
       }}>
         {/* Logo mark */}
         <div style={{
-          width: 64, height: 64, borderRadius: 16,
-          background: "var(--navy)",
+          position: "relative", width: 64, height: 64,
           display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: "0 8px 32px rgba(43,45,66,0.25)",
-          position: "relative",
         }}>
-          <Icon name="shield_lock" fill size={30} style={{ color: "#fff" }} />
+          <img
+            src="/LOGO.png"
+            alt="VaultBot"
+            style={{
+              width: "100%", height: "100%",
+              objectFit: "contain",
+            }}
+          />
           <span style={{
-            position: "absolute", inset: -4, borderRadius: 20,
+            position: "absolute", inset: -4, borderRadius: "50%",
             border: "2px solid var(--accent)", opacity: 0.35,
             animation: "pulse-dot 2.5s infinite",
+            pointerEvents: "none",
           }} />
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "var(--navy)" }}>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--navy)" }}>
             Vault<span style={{ color: "var(--accent)" }}>Bot</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--muted)" }}>
@@ -444,10 +465,51 @@ export default function App() {
     LS.set("wb_guilds", updated);
   };
 
-  const handleActivateServer = (id) => {
+  const handleActivateServer = async (id, serverObj = null) => {
     setActiveGuildId(id);
     LS.strSet("wb_active_guild", id);
+
+    if (serverObj) {
+      const exists = guilds.some(g => g.id === id);
+      if (!exists) {
+        const tempGuild = {
+          id: id,
+          name: serverObj.name,
+          icon: serverObj.icon,
+          config_status: "configured",
+          channel_count: 0,
+          is_paused: false,
+        };
+        const updated = [...guilds, tempGuild];
+        setGuilds(updated);
+        LS.set("wb_guilds", updated);
+      }
+    }
+
     setView("dashboard");
+
+    try {
+      const [guildsRes, statusRes] = await Promise.all([
+        API.getGuilds(),
+        API.listServersWithStatus(),
+      ]);
+      const allGuilds = guildsRes.guilds || [];
+      const dbServers = statusRes.servers || [];
+      setDiscordGuilds(allGuilds);
+
+      const mappedConfigured = dbServers.map(s => {
+        const dcGuild = allGuilds.find(g => g.id === s.guild_id);
+        return {
+          id: s.guild_id, name: s.name, icon: dcGuild?.icon || null,
+          config_status: s.config_status, channel_count: s.channel_count,
+          has_custom_prompt: s.has_custom_prompt, is_paused: s.is_paused,
+        };
+      });
+      setGuilds(mappedConfigured);
+      LS.set("wb_guilds", mappedConfigured);
+    } catch (e) {
+      console.error("Error refreshing servers:", e);
+    }
   };
 
   const handleLogout = async () => {
@@ -463,6 +525,7 @@ export default function App() {
   };
 
   const discordLogin = () => { window.location.href = `${API_BASE}/auth/discord`; };
+  const discordInvite = () => { window.location.href = `${API_BASE}/auth/invite`; };
 
   if (booting) {
     return (
@@ -480,12 +543,27 @@ export default function App() {
         <LandingPage
           user={user}
           onLogin={discordLogin}
+          onInvite={discordInvite}
           onShowDashboard={() => setView("servers")}
           onShowPricing={() => setView("pricing")}
         />
       )}
       {view === "pricing" && (
-        <PricingPage onBack={() => setView("landing")} />
+        <PricingPage
+          user={user}
+          onLogin={discordLogin}
+          onInvite={discordInvite}
+          onShowDashboard={() => setView("servers")}
+          onBack={(hash) => {
+            setView("landing");
+            if (hash) {
+              setTimeout(() => {
+                const el = document.getElementById(hash.replace("#", ""));
+                if (el) el.scrollIntoView({ behavior: "smooth" });
+              }, 100);
+            }
+          }}
+        />
       )}
       {view === "servers" && (
         <ServerSelect
@@ -507,6 +585,7 @@ export default function App() {
           onActivate={handleActivateServer}
           onLogout={handleLogout}
           onGuildsChange={handleGuildsChange}
+          onShowPricing={() => setView("pricing")}
         />
       )}
     </>

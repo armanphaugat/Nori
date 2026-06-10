@@ -163,7 +163,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
                 padding: "4px 10px",
                 background: "var(--surface-2)", border: "1px solid var(--border2)",
                 borderRadius: "var(--r-full)", fontSize: 12, color: "var(--navy)",
-                fontFamily: "'DM Sans', sans-serif",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
               }}>
                 <Icon name="insert_drive_file" size={13} style={{ color: "var(--accent)" }} />
                 {f.name.length > 22 ? f.name.slice(0, 19) + "…" : f.name}

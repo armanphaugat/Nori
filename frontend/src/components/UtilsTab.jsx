@@ -84,7 +84,7 @@ export default function UtilsTab({ guildId, onGoToOverview, user }) {
                 width: "100%", padding: "8px 14px 8px 36px",
                 borderRadius: "var(--r-full)", background: "var(--surface-2)",
                 border: "1.5px solid var(--border2)", color: "var(--text)", outline: "none", fontSize: 13.5,
-                fontFamily: "'DM Sans', sans-serif", transition: "border-color var(--tr)",
+                fontFamily: "'Plus Jakarta Sans', sans-serif", transition: "border-color var(--tr)",
               }}
               onFocus={e => e.target.style.borderColor = "var(--accent)"}
               onBlur={e => e.target.style.borderColor = "var(--border2)"}
@@ -99,7 +99,7 @@ export default function UtilsTab({ guildId, onGoToOverview, user }) {
                 color: scope === val ? "var(--accent-deep)" : "var(--muted)",
                 fontSize: 12.5, fontWeight: 600, cursor: "pointer",
                 display: "inline-flex", alignItems: "center", gap: 5,
-                transition: "all var(--tr)", fontFamily: "'DM Sans', sans-serif",
+                transition: "all var(--tr)", fontFamily: "'Plus Jakarta Sans', sans-serif",
               }}>
                 <Icon name={icon} size={13} /> {label}
               </button>
@@ -112,7 +112,7 @@ export default function UtilsTab({ guildId, onGoToOverview, user }) {
                 background: filterType === t ? "var(--red-dim)" : "var(--surface)",
                 color: filterType === t ? "var(--accent-deep)" : "var(--muted)",
                 fontSize: 11, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: ".04em",
-                transition: "all var(--tr)", fontFamily: "'DM Sans', sans-serif",
+                transition: "all var(--tr)", fontFamily: "'Plus Jakarta Sans', sans-serif",
               }}>{t}</button>
             ))}
           </div>
@@ -219,7 +219,7 @@ export default function UtilsTab({ guildId, onGoToOverview, user }) {
               padding: "18px 24px", borderBottom: "1px solid var(--border)",
               background: "var(--surface-2)",
             }}>
-              <h3 style={{ margin: 0, fontFamily: "'Playfair Display',serif", fontSize: 17, fontWeight: 600, color: "var(--navy)", display: "flex", alignItems: "center", gap: 8 }}>
+              <h3 style={{ margin: 0, fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 600, color: "var(--navy)", display: "flex", alignItems: "center", gap: 8 }}>
                 <Icon name="info" size={17} style={{ color: "var(--accent)" }} /> Source Inspector
               </h3>
               <button onClick={() => setInspectUpload(null)} style={{ background: "transparent", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 18 }}>✕</button>
@@ -269,7 +269,7 @@ export default function UtilsTab({ guildId, onGoToOverview, user }) {
               padding: "16px 24px", borderBottom: "1px solid var(--red-border)",
               background: "var(--red-dim)",
             }}>
-              <h3 style={{ margin: 0, fontFamily: "'Playfair Display',serif", fontSize: 17, fontWeight: 600, color: "var(--accent-deep)", display: "flex", alignItems: "center", gap: 8 }}>
+              <h3 style={{ margin: 0, fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 600, color: "var(--accent-deep)", display: "flex", alignItems: "center", gap: 8 }}>
                 <Icon name="warning" size={17} /> Confirm Deletion
               </h3>
               <button onClick={() => setDeleteTarget(null)} style={{ background: "transparent", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 18 }}>✕</button>

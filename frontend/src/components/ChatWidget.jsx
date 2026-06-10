@@ -2,11 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { API } from "../utils/api.js";
 import { Icon, OnlineDot, Spinner } from "./Common.jsx";
 
-function DiscordIcon({ size = 16 }) {
+// ── Glowing Bot Avatar ──
+function BotAvatar({ size = 32 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
-    </svg>
+    <div style={{ width: size, height: size, flexShrink: 0, borderRadius: 8, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <img src="/LOGO.png" alt="VaultBot Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+    </div>
   );
 }
 
@@ -15,13 +16,22 @@ export default function ChatWidget({ guildId, guildName }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput]     = useState("");
   const [loading, setLoading] = useState(false);
+  const [reactions, setReactions] = useState({}); // { [messageIndex]: 'like' | 'dislike' }
+  const [copiedIndex, setCopiedIndex] = useState(null);
   const bottomRef = useRef(null);
   const inputRef  = useRef(null);
+
+  const suggestions = [
+    { label: "Channel Management", q: "How do I configure channels?" },
+    { label: "Knowledge Base", q: "How do I upload new documents?" },
+    { label: "URL Crawler", q: "How do I crawl and ingest website content?" }
+  ];
 
   useEffect(() => {
     setMessages([{
       role: "bot",
       text: `Hi! Ask me anything about ${guildName || "the knowledge base"}.`,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }]);
   }, [guildId, guildName]);
 
@@ -33,78 +43,147 @@ export default function ChatWidget({ guildId, guildName }) {
     if (open) setTimeout(() => inputRef.current?.focus(), 200);
   }, [open]);
 
-  const send = async () => {
-    const q = input.trim();
-    if (!q || loading) return;
-    setInput("");
-    setMessages(m => [...m, { role: "user", text: q }]);
+  const sendQuery = async (queryText) => {
+    if (!queryText || loading) return;
+    setMessages(m => [...m, { 
+      role: "user", 
+      text: queryText,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }]);
     setLoading(true);
     try {
-      const d = await API.query(q, guildId);
-      setMessages(m => [...m, { role: "bot", text: d.answer || d.response || JSON.stringify(d) }]);
+      const d = await API.query(queryText, guildId);
+      setMessages(m => [...m, { 
+        role: "bot", 
+        text: d.answer || d.response || JSON.stringify(d),
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }]);
     } catch (e) {
       setMessages(m => [...m, { role: "bot", text: "Error: " + e.message, error: true }]);
     }
     setLoading(false);
   };
 
+  const handleSend = () => {
+    const q = input.trim();
+    if (!q) return;
+    setInput("");
+    sendQuery(q);
+  };
+
+  const handleSuggestionClick = (q) => {
+    sendQuery(q);
+  };
+
+  const handleReact = (idx, type) => {
+    setReactions(prev => ({
+      ...prev,
+      [idx]: prev[idx] === type ? null : type
+    }));
+  };
+
+  const handleCopy = (idx, text) => {
+    navigator.clipboard.writeText(text);
+    setCopiedIndex(idx);
+    setTimeout(() => setCopiedIndex(null), 2000);
+  };
+
+  const WIDGET_CSS = `
+    @keyframes slideInUp {
+      from { opacity: 0; transform: translateY(16px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes pulse-dot {
+      0% { box-shadow: 0 0 0 0 rgba(82, 183, 136, 0.7); }
+      70% { box-shadow: 0 0 0 6px rgba(82, 183, 136, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(82, 183, 136, 0); }
+    }
+    @keyframes typing-bubble {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+    .typing-indicator-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--muted);
+      display: inline-block;
+      animation: typing-bubble 1.2s infinite ease-in-out;
+    }
+    .typing-indicator-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator-dot:nth-child(3) { animation-delay: 0.4s; }
+    
+    .fancy-fab {
+      background: linear-gradient(135deg, var(--navy) 0%, #1e2229 100%);
+      box-shadow: 0 8px 24px rgba(43,45,66,0.18), inset 0 1px 0 rgba(255,255,255,0.12);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .fancy-fab:hover {
+      transform: scale(1.04) translateY(-2px);
+      box-shadow: 0 12px 32px rgba(43,45,66,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+    .fancy-fab:active {
+      transform: scale(0.98) translateY(0);
+    }
+    .message-bubble-bot {
+      animation: slideInUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .message-bubble-user {
+      animation: slideInUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+  `;
+
   return (
     <>
+      <style dangerouslySetInnerHTML={{ __html: WIDGET_CSS }} />
+
       {/* ── Chat panel ── */}
       <div style={{
-        position: "fixed", bottom: 88, right: 24, width: 380, height: 520,
+        position: "fixed", bottom: 88, right: 24, width: 390, height: 550,
         background: "var(--surface)",
         border: "1px solid var(--border2)",
-        borderRadius: "var(--r-xl)",
-        boxShadow: "var(--shadow-lg)",
+        borderRadius: 24,
+        boxShadow: "0 16px 48px rgba(43,45,66,0.15), 0 2px 8px rgba(43,45,66,0.05)",
         zIndex: 200,
         display: "flex", flexDirection: "column", overflow: "hidden",
-        transform: open ? "scale(1) translateY(0)" : "scale(0.93) translateY(14px)",
+        transform: open ? "scale(1) translateY(0)" : "scale(0.92) translateY(18px)",
         opacity: open ? 1 : 0,
         pointerEvents: open ? "all" : "none",
-        transition: "transform .3s cubic-bezier(0.16,1,0.3,1), opacity .2s ease",
+        transition: "transform .35s cubic-bezier(0.16,1,0.3,1), opacity .25s ease",
         transformOrigin: "bottom right",
       }}>
 
         {/* Header */}
         <div style={{
-          padding: "12px 16px",
+          padding: "16px 20px",
           borderBottom: "1px solid var(--border)",
-          display: "flex", alignItems: "center", gap: 10,
-          background: "var(--navy)",
+          display: "flex", alignItems: "center", gap: 12,
+          background: "linear-gradient(135deg, var(--navy) 0%, #1e2229 100%)",
           flexShrink: 0,
+          boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
         }}>
-          <div style={{
-            width: 34, height: 34, borderRadius: "var(--r-md)",
-            background: "rgba(255,255,255,0.1)",
-            border: "1px solid rgba(255,255,255,0.15)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            <Icon name="shield_lock" size={17} fill style={{ color: "#fff" }} />
-          </div>
+          <BotAvatar size={36} />
           <div style={{ flex: 1 }}>
             <div style={{
-              fontSize: 14, fontWeight: 600, color: "#fff",
-              fontFamily: "'Playfair Display', serif",
+              fontSize: 14.5, fontWeight: 700, color: "#fff",
+              fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.01em",
             }}>
               {guildName || "VaultBot"}
             </div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", fontWeight: 400 }}>
-              RAG Assistant
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.55)", fontWeight: 400, marginTop: 1 }}>
+              Typically replies instantly
             </div>
           </div>
-          <OnlineDot />
           <button
             onClick={() => setOpen(false)}
             style={{
-              background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
-              borderRadius: "var(--r-sm)", width: 28, height: 28,
+              background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)",
+              borderRadius: 8, width: 28, height: 28,
               display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", color: "rgba(255,255,255,0.6)",
-              transition: "all var(--tr)", marginLeft: 4,
+              cursor: "pointer", color: "rgba(255,255,255,0.7)",
+              transition: "all var(--tr)",
             }}
-            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.15)"}
-            onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "#fff"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "rgba(255,255,255,0.7)"; }}
           >
             <Icon name="close" size={15} />
           </button>
@@ -112,71 +191,165 @@ export default function ChatWidget({ guildId, guildName }) {
 
         {/* Messages */}
         <div style={{
-          flex: 1, overflowY: "auto", padding: "16px",
-          display: "flex", flexDirection: "column", gap: 14,
-          background: "var(--surface-2)",
+          flex: 1, overflowY: "auto", padding: "20px 18px",
+          display: "flex", flexDirection: "column", gap: 18,
+          background: "linear-gradient(to bottom, var(--surface-2) 0%, var(--bg) 100%)",
         }}>
+          
+          {/* Welcome Dashboard Block */}
+          {messages.length <= 1 && (
+            <div style={{
+              background: "var(--surface)", border: "1px solid var(--border2)",
+              borderRadius: 16, padding: "20px 18px", display: "flex", flexDirection: "column",
+              gap: 12, boxShadow: "var(--shadow-sm)", marginBottom: 4,
+              animation: "slideInUp .35s ease both"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <BotAvatar size={40} />
+                <div>
+                  <h3 style={{ fontSize: 14.5, fontWeight: 700, color: "var(--navy)", margin: 0 }}>VaultBot Assistant</h3>
+                  <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 500 }}>AI Concierge</span>
+                </div>
+              </div>
+              <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6, margin: 0, fontWeight: 400 }}>
+                Hello! I am trained on your server documents and configurations. Ask me anything to get instant help.
+              </p>
+            </div>
+          )}
+
           {messages.map((msg, i) => (
-            <div key={i} style={{ animation: "fadeUp .25s ease both" }}>
+            <div key={i} className={msg.role === "user" ? "message-bubble-user" : "message-bubble-bot"}>
               {msg.role === "user" ? (
-                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
                   <div style={{
-                    background: "var(--navy)",
-                    borderRadius: "12px 4px 12px 12px",
-                    padding: "9px 14px",
+                    background: "linear-gradient(135deg, var(--navy) 0%, #1a1c23 100%)",
+                    borderRadius: "16px 16px 4px 16px",
+                    padding: "10px 16px",
                     fontSize: 13.5, color: "#fff",
-                    maxWidth: 260, lineHeight: 1.55,
-                    boxShadow: "0 2px 10px rgba(43,45,66,0.15)",
+                    maxWidth: 270, lineHeight: 1.55,
+                    boxShadow: "0 4px 14px rgba(43,45,66,0.12)",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
                   }}>
                     {msg.text}
                   </div>
+                  <span style={{ fontSize: 10, color: "var(--muted2)", marginRight: 4 }}>
+                    {msg.time}
+                  </span>
                 </div>
               ) : (
-                <div style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
-                  <div style={{
-                    width: 28, height: 28, borderRadius: "var(--r-sm)",
-                    background: "var(--red-dim)",
-                    border: "1px solid var(--red-border)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    flexShrink: 0, marginTop: 1,
-                  }}>
-                    <Icon name="shield_lock" size={14} fill style={{ color: "var(--accent-deep)" }} />
-                  </div>
-                  <div style={{
-                    background: msg.error ? "rgba(239,35,60,0.06)" : "var(--surface)",
-                    border: `1px solid ${msg.error ? "var(--red-border)" : "var(--border2)"}`,
-                    borderRadius: "4px 12px 12px 12px",
-                    padding: "10px 14px",
-                    fontSize: 13.5,
-                    color: msg.error ? "var(--accent-deep)" : "var(--muted)",
-                    maxWidth: 280, lineHeight: 1.65,
-                    boxShadow: "var(--shadow-sm)",
-                  }}>
-                    {msg.text}
+                <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                  <BotAvatar size={30} />
+                  <div style={{ display: "flex", flexDirection: "column", gap: 5, flex: 1 }}>
+                    <div style={{
+                      background: msg.error ? "rgba(239,35,60,0.06)" : "var(--surface)",
+                      border: `1px solid ${msg.error ? "var(--red-border)" : "var(--border2)"}`,
+                      borderRadius: "4px 16px 16px 16px",
+                      padding: "11px 16px",
+                      fontSize: 13.5,
+                      color: msg.error ? "var(--accent-deep)" : "var(--navy)",
+                      maxWidth: 280, lineHeight: 1.6,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    }}>
+                      {msg.text}
+                    </div>
+                    {/* Reactions & Helper Utilities */}
+                    {!msg.error && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, paddingLeft: 4 }}>
+                        <span style={{ fontSize: 10.5, color: "var(--muted2)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                          {msg.time || "Just now"}
+                        </span>
+                        <span style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--border2)" }} />
+                        
+                        {/* Like Button */}
+                        <button
+                          onClick={() => handleReact(i, "like")}
+                          style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", color: reactions[i] === "like" ? "var(--accent)" : "var(--muted2)", transition: "color 0.2s" }}
+                        >
+                          <Icon name="thumb_up" size={11} fill={reactions[i] === "like"} />
+                        </button>
+                        
+                        {/* Dislike Button */}
+                        <button
+                          onClick={() => handleReact(i, "dislike")}
+                          style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", color: reactions[i] === "dislike" ? "var(--accent)" : "var(--muted2)", transition: "color 0.2s" }}
+                        >
+                          <Icon name="thumb_down" size={11} fill={reactions[i] === "dislike"} />
+                        </button>
+                        
+                        {/* Copy Button */}
+                        <button
+                          onClick={() => handleCopy(i, msg.text)}
+                          style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 3, color: "var(--muted2)", fontSize: 10, fontWeight: 500, fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                        >
+                          <Icon name={copiedIndex === i ? "done" : "content_copy"} size={11} />
+                          {copiedIndex === i && <span style={{ color: "#16a34a" }}>Copied</span>}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
             </div>
           ))}
 
-          {loading && (
-            <div style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: "var(--r-sm)",
-                background: "var(--red-dim)", border: "1px solid var(--red-border)",
-                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-              }}>
-                <Icon name="shield_lock" size={14} fill style={{ color: "var(--accent-deep)" }} />
+          {/* Suggested Prompts Block */}
+          {messages.length <= 1 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted2)", textTransform: "uppercase", letterSpacing: "0.8px", paddingLeft: 4 }}>
+                Suggested Topics
               </div>
-              <div style={{
-                background: "var(--surface)", border: "1px solid var(--border2)",
-                borderRadius: "4px 12px 12px 12px",
-                padding: "12px 16px", display: "flex", gap: 5, alignItems: "center",
-                boxShadow: "var(--shadow-sm)",
-              }}>
-                {[0, 1, 2].map(i => (
-                  <span key={i} className="typing-dot" style={{ animationDelay: `${i * 0.2}s` }} />
-                ))}
+              {suggestions.map((s, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => handleSuggestionClick(s.q)}
+                  style={{
+                    padding: "10px 14px", background: "var(--surface)",
+                    border: "1px solid var(--border2)", borderRadius: 12,
+                    fontSize: 12.5, color: "var(--navy)", fontWeight: 500,
+                    cursor: "pointer", transition: "all .2s ease",
+                    display: "flex", alignItems: "center", gap: 10,
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.02)",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                    e.currentTarget.style.borderColor = "var(--accent)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(239,35,60,0.08)";
+                    e.currentTarget.style.color = "var(--accent-deep)";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = "none";
+                    e.currentTarget.style.borderColor = "var(--border2)";
+                    e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.02)";
+                    e.currentTarget.style.color = "var(--navy)";
+                  }}
+                >
+                  <Icon name="chat_bubble_outline" size={13} style={{ color: "var(--accent)" }} />
+                  <span style={{ flex: 1 }}>{s.q}</span>
+                  <Icon name="arrow_forward" size={12} style={{ opacity: 0.5 }} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {loading && (
+            <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+              <BotAvatar size={30} />
+              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <div style={{
+                  background: "var(--surface)", border: "1px solid var(--border2)",
+                  borderRadius: "4px 16px 16px 16px",
+                  padding: "12px 16px", display: "flex", gap: 4, alignItems: "center",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
+                }}>
+                  <span className="typing-indicator-dot" />
+                  <span className="typing-indicator-dot" />
+                  <span className="typing-indicator-dot" />
+                </div>
+                <span style={{ fontSize: 11, color: "var(--muted2)", fontStyle: "italic", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                  searching documentation...
+                </span>
               </div>
             </div>
           )}
@@ -186,7 +359,7 @@ export default function ChatWidget({ guildId, guildName }) {
 
         {/* Input bar */}
         <div style={{
-          padding: "10px 12px 14px",
+          padding: "12px 16px 16px",
           borderTop: "1px solid var(--border)",
           background: "var(--surface)",
           flexShrink: 0,
@@ -195,7 +368,7 @@ export default function ChatWidget({ guildId, guildName }) {
             display: "flex", alignItems: "flex-end", gap: 8,
             background: "var(--surface-2)",
             border: "1.5px solid var(--border2)",
-            borderRadius: "var(--r-md)",
+            borderRadius: 14,
             padding: "8px 8px 8px 14px",
             transition: "border-color var(--tr), box-shadow var(--tr)",
           }}
@@ -218,29 +391,29 @@ export default function ChatWidget({ guildId, guildName }) {
                 el.style.height = Math.min(el.scrollHeight, 80) + "px";
               }}
               onKeyDown={e => {
-                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
               }}
-              placeholder="Ask a question…"
+              placeholder="Ask VaultBot a question…"
               rows={1}
               disabled={loading}
               style={{
                 flex: 1, background: "transparent", border: "none", outline: "none",
                 color: "var(--text)", fontSize: 13.5, lineHeight: 1.5,
-                resize: "none", fontFamily: "'DM Sans', sans-serif",
+                resize: "none", fontFamily: "'Plus Jakarta Sans', sans-serif",
                 minHeight: 22, maxHeight: 80,
               }}
             />
             <button
-              onClick={send}
+              onClick={handleSend}
               disabled={loading || !input.trim()}
               style={{
-                width: 32, height: 32, borderRadius: "var(--r-sm)",
+                width: 32, height: 32, borderRadius: 10,
                 border: "none", cursor: input.trim() && !loading ? "pointer" : "default",
                 background: input.trim() && !loading ? "var(--navy)" : "var(--surface-3)",
                 color: input.trim() && !loading ? "#fff" : "var(--muted2)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 flexShrink: 0, transition: "all var(--tr)",
-                boxShadow: input.trim() && !loading ? "0 2px 10px rgba(43,45,66,0.2)" : "none",
+                boxShadow: input.trim() && !loading ? "0 2px 8px rgba(43,45,66,0.2)" : "none",
               }}
             >
               {loading
@@ -252,10 +425,10 @@ export default function ChatWidget({ guildId, guildName }) {
           <div style={{
             display: "flex", alignItems: "center", gap: 5,
             marginTop: 8, fontSize: 11, color: "var(--muted2)",
-            justifyContent: "center",
+            justifyContent: "center", fontFamily: "'Plus Jakarta Sans', sans-serif",
           }}>
-            <Icon name="shield_lock" size={11} style={{ color: "var(--muted2)" }} />
-            Powered by VaultBot · Answers from your docs
+            <Icon name="verified" size={11} style={{ color: "var(--accent)" }} />
+            Answers synced from server documentation
           </div>
         </div>
       </div>
@@ -263,32 +436,27 @@ export default function ChatWidget({ guildId, guildName }) {
       {/* ── FAB toggle ── */}
       <button
         onClick={() => setOpen(o => !o)}
+        className="fancy-fab"
         style={{
           position: "fixed", bottom: 24, right: 24, zIndex: 210,
-          width: 54, height: 54, borderRadius: "50%",
-          background: open ? "var(--surface)" : "var(--navy)",
-          border: `1.5px solid ${open ? "var(--border2)" : "transparent"}`,
+          padding: open ? "0" : "10px 20px 10px 14px",
+          width: open ? 54 : "auto", height: 54,
+          borderRadius: open ? "50%" : 99,
           cursor: "pointer",
-          boxShadow: open ? "var(--shadow-sm)" : "0 8px 28px rgba(43,45,66,0.28)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          transition: "all .2s cubic-bezier(0.16,1,0.3,1)",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+          transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+          border: "none",
         }}
-        onMouseEnter={e => { if (!open) e.currentTarget.style.boxShadow = "0 8px 32px rgba(43,45,66,0.38)"; }}
-        onMouseLeave={e => { if (!open) e.currentTarget.style.boxShadow = "0 8px 28px rgba(43,45,66,0.28)"; }}
       >
-        <Icon
-          name={open ? "close" : "chat"}
-          size={22}
-          style={{ color: open ? "var(--muted)" : "#fff", transition: "all .2s" }}
-        />
-        {!open && (
-          <span style={{
-            position: "absolute", top: 10, right: 10,
-            width: 9, height: 9, borderRadius: "50%",
-            background: "var(--accent)",
-            border: "2px solid var(--surface)",
-            animation: "pulse-dot 2.5s ease infinite",
-          }} />
+        {open ? (
+          <Icon name="close" size={22} style={{ color: "#fff", transition: "all .2s" }} />
+        ) : (
+          <>
+            <BotAvatar size={28} />
+            <span style={{ fontSize: 14.5, fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#fff", letterSpacing: "-0.01em" }}>
+              Ask VaultBot
+            </span>
+          </>
         )}
       </button>
     </>

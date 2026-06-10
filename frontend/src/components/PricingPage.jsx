@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function Icon({ name, size = 20, fill = 0, style = {} }) {
   return (
@@ -27,7 +27,7 @@ function DiscordIcon({ size = 16 }) {
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
@@ -66,7 +66,7 @@ const CSS = `
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
   }
@@ -74,7 +74,7 @@ const CSS = `
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-thumb { background: var(--slate); border-radius: 99px; }
 
-  h1, h2, h3, h4 { font-family: 'Playfair Display', serif; }
+  h1, h2, h3, h4 { font-family: 'Outfit', sans-serif; }
 
   .water-bg {
     position: fixed; top:0; left:0; width:100%; height:100%;
@@ -169,7 +169,7 @@ const CSS = `
     border-radius: 99px;
     border: none;
     cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 13px;
     font-weight: 500;
     transition: all var(--tr);
@@ -242,7 +242,7 @@ const TIERS = [
   {
     id: "free",
     name: "Free",
-    tagline: "Try it out — no commitment",
+    tagline: "Try it out, no commitment",
     monthlyPrice: 0,
     yearlyPrice: 0,
     color: "slate",
@@ -380,7 +380,7 @@ const TIERS = [
   {
     id: "enterprise",
     name: "Enterprise",
-    tagline: "Custom scale — built around your needs",
+    tagline: "Custom scale, built around your needs",
     monthlyPrice: null,
     yearlyPrice: null,
     color: "navy",
@@ -432,12 +432,12 @@ const COMPARE_FEATURES = [
 
 const FAQS = [
   { q: "What counts as a 'message'?", a: "Every time a server member sends a question and VaultBot responds, that's one message. Commands, setup interactions, and analytics views don't count. You can monitor usage in real time on the dashboard." },
-  { q: "What happens if I exceed my monthly message limit?", a: "On Starter, Growth, and Pro plans you can continue using the bot — we simply bill the overage at the per-message rate shown on your plan. We'll send you an email alert at 80% and 100% of your base allocation so there are no surprises." },
+  { q: "What happens if I exceed my monthly message limit?", a: "On Starter, Growth, and Pro plans you can continue using the bot, we simply bill the overage at the per-message rate shown on your plan. We'll send you an email alert at 80% and 100% of your base allocation so there are no surprises." },
   { q: "Can I switch plans mid-month?", a: "Yes. Upgrades take effect instantly; you'll be charged a prorated amount for the remainder of the billing period. Downgrades take effect at the start of your next billing cycle." },
-  { q: "What is the free trial for paid plans?", a: "Every paid plan comes with a 14-day free trial with full access to all plan features. No credit card is required to start the trial — you only enter payment details if you decide to continue." },
+  { q: "What is the free trial for paid plans?", a: "Every paid plan comes with a 14-day free trial with full access to all plan features. No credit card is required to start the trial, you only enter payment details if you decide to continue." },
   { q: "Do documents count against my limit permanently?", a: "Deleted documents are removed from your storage and no longer count. You can replace or rotate your content library as often as you like within your plan's document slot limit." },
-  { q: "What does 'white-label' mean in the Enterprise plan?", a: "Your bot gets a fully custom name, avatar, and brand identity with zero mention of VaultBot anywhere in the interface. Members interact with your bot — not ours." },
-  { q: "Is there a discount for annual billing?", a: "Yes — switching to annual billing saves you roughly 25% compared to monthly pricing across all paid plans. You can toggle between billing periods on this page to see the exact rates." },
+  { q: "What does 'white-label' mean in the Enterprise plan?", a: "Your bot gets a fully custom name, avatar, and brand identity with zero mention of VaultBot anywhere in the interface. Members interact with your bot, not ours." },
+  { q: "Is there a discount for annual billing?", a: "Yes, switching to annual billing saves you roughly 25% compared to monthly pricing across all paid plans. You can toggle between billing periods on this page to see the exact rates." },
 ];
 
 const colorMap = {
@@ -448,17 +448,12 @@ const colorMap = {
 };
 
 function SectionLabel({ text }) {
-  return (
-    <div style={{ display:"inline-flex",alignItems:"center",gap:8,padding:"5px 14px",borderRadius:99,background:"rgba(239,35,60,0.08)",border:"1px solid rgba(239,35,60,0.22)",marginBottom:16 }}>
-      <span style={{ width:3,height:16,borderRadius:2,background:"var(--accent)",display:"inline-block" }} />
-      <span style={{ fontSize:11,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:"var(--accent-deep)",fontFamily:"'DM Sans',sans-serif" }}>{text}</span>
-    </div>
-  );
+  return null;
 }
 
 function CheckIcon({ on }) {
   if (on === true) return (
-    <span style={{ width:18,height:18,borderRadius:"50%",background:"rgba(239,35,60,0.1)",border:"1px solid rgba(239,35,60,0.22)",display:"inline-flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:"var(--accent-deep)",marginTop:1 }}>
+    <span style={{ width:18,height:18,borderRadius:"50%",background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.22)",display:"inline-flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:"#16a34a",marginTop:1 }}>
       <Icon name="check" size={11} />
     </span>
   );
@@ -471,15 +466,22 @@ function CheckIcon({ on }) {
 }
 
 function CellVal({ v }) {
-  if (v === true) return <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:24,height:24,borderRadius:"50%",background:"rgba(239,35,60,0.08)",color:"var(--accent-deep)",fontSize:13,fontWeight:700 }}>✓</span>;
+  if (v === true) return <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:24,height:24,borderRadius:"50%",background:"rgba(34,197,94,0.08)",color:"#16a34a",fontSize:13,fontWeight:700 }}>✓</span>;
   if (v === false) return <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:24,height:24,borderRadius:"50%",background:"rgba(43,45,66,0.04)",color:"#c0c4d0",fontSize:13 }}>✗</span>;
   return <span style={{ fontSize:13,color:"var(--navy)",fontWeight:500 }}>{v}</span>;
 }
 
-export default function PricingPage({ user, onLogin, onShowDashboard }) {
+export default function PricingPage({ user, onLogin, onInvite, onShowDashboard, onBack }) {
   const [annual, setAnnual] = useState(true);
   const [faq, setFaq] = useState(null);
   const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+    const fn = () => setScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", fn);
+    return () => window.removeEventListener("scroll", fn);
+  }, []);
 
   const getPrice = (tier) => {
     if (tier.enterprise) return null;
@@ -503,21 +505,43 @@ export default function PricingPage({ user, onLogin, onShowDashboard }) {
         position:"fixed",top:0,left:0,right:0,zIndex:200,height:64,
         display:"flex",alignItems:"center",justifyContent:"space-between",
         padding:"0 64px",
-        background:"rgba(237,242,244,0.95)",
+        background: scrolled ? "rgba(237,242,244,0.97)" : "rgba(237,242,244,0.82)",
         backdropFilter:"blur(20px)",
-        borderBottom:"1px solid rgba(43,45,66,0.12)",
+        borderBottom:`1px solid ${scrolled ? "rgba(43,45,66,0.15)" : "var(--border)"}`,
         transition:"all 0.3s ease",
       }}>
-        <a href="#" style={{ textDecoration:"none",display:"flex",alignItems:"center",gap:10 }}>
-          <div style={{ width:30,height:30,borderRadius:8,background:"var(--navy)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 0 16px rgba(43,45,66,0.25)",border:"1px solid rgba(43,45,66,0.2)" }}>
-            <Icon name="shield_lock" size={16} fill={1} style={{ color:"white" }} />
+        <a href="#" onClick={(e) => { e.preventDefault(); onBack ? onBack() : window.location.reload(); }} style={{ textDecoration:"none",display:"flex",alignItems:"center",gap:10 }}>
+          <div style={{ width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center" }}>
+            <img
+              src="/LOGO.png"
+              alt="VaultBot"
+              style={{ width:"100%",height:"100%",objectFit:"contain" }}
+            />
           </div>
-          <span style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>VaultBot</span>
+          <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>VaultBot</span>
         </a>
         <div className="hide900" style={{ display:"flex",alignItems:"center",gap:2 }}>
-          {[["Features","#features"],["How it Works","#howitworks"],["Pricing","#pricing"],["FAQ","#faq"]].map(([l,h],i) => (
-            <a key={i} href={h} className="nav-link" style={{ padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,letterSpacing:"0.02em",color: h==="#pricing" ? "var(--accent-deep)" : "var(--muted)",textDecoration:"none",transition:"all var(--tr)" }}>{l}</a>
+          {[["Features","#features"],["How it Works","#howitworks"],["Compare","#compare"],["FAQ","#faq"]].map(([l,h],i) => (
+            <a
+              key={i}
+              href={h}
+              onClick={(e) => {
+                e.preventDefault();
+                onBack?.(h);
+              }}
+              className="nav-link"
+              style={{ padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,letterSpacing:"0.02em",color:"var(--muted)",textDecoration:"none",transition:"all var(--tr)" }}
+            >
+              {l}
+            </a>
           ))}
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="nav-link"
+            style={{ padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,letterSpacing:"0.02em",color:"var(--accent-deep)",background:"none",border:"none",cursor:"pointer",transition:"all var(--tr)" }}
+          >
+            Pricing
+          </button>
           {user ? (
             <button onClick={onShowDashboard} className="btn-sm" style={{ marginLeft:12,display:"flex",alignItems:"center",gap:8,padding:"8px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:"var(--surface1)",color:"var(--navy)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
               <Icon name="grid_view" size={15} /> Dashboard
@@ -535,17 +559,13 @@ export default function PricingPage({ user, onLogin, onShowDashboard }) {
         <div className="bloom" style={{ top:-100,left:"20%",width:900,height:700 }} />
         <div className="bloom-slate" style={{ bottom:"5%",right:"-5%",width:500,height:500 }} />
         <div style={{ position:"relative",zIndex:1,maxWidth:760,margin:"0 auto" }}>
-          <div className="a0" style={{ display:"inline-flex",alignItems:"center",gap:8,padding:"6px 16px",borderRadius:99,background:"rgba(239,35,60,0.08)",border:"1px solid rgba(239,35,60,0.25)",fontSize:12,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--accent-deep)",marginBottom:28 }}>
-            <span className="ripple-dot" style={{ width:7,height:7,borderRadius:"50%",background:"var(--accent)",display:"inline-block" }} />
-            Simple, Transparent Pricing
-          </div>
 
-          <h1 className="a1" style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:"clamp(38px,5.5vw,72px)",lineHeight:1.05,letterSpacing:"-0.01em",color:"var(--navy)",marginBottom:20 }}>
+          <h1 className="a1" style={{ fontFamily:"'Outfit', sans-serif",fontWeight:700,fontSize:"clamp(38px,5.5vw,72px)",lineHeight:1.05,letterSpacing:"-0.01em",color:"var(--navy)",marginBottom:20 }}>
             Pay for What You Use,<br /><span className="shimmer-text">Nothing More</span>
           </h1>
 
           <p className="a2" style={{ fontSize:18,lineHeight:1.8,color:"var(--muted)",maxWidth:560,margin:"0 auto 40px",fontWeight:300 }}>
-            Every plan includes the full feature set for that tier. Exceed your base allowance? We bill only the overage — no plan-jumping required.
+            Every plan includes the full feature set for that tier. Exceed your base allowance? We bill only the overage, no plan-jumping required.
           </p>
 
           {/* Billing toggle */}
@@ -616,7 +636,7 @@ export default function PricingPage({ user, onLogin, onShowDashboard }) {
                         <Icon name={tier.icon} size={20} fill={1} />
                       </div>
                       <div>
-                        <div style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:20,color:"var(--navy)",lineHeight:1.1 }}>{tier.name}</div>
+                        <div style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:20,color:"var(--navy)",lineHeight:1.1 }}>{tier.name}</div>
                       </div>
                     </div>
 
@@ -626,19 +646,19 @@ export default function PricingPage({ user, onLogin, onShowDashboard }) {
                     <div style={{ marginBottom:20 }}>
                       {isEnterprise ? (
                         <div>
-                          <div style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:34,color:"var(--navy)",lineHeight:1 }}>Custom</div>
+                          <div style={{ fontFamily:"'Outfit', sans-serif",fontWeight:700,fontSize:34,color:"var(--navy)",lineHeight:1 }}>Custom</div>
                           <div style={{ fontSize:12,color:"var(--muted2)",marginTop:4 }}>Volume-based quote</div>
                         </div>
                       ) : price === 0 ? (
                         <div>
-                          <div style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:34,color:"var(--navy)",lineHeight:1 }}>Free</div>
+                          <div style={{ fontFamily:"'Outfit', sans-serif",fontWeight:700,fontSize:34,color:"var(--navy)",lineHeight:1 }}>Free</div>
                           <div style={{ fontSize:12,color:"var(--muted2)",marginTop:4 }}>Forever, no card needed</div>
                         </div>
                       ) : (
                         <div>
                           <div style={{ display:"flex",alignItems:"flex-end",gap:3,lineHeight:1 }}>
                             <span style={{ fontSize:15,color:"var(--muted)",fontWeight:500,alignSelf:"flex-start",marginTop:7 }}>$</span>
-                            <span style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:38,color:"var(--navy)" }}>{price}</span>
+                            <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:700,fontSize:38,color:"var(--navy)" }}>{price}</span>
                             <span style={{ fontSize:13,color:"var(--muted2)",marginBottom:5 }}>/mo</span>
                           </div>
                           <div style={{ fontSize:11.5,color:"var(--muted2)",marginTop:5 }}>
@@ -677,11 +697,11 @@ export default function PricingPage({ user, onLogin, onShowDashboard }) {
                       </div>
                     ) : !isEnterprise ? (
                       <div style={{ marginBottom:20,padding:"10px 14px",borderRadius:10,background:"rgba(43,45,66,0.04)",border:"1px solid var(--border)" }}>
-                        <div style={{ fontSize:11.5,color:"var(--muted2)" }}>No overage billing — upgrade to continue if you hit limits.</div>
+                        <div style={{ fontSize:11.5,color:"var(--muted2)" }}>No overage billing, upgrade to continue if you hit limits.</div>
                       </div>
                     ) : (
                       <div style={{ marginBottom:20,padding:"10px 14px",borderRadius:10,background:"rgba(43,45,66,0.04)",border:"1px solid var(--border)" }}>
-                        <div style={{ fontSize:11.5,color:"var(--muted2)" }}>Custom contract — SLA-backed with flexible terms.</div>
+                        <div style={{ fontSize:11.5,color:"var(--muted2)" }}>Custom contract, SLA-backed with flexible terms.</div>
                       </div>
                     )}
 
@@ -698,7 +718,7 @@ export default function PricingPage({ user, onLogin, onShowDashboard }) {
                         cursor:"pointer",
                         transition:"all var(--tr)",
                         marginBottom:20,
-                        fontFamily:"'DM Sans',sans-serif",
+                        fontFamily:"'Plus Jakarta Sans', sans-serif",
                         ...(tier.ctaStyle === "primary"
                           ? { background:"var(--accent)",color:"white",border:"none",boxShadow:"0 4px 18px rgba(239,35,60,0.3)" }
                           : tier.ctaStyle === "dark"
@@ -751,8 +771,8 @@ export default function PricingPage({ user, onLogin, onShowDashboard }) {
         <div style={{ maxWidth:1000,margin:"0 auto" }}>
           <div style={{ textAlign:"center",marginBottom:48 }}>
             <SectionLabel text="How Overage Works" />
-            <h2 style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:"clamp(26px,3.5vw,44px)",lineHeight:1.1,color:"var(--navy)",marginBottom:12 }}>No Surprise Bills, Ever</h2>
-            <p style={{ fontSize:16,color:"var(--muted)",lineHeight:1.8,maxWidth:520,margin:"0 auto",fontWeight:300 }}>Your base plan covers most usage. If a busy month pushes you over, we charge only for what's extra — and alert you before it happens.</p>
+            <h2 style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:"clamp(26px,3.5vw,44px)",lineHeight:1.1,color:"var(--navy)",marginBottom:12 }}>No Surprise Bills, Ever</h2>
+            <p style={{ fontSize:16,color:"var(--muted)",lineHeight:1.8,maxWidth:520,margin:"0 auto",fontWeight:300 }}>Your base plan covers most usage. If a busy month pushes you over, we charge only for what's extra, and alert you before it happens.</p>
           </div>
 
           <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:20 }}>
@@ -767,7 +787,7 @@ export default function PricingPage({ user, onLogin, onShowDashboard }) {
                   <Icon name={item.icon} size={20} fill={1} />
                 </div>
                 <div>
-                  <div style={{ fontSize:14,fontWeight:600,color:"var(--navy)",marginBottom:6,fontFamily:"'DM Sans',sans-serif" }}>{item.title}</div>
+                  <div style={{ fontSize:14,fontWeight:600,color:"var(--navy)",marginBottom:6,fontFamily:"'Plus Jakarta Sans', sans-serif" }}>{item.title}</div>
                   <div style={{ fontSize:13,color:"var(--muted)",lineHeight:1.6,fontWeight:300 }}>{item.desc}</div>
                 </div>
               </div>
@@ -781,7 +801,7 @@ export default function PricingPage({ user, onLogin, onShowDashboard }) {
         <div style={{ maxWidth:1200,margin:"0 auto" }}>
           <div style={{ textAlign:"center",marginBottom:48 }}>
             <SectionLabel text="Full Comparison" />
-            <h2 style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:"clamp(26px,3.5vw,44px)",lineHeight:1.1,color:"var(--navy)",marginBottom:12 }}>Every Plan, Side by Side</h2>
+            <h2 style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:"clamp(26px,3.5vw,44px)",lineHeight:1.1,color:"var(--navy)",marginBottom:12 }}>Every Plan, Side by Side</h2>
             <p style={{ fontSize:16,color:"var(--muted)",lineHeight:1.8,fontWeight:300 }}>See exactly what's in each plan before you commit.</p>
           </div>
 
@@ -816,7 +836,7 @@ export default function PricingPage({ user, onLogin, onShowDashboard }) {
       <section id="faq" style={{ padding:"88px 64px",background:"var(--surface2)",borderTop:"1px solid var(--border)" }}>
         <div style={{ maxWidth:780,margin:"0 auto",textAlign:"center" }}>
           <SectionLabel text="Questions" />
-          <h2 style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:"clamp(26px,3.5vw,44px)",lineHeight:1.1,color:"var(--navy)",marginBottom:44 }}>Pricing Questions, Answered</h2>
+          <h2 style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:"clamp(26px,3.5vw,44px)",lineHeight:1.1,color:"var(--navy)",marginBottom:44 }}>Pricing Questions, Answered</h2>
           <div style={{ display:"flex",flexDirection:"column",gap:10,textAlign:"left" }}>
             {FAQS.map((f, i) => (
               <div
@@ -824,7 +844,7 @@ export default function PricingPage({ user, onLogin, onShowDashboard }) {
                 className={`faq-item${faq === i ? " open" : ""}`}
                 onClick={() => setFaq(faq === i ? null : i)}
               >
-                <div style={{ padding:"17px 22px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,fontSize:14.5,fontWeight:600,color: faq===i ? "var(--accent-deep)" : "var(--navy)",fontFamily:"'DM Sans',sans-serif" }}>
+                <div style={{ padding:"17px 22px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,fontSize:14.5,fontWeight:600,color: faq===i ? "var(--accent-deep)" : "var(--navy)",fontFamily:"'Plus Jakarta Sans', sans-serif" }}>
                   {f.q}
                   <span style={{ width:28,height:28,borderRadius:8,background: faq===i ? "rgba(239,35,60,0.08)" : "rgba(43,45,66,0.05)",display:"flex",alignItems:"center",justifyContent:"center",color: faq===i ? "var(--accent)" : "var(--muted2)",flexShrink:0,transition:"transform var(--tr),background var(--tr)",transform: faq===i ? "rotate(180deg)" : "none" }}>
                     <Icon name="expand_more" size={18} />
@@ -844,10 +864,10 @@ export default function PricingPage({ user, onLogin, onShowDashboard }) {
         <div style={{ position:"absolute",top:-80,left:"25%",width:900,height:700,background:"radial-gradient(circle, rgba(239,35,60,0.12) 0%, transparent 70%)",pointerEvents:"none",zIndex:0 }} />
         <div style={{ position:"relative",zIndex:1,maxWidth:760,margin:"0 auto" }}>
           <SectionLabel text="Get Started Free" />
-          <h2 style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:"clamp(28px,4.5vw,56px)",color:"white",letterSpacing:"-0.01em",lineHeight:1.08,marginBottom:14 }}>Start free. Scale only when you're ready.</h2>
+          <h2 style={{ fontFamily:"'Outfit', sans-serif",fontWeight:700,fontSize:"clamp(28px,4.5vw,56px)",color:"white",letterSpacing:"-0.01em",lineHeight:1.08,marginBottom:14 }}>Start free. Scale only when you're ready.</h2>
           <p style={{ fontSize:17,color:"rgba(255,255,255,0.55)",marginBottom:40,maxWidth:460,margin:"0 auto 36px",fontWeight:300,lineHeight:1.75 }}>No credit card. No commitment. Just upload your first document and watch VaultBot go to work.</p>
           <div style={{ display:"flex",justifyContent:"center",gap:14,flexWrap:"wrap" }}>
-            <button onClick={onLogin} className="btn-primary glow-red" style={{ display:"flex",alignItems:"center",gap:10,padding:"15px 30px",borderRadius:12,fontSize:15,fontWeight:600,background:"var(--accent)",color:"white",border:"none",cursor:"pointer",boxShadow:"0 0 28px var(--red-glow)",transition:"all var(--tr)" }}>
+            <button onClick={onInvite} className="btn-primary glow-red" style={{ display:"flex",alignItems:"center",gap:10,padding:"15px 30px",borderRadius:12,fontSize:15,fontWeight:600,background:"var(--accent)",color:"white",border:"none",cursor:"pointer",boxShadow:"0 0 28px var(--red-glow)",transition:"all var(--tr)" }}>
               <DiscordIcon size={16} /> Add VaultBot Free
               <Icon name="arrow_forward" size={16} />
             </button>
@@ -863,10 +883,20 @@ export default function PricingPage({ user, onLogin, onShowDashboard }) {
       <footer style={{ background:"var(--surface3)",borderTop:"1px solid var(--border2)",padding:"48px 64px 36px" }}>
         <div style={{ maxWidth:1200,margin:"0 auto",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:20 }}>
           <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-            <div style={{ width:28,height:28,borderRadius:8,background:"var(--navy)",display:"flex",alignItems:"center",justifyContent:"center" }}>
-              <Icon name="shield_lock" size={14} fill={1} style={{ color:"white" }} />
+            <div style={{
+              width: 28, height: 28,
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <img
+                src="/LOGO.png"
+                alt="VaultBot"
+                style={{
+                  width: "100%", height: "100%",
+                  objectFit: "contain",
+                }}
+              />
             </div>
-            <span style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:20,color:"var(--navy)" }}>VaultBot</span>
+            <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:20,color:"var(--navy)" }}>VaultBot</span>
           </div>
           <div style={{ display:"flex",gap:24 }}>
             {["Features","How it Works","Pricing","FAQ","Privacy"].map((l, i) => (

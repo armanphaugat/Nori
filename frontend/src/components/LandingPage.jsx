@@ -27,7 +27,7 @@ function DiscordIcon({ size = 16 }) {
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
@@ -66,7 +66,7 @@ const CSS = `
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
   }
@@ -113,6 +113,7 @@ const CSS = `
   @keyframes scroll-mouse { 0%{opacity:0;transform:translateY(-4px);} 50%{opacity:1;} 100%{opacity:0;transform:translateY(8px);} }
   @keyframes shimmer { 0%{background-position:-200% center;} 100%{background-position:200% center;} }
   @keyframes ripple { 0%{transform:scale(1);opacity:0.5;} 100%{transform:scale(2.2);opacity:0;} }
+  @keyframes float { 0%,100%{transform:translateY(0px);} 50%{transform:translateY(-8px);} }
 
   .mascot-bounce { animation: bounce-slow 4s ease-in-out infinite; }
   .mascot-antenna { animation: antenna-wiggle 2.5s ease-in-out infinite; transform-origin: bottom center; display: inline-block; }
@@ -187,7 +188,7 @@ const CSS = `
   .ripple-dot { position: relative; }
 
   h1, h2, h3, h4 {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Outfit', sans-serif;
   }
 
   .carousel-dot {
@@ -216,12 +217,12 @@ const FEATS = [
   { icon:"robot_2",        fill:1, color:"red",   title:"Your Own AI Discord Bot",      desc:"Stop answering the same questions over and over. Your bot handles them 24/7 so you don't have to." },
   { icon:"picture_as_pdf", fill:1, color:"slate",  title:"Upload Any Document",          desc:"Drop in your PDFs, notes, or spreadsheets. The bot reads them instantly and starts answering questions from them." },
   { icon:"language",       fill:1, color:"red",   title:"Import Entire Websites",       desc:"Paste a URL and watch it crawl your whole documentation site or knowledge base in one click." },
-  { icon:"question_answer",fill:1, color:"slate",  title:"Answers From Your Content",   desc:"Every reply comes directly from what you've uploaded — not random internet guesses or hallucinations." },
+  { icon:"question_answer",fill:1, color:"slate",  title:"Answers From Your Content",   desc:"Every reply comes directly from what you've uploaded, not random internet guesses or hallucinations." },
   { icon:"tune",           fill:1, color:"red",   title:"Make It Sound Like You",       desc:"Give your bot a name, a personality, and a tone that matches your community. It's your brand, not ours." },
   { icon:"forum",          fill:1, color:"slate",  title:"Pick Which Channels It Uses",  desc:"The bot only shows up where you want it. Keep it focused, on-topic, and out of your off-topic channels." },
   { icon:"bar_chart",      fill:1, color:"red",   title:"See What's Being Asked",       desc:"A clean dashboard shows you the most common questions so you can fill gaps and improve over time." },
   { icon:"sync",           fill:1, color:"slate",  title:"Always Up to Date",            desc:"Set it and forget it. VaultBot checks your URLs regularly and pulls in any new content automatically." },
-  { icon:"image_search",   fill:1, color:"red",   title:"Works on Screenshots Too",     desc:"Upload an image or screenshot and the bot reads the text inside it — no retyping anything by hand." },
+  { icon:"image_search",   fill:1, color:"red",   title:"Works on Screenshots Too",     desc:"Upload an image or screenshot and the bot reads the text inside it, no retyping anything by hand." },
   { icon:"translate",      fill:1, color:"slate",  title:"Speaks Your Members' Language","desc":"No matter what language someone asks in, the bot detects it and responds in kind. Every time." },
   { icon:"link",           fill:1, color:"red",   title:"Always Shows Its Sources",     desc:"Every answer links back to the exact document or page it came from. Full transparency, no mystery." },
   { icon:"search",         fill:1, color:"slate",  title:"Falls Back to Web Search",    desc:"If your docs don't cover it, the bot searches the web and clearly marks that the answer came from outside." },
@@ -242,25 +243,25 @@ const STEPS = [
 const USE_CASES = [
   { tag:"Education", icon:"school",         fill:1, title:"Universities & Colleges", desc:"Students stop emailing staff about timetables and deadlines. The bot has the answers at 2am when you don't." },
   { tag:"Support",   icon:"support_agent",  fill:1, title:"Product & Customer Support", desc:"Train it on your help docs and let it handle the repetitive questions your team gets tired of answering." },
-  { tag:"Gaming",    icon:"sports_esports", fill:1, title:"Gaming Communities",      desc:"Game wikis, patch notes, item stats — players get instant answers without digging through dozens of pages." },
-  { tag:"Business",  icon:"business_center",fill:1, title:"Internal Team Servers",   desc:"Onboarding docs, HR policies, SOPs — new hires can ask anything and get an answer in seconds." },
+  { tag:"Gaming",    icon:"sports_esports", fill:1, title:"Gaming Communities",      desc:"Game wikis, patch notes, item stats, players get instant answers without digging through dozens of pages." },
+  { tag:"Business",  icon:"business_center",fill:1, title:"Internal Team Servers",   desc:"Onboarding docs, HR policies, SOPs, new hires can ask anything and get an answer in seconds." },
 ];
 
 const COMP = [
-  ["Answers From Your Own Documents",    "yes","no",      "Generic bots guess or pull from the internet. VaultBot only uses what you give it."],
-  ["PDF & File Uploads",                 "yes","no",      "Most bots can't read your files at all, let alone answer questions from them."],
+  ["Answers From Your Own Documents",    "yes","yes",     "Generic bots guess or pull from the internet. VaultBot only uses what you give it."],
+  ["PDF & File Uploads",                 "yes","yes",     "Most bots can't read your files at all, let alone answer questions from them."],
   ["Crawl and Import Websites",          "yes","no",      "Other bots don't scan URLs or sync entire documentation sites automatically."],
   ["Keeps Content Automatically Fresh",  "yes","no",      "No other bot monitors your URLs and pulls updates without you lifting a finger."],
-  ["Custom Bot Personality",             "yes","partial", "Others offer basic command prefixes. VaultBot lets you write full custom AI personas."],
-  ["Usage Analytics Dashboard",         "yes","partial", "No visual view of what questions are being asked or where answers are coming from."],
+  ["Custom Bot Personality",             "yes","no",      "Others offer basic command prefixes. VaultBot lets you write full custom AI personas."],
+  ["Usage Analytics Dashboard",          "yes","no",      "No visual view of what questions are being asked or where answers are coming from."],
 ];
 
 const FAQS = [
-  { q:"Do I need any technical skills to set this up?",    a:"None whatsoever. You log in with Discord, upload your files, and the bot is live. Everything is managed through a clean visual dashboard — no code, no configuration files, no technical knowledge needed." },
+  { q:"Do I need any technical skills to set this up?",    a:"None whatsoever. You log in with Discord, upload your files, and the bot is live. Everything is managed through a clean visual dashboard, no code, no configuration files, no technical knowledge needed." },
   { q:"Where does my uploaded content get stored?",        a:"Your documents and data stay on your own infrastructure. We never read, share, or use your content for anything other than powering your bot's answers." },
   { q:"What kinds of files can I upload?",                 a:"PDFs, Word documents, Excel spreadsheets, plain text files, images and screenshots (the bot reads the text inside them), and any public website URL or documentation site." },
-  { q:"What happens when the bot doesn't know the answer?",a:"It first searches everything you've uploaded. If it can't find a good answer there, it falls back to a live web search — and clearly tells your members that the answer came from outside your documents." },
-  { q:"Can I use it across multiple Discord servers?",     a:"Yes. Each server gets its own completely separate knowledge base and settings. Add it to as many servers as you want — they never interfere with each other." },
+  { q:"What happens when the bot doesn't know the answer?",a:"It first searches everything you've uploaded. If it can't find a good answer there, it falls back to a live web search, and clearly tells your members that the answer came from outside your documents." },
+  { q:"Can I use it across multiple Discord servers?",     a:"Yes. Each server gets its own completely separate knowledge base and settings. Add it to as many servers as you want, they never interfere with each other." },
   { q:"How much does it cost?",                            a:"There's a free tier so you can try it out without any commitment. Paid plans unlock higher usage limits and priority support when you're ready to scale." },
 ];
 
@@ -283,6 +284,10 @@ function CarouselSlider() {
   const goTo = (idx) => {
     if (animating) return;
     setCurrent(idx);
+    if (timeoutRef.current) {
+      clearInterval(timeoutRef.current);
+      timeoutRef.current = setInterval(advance, 5000);
+    }
   };
 
   const advance = () => {
@@ -297,103 +302,174 @@ function CarouselSlider() {
   }, []);
 
   return (
-    <div style={{ position:"relative", width:"100%", borderRadius:16, overflow:"hidden", background:"#1a1c2e", minHeight:420 }}>
-      {/* Slide strip */}
+    <div style={{
+      position:"relative",
+      width:"100%",
+      borderRadius:16,
+      border:"1px solid rgba(255, 255, 255, 0.12)",
+      background:"#18191c",
+      boxShadow:"0 24px 60px rgba(0, 0, 0, 0.35), 0 0 40px rgba(239, 35, 60, 0.12)",
+      overflow:"hidden",
+    }}>
+      {/* Window Header */}
       <div style={{
+        height:"38px",
+        background:"#202225",
+        borderBottom:"1px solid rgba(0,0,0,0.2)",
         display:"flex",
-        width:`${TOTAL_SLIDES * 100}%`,
-        transform:`translateX(-${(current * 100) / TOTAL_SLIDES}%)`,
-        transition:"transform 0.65s cubic-bezier(0.77,0,0.18,1)",
+        alignItems:"center",
+        padding:"0 16px",
+        position:"relative"
       }}>
-        {Array.from({ length: TOTAL_SLIDES }, (_, i) => (
-          <div
-            key={i}
-            style={{
-              width:`${100 / TOTAL_SLIDES}%`,
-              flexShrink:0,
-              position:"relative",
-            }}
-          >
-            <img
-              src={`/CHAT${i + 1}.png`}
-              alt={`Demo ${i + 1}`}
+        {/* Dots */}
+        <div style={{ display:"flex",gap:6,alignItems:"center" }}>
+          <div style={{ width:9,height:9,borderRadius:"50%",background:"#ff5f56" }} />
+          <div style={{ width:9,height:9,borderRadius:"50%",background:"#ffbd2e" }} />
+          <div style={{ width:9,height:9,borderRadius:"50%",background:"#27c93f" }} />
+        </div>
+        {/* Mock Address Bar */}
+        <div style={{
+          position:"absolute",
+          left:"50%",
+          top:"50%",
+          transform:"translate(-50%,-50%)",
+          background:"rgba(0,0,0,0.25)",
+          border:"1px solid rgba(255,255,255,0.06)",
+          padding:"3px 24px",
+          borderRadius:6,
+          fontSize:11,
+          color:"rgba(255,255,255,0.45)",
+          display:"flex",
+          alignItems:"center",
+          gap:6,
+          letterSpacing:"0.02em"
+        }}>
+          <Icon name="lock" size={10} style={{ color:"rgba(255,255,255,0.3)" }} />
+          <span>discord.com/channels/vaultbot/demo</span>
+        </div>
+      </div>
+
+      <div style={{ position:"relative", width:"100%", background:"#2f3136", overflow:"hidden", minHeight:420 }}>
+        {/* Slide strip */}
+        <div style={{
+          display:"flex",
+          width:`${TOTAL_SLIDES * 100}%`,
+          transform:`translateX(-${(current * 100) / TOTAL_SLIDES}%)`,
+          transition:"transform 0.65s cubic-bezier(0.77,0,0.18,1)",
+        }}>
+          {Array.from({ length: TOTAL_SLIDES }, (_, i) => (
+            <div
+              key={i}
               style={{
+                width:`${100 / TOTAL_SLIDES}%`,
+                flexShrink:0,
+                position:"relative",
+                background:"#0e1118",
+                display:"flex",
+                alignItems:"center",
+                justifyContent:"center",
+                padding:"24px 40px",
+              }}
+            >
+              <div style={{
+                position:"relative",
                 width:"100%",
                 height:"100%",
-                minHeight:420,
-                objectFit:"contain",
-                display:"block",
+                borderRadius:10,
+                overflow:"hidden",
+                border:"1px solid rgba(255, 255, 255, 0.08)",
+                boxShadow:"0 16px 40px rgba(0,0,0,0.45)",
+                background:"#18191c"
+              }}>
+                <img
+                  src={`/CHAT${i + 1}.png`}
+                  alt={`Demo ${i + 1}`}
+                  style={{
+                    width:"100%",
+                    height:"100%",
+                    minHeight:380,
+                    objectFit:"contain",
+                    display:"block",
+                  }}
+                />
+                {/* Glass reflection overlay */}
+                <div style={{
+                  position:"absolute",
+                  inset:0,
+                  background:"linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 40%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.12) 100%)",
+                  pointerEvents:"none"
+                }} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Left arrow */}
+        <button
+          onClick={() => goTo((current - 1 + TOTAL_SLIDES) % TOTAL_SLIDES)}
+          style={{
+            position:"absolute", left:12, top:"50%", transform:"translateY(-50%)",
+            width:36, height:36, borderRadius:"50%",
+            background:"rgba(255,255,255,0.15)", backdropFilter:"blur(8px)",
+            border:"1px solid rgba(255,255,255,0.25)",
+            color:"white", cursor:"pointer", display:"flex", alignItems:"center",
+            justifyContent:"center", zIndex:10, transition:"all 0.2s ease",
+          }}
+          onMouseEnter={e => e.currentTarget.style.background="rgba(239,35,60,0.7)"}
+          onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.15)"}
+        >
+          <Icon name="chevron_left" size={20} style={{ color:"white" }} />
+        </button>
+
+        {/* Right arrow */}
+        <button
+          onClick={() => goTo((current + 1) % TOTAL_SLIDES)}
+          style={{
+            position:"absolute", right:12, top:"50%", transform:"translateY(-50%)",
+            width:36, height:36, borderRadius:"50%",
+            background:"rgba(255,255,255,0.15)", backdropFilter:"blur(8px)",
+            border:"1px solid rgba(255,255,255,0.25)",
+            color:"white", cursor:"pointer", display:"flex", alignItems:"center",
+            justifyContent:"center", zIndex:10, transition:"all 0.2s ease",
+          }}
+          onMouseEnter={e => e.currentTarget.style.background="rgba(239,35,60,0.7)"}
+          onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.15)"}
+        >
+          <Icon name="chevron_right" size={20} style={{ color:"white" }} />
+        </button>
+
+        {/* Dot indicators */}
+        <div style={{
+          position:"absolute", bottom:14, left:"50%", transform:"translateX(-50%)",
+          display:"flex", gap:6, zIndex:10,
+        }}>
+          {Array.from({ length: TOTAL_SLIDES }, (_, i) => (
+            <button
+              key={i}
+              className="carousel-dot"
+              onClick={() => goTo(i)}
+              style={{
+                width: current === i ? 22 : 7,
+                height:7,
+                borderRadius:99,
+                background: current === i ? "var(--accent)" : "rgba(255,255,255,0.4)",
+                border:"none",
               }}
             />
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      {/* Left arrow */}
-      <button
-        onClick={() => goTo((current - 1 + TOTAL_SLIDES) % TOTAL_SLIDES)}
-        style={{
-          position:"absolute", left:12, top:"50%", transform:"translateY(-50%)",
-          width:36, height:36, borderRadius:"50%",
-          background:"rgba(255,255,255,0.15)", backdropFilter:"blur(8px)",
-          border:"1px solid rgba(255,255,255,0.25)",
-          color:"white", cursor:"pointer", display:"flex", alignItems:"center",
-          justifyContent:"center", zIndex:10, transition:"all 0.2s ease",
-        }}
-        onMouseEnter={e => e.currentTarget.style.background="rgba(239,35,60,0.7)"}
-        onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.15)"}
-      >
-        <Icon name="chevron_left" size={20} style={{ color:"white" }} />
-      </button>
-
-      {/* Right arrow */}
-      <button
-        onClick={() => goTo((current + 1) % TOTAL_SLIDES)}
-        style={{
-          position:"absolute", right:12, top:"50%", transform:"translateY(-50%)",
-          width:36, height:36, borderRadius:"50%",
-          background:"rgba(255,255,255,0.15)", backdropFilter:"blur(8px)",
-          border:"1px solid rgba(255,255,255,0.25)",
-          color:"white", cursor:"pointer", display:"flex", alignItems:"center",
-          justifyContent:"center", zIndex:10, transition:"all 0.2s ease",
-        }}
-        onMouseEnter={e => e.currentTarget.style.background="rgba(239,35,60,0.7)"}
-        onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.15)"}
-      >
-        <Icon name="chevron_right" size={20} style={{ color:"white" }} />
-      </button>
-
-      {/* Dot indicators */}
-      <div style={{
-        position:"absolute", bottom:14, left:"50%", transform:"translateX(-50%)",
-        display:"flex", gap:6, zIndex:10,
-      }}>
-        {Array.from({ length: TOTAL_SLIDES }, (_, i) => (
-          <button
-            key={i}
-            className="carousel-dot"
-            onClick={() => goTo(i)}
-            style={{
-              width: current === i ? 22 : 7,
-              height:7,
-              borderRadius:99,
-              background: current === i ? "var(--accent)" : "rgba(255,255,255,0.4)",
-              border:"none",
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Counter badge */}
-      <div style={{
-        position:"absolute", top:12, right:12,
-        fontSize:11, fontWeight:700, color:"white",
-        background:"rgba(239,35,60,0.8)",
-        padding:"4px 10px", borderRadius:6,
-        letterSpacing:"0.05em", zIndex:10,
-        backdropFilter:"blur(4px)",
-      }}>
-        {current + 1} / {TOTAL_SLIDES}
+        {/* Counter badge */}
+        <div style={{
+          position:"absolute", top:12, right:12,
+          fontSize:11, fontWeight:700, color:"white",
+          background:"rgba(239,35,60,0.8)",
+          padding:"4px 10px", borderRadius:6,
+          letterSpacing:"0.05em", zIndex:10,
+          backdropFilter:"blur(4px)",
+        }}>
+          {current + 1} / {TOTAL_SLIDES}
+        </div>
       </div>
     </div>
   );
@@ -414,27 +490,22 @@ function useReveal() {
 }
 
 function SectionLabel({ text }) {
-  return (
-    <div style={{ display:"inline-flex",alignItems:"center",gap:8,padding:"5px 14px",borderRadius:99,background:"rgba(239,35,60,0.08)",border:"1px solid rgba(239,35,60,0.22)",marginBottom:16 }}>
-      <span style={{ width:3,height:16,borderRadius:2,background:"var(--accent)",display:"inline-block" }} />
-      <span style={{ fontSize:11,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:"var(--accent-deep)",fontFamily:"'DM Sans',sans-serif" }}>{text}</span>
-    </div>
-  );
+  return null;
 }
 
 function H2({ children }) {
   return (
-    <h2 style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:"clamp(28px,4vw,52px)",lineHeight:1.1,letterSpacing:"-0.01em",color:"var(--navy)",marginBottom:12 }}>{children}</h2>
+    <h2 style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:"clamp(28px,4vw,52px)",lineHeight:1.1,letterSpacing:"-0.01em",color:"var(--navy)",marginBottom:12 }}>{children}</h2>
   );
 }
 
 function Tick({ v }) {
-  if (v === "yes") return <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:26,height:26,borderRadius:"50%",background:"rgba(239,35,60,0.1)",color:"var(--accent-deep)",fontSize:14,fontWeight:700 }}>✓</span>;
+  if (v === "yes") return <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:26,height:26,borderRadius:"50%",background:"rgba(34,197,94,0.1)",color:"#16a34a",fontSize:14,fontWeight:700 }}>✓</span>;
   if (v === "no")  return <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:26,height:26,borderRadius:"50%",background:"rgba(43,45,66,0.05)",color:"#c0c4d0",fontSize:14 }}>✗</span>;
   return                  <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:26,height:26,borderRadius:"50%",background:"rgba(141,153,174,0.15)",color:"var(--slate)",fontSize:14 }}>~</span>;
 }
 
-export default function LandingPage({ user, onLogin, onShowDashboard, onShowPricing }) {
+export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, onShowPricing }) {
   const [faq, setFaq] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const pageRef = useReveal();
@@ -461,12 +532,14 @@ export default function LandingPage({ user, onLogin, onShowDashboard, onShowPric
         transition:"all 0.3s ease",
       }}>
         <a href="#" style={{ textDecoration:"none",display:"flex",alignItems:"center",gap:10 }}>
-          <img
-            src="/LOGO.png"
-            alt="VaultBot"
-            style={{ width:30,height:30,borderRadius:8,objectFit:"contain",mixBlendMode:"multiply" }}
-          />
-          <span style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>VaultBot</span>
+          <div style={{ width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center" }}>
+            <img
+              src="/LOGO.png"
+              alt="VaultBot"
+              style={{ width:"100%",height:"100%",objectFit:"contain" }}
+            />
+          </div>
+          <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>VaultBot</span>
         </a>
         <div className="hide900" style={{ display:"flex",alignItems:"center",gap:2 }}>
           {[["Features","#features"],["How it Works","#howitworks"],["Compare","#compare"],["FAQ","#faq"]].map(([l,h],i) => (
@@ -500,44 +573,120 @@ export default function LandingPage({ user, onLogin, onShowDashboard, onShowPric
         <div className="hero-inner" style={{ width:"100%",maxWidth:1300,display:"flex",alignItems:"center",gap:48,paddingTop:64,position:"relative",zIndex:1 }}>
           {/* LEFT */}
           <div style={{ flex:1,minWidth:0 }}>
-            <div className="a0" style={{ display:"inline-flex",alignItems:"center",gap:8,padding:"6px 16px",borderRadius:99,background:"rgba(239,35,60,0.08)",border:"1px solid rgba(239,35,60,0.25)",fontSize:12,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--accent-deep)",marginBottom:28 }}>
-              <span className="ripple-dot" style={{ width:7,height:7,borderRadius:"50%",background:"var(--accent)",display:"inline-block" }} />
-              AI Assistant for Discord
-            </div>
 
-            <h1 className="a1" style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:"clamp(40px,5.5vw,76px)",lineHeight:1.04,letterSpacing:"-0.01em",color:"var(--navy)",marginBottom:22 }}>
+            <h1 className="a1" style={{ fontFamily:"'Outfit', sans-serif",fontWeight:700,fontSize:"clamp(40px,5.5vw,76px)",lineHeight:1.04,letterSpacing:"-0.01em",color:"var(--navy)",marginBottom:22 }}>
               Your Discord Server<br />
               Deserves an{" "}
               <span className="shimmer-text">AI Brain</span>
             </h1>
 
             <p className="a2" style={{ fontSize:18,lineHeight:1.8,color:"var(--muted)",maxWidth:500,marginBottom:38,fontWeight:300 }}>
-              Stop answering the same questions every day. VaultBot learns from your documents, PDFs, and websites — then handles member questions inside Discord, around the clock.
+              Stop answering the same questions every day. VaultBot learns from your documents, PDFs, and websites, then handles member questions inside Discord, around the clock.
             </p>
 
-            <div className="a3" style={{ display:"flex",gap:12,flexWrap:"wrap",marginBottom:40 }}>
-              <button onClick={user ? onShowDashboard : onLogin} className="btn-primary" style={{ display:"flex",alignItems:"center",gap:10,padding:"14px 28px",borderRadius:10,fontSize:15,fontWeight:600,background:"var(--navy)",color:"white",border:"none",cursor:"pointer",boxShadow:"0 4px 24px rgba(43,45,66,0.2)",transition:"all var(--tr)" }}>
-                <DiscordIcon size={18} /> {user ? "Go to Dashboard" : "Add to Your Server"}
+            <div className="a3" style={{ display:"flex",gap:12,flexWrap:"wrap",marginBottom:24 }}>
+              <button onClick={onInvite} className="btn-primary" style={{ display:"flex",alignItems:"center",gap:10,padding:"14px 28px",borderRadius:10,fontSize:15,fontWeight:600,background:"var(--navy)",color:"white",border:"none",cursor:"pointer",boxShadow:"0 4px 24px rgba(43,45,66,0.2)",transition:"all var(--tr)" }}>
+                <DiscordIcon size={18} /> Add to Your Server
                 <Icon name="arrow_forward" size={18} />
               </button>
               <button onClick={() => document.getElementById("playground")?.scrollIntoView({ behavior:"smooth" })} className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"14px 22px",borderRadius:10,fontSize:15,fontWeight:500,background:"white",color:"var(--muted)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
                 See It in Action
               </button>
+              <button onClick={onShowPricing} className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"14px 22px",borderRadius:10,fontSize:15,fontWeight:500,background:"white",color:"var(--muted)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
+                <Icon name="payments" size={18} style={{ color: "var(--accent)" }} /> View Pricing
+              </button>
             </div>
 
-            <div className="a4" style={{ display:"flex",alignItems:"center",gap:8,fontSize:13,color:"var(--muted2)" }}>
+            <div className="a4" style={{ display:"flex",alignItems:"center",gap:8,fontSize:13,color:"var(--muted2)",marginTop:16 }}>
               <Icon name="shield_lock" size={13} />
-              Free to get started · No credit card · Secure Discord login
+              Free to get started · No credit card · 0.8s Response Time · Secure Discord login
             </div>
           </div>
 
           {/* RIGHT — static image */}
-          <div className="a5 hide900" style={{ flex:"0 0 550px",display:"flex",alignItems:"center",justifyContent:"flex-end",marginRight:"-60px" }}>
-            <img
-              src="/CHAT.png"
-              alt="VaultBot in action"
-              style={{ width:"800px",objectFit:"contain",borderRadius:16,filter:"drop-shadow(0 24px 48px rgba(43,45,66,0.22))" }}
-            />
+          <div className="a5 hide900" style={{ flex:"0 0 550px",display:"flex",alignItems:"center",justifyContent:"flex-end",marginRight:"-60px",position:"relative" }}>
+            {/* Ambient diffuse back glow */}
+            <div style={{
+              position:"absolute",
+              top:"10%",
+              left:"20%",
+              width:"70%",
+              height:"70%",
+              background:"radial-gradient(circle, rgba(239,35,60,0.28) 0%, transparent 70%)",
+              filter:"blur(50px)",
+              pointerEvents:"none",
+              zIndex:0
+            }} />
+
+            <div style={{
+              width:"800px",
+              background:"#18191c",
+              borderRadius:16,
+              border:"1px solid rgba(255,255,255,0.12)",
+              boxShadow:"0 24px 60px rgba(0, 0, 0, 0.35), 0 0 40px rgba(239, 35, 60, 0.12)",
+              overflow:"hidden",
+              position:"relative",
+              zIndex:1,
+              transform:"perspective(1000px) rotateY(-4deg) rotateX(2deg) rotateZ(-1deg)",
+              transition:"transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)",
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform="perspective(1000px) rotateY(0deg) rotateX(0deg) rotateZ(0deg) scale(1.02)"}
+            onMouseLeave={e => e.currentTarget.style.transform="perspective(1000px) rotateY(-4deg) rotateX(2deg) rotateZ(-1deg)"}
+            >
+              {/* Window Header */}
+              <div style={{
+                height:"38px",
+                background:"#202225",
+                borderBottom:"1px solid rgba(0,0,0,0.2)",
+                display:"flex",
+                alignItems:"center",
+                padding:"0 16px",
+                position:"relative"
+              }}>
+                {/* Dots */}
+                <div style={{ display:"flex",gap:6,alignItems:"center" }}>
+                  <div style={{ width:9,height:9,borderRadius:"50%",background:"#ff5f56" }} />
+                  <div style={{ width:9,height:9,borderRadius:"50%",background:"#ffbd2e" }} />
+                  <div style={{ width:9,height:9,borderRadius:"50%",background:"#27c93f" }} />
+                </div>
+                {/* Mock Address Bar */}
+                <div style={{
+                  position:"absolute",
+                  left:"50%",
+                  top:"50%",
+                  transform:"translate(-50%,-50%)",
+                  background:"rgba(0,0,0,0.25)",
+                  border:"1px solid rgba(255,255,255,0.06)",
+                  padding:"3px 24px",
+                  borderRadius:6,
+                  fontSize:11,
+                  color:"rgba(255,255,255,0.45)",
+                  display:"flex",
+                  alignItems:"center",
+                  gap:6,
+                  letterSpacing:"0.02em"
+                }}>
+                  <Icon name="lock" size={10} style={{ color:"rgba(255,255,255,0.3)" }} />
+                  <span>discord.com/channels/vaultbot</span>
+                </div>
+              </div>
+              
+              {/* Screenshot container */}
+              <div style={{ background:"#2f3136", position:"relative" }}>
+                <img
+                  src="/CHAT.png"
+                  alt="VaultBot in action"
+                  style={{ width:"100%",display:"block",objectFit:"contain" }}
+                />
+                {/* Glass reflection overlay */}
+                <div style={{
+                  position:"absolute",
+                  inset:0,
+                  background:"linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 40%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.12) 100%)",
+                  pointerEvents:"none"
+                }} />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -553,10 +702,10 @@ export default function LandingPage({ user, onLogin, onShowDashboard, onShowPric
       <section id="playground" style={{ padding:"96px 64px",background:"var(--surface2)",borderTop:"1px solid var(--border)",position:"relative" }}>
         <div style={{ maxWidth:1200,margin:"0 auto" }}>
           <div style={{ textAlign:"center",marginBottom:48 }}>
-            <div className="rv"><SectionLabel text="Live Demo" /></div>
-            <div className="rv"><H2>See It Answer a Real Question</H2></div>
+            <div className="rv"><SectionLabel text="Feature Tour" /></div>
+            <div className="rv"><H2>Take a Tour of the Interface</H2></div>
             <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.8,maxWidth:560,margin:"0 auto",fontWeight:300 }}>
-              Click any question below and watch Vaulty pull the answer straight from an uploaded document — and show you exactly which line it came from.
+              Explore how VaultBot integrates into your channels. Flip through the features below to preview how answers, source citations, and documents appear inside Discord.
             </p>
           </div>
 
@@ -565,24 +714,51 @@ export default function LandingPage({ user, onLogin, onShowDashboard, onShowPric
             <div style={{ flex:"1 1 340px",display:"flex",flexDirection:"column",gap:12 }}>
               <div style={{ fontSize:12,fontWeight:700,color:"var(--muted2)",letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:4 }}>What VaultBot Can Do</div>
 
-              {[
-                { icon:"picture_as_pdf", label:"Reads your PDFs & documents",    sub:"Answers directly from uploaded files" },
-                { icon:"language",       label:"Crawls your websites & docs",    sub:"Auto-syncs new content automatically" },
-                { icon:"translate",      label:"Replies in any language",         sub:"Detects and matches member language" },
-                { icon:"link",           label:"Always cites its sources",        sub:"Every answer links back to the source" },
-                { icon:"image_search",   label:"Reads text from screenshots",    sub:"OCR on images — no retyping needed" },
-                { icon:"search",         label:"Falls back to web search",        sub:"Marks external answers clearly" },
-              ].map((item, idx) => (
-                <div key={idx} style={{ display:"flex",alignItems:"center",gap:12,padding:"14px 18px",borderRadius:12,border:"1px solid var(--border2)",background:"white",boxShadow:"0 2px 8px rgba(43,45,66,0.05)" }}>
-                  <div style={{ width:36,height:36,borderRadius:10,background:"rgba(239,35,60,0.08)",border:"1px solid rgba(239,35,60,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:"var(--accent-deep)" }}>
-                    <Icon name={item.icon} size={18} fill={1} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize:13,fontWeight:600,color:"var(--navy)",marginBottom:2 }}>{item.label}</div>
-                    <div style={{ fontSize:12,color:"var(--muted2)",fontWeight:300 }}>{item.sub}</div>
-                  </div>
-                </div>
-              ))}
+               {[
+                 { icon:"picture_as_pdf", label:"Reads your PDFs & documents",    sub:"Answers directly from uploaded files" },
+                 { icon:"language",       label:"Crawls your websites & docs",    sub:"Auto-syncs new content automatically" },
+                 { icon:"translate",      label:"Replies in any language",         sub:"Detects and matches member language" },
+                 { icon:"link",           label:"Always cites its sources",        sub:"Every answer links back to the source" },
+                 { icon:"image_search",   label:"Reads text from screenshots",    sub:"OCR on images, no retyping needed" },
+                 { icon:"search",         label:"Falls back to web search",        sub:"Marks external answers clearly" },
+               ].map((item, idx) => {
+                 return (
+                   <div
+                     key={idx}
+                     style={{
+                       display:"flex",
+                       alignItems:"center",
+                       gap:12,
+                       padding:"14px 18px",
+                       borderRadius:12,
+                       border:"1px solid var(--border2)",
+                       background:"white",
+                       boxShadow:"0 2px 8px rgba(43,45,66,0.03)",
+                       transition:"all 0.25s ease",
+                     }}
+                   >
+                     <div style={{
+                       width:36,
+                       height:36,
+                       borderRadius:10,
+                       background:"rgba(239,35,60,0.08)",
+                       border:"1px solid rgba(239,35,60,0.2)",
+                       display:"flex",
+                       alignItems:"center",
+                       justifyContent:"center",
+                       flexShrink:0,
+                       color:"var(--accent-deep)",
+                       transition:"all 0.25s ease",
+                     }}>
+                       <Icon name={item.icon} size={18} fill={1} />
+                     </div>
+                     <div>
+                       <div style={{ fontSize:13,fontWeight:600,color:"var(--navy)",marginBottom:2 }}>{item.label}</div>
+                       <div style={{ fontSize:12,color:"var(--muted2)",fontWeight:300 }}>{item.sub}</div>
+                     </div>
+                   </div>
+                 );
+               })}
             </div>
 
             {/* RIGHT — carousel */}
@@ -620,7 +796,7 @@ export default function LandingPage({ user, onLogin, onShowDashboard, onShowPric
             { val:"90", suf:"%", label:"Cheaper Than Hiring Staff",   col:"var(--accent)" },
           ].map((s,i) => (
             <div key={i} style={{ padding:"36px 24px",textAlign:"center",borderRight:"1px solid rgba(255,255,255,0.08)" }}>
-              <div style={{ fontFamily:"'Playfair Display',serif",fontSize:52,fontWeight:700,lineHeight:1,marginBottom:8 }}>
+              <div style={{ fontFamily:"'Outfit', sans-serif",fontSize:52,fontWeight:700,lineHeight:1,marginBottom:8 }}>
                 <span style={{ color:s.col }}>{s.val}</span>
                 <span style={{ color:"rgba(255,255,255,0.7)" }}>{s.suf}</span>
               </div>
@@ -645,10 +821,10 @@ export default function LandingPage({ user, onLogin, onShowDashboard, onShowPric
               <div key={i} className="rv step-wrap" style={{ padding:"0 20px",display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",position:"relative",zIndex:1,transitionDelay:`${i*0.08}s` }}>
                 <div className="step-icon" style={{ width:88,height:88,borderRadius:20,background:"white",border:"1px solid var(--border2)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:20,position:"relative",transition:"all 0.3s ease",color:c.text,boxShadow:"0 4px 16px rgba(43,45,66,0.08)" }}>
                   <Icon name={s.icon} size={34} fill={s.fill} />
-                  <span style={{ position:"absolute",top:-10,right:-10,width:26,height:26,borderRadius:"50%",background:s.color==="red"?"var(--navy)":c.bg,border:`1px solid ${c.border}`,color:s.color==="red"?"white":c.text,fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'DM Sans',sans-serif" }}>{s.n}</span>
+                  <span style={{ position:"absolute",top:-10,right:-10,width:26,height:26,borderRadius:"50%",background:s.color==="red"?"var(--navy)":c.bg,border:`1px solid ${c.border}`,color:s.color==="red"?"white":c.text,fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Plus Jakarta Sans', sans-serif" }}>{s.n}</span>
                 </div>
                 {i < 3 && <span style={{ position:"absolute",right:-8,top:30,color:"var(--muted2)",fontSize:20 }}>→</span>}
-                <div style={{ fontSize:14,fontWeight:600,color:"var(--navy)",marginBottom:8,fontFamily:"'DM Sans',sans-serif" }}>{s.title}</div>
+                <div style={{ fontSize:14,fontWeight:600,color:"var(--navy)",marginBottom:8,fontFamily:"'Plus Jakarta Sans', sans-serif" }}>{s.title}</div>
                 <div style={{ fontSize:13.5,color:"var(--muted)",lineHeight:1.65,fontWeight:300 }}>{s.desc}</div>
               </div>
             );
@@ -667,7 +843,7 @@ export default function LandingPage({ user, onLogin, onShowDashboard, onShowPric
             <div className="feat-icon" style={{ width:52,height:52,borderRadius:14,background:"rgba(239,35,60,0.08)",border:"1px solid rgba(239,35,60,0.22)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent-deep)",transition:"all 0.3s ease" }}>
               <Icon name="dashboard_customize" size={26} fill={1} />
             </div>
-            <h3 style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:30,color:"var(--navy)",letterSpacing:"-0.01em" }}>One Dashboard. Total Control.</h3>
+            <h3 style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:30,color:"var(--navy)",letterSpacing:"-0.01em" }}>One Dashboard. Total Control.</h3>
             <p style={{ fontSize:16,color:"var(--muted)",lineHeight:1.75,maxWidth:720,fontWeight:300 }}>Everything your bot needs lives in one place. Upload new files, add URLs, choose which channels it listens in, and watch your usage stats update in real time. No terminal. No config files. No calling your developer friend.</p>
             <div style={{ display:"flex",gap:10,flexWrap:"wrap" }}>
               {["Drag & Drop Upload","Auto-Sync Scheduler","Usage Dashboard","Zero Code Required","Per-Channel Control"].map((t,i) => (
@@ -701,15 +877,15 @@ export default function LandingPage({ user, onLogin, onShowDashboard, onShowPric
         <div style={{ maxWidth:1200,margin:"0 auto" }}>
           <div className="rv"><SectionLabel text="Who It's For" /></div>
           <div className="rv"><H2>Works for Any Kind of Community</H2></div>
-          <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.8,maxWidth:580,marginBottom:52,fontWeight:300 }}>Whether you run a study server, a help desk, a fan community, or a work team — VaultBot fits straight in.</p>
+          <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.8,maxWidth:580,marginBottom:52,fontWeight:300 }}>Whether you run a study server, a help desk, a fan community, or a work team, VaultBot fits straight in.</p>
           <div className="use-grid" style={{ display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:20 }}>
             {USE_CASES.map((u,i) => (
               <div key={i} className="rv use-card" style={{ padding:32,borderRadius:16,transition:"all 0.25s ease",transitionDelay:`${i*0.05}s`,background:"white",border:"1px solid var(--border2)",boxShadow:"0 2px 12px rgba(43,45,66,0.06)" }}>
                 <div style={{ width:50,height:50,borderRadius:14,background:"rgba(239,35,60,0.08)",border:"1px solid rgba(239,35,60,0.2)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:18,color:"var(--accent-deep)" }}>
                   <Icon name={u.icon} size={24} fill={u.fill} />
                 </div>
-                <span style={{ display:"inline-block",padding:"3px 10px",borderRadius:99,fontSize:11,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",background:"rgba(239,35,60,0.08)",color:"var(--accent-deep)",border:"1px solid rgba(239,35,60,0.2)",marginBottom:12 }}>{u.tag}</span>
-                <div style={{ fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:600,color:"var(--navy)",marginBottom:10 }}>{u.title}</div>
+                <span style={{ display:"inline-block",fontSize:18,fontWeight:800,letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--accent-deep)",marginBottom:12 }}>{u.tag}</span>
+                <div style={{ fontFamily:"'Outfit', sans-serif",fontSize:22,fontWeight:600,color:"var(--navy)",marginBottom:10 }}>{u.title}</div>
                 <div style={{ fontSize:14,color:"var(--muted)",lineHeight:1.65,fontWeight:300 }}>{u.desc}</div>
               </div>
             ))}
@@ -721,7 +897,7 @@ export default function LandingPage({ user, onLogin, onShowDashboard, onShowPric
       <section style={{ padding:"80px 64px",background:"var(--surface2)" }}>
         <div style={{ maxWidth:1200,margin:"0 auto",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(420px,1fr))",gap:56 }}>
           {[
-            { label:"The Real Benefits", title:"What you actually get when you add VaultBot", items:[["Stop repeating yourself","— the bot handles the same questions so your team doesn't have to"],["Reclaim your evenings","— it answers questions at midnight so you don't need to"],["Give instant answers","— no more 'I'll check and get back to you' delays"],["Reach everyone","— it auto-detects language and responds in kind, no extra setup"]] },
+            { label:"The Real Benefits", title:"What you actually get when you add VaultBot", items:[["Stop repeating yourself",", the bot handles the same questions so your team doesn't have to"],["Reclaim your evenings",", it answers questions at midnight so you don't need to"],["Give instant answers",", no more 'I'll check and get back to you' delays"],["Reach everyone",", it auto-detects language and responds in kind, no extra setup"]] },
             { label:"What Members Say",  title:"The difference people notice straight away",       items:[["90% fewer repeated questions","from server members within the first week"],["Round-the-clock coverage","without paying for extra staff or stretching your team thin"],["10× faster replies","to common questions compared to waiting for a human response"],["Members feel heard","because they get a real answer, not a 'check the pinned posts' reply"]] },
           ].map((col,ci) => (
             <div key={ci} className="rv" style={{ transitionDelay:`${ci*0.12}s` }}>
@@ -730,7 +906,7 @@ export default function LandingPage({ user, onLogin, onShowDashboard, onShowPric
               <div style={{ display:"flex",flexDirection:"column",gap:14,marginTop:8 }}>
                 {col.items.map(([b,r],j) => (
                   <div key={j} style={{ display:"flex",alignItems:"flex-start",gap:12 }}>
-                    <div style={{ width:22,height:22,borderRadius:"50%",background:"rgba(239,35,60,0.1)",border:"1px solid rgba(239,35,60,0.22)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:2,color:"var(--accent-deep)" }}>
+                    <div style={{ width:22,height:22,borderRadius:"50%",background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.22)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:2,color:"#16a34a" }}>
                       <Icon name="check" size={12} />
                     </div>
                     <span style={{ fontSize:15,color:"var(--muted)",lineHeight:1.6,fontWeight:300 }}>
@@ -785,7 +961,7 @@ export default function LandingPage({ user, onLogin, onShowDashboard, onShowPric
           <div style={{ display:"flex",flexDirection:"column",gap:10,marginTop:44,textAlign:"left" }}>
             {FAQS.map((f,i) => (
               <div key={i} className="rv" onClick={() => setFaq(faq===i?null:i)} style={{ background:"white",border:`1px solid ${faq===i?"rgba(239,35,60,0.3)":"var(--border2)"}`,borderRadius:13,overflow:"hidden",cursor:"pointer",transition:"border-color var(--tr)",transitionDelay:`${i*0.04}s`,boxShadow:faq===i?"0 4px 16px rgba(239,35,60,0.08)":"0 2px 8px rgba(43,45,66,0.05)" }}>
-                <div style={{ padding:"18px 22px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,fontSize:15,fontWeight:600,color:faq===i?"var(--accent-deep)":"var(--navy)",fontFamily:"'DM Sans',sans-serif" }}>
+                <div style={{ padding:"18px 22px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,fontSize:15,fontWeight:600,color:faq===i?"var(--accent-deep)":"var(--navy)",fontFamily:"'Plus Jakarta Sans', sans-serif" }}>
                   {f.q}
                   <span style={{ width:28,height:28,borderRadius:8,background:faq===i?"rgba(239,35,60,0.08)":"rgba(43,45,66,0.05)",display:"flex",alignItems:"center",justifyContent:"center",color:faq===i?"var(--accent)":"var(--muted2)",flexShrink:0,transition:"transform var(--tr),background var(--tr)",transform:faq===i?"rotate(180deg)":"none" }}>
                     <Icon name="expand_more" size={18} />
@@ -807,11 +983,14 @@ export default function LandingPage({ user, onLogin, onShowDashboard, onShowPric
         <div style={{ position:"relative",zIndex:1 }}>
           <div style={{ maxWidth:860,margin:"0 auto",borderRadius:28,padding:"80px 60px",display:"inline-block",width:"100%",border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.04)" }}>
             <div className="rv"><SectionLabel text="Get Started Free" /></div>
-            <h2 className="rv" style={{ fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:"clamp(30px,5vw,60px)",color:"white",letterSpacing:"-0.01em",lineHeight:1.08,marginBottom:16 }}>Ready to stop answering the same question twice?</h2>
+            <h2 className="rv" style={{ fontFamily:"'Outfit', sans-serif",fontWeight:700,fontSize:"clamp(30px,5vw,60px)",color:"white",letterSpacing:"-0.01em",lineHeight:1.08,marginBottom:16 }}>Ready to stop answering the same question twice?</h2>
             <p className="rv" style={{ fontSize:18,color:"rgba(255,255,255,0.55)",marginBottom:44,maxWidth:480,margin:"0 auto 40px",fontWeight:300 }}>Add VaultBot to your server in minutes. It's free to start and your members will notice the difference immediately.</p>
             <div className="rv" style={{ display:"flex",justifyContent:"center",gap:14,flexWrap:"wrap" }}>
-              <button onClick={onLogin} className="btn-primary glow-red" style={{ display:"flex",alignItems:"center",gap:10,padding:"16px 32px",borderRadius:14,fontSize:16,fontWeight:600,background:"var(--accent)",color:"white",border:"none",cursor:"pointer",boxShadow:"0 0 28px var(--red-glow)",transition:"all var(--tr)" }}>
+              <button onClick={onInvite} className="btn-primary glow-red" style={{ display:"flex",alignItems:"center",gap:10,padding:"16px 32px",borderRadius:14,fontSize:16,fontWeight:600,background:"var(--accent)",color:"white",border:"none",cursor:"pointer",boxShadow:"0 0 28px var(--red-glow)",transition:"all var(--tr)" }}>
                 <DiscordIcon size={18} /> Add VaultBot to Discord
+              </button>
+              <button onClick={onShowPricing} className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"16px 26px",borderRadius:14,fontSize:16,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",cursor:"pointer",transition:"all var(--tr)" }}>
+                <Icon name="payments" size={18} /> View Pricing Plans
               </button>
               <a href="#features" className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"16px 26px",borderRadius:14,fontSize:16,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",textDecoration:"none",transition:"all var(--tr)" }}>
                 See All Features →
@@ -827,18 +1006,20 @@ export default function LandingPage({ user, onLogin, onShowDashboard, onShowPric
         <div style={{ maxWidth:1200,margin:"0 auto",display:"grid",gridTemplateColumns:"1fr 1fr",gap:32 }}>
           <div>
             <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:16 }}>
-              <img
-                src="/LOGO.png"
-                alt="VaultBot"
-                style={{ width:30,height:30,borderRadius:8,objectFit:"contain",mixBlendMode:"multiply" }}
-              />
-              <span style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:22,color:"var(--navy)" }}>VaultBot</span>
+              <div style={{ width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center" }}>
+                <img
+                  src="/LOGO.png"
+                  alt="VaultBot"
+                  style={{ width:"100%",height:"100%",objectFit:"contain" }}
+                />
+              </div>
+              <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:22,color:"var(--navy)" }}>VaultBot</span>
             </div>
-            <p style={{ fontSize:14,color:"var(--muted)",lineHeight:1.75,maxWidth:340,marginBottom:24,fontWeight:300 }}>VaultBot is an AI assistant for Discord communities. Upload your documents, point it at your website, and let it answer your members' questions around the clock — accurately, instantly, and always with a source.</p>
+            <p style={{ fontSize:14,color:"var(--muted)",lineHeight:1.75,maxWidth:340,marginBottom:24,fontWeight:300 }}>VaultBot is an AI assistant for Discord communities. Upload your documents, point it at your website, and let it answer your members' questions around the clock, accurately, instantly, and always with a source.</p>
           </div>
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:24 }}>
             <div>
-              <h4 style={{ fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:700,color:"var(--navy)",marginBottom:16,letterSpacing:"0.06em",textTransform:"uppercase" }}>Accepts These Formats</h4>
+              <h4 style={{ fontFamily:"'Plus Jakarta Sans', sans-serif",fontSize:12,fontWeight:700,color:"var(--navy)",marginBottom:16,letterSpacing:"0.06em",textTransform:"uppercase" }}>Accepts These Formats</h4>
               <ul style={{ display:"flex",flexDirection:"column",gap:10,listStyle:"none",padding:0 }}>
                 {["PDF Documents","Websites & URLs","Excel Spreadsheets","Images & Screenshots"].map((l,i) => (
                   <li key={i} style={{ fontSize:13.5,color:"var(--muted)",display:"flex",alignItems:"center",gap:8,fontWeight:300 }}>
@@ -849,7 +1030,7 @@ export default function LandingPage({ user, onLogin, onShowDashboard, onShowPric
               </ul>
             </div>
             <div>
-              <h4 style={{ fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:700,color:"var(--navy)",marginBottom:16,letterSpacing:"0.06em",textTransform:"uppercase" }}>Links</h4>
+              <h4 style={{ fontFamily:"'Plus Jakarta Sans', sans-serif",fontSize:12,fontWeight:700,color:"var(--navy)",marginBottom:16,letterSpacing:"0.06em",textTransform:"uppercase" }}>Links</h4>
               <ul style={{ display:"flex",flexDirection:"column",gap:10,listStyle:"none",padding:0 }}>
                 {["Add to Discord","Features","Pricing","Support"].map((l,i) => (
                   <li

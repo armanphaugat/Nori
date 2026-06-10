@@ -206,7 +206,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
             <Icon name="bar_chart" size={28} style={{ color: "var(--accent)" }} />
           </div>
           <div>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--text)", marginBottom: 6, fontFamily: "'Syne', sans-serif" }}>No Analytics Recorded Yet</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--text)", marginBottom: 6, fontFamily: "'Outfit', sans-serif" }}>No Analytics Recorded Yet</h2>
             <p style={{ fontSize: 14, color: "var(--text-s)", maxWidth: 520, lineHeight: 1.6, margin: "0 auto", fontWeight: 300 }}>
               VaultBot has not processed any search queries on this server. Once members start asking questions in the configured Discord channels, details of response metrics and bot usage will populate here instantly.
             </p>
@@ -257,7 +257,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", fontFamily: "'Syne', sans-serif" }}>{totalQuestions}</span>
+            <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>{totalQuestions}</span>
             <span style={{ fontSize: 11, color: "var(--text-s)" }}>recorded</span>
           </div>
         </Card>
@@ -271,7 +271,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", fontFamily: "'Syne', sans-serif" }}>{answerRate}%</span>
+            <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>{answerRate}%</span>
             <span style={{ fontSize: 11, color: "var(--text-s)" }}>({answeredQuestions} answered)</span>
           </div>
         </Card>
@@ -285,7 +285,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", fontFamily: "'Syne', sans-serif" }}>{uniqueUsers}</span>
+            <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>{uniqueUsers}</span>
             <span style={{ fontSize: 11, color: "var(--text-s)" }}>unique members</span>
           </div>
         </Card>
@@ -299,7 +299,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", fontFamily: "'Syne', sans-serif" }}>{avgLatency}ms</span>
+            <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>{avgLatency}ms</span>
             <span style={{ fontSize: 11, color: "var(--text-s)" }}>bot response</span>
           </div>
         </Card>
@@ -311,7 +311,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
         <Card style={{ padding: 24, display: "flex", flexDirection: "column", gap: 18 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", fontFamily: "'Syne', sans-serif" }}>Query Trends</h3>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>Query Trends</h3>
               <p style={{ fontSize: 12, color: "var(--text-s)" }}>Daily query volume over the last 30 days</p>
             </div>
             <Btn onClick={() => loadAnalytics(guildId)} variant="ghost" style={{ padding: 6, minHeight: 30, minWidth: 30 }}>
@@ -342,7 +342,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
                       border: "1px solid var(--border)",
                       borderRadius: "var(--r-md)",
                       fontSize: 12.5,
-                      fontFamily: "'DM Sans', sans-serif",
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
                       boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
                     }}
                   />
@@ -361,7 +361,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
         {/* Heatmap Grid Card */}
         <Card style={{ padding: 24, display: "flex", flexDirection: "column", gap: 18 }}>
           <div>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", fontFamily: "'Syne', sans-serif" }}>Query Heatmap</h3>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>Query Heatmap</h3>
             <p style={{ fontSize: 12, color: "var(--text-s)" }}>Analysis of query volume by weekday and hour of day</p>
           </div>
 
@@ -491,7 +491,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
       <Card pad="0" style={{ overflow: "hidden" }}>
         <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", fontFamily: "'Syne', sans-serif" }}>Recent Bot Queries</h3>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>Recent Bot Queries</h3>
             <p style={{ fontSize: 12, color: "var(--text-s)" }}>Chronological list of recent queries asked by server members</p>
           </div>
           <Tag variant="neutral">{recentEvents.length} events logged</Tag>
@@ -543,19 +543,9 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
                       </td>
                       <td>
                         {hasAnswered ? (
-                          <Tag variant="success">
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                              <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e" }} />
-                              Answered
-                            </span>
-                          </Tag>
+                          <Tag variant="success">Answered</Tag>
                         ) : (
-                          <Tag variant="error">
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                              <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--accent)" }} />
-                              Unanswered
-                            </span>
-                          </Tag>
+                          <Tag variant="error">Unanswered</Tag>
                         )}
                       </td>
                       <td style={{ textAlign: "right", paddingRight: 24 }}>

@@ -239,7 +239,7 @@ export default function ChannelsTab({
     background: "var(--surface)", border: "1.5px solid var(--border2)",
     borderRadius: "var(--r-md)", color: "var(--navy)",
     cursor: "pointer", outline: "none",
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
   };
 
   const DropdownMenu = ({ list, selected, onSelect, multi }) => {
@@ -322,7 +322,7 @@ export default function ChannelsTab({
                   transition: "all var(--tr)",
                   fontSize: 13.5, fontWeight: 600,
                   color: isPaused ? "var(--accent-deep)" : "var(--muted)",
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
                   opacity: togglingPause ? 0.7 : 1,
                 }}
                 onMouseEnter={e => { if (!togglingPause) { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(43,45,66,0.1)"; } }}
@@ -355,7 +355,7 @@ export default function ChannelsTab({
                   transition: "all var(--tr)",
                   fontSize: 13.5, fontWeight: 600,
                   color: webSearchEnabled ? "rgb(37,99,235)" : "var(--muted)",
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
                   opacity: togglingWebSearch ? 0.7 : 1,
                 }}
                 onMouseEnter={e => { if (!togglingWebSearch) { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(59,130,246,0.12)"; } }}
@@ -531,7 +531,7 @@ export default function ChannelsTab({
                     Automated Ticket & Support System
                   </div>
                   <div style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.5, fontWeight: 300 }}>
-                    Configure a read-only channel with a 🎫 ticket widget. Users open private threads — they can't chat directly in the channel.
+                    Configure a read-only channel with a ticket widget. Users open private threads, they can't chat directly in the channel.
                   </div>
                 </div>
               </div>
@@ -545,7 +545,7 @@ export default function ChannelsTab({
                   <div style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 8 }}>Setup Method</div>
                   <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
                     {[["new", "Create a dedicated new channel"], ["existing", "Use an existing channel"]].map(([val, label]) => (
-                      <label key={val} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13.5, color: "var(--navy)", fontFamily: "'DM Sans', sans-serif" }}>
+                      <label key={val} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13.5, color: "var(--navy)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                         <input type="radio" name="supportSetupMode" value={val} checked={supportSetupMode === val}
                           onChange={() => setSupportSetupMode(val)}
                           style={{ accentColor: "var(--accent)" }} />

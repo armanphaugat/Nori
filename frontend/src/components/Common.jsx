@@ -2,16 +2,16 @@ import { useEffect } from "react";
 
 // ─── GLOBAL STYLES ────────────────────────────────────────────────────────────
 export const GLOBAL_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=Outfit:wght@300..900&display=swap');
   @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body, #root { min-height: 100%; height: 100%; }
 
   body {
-    font-family: 'DM Sans', sans-serif;
-    background: #EDF2F4;
-    color: #2B2D42;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: #F8FAFC;
+    color: #0F172A;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -45,27 +45,26 @@ export const GLOBAL_CSS = `
     --border:        rgba(43,45,66,0.10);
     --border2:       rgba(43,45,66,0.22);
 
-    /* ── Accent (red) ── */
+    /* ── Accent ── */
     --accent:        #EF233C;
     --accent-deep:   #D90429;
 
-    /* ── Alias tokens used in App.jsx / Dashboard dark-header ──
-       These let the header & booting screen work without separate dark CSS vars */
+    /* ── Alias tokens ── */
     --primary:       #EF233C;
     --blue:          #8D99AE;
     --on-surface-variant: #5a5d78;
     --outline-variant:    rgba(43,45,66,0.18);
 
     /* ── Misc ── */
-    --r-sm:   6px;
-    --r-md:   10px;
-    --r-lg:   14px;
-    --r-xl:   20px;
+    --r-sm:   8px;
+    --r-md:   14px;
+    --r-lg:   20px;
+    --r-xl:   28px;
     --r-full: 9999px;
     --tr:     0.2s cubic-bezier(0.4,0,0.2,1);
-    --shadow-sm: 0 2px 12px rgba(43,45,66,0.08);
-    --shadow-md: 0 8px 32px rgba(43,45,66,0.12);
-    --shadow-lg: 0 20px 60px rgba(43,45,66,0.14);
+    --shadow-sm: 0 1px 3px rgba(43,45,66,0.03), 0 1px 2px rgba(43,45,66,0.02);
+    --shadow-md: 0 4px 20px -2px rgba(43,45,66,0.05), 0 2px 8px -1px rgba(43,45,66,0.03);
+    --shadow-lg: 0 20px 48px -6px rgba(43,45,66,0.08), 0 10px 20px -4px rgba(43,45,66,0.04);
   }
 
   /* ── Material Symbols ── */
@@ -82,7 +81,7 @@ export const GLOBAL_CSS = `
   .ms-fill { font-variation-settings: 'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24; }
 
   /* ── Headings ── */
-  h1,h2,h3,h4 { font-family: 'Playfair Display', serif; }
+  h1,h2,h3,h4 { font-family: 'Outfit', sans-serif; font-weight: 700; }
 
   /* ── Animations ── */
   @keyframes fadeUp   { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
@@ -109,14 +108,14 @@ export const GLOBAL_CSS = `
     border-radius: var(--r-md);
     padding: 10px 14px;
     font-size: 14px;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     outline: none;
     transition: border-color var(--tr), box-shadow var(--tr);
   }
   .kb-input::placeholder { color: var(--muted2); }
   .kb-input:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--red-dim);
+    box-shadow: 0 0 0 3px var(--red-glow);
   }
   .kb-input option { background: #ffffff; color: var(--text); }
 
@@ -136,13 +135,13 @@ export const GLOBAL_CSS = `
 
   /* ── Nav items (sidebar) ── */
   .nav-item {
-    display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
     border-radius: var(--r-md); font-size: 14px; font-weight: 500;
     color: var(--muted); cursor: pointer; border: none; background: none;
-    font-family: 'DM Sans', sans-serif; transition: all var(--tr);
+    font-family: 'Plus Jakarta Sans', sans-serif; transition: all var(--tr);
     white-space: nowrap; width: 100%; text-align: left;
   }
-  .nav-item:hover  { background: var(--navy-light); color: var(--navy); }
+  .nav-item:hover  { background: var(--navy-light); color: var(--accent-deep); }
   .nav-item.active { background: var(--red-dim); color: var(--accent-deep); font-weight: 600; }
 
   /* ── Drop zone ── */
@@ -160,7 +159,7 @@ export const GLOBAL_CSS = `
     padding: 11px 16px; text-align: left; color: var(--muted); font-weight: 600;
     font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
     background: var(--surface-2); border-bottom: 1px solid var(--border);
-    white-space: nowrap; font-family: 'DM Sans', sans-serif;
+    white-space: nowrap; font-family: 'Plus Jakarta Sans', sans-serif;
   }
   .data-table td {
     padding: 13px 16px; border-bottom: 1px solid var(--border);
@@ -194,7 +193,7 @@ export const GLOBAL_CSS = `
   }
   .section-pill span.label {
     font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
-    color: var(--accent-deep); font-family: 'DM Sans', sans-serif;
+    color: var(--accent-deep); font-family: 'Plus Jakarta Sans', sans-serif;
   }
 `;
 
@@ -236,13 +235,7 @@ export function Spinner({ size = 16, color = "var(--accent)" }) {
 }
 
 export function OnlineDot() {
-  return (
-    <span style={{
-      width: 7, height: 7, borderRadius: "50%", display: "inline-block", flexShrink: 0,
-      background: "#22c55e", boxShadow: "0 0 6px rgba(34,197,94,0.5)",
-      animation: "pulse-dot 2.5s ease infinite",
-    }} />
-  );
+  return null;
 }
 
 export function StatusBadge({ msg, ok }) {
@@ -253,7 +246,7 @@ export function StatusBadge({ msg, ok }) {
       background: ok ? "rgba(34,197,94,0.06)" : "rgba(239,35,60,0.06)",
       border: `1px solid ${ok ? "rgba(34,197,94,0.2)" : "var(--red-border)"}`,
       color: ok ? "#16a34a" : "var(--accent-deep)",
-      fontFamily: "'DM Sans', sans-serif",
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
     }}>{msg}</div>
   );
 }
@@ -270,10 +263,10 @@ export function Tag({ children, variant = "primary", style = {} }) {
   const v = variants[variant] || variants.primary;
   return (
     <span style={{
-      display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 10px",
-      borderRadius: "var(--r-full)", fontSize: 11, fontWeight: 600, letterSpacing: ".04em",
+      display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 12px",
+      borderRadius: "var(--r-full)", fontSize: 11, fontWeight: 700, letterSpacing: ".04em",
       background: v.bg, color: v.color, border: `1px solid ${v.border}`,
-      fontFamily: "'DM Sans', sans-serif", ...style,
+      fontFamily: "'Plus Jakarta Sans', sans-serif", ...style,
     }}>{children}</span>
   );
 }
@@ -282,41 +275,47 @@ export function Btn({ children, onClick, disabled, variant = "primary", style = 
   const base = {
     display: "inline-flex", alignItems: "center", gap: 7,
     border: "none", cursor: "pointer",
-    fontFamily: "'DM Sans', sans-serif", fontWeight: 600,
-    borderRadius: "var(--r-md)", transition: "all var(--tr)",
+    fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700,
+    borderRadius: "var(--r-md)", transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
     whiteSpace: "nowrap", userSelect: "none",
     opacity: disabled ? .45 : 1,
     pointerEvents: disabled ? "none" : "auto",
-    fontSize: 14, minHeight: 40,
+    fontSize: 13.5, minHeight: 38,
   };
   const variants = {
     primary: {
-      background: "var(--navy)", color: "#fff",
-      padding: "10px 22px", boxShadow: "0 4px 16px rgba(43,45,66,0.2)",
+      background: "linear-gradient(135deg, var(--accent-deep) 0%, var(--accent) 100%)",
+      color: "#fff",
+      padding: "8px 20px",
+      boxShadow: "0 4px 14px rgba(239, 35, 60, 0.35)",
     },
     ghost: {
       background: "var(--surface)", color: "var(--muted)",
-      padding: "10px 18px", border: "1.5px solid var(--border2)",
+      padding: "8px 16px", border: "1.5px solid var(--border2)",
     },
     danger: {
       background: "rgba(239,35,60,0.07)", color: "var(--accent-deep)",
-      padding: "8px 14px", border: "1.5px solid var(--red-border)",
+      padding: "6px 12px", border: "1.5px solid var(--red-border)",
     },
     success: {
       background: "rgba(34,197,94,0.07)", color: "#15803d",
-      padding: "10px 20px", border: "1.5px solid rgba(34,197,94,0.2)",
+      padding: "8px 18px", border: "1.5px solid rgba(34,197,94,0.2)",
     },
     accent: {
-      background: "var(--accent)", color: "#fff",
-      padding: "10px 22px", boxShadow: "0 4px 16px var(--red-glow)",
+      background: "linear-gradient(135deg, var(--accent) 0%, #ff6b6b 100%)",
+      color: "#fff",
+      padding: "8px 20px",
+      boxShadow: "0 4px 14px rgba(239, 35, 60, 0.35)",
     },
     outline: {
       background: "transparent", color: "var(--accent-deep)",
-      padding: "10px 20px", border: "1.5px solid var(--red-border)",
+      padding: "8px 18px", border: "1.5px solid var(--red-border)",
     },
     discord: {
-      background: "#5865F2", color: "#fff",
-      padding: "11px 24px", boxShadow: "0 4px 20px rgba(88,101,242,0.3)",
+      background: "linear-gradient(135deg, #5865F2 0%, #404eed 100%)",
+      color: "#fff",
+      padding: "9px 22px",
+      boxShadow: "0 4px 16px rgba(88,101,242,0.25)",
     },
   };
   return (
@@ -324,8 +323,22 @@ export function Btn({ children, onClick, disabled, variant = "primary", style = 
       onClick={onClick}
       disabled={disabled}
       style={{ ...base, ...variants[variant], ...style }}
-      onMouseEnter={e => { if (!disabled) e.currentTarget.style.transform = "translateY(-1px)"; }}
-      onMouseLeave={e => { if (!disabled) e.currentTarget.style.transform = "translateY(0)"; }}
+      onMouseEnter={e => { 
+        if (!disabled) {
+          e.currentTarget.style.transform = "translateY(-1.5px)";
+          if (variant === "primary" || variant === "accent") {
+            e.currentTarget.style.boxShadow = "0 6px 20px rgba(239, 35, 60, 0.45)";
+          }
+        }
+      }}
+      onMouseLeave={e => { 
+        if (!disabled) {
+          e.currentTarget.style.transform = "translateY(0)";
+          if (variant === "primary" || variant === "accent") {
+            e.currentTarget.style.boxShadow = variants[variant].boxShadow;
+          }
+        }
+      }}
     >
       {children}
     </button>
@@ -348,12 +361,7 @@ export function Card({ children, style = {}, pad = "24px" }) {
 }
 
 export function SectionLabel({ text }) {
-  return (
-    <div className="section-pill">
-      <span className="bar" />
-      <span className="label">{text}</span>
-    </div>
-  );
+  return null;
 }
 
 export function SectionHeader({ label, title, subtitle }) {
@@ -361,11 +369,11 @@ export function SectionHeader({ label, title, subtitle }) {
     <div style={{ marginBottom: 28 }}>
       {label && <SectionLabel text={label} />}
       <h2 style={{
-        fontFamily: "'Playfair Display', serif",
-        fontWeight: 600,
+        fontFamily: "'Outfit', sans-serif",
+        fontWeight: 800,
         fontSize: "clamp(22px,3vw,32px)",
         lineHeight: 1.15,
-        letterSpacing: "-0.01em",
+        letterSpacing: "-0.025em",
         color: "var(--navy)",
         marginBottom: 6,
         marginTop: label ? 4 : 0,
@@ -402,7 +410,7 @@ export function NoServerSelected({ onGoToOverview }) {
       </div>
       <div>
         <div style={{
-          fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 600,
+          fontFamily: "'Outfit', sans-serif", fontSize: 18, fontWeight: 600,
           color: "var(--navy)", marginBottom: 8,
         }}>No server selected</div>
         <div style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.6, maxWidth: 320, fontWeight: 300 }}>
