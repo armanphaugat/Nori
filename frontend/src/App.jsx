@@ -24,6 +24,7 @@ import ChatWidget from "./components/ChatWidget.jsx";
 import PricingPage from "./components/PricingPage.jsx";
 import AnalyticsTab from "./components/AnalyticsTab.jsx";
 import DocsTab from "./components/DocsTab.jsx";
+import LegalPage from "./components/LegalPage.jsx";
 function Dashboard({ 
   user, 
   guilds, 
@@ -546,6 +547,8 @@ export default function App() {
           onInvite={discordInvite}
           onShowDashboard={() => setView("servers")}
           onShowPricing={() => setView("pricing")}
+          onShowPrivacy={() => setView("privacy")}
+          onShowTerms={() => setView("terms")}
         />
       )}
       {view === "pricing" && (
@@ -554,6 +557,8 @@ export default function App() {
           onLogin={discordLogin}
           onInvite={discordInvite}
           onShowDashboard={() => setView("servers")}
+          onShowPrivacy={() => setView("privacy")}
+          onShowTerms={() => setView("terms")}
           onBack={(hash) => {
             setView("landing");
             if (hash) {
@@ -586,6 +591,12 @@ export default function App() {
           onLogout={handleLogout}
           onGuildsChange={handleGuildsChange}
           onShowPricing={() => setView("pricing")}
+        />
+      )}
+      {(view === "privacy" || view === "terms") && (
+        <LegalPage
+          type={view}
+          onBack={() => setView("landing")}
         />
       )}
     </>

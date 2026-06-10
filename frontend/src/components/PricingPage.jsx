@@ -471,7 +471,7 @@ function CellVal({ v }) {
   return <span style={{ fontSize:13,color:"var(--navy)",fontWeight:500 }}>{v}</span>;
 }
 
-export default function PricingPage({ user, onLogin, onInvite, onShowDashboard, onBack }) {
+export default function PricingPage({ user, onLogin, onInvite, onShowDashboard, onBack, onShowPrivacy, onShowTerms }) {
   const [annual, setAnnual] = useState(true);
   const [faq, setFaq] = useState(null);
   const [scrolled, setScrolled] = useState(false);
@@ -871,7 +871,7 @@ export default function PricingPage({ user, onLogin, onInvite, onShowDashboard, 
               <DiscordIcon size={16} /> Add VaultBot Free
               <Icon name="arrow_forward" size={16} />
             </button>
-            <a href="mailto:sales@vaultbot.ai" style={{ display:"flex",alignItems:"center",gap:8,padding:"15px 24px",borderRadius:12,fontSize:15,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",textDecoration:"none",transition:"all var(--tr)" }}>
+            <a href="mailto:support@vaultbot.dev" style={{ display:"flex",alignItems:"center",gap:8,padding:"15px 24px",borderRadius:12,fontSize:15,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",textDecoration:"none",transition:"all var(--tr)" }}>
               <Icon name="mail" size={16} fill={1} /> Talk to Sales
             </a>
           </div>
@@ -898,14 +898,43 @@ export default function PricingPage({ user, onLogin, onInvite, onShowDashboard, 
             </div>
             <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:20,color:"var(--navy)" }}>VaultBot</span>
           </div>
-          <div style={{ display:"flex",gap:24 }}>
-            {["Features","How it Works","Pricing","FAQ","Privacy"].map((l, i) => (
-              <a key={i} href="#" style={{ fontSize:13,color:"var(--muted)",textDecoration:"none" }}>{l}</a>
+          <div style={{ display:"flex",gap:24,flexWrap:"wrap" }}>
+            {[
+              { label: "Features", href: "#features", onClick: (e) => { e.preventDefault(); onBack?.("#features"); } },
+              { label: "How it Works", href: "#howitworks", onClick: (e) => { e.preventDefault(); onBack?.("#howitworks"); } },
+              { label: "Pricing", onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
+              { label: "Support", href: "mailto:support@vaultbot.dev" },
+              { label: "Privacy Policy", onClick: onShowPrivacy },
+              { label: "Terms & Conditions", onClick: onShowTerms },
+            ].map((item, i) => (
+              item.href ? (
+                <a
+                  key={i}
+                  href={item.href}
+                  onClick={item.onClick}
+                  style={{ fontSize:13,color:"var(--muted)",textDecoration:"none",transition:"all var(--tr)" }}
+                  onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"}
+                  onMouseLeave={e => e.currentTarget.style.color = "var(--muted)"}
+                >
+                  {item.label}
+                </a>
+              ) : (
+                <span
+                  key={i}
+                  onClick={item.onClick}
+                  style={{ fontSize:13,color:"var(--muted)",textDecoration:"none",cursor:"pointer",transition:"all var(--tr)" }}
+                  onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"}
+                  onMouseLeave={e => e.currentTarget.style.color = "var(--muted)"}
+                >
+                  {item.label}
+                </span>
+              )
             ))}
           </div>
         </div>
         <div style={{ maxWidth:1200,margin:"24px auto 0",paddingTop:20,borderTop:"1px solid var(--border2)",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap" }}>
           <span style={{ fontSize:12,color:"var(--muted2)" }}>© 2026 VaultBot · Not affiliated with Discord Inc.</span>
+          <a href="mailto:support@vaultbot.dev" style={{ fontSize:12,color:"var(--accent-deep)",textDecoration:"none",fontWeight:600,transition:"color var(--tr)" }} onMouseEnter={e => e.currentTarget.style.color = "var(--navy)"} onMouseLeave={e => e.currentTarget.style.color = "var(--accent-deep)"}>support@vaultbot.dev</a>
           <span style={{ fontSize:12,color:"var(--muted2)" }}>Your docs. Your bot. Your community.</span>
         </div>
       </footer>

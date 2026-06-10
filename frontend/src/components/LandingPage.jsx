@@ -505,7 +505,7 @@ function Tick({ v }) {
   return                  <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:26,height:26,borderRadius:"50%",background:"rgba(141,153,174,0.15)",color:"var(--slate)",fontSize:14 }}>~</span>;
 }
 
-export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, onShowPricing }) {
+export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, onShowPricing, onShowPrivacy, onShowTerms }) {
   const [faq, setFaq] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const pageRef = useReveal();
@@ -1032,14 +1032,38 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
             <div>
               <h4 style={{ fontFamily:"'Plus Jakarta Sans', sans-serif",fontSize:12,fontWeight:700,color:"var(--navy)",marginBottom:16,letterSpacing:"0.06em",textTransform:"uppercase" }}>Links</h4>
               <ul style={{ display:"flex",flexDirection:"column",gap:10,listStyle:"none",padding:0 }}>
-                {["Add to Discord","Features","Pricing","Support"].map((l,i) => (
+                {[
+                  { label: "Add to Discord", onClick: onInvite },
+                  { label: "Features", href: "#features" },
+                  { label: "Pricing", onClick: onShowPricing },
+                  { label: "Support", href: "mailto:support@vaultbot.dev" },
+                  { label: "Privacy Policy", onClick: onShowPrivacy },
+                  { label: "Terms & Conditions", onClick: onShowTerms },
+                ].map((item, i) => (
                   <li
                     key={i}
-                    onClick={l === "Pricing" ? onShowPricing : undefined}
-                    style={{ fontSize:13.5,color:l==="Pricing"?"var(--accent-deep)":"var(--muted)",display:"flex",alignItems:"center",gap:8,fontWeight:300,cursor:l==="Pricing"?"pointer":"default" }}
+                    style={{ fontSize:13.5,color:"var(--muted)",display:"flex",alignItems:"center",gap:8,fontWeight:300 }}
                   >
                     <span style={{ width:4,height:4,borderRadius:"50%",background:"var(--slate)" }} />
-                    {l}
+                    {item.href ? (
+                      <a
+                        href={item.href}
+                        style={{ color: "var(--muted)", textDecoration: "none", transition: "all var(--tr)", cursor: "pointer" }}
+                        onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"}
+                        onMouseLeave={e => e.currentTarget.style.color = "var(--muted)"}
+                      >
+                        {item.label}
+                      </a>
+                    ) : (
+                      <span
+                        onClick={item.onClick}
+                        style={{ color: "var(--muted)", cursor: "pointer", transition: "all var(--tr)" }}
+                        onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"}
+                        onMouseLeave={e => e.currentTarget.style.color = "var(--muted)"}
+                      >
+                        {item.label}
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -1048,6 +1072,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
         </div>
         <div style={{ maxWidth:1200,margin:"32px auto 0",paddingTop:24,borderTop:"1px solid var(--border2)",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap" }}>
           <span style={{ fontSize:12,color:"var(--muted2)" }}>© 2026 VaultBot · Not affiliated with Discord Inc.</span>
+          <a href="mailto:support@vaultbot.dev" style={{ fontSize:12,color:"var(--accent-deep)",textDecoration:"none",fontWeight:600,transition:"color var(--tr)" }} onMouseEnter={e => e.currentTarget.style.color = "var(--navy)"} onMouseLeave={e => e.currentTarget.style.color = "var(--accent-deep)"}>support@vaultbot.dev</a>
           <span style={{ fontSize:12,color:"var(--muted2)" }}>Your docs. Your bot. Your community.</span>
         </div>
       </footer>
