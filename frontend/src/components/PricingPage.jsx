@@ -471,7 +471,11 @@ function CellVal({ v }) {
   return <span style={{ fontSize:13,color:"var(--navy)",fontWeight:500 }}>{v}</span>;
 }
 
+<<<<<<< Updated upstream
 export default function PricingPage({ user, onLogin, onInvite, onShowDashboard, onBack, onShowPrivacy, onShowTerms }) {
+=======
+export default function PricingPage({ user, onLogin, onShowDashboard ,onBack}) {
+>>>>>>> Stashed changes
   const [annual, setAnnual] = useState(true);
   const [faq, setFaq] = useState(null);
   const [scrolled, setScrolled] = useState(false);
@@ -510,6 +514,7 @@ export default function PricingPage({ user, onLogin, onInvite, onShowDashboard, 
         borderBottom:`1px solid ${scrolled ? "rgba(43,45,66,0.15)" : "var(--border)"}`,
         transition:"all 0.3s ease",
       }}>
+<<<<<<< Updated upstream
         <a href="#" onClick={(e) => { e.preventDefault(); onBack ? onBack() : window.location.reload(); }} style={{ textDecoration:"none",display:"flex",alignItems:"center",gap:10 }}>
           <div style={{ width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center" }}>
             <img
@@ -552,6 +557,39 @@ export default function PricingPage({ user, onLogin, onInvite, onShowDashboard, 
             </button>
           )}
         </div>
+=======
+        <div onClick={onBack} style={{ textDecoration:"none",display:"flex",alignItems:"center",gap:10,cursor:"pointer" }}>
+  <img
+    src="/LOGO.png"
+    alt="VaultBot"
+    style={{ width:30,height:30,borderRadius:8,objectFit:"contain",mixBlendMode:"multiply" }}
+  />
+  <span style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>VaultBot</span>
+</div>
+        <div className="hide900" style={{ display:"flex",alignItems:"center",gap:2 }}>
+  <button
+    onClick={onBack}
+    className="nav-link"
+    style={{ display:"flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,color:"var(--muted)",background:"none",border:"none",cursor:"pointer",transition:"all var(--tr)" }}
+  >
+    <Icon name="arrow_back" size={15} /> Back
+  </button>
+
+  {[["Plans","#pricing"],["Compare","#pricing"],["FAQ","#faq"]].map(([l,h],i) => (
+    <a key={i} href={h} className="nav-link" style={{ padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,letterSpacing:"0.02em",color:"var(--muted)",textDecoration:"none",transition:"all var(--tr)" }}>{l}</a>
+  ))}
+
+  {user ? (
+    <button onClick={onShowDashboard} className="btn-sm" style={{ marginLeft:12,display:"flex",alignItems:"center",gap:8,padding:"8px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:"var(--surface1)",color:"var(--navy)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
+      <Icon name="grid_view" size={15} /> Dashboard
+    </button>
+  ) : (
+    <button onClick={onLogin} className="btn-sm" style={{ marginLeft:12,display:"flex",alignItems:"center",gap:8,padding:"8px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:"var(--surface1)",color:"var(--navy)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
+      <DiscordIcon /> Login with Discord
+    </button>
+  )}
+</div>
+>>>>>>> Stashed changes
       </nav>
 
       {/* HERO */}

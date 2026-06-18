@@ -20,6 +20,11 @@ async def handle_add_server(
         role="owner",
         granted_by=user["discord_id"],
     )
+    upsert_server_plan(
+        server_id=guild_id,
+        plan="free",
+        max_limit_questions=100,
+    )
     return {"status": "success", "message": "Server added successfully"}
 
 

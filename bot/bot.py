@@ -9,7 +9,7 @@ from io import BytesIO
 from datetime import datetime, timezone, timedelta
 import time
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event, get_channel_config, get_web_search
+from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event, get_channel_config, get_web_search,get_total_questions,get_server_plan
 from python.query import query_graphlit, query_graphlit_web, query_with_temp_kb_spec
 from python.ingest import read_ocr_async
 
@@ -198,6 +198,17 @@ async def on_message(message):
         return
     if message.guild is None:
         return
+    server_plan = get_server_plan(str(message.guild.id))
+    if server_plan:
+        total_question_asked = get_total_questions(str(message.guild.id)) or 0
+        max_limit = server_plan.get("max_limit_questions", 100)
+        plan = server_plan.get("plan", "free")
+        if plan == "free" and total_question_asked >= max_limit:
+            await message.channel.send(
+                f"⚠️ This server has reached its **{max_limit} question limit** on the free plan. "
+                f"Please ask a mod or admin to upgrade to **Pro** on the dashboard."
+            )
+            return
     info = get_server(str(message.guild.id))
     if info and info.get("is_paused"):
         await message.channel.send("The Bot is Paused By The Admin/Owner Of The Servers")
@@ -290,6 +301,17 @@ async def on_reaction_add(reaction, user):
 @bot.command()
 @commands.cooldown(4, 60, commands.BucketType.user)
 async def ask(ctx, *, question: str = None):
+    server_plan = get_server_plan(str(ctx.guild.id))
+    if server_plan:
+        total_question_asked = get_total_questions(str(ctx.guild.id)) or 0
+        max_limit = server_plan.get("max_limit_questions", 100)
+        plan = server_plan.get("plan", "free")
+        if plan == "free" and total_question_asked >= max_limit:
+            await ctx.send(
+                f"⚠️ This server has reached its **{max_limit} question limit** on the free plan. "
+                f"Please ask a mod or admin to upgrade to **Pro** on the dashboard."
+            )
+            return
     start_time = time.time()
     if ctx.message.attachments:
         attachment = ctx.message.attachments[0]

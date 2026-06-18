@@ -843,3 +843,90 @@ def sync_guild_admins(guild_id: str, guild_name: str, discord_id: str, role: str
 
     except Exception as e:
         print(f"[sync_guild_admins] Non-fatal error for {discord_id}: {e}")
+
+def get_total_questions(server_id: str):
+    try:
+        with DB() as s:
+            result = s.execute(
+                text("SELECT count(*) FROM question_events WHERE server_id = :server_id"),
+                {"server_id": server_id}
+            )
+            return result.scalar()
+    except Exception as e:
+        print(f"Failed To Get Total Questions: {e}")
+        return None
+    
+def get_questions_last_30_days(server_id: str):
+    try:
+        with DB() as s:
+            result = s.execute(
+                text("SELECT count(*) FROM question_events WHERE server_id = :server_id AND asked_at >= now() - interval '30 days'"),
+                {"server_id": server_id}
+            )
+            return result.scalar()
+    except Exception as e:
+        print(f"Failed To Get Questions Last 30 Days: {e}")
+        return None
+    
+def get_server_plan(server_id: str) -> Optional[dict]:
+    with DB() as s:
+        row = s.execute(
+            text("SELECT * FROM server_plans WHERE server_id = :server_id"),
+            {"server_id": server_id},
+        ).mappings().first()
+        return dict(row) if row else None
+
+
+def upsert_server_plan(server_id: str, plan: str, max_limit_questions: int) -> int:
+    with DB() as s:
+        result = s.execute(
+            text("""
+                INSERT INTO server_plans (server_id, plan, max_limit_questions)
+                VALUES (:server_id, :plan, :max_limit_questions)
+                ON CONFLICT (server_id) DO UPDATE SET
+                    plan = EXCLUDED.plan,
+                    max_limit_questions = EXCLUDED.max_limit_questions,
+                    updated_at = NOW()
+            """),
+            {"server_id": server_id, "plan": plan, "max_limit_questions": max_limit_questions},
+        )
+        s.commit()
+        return result.rowcount
+
+
+def update_server_plan(server_id: str, plan: str) -> int:
+    with DB() as s:
+        result = s.execute(
+            text("""
+                UPDATE server_plans
+                SET plan = :plan, updated_at = NOW()
+                WHERE server_id = :server_id
+            """),
+            {"server_id": server_id, "plan": plan},
+        )
+        s.commit()
+        return result.rowcount
+
+
+def update_max_limit_questions(server_id: str, max_limit_questions: int) -> int:
+    with DB() as s:
+        result = s.execute(
+            text("""
+                UPDATE server_plans
+                SET max_limit_questions = :max_limit_questions, updated_at = NOW()
+                WHERE server_id = :server_id
+            """),
+            {"server_id": server_id, "max_limit_questions": max_limit_questions},
+        )
+        s.commit()
+        return result.rowcount
+
+
+def delete_server_plan(server_id: str) -> int:
+    with DB() as s:
+        result = s.execute(
+            text("DELETE FROM server_plans WHERE server_id = :server_id"),
+            {"server_id": server_id},
+        )
+        s.commit()
+        return result.rowcount
