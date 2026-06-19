@@ -9,7 +9,7 @@ from io import BytesIO
 from datetime import datetime, timezone, timedelta
 import time
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event, get_channel_config, get_web_search,get_total_questions,get_server_plan
+from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event, get_channel_config, get_web_search,get_total_questions,get_server_plan,get_questions_since
 from python.query import query_graphlit, query_graphlit_web, query_with_temp_kb_spec
 from python.ingest import read_ocr_async
 
@@ -107,7 +107,7 @@ async def get_answer(guild_id: str, question: str, language: str, tone: str, prv
         print("[get_answer] KB had no answer, falling back to web search")
         web_search_info = get_web_search(guild_id)
         if not web_search_info:
-            return "I don't Have Information(Web Search Is Paused By Admin)"
+            return "I don't Have Information in Current Knowledge Base & Web Search is Paused By Admin"
         try:
             answer = await asyncio.wait_for(query_graphlit_web(guild_id, question, language, tone, prv_messages), timeout=30.0)
         except asyncio.TimeoutError:
@@ -206,21 +206,27 @@ async def on_message(message):
     watch_ids = [c["channel_id"] for c in channels]
     if str(message.channel.id) in watch_ids or str(message.channel.id) in watched_threads:
         print(f"[on_message] Message in watched channel '{message.channel.name}' from {message.author.name}")
-        server_plan = get_server_plan(str(message.guild.id))
-        if server_plan:
-            total_question_asked = get_total_questions(str(message.guild.id)) or 0
-            max_limit = server_plan.get("max_limit_questions", 100)
-            plan = server_plan.get("plan", "free")
-            if plan == "free" and total_question_asked >= max_limit:
-                await message.channel.send(
-                    f"⚠️ This server has reached its **{max_limit} question limit** on the free plan. "
-                    f"Please ask a mod or admin to upgrade to **Pro** on the dashboard."
-                )
-                return
         info = get_server(str(message.guild.id))
         if info is None:
             await message.channel.send("Please configure the bot on the dashboard.")
             return
+        server_plan = get_server_plan(str(message.guild.id))
+        if server_plan:
+            max_limit = server_plan.get("max_limit_questions", 100)
+            plan = server_plan.get("plan", "free")
+            if plan == "free":
+                if (get_total_questions(str(message.guild.id)) or 0)>=max_limit:
+                    await message.channel.send(
+                    f"⚠️ This server has reached its **{max_limit} question limit** on the free plan. "
+                    f"Please ask a mod or admin to upgrade to **Pro** on the dashboard."
+                    )
+                    return
+            if plan == "paid" and (get_questions_since(str(message.guild.id), server_plan.get("billing_date")) or 0) >= max_limit:
+                await message.channel.send(
+                    f"⚠️ This server has reached its **{max_limit} question limit** on the paid plan. "
+                    f"Please ask a mod or admin to upgrade to **Upper Tier** on the dashboard."
+                )
+                return
         channel_info = get_channel_config(str(message.guild.id), str(message.channel.id))
         language = channel_info.get("language", "english") if channel_info else "english"
         tone = channel_info.get("tone", "professional") if channel_info else "professional"
@@ -234,7 +240,7 @@ async def on_message(message):
                     if web_search_info:
                         result = await query_graphlit_web(str(message.guild.id), message.content, language, tone, prv_messages)
                     else:
-                        result = "I don't Have Information(Web Search Is Paused By Admin)"
+                        result = "I don't Have Information in Current Knowledge Base & Web Search is Paused By Admin"
             latency_ms = round((time.time() - start_time) * 1000, 2)
             await send_answer_with_feedback(message.channel, message.author, str(message.guild.id), message.content, result)
             if is_no_kb_response(result):
@@ -303,15 +309,21 @@ async def on_reaction_add(reaction, user):
 async def ask(ctx, *, question: str = None):
     server_plan = get_server_plan(str(ctx.guild.id))
     if server_plan:
-        total_question_asked = get_total_questions(str(ctx.guild.id)) or 0
         max_limit = server_plan.get("max_limit_questions", 100)
         plan = server_plan.get("plan", "free")
-        if plan == "free" and total_question_asked >= max_limit:
-            await ctx.send(
+        if plan == "free":
+            if (get_total_questions(str(ctx.guild.id)) or 0)>=max_limit:
+                await ctx.send(
                 f"⚠️ This server has reached its **{max_limit} question limit** on the free plan. "
                 f"Please ask a mod or admin to upgrade to **Pro** on the dashboard."
-            )
-            return
+                )
+                return
+        if plan == "paid" and (get_questions_since(str(ctx.guild.id), server_plan.get("billing_date")) or 0) >= max_limit:
+                await ctx.send(
+                    f"⚠️ This server has reached its **{max_limit} question limit** on the paid plan. "
+                    f"Please ask a mod or admin to upgrade to **Upper Tier** on the dashboard."
+                )
+                return
     start_time = time.time()
     if ctx.message.attachments:
         attachment = ctx.message.attachments[0]
@@ -338,7 +350,7 @@ async def ask(ctx, *, question: str = None):
                 if web_search_info:
                     result = await query_graphlit_web(str(ctx.guild.id), question, language, tone, prv_messages)
                 else:
-                    result = "I don't Have Information(Web Search Is Paused By Admin)"
+                    result = "I don't Have Information in Current Knowledge Base & Web Search is Paused By Admin"
         latency_ms = round((time.time() - start_time) * 1000, 2)
         await send_answer_with_feedback(ctx.channel, ctx.author, str(ctx.guild.id), question, result)
         if is_no_kb_response(result):

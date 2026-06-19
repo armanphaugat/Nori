@@ -948,3 +948,15 @@ def get_uploads_count_by_type(server_id: str) -> Optional[dict]:
     except Exception as e:
         print(f"Failed To Get Uploads Count By Type: {e}")
         return None
+    
+def get_questions_since(server_id: str, billing_date) -> int:
+    with DB() as s:
+        result = s.execute(
+            text("""
+                SELECT count(*) FROM question_events 
+                WHERE server_id = :server_id 
+                AND asked_at >= :billing_date
+            """),
+            {"server_id": server_id, "billing_date": billing_date}
+        )
+        return result.scalar() or 0
