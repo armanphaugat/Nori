@@ -64,6 +64,17 @@ async def handle_upload_website(
         raise HTTPException(status_code=400, detail="'url' must start with http:// or https://")
     try:
         feed_id = await add_website_graphlit(guild_id, url)
+        if not feed_id:
+            log_upload(
+                guild_id=guild_id,
+                user_id=user["discord_id"],
+                username=user["username"],
+                kind="url",
+                name=url,
+                status="failed",
+                error="Graphlit ingestion returned no feed_id (see backend logs for the underlying error)",
+            )
+            raise HTTPException(status_code=502, detail="Failed to create website feed in knowledge base")
         log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
@@ -75,6 +86,8 @@ async def handle_upload_website(
             status="ok",
         )
         return {"status": "success", "message": "Website feed created"}
+    except HTTPException:
+        raise
     except Exception as e:
         log_upload(
             guild_id=guild_id,
@@ -108,6 +121,17 @@ async def handle_upload_url(
         raise HTTPException(status_code=400, detail="'url' must start with http:// or https://")
     try:
         content_id = await add_url_graphlit(guild_id, url)
+        if not content_id:
+            log_upload(
+                guild_id=guild_id,
+                user_id=user["discord_id"],
+                username=user["username"],
+                kind="url",
+                name=url,
+                status="failed",
+                error="Graphlit ingestion returned no content_id (see backend logs for the underlying error)",
+            )
+            raise HTTPException(status_code=502, detail="Failed to ingest URL into knowledge base")
         log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
@@ -118,6 +142,8 @@ async def handle_upload_url(
             status="ok",
         )
         return {"status": "success", "message": "URL ingested"}
+    except HTTPException:
+        raise
     except Exception as e:
         log_upload(
             guild_id=guild_id,
@@ -184,6 +210,19 @@ async def handle_upload_file(
 
         elif ext in {".mp4", ".mp3", ".wav", ".m4a"}:
             content_id = await add_video_graphlit(guild_id, BytesIO(file_bytes))
+
+        if not content_id:
+            log_upload(
+                guild_id=guild_id,
+                user_id=user["discord_id"],
+                username=user["username"],
+                kind="pdf",
+                name=file.filename,
+                status="failed",
+                error="Graphlit ingestion returned no content_id (see backend logs for the underlying error)",
+            )
+            raise HTTPException(status_code=502, detail=f"Failed to ingest {ext} into knowledge base")
+
         log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],

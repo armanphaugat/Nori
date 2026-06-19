@@ -127,7 +127,7 @@ async def get_or_create_kb_spec(server_id: str, language: str, tone: str) -> str
                 content_limit=5,
             ),
             open_ai=OpenAIModelPropertiesInput(
-            model=OpenAIModels.GPT54_NANO_400K,
+            model=OpenAIModels.GPT4O_MINI_128K,
             temperature=0.2,
             completion_token_limit=1000,
             ),
