@@ -5,6 +5,7 @@ import os
 from io import BytesIO
 from typing import List, Optional
 from bot.bot import get_message_from_channel
+from dbhelper.db_helper import *
 URL_PATTERN = r"(https?://[^\s]+)"
 MAX_FILE_SIZE = 10 * 1024 * 1024
 ALLOWED_EXTENSIONS = {
@@ -52,6 +53,12 @@ async def handle_upload_website(
     guild_id = guild_id.strip()
     if not guild_id:
         raise HTTPException(status_code=400, detail="'guild_id' cannot be empty")
+    server_plan = get_server_plan(str(guild_id))
+    plan = server_plan.get("plan", "free")
+    counts=get_uploads_count_by_type(guild_id)
+    total_url_count=counts.get("url",0)
+    if plan=="free" and total_url_count>=5:
+        raise HTTPException(status_code=403,detail="Please Upgrade To the Premium Plan")
     url = url.strip()
     if not re.match(r"https?://", url):
         raise HTTPException(status_code=400, detail="'url' must start with http:// or https://")
@@ -91,6 +98,12 @@ async def handle_upload_url(
     if not guild_id:
         raise HTTPException(status_code=400, detail="'guild_id' cannot be empty")
     url = url.strip()
+    server_plan = get_server_plan(str(guild_id))
+    plan = server_plan.get("plan", "free")
+    counts=get_uploads_count_by_type(guild_id)
+    total_url_count=counts.get("url",0)
+    if plan=="free" and total_url_count>=5:
+        raise HTTPException(status_code=403,detail="Please Upgrade To the Premium Plan")
     if not re.match(r"https?://", url):
         raise HTTPException(status_code=400, detail="'url' must start with http:// or https://")
     try:
@@ -127,7 +140,12 @@ async def handle_upload_file(
     guild_id = guild_id.strip()
     if not guild_id:
         raise HTTPException(status_code=400, detail="'guild_id' cannot be empty")
-
+    server_plan = get_server_plan(str(guild_id))
+    plan = server_plan.get("plan", "free")
+    counts=get_uploads_count_by_type(guild_id)
+    total_file_count=counts.get("file",0)
+    if plan=="free" and total_file_count>=3:
+        raise HTTPException(status_code=403,detail="Please Upgrade To the Premium Plan")
     ext = os.path.splitext(file.filename or "")[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(

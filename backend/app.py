@@ -1,7 +1,6 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from backend.routers.auth_router    import *
 from backend.routers.server_router  import *
 from backend.routers.upload_router  import *

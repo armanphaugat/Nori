@@ -471,11 +471,7 @@ function CellVal({ v }) {
   return <span style={{ fontSize:13,color:"var(--navy)",fontWeight:500 }}>{v}</span>;
 }
 
-<<<<<<< Updated upstream
-export default function PricingPage({ user, onLogin, onInvite, onShowDashboard, onBack, onShowPrivacy, onShowTerms }) {
-=======
 export default function PricingPage({ user, onLogin, onShowDashboard ,onBack}) {
->>>>>>> Stashed changes
   const [annual, setAnnual] = useState(true);
   const [faq, setFaq] = useState(null);
   const [scrolled, setScrolled] = useState(false);
@@ -514,50 +510,6 @@ export default function PricingPage({ user, onLogin, onShowDashboard ,onBack}) {
         borderBottom:`1px solid ${scrolled ? "rgba(43,45,66,0.15)" : "var(--border)"}`,
         transition:"all 0.3s ease",
       }}>
-<<<<<<< Updated upstream
-        <a href="#" onClick={(e) => { e.preventDefault(); onBack ? onBack() : window.location.reload(); }} style={{ textDecoration:"none",display:"flex",alignItems:"center",gap:10 }}>
-          <div style={{ width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center" }}>
-            <img
-              src="/LOGO.png"
-              alt="VaultBot"
-              style={{ width:"100%",height:"100%",objectFit:"contain" }}
-            />
-          </div>
-          <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>VaultBot</span>
-        </a>
-        <div className="hide900" style={{ display:"flex",alignItems:"center",gap:2 }}>
-          {[["Features","#features"],["How it Works","#howitworks"],["Compare","#compare"],["FAQ","#faq"]].map(([l,h],i) => (
-            <a
-              key={i}
-              href={h}
-              onClick={(e) => {
-                e.preventDefault();
-                onBack?.(h);
-              }}
-              className="nav-link"
-              style={{ padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,letterSpacing:"0.02em",color:"var(--muted)",textDecoration:"none",transition:"all var(--tr)" }}
-            >
-              {l}
-            </a>
-          ))}
-          <button
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="nav-link"
-            style={{ padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,letterSpacing:"0.02em",color:"var(--accent-deep)",background:"none",border:"none",cursor:"pointer",transition:"all var(--tr)" }}
-          >
-            Pricing
-          </button>
-          {user ? (
-            <button onClick={onShowDashboard} className="btn-sm" style={{ marginLeft:12,display:"flex",alignItems:"center",gap:8,padding:"8px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:"var(--surface1)",color:"var(--navy)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
-              <Icon name="grid_view" size={15} /> Dashboard
-            </button>
-          ) : (
-            <button onClick={onLogin} className="btn-sm" style={{ marginLeft:12,display:"flex",alignItems:"center",gap:8,padding:"8px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:"var(--surface1)",color:"var(--navy)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
-              <DiscordIcon /> Login with Discord
-            </button>
-          )}
-        </div>
-=======
         <div onClick={onBack} style={{ textDecoration:"none",display:"flex",alignItems:"center",gap:10,cursor:"pointer" }}>
   <img
     src="/LOGO.png"
@@ -589,7 +541,6 @@ export default function PricingPage({ user, onLogin, onShowDashboard ,onBack}) {
     </button>
   )}
 </div>
->>>>>>> Stashed changes
       </nav>
 
       {/* HERO */}

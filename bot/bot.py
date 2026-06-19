@@ -198,17 +198,6 @@ async def on_message(message):
         return
     if message.guild is None:
         return
-    server_plan = get_server_plan(str(message.guild.id))
-    if server_plan:
-        total_question_asked = get_total_questions(str(message.guild.id)) or 0
-        max_limit = server_plan.get("max_limit_questions", 100)
-        plan = server_plan.get("plan", "free")
-        if plan == "free" and total_question_asked >= max_limit:
-            await message.channel.send(
-                f"⚠️ This server has reached its **{max_limit} question limit** on the free plan. "
-                f"Please ask a mod or admin to upgrade to **Pro** on the dashboard."
-            )
-            return
     info = get_server(str(message.guild.id))
     if info and info.get("is_paused"):
         await message.channel.send("The Bot is Paused By The Admin/Owner Of The Servers")
@@ -217,6 +206,17 @@ async def on_message(message):
     watch_ids = [c["channel_id"] for c in channels]
     if str(message.channel.id) in watch_ids or str(message.channel.id) in watched_threads:
         print(f"[on_message] Message in watched channel '{message.channel.name}' from {message.author.name}")
+        server_plan = get_server_plan(str(message.guild.id))
+        if server_plan:
+            total_question_asked = get_total_questions(str(message.guild.id)) or 0
+            max_limit = server_plan.get("max_limit_questions", 100)
+            plan = server_plan.get("plan", "free")
+            if plan == "free" and total_question_asked >= max_limit:
+                await message.channel.send(
+                    f"⚠️ This server has reached its **{max_limit} question limit** on the free plan. "
+                    f"Please ask a mod or admin to upgrade to **Pro** on the dashboard."
+                )
+                return
         info = get_server(str(message.guild.id))
         if info is None:
             await message.channel.send("Please configure the bot on the dashboard.")

@@ -930,3 +930,21 @@ def delete_server_plan(server_id: str) -> int:
         )
         s.commit()
         return result.rowcount
+
+def get_uploads_count_by_type(server_id: str) -> Optional[dict]:
+    try:
+        with DB() as s:
+            url_count = s.execute(
+                text("SELECT count(*) FROM uploads WHERE server_id = :server_id AND type = 'url' AND deleted_at IS NULL"),
+                {"server_id": server_id}
+            ).scalar()
+            
+            file_count = s.execute(
+                text("SELECT count(*) FROM uploads WHERE server_id = :server_id AND type = 'pdf' AND deleted_at IS NULL"),
+                {"server_id": server_id}
+            ).scalar()
+            
+            return {"url": url_count, "file": file_count}
+    except Exception as e:
+        print(f"Failed To Get Uploads Count By Type: {e}")
+        return None
