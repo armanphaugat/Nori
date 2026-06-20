@@ -25,6 +25,47 @@ import PricingPage from "./components/PricingPage.jsx";
 import AnalyticsTab from "./components/AnalyticsTab.jsx";
 import DocsTab from "./components/DocsTab.jsx";
 import LegalPage from "./components/LegalPage.jsx";
+import BillingTab from "./components/BillingTab.jsx";
+
+const BADGE_STYLES = {
+  free: {
+    bg: "linear-gradient(135deg, #8D99AE 0%, #5a6480 100%)",
+    shadow: "rgba(141, 153, 174, 0.25)",
+    label: "Free Plan",
+    icon: "info"
+  },
+  starter: {
+    bg: "linear-gradient(135deg, #3885dc 0%, #1a5fab 100%)",
+    shadow: "rgba(26, 95, 171, 0.25)",
+    label: "Starter Plan",
+    icon: "verified"
+  },
+  growth: {
+    bg: "linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%)",
+    shadow: "rgba(239, 35, 60, 0.25)",
+    label: "Growth Plan",
+    icon: "verified"
+  },
+  pro: {
+    bg: "linear-gradient(135deg, #3d3f58 0%, var(--navy) 100%)",
+    shadow: "rgba(43, 45, 66, 0.25)",
+    label: "Pro Plan",
+    icon: "verified"
+  },
+  enterprise: {
+    bg: "linear-gradient(135deg, #3d3f58 0%, var(--navy) 100%)",
+    shadow: "rgba(43, 45, 66, 0.25)",
+    label: "Enterprise Plan",
+    icon: "verified"
+  },
+  paid: {
+    bg: "linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%)",
+    shadow: "rgba(239, 35, 60, 0.25)",
+    label: "Premium Plan",
+    icon: "verified"
+  }
+};
+
 function Dashboard({ 
   user, 
   guilds, 
@@ -36,7 +77,30 @@ function Dashboard({
   onGuildsChange,
   onShowPricing
 }) {
-  const [tab, setTab] = useState("channels");
+  const [tab, setTab] = useState(() => {
+    if (window.location.hash.includes("tab=billing")) {
+      return "billing";
+    }
+    return "channels";
+  });
+  const [activePlan, setActivePlan] = useState("free");
+
+  useEffect(() => {
+    if (!activeGuildId) return;
+    API.getServerPlan(activeGuildId)
+      .then(res => {
+        if (res && res.plan) {
+          setActivePlan(res.plan);
+        } else {
+          setActivePlan("free");
+        }
+      })
+      .catch(() => {
+        setActivePlan("free");
+      });
+  }, [activeGuildId]);
+
+  const badge = BADGE_STYLES[activePlan] || BADGE_STYLES.free;
   const [showServerDropdown, setShowServerDropdown] = useState(false);
   const [togglingPause, setTogglingPause] = useState(false);
 
@@ -77,6 +141,7 @@ function Dashboard({
     sources: "Ingested Sources",
     analytics: "Analytics",
     utils: "URL Crawler",
+    billing: "Billing & Plans",
     docs: "Setup Documentation",
   };
 
@@ -116,7 +181,7 @@ function Dashboard({
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
           flexShrink: 0,
-          zIndex: 10,
+          zIndex: 150,
           boxShadow: "0 1px 0 var(--border)",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
@@ -127,7 +192,7 @@ function Dashboard({
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               {[
                 { label: "Docs", href: "#", onClick: (e) => { e.preventDefault(); setTab("docs"); } },
-                { label: "Invite", href: "https://discord.gg/H92wkB4X" },
+                { label: "Invite", href: "https://discord.gg/eBRgsseN" },
                 { label: "Discord", href: activeGuild?.id ? `https://discord.com/channels/${activeGuild.id}` : "https://discord.com" },
               ].map(({ label, href, onClick }) => (
                 <a
@@ -145,27 +210,27 @@ function Dashboard({
               ))}
               <a
                 href="#"
-                onClick={(e) => { e.preventDefault(); }}
+                onClick={(e) => { e.preventDefault(); setTab("billing"); }}
                 style={{ 
-                  fontSize: 12, fontWeight: 700, color: "#fff", textDecoration: "none", 
+                  fontSize: 11, fontWeight: 700, color: "#fff", textDecoration: "none", 
                   display: "flex", alignItems: "center", gap: 4, padding: "5px 12px", 
-                  borderRadius: "var(--r-full)", background: "linear-gradient(135deg, var(--accent-deep) 0%, var(--accent) 100%)", 
-                  boxShadow: "0 2px 10px rgba(239, 35, 60, 0.25)", transition: "all var(--tr)",
+                  borderRadius: "var(--r-full)", background: badge.bg, 
+                  boxShadow: `0 2px 10px ${badge.shadow}`, transition: "all var(--tr)",
                   textTransform: "uppercase", letterSpacing: "0.5px"
                 }}
-                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(239, 35, 60, 0.45)"; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(239, 35, 60, 0.25)"; }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = `0 4px 14px ${badge.shadow}`; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = `0 2px 10px ${badge.shadow}`; }}
               >
-                <Icon name="verified" size={13} style={{ color: "#fff" }} /> Premium
+                <Icon name={badge.icon} size={13} style={{ color: "#fff" }} /> {badge.label}
               </a>
             </div>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {/* Server Switcher Dropdown */}
-            <div style={{ display: "flex", alignItems: "center", gap: 16, position: "relative" }} data-dropdown="server-select">
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }} data-dropdown="server-select">
               {activeGuild ? (
-                <>
+                <div style={{ position: "relative" }}>
                   <div
                     onClick={() => setShowServerDropdown(!showServerDropdown)}
                     style={{
@@ -233,7 +298,7 @@ function Dashboard({
                       </div>
                     </div>
                   )}
-                </>
+                </div>
               ) : (
                 <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: "var(--r-full)", background: "var(--surface-2)", border: "1px solid var(--border2)" }}>
                   <Icon name="warning" size={14} style={{ color: "var(--muted)" }} />
@@ -284,6 +349,9 @@ function Dashboard({
             )}
             {tab === "utils" && (
               <CrawlerTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
+            )}
+            {tab === "billing" && (
+              <BillingTab guildId={activeGuildId} onGoToOverview={onSwitchServer} user={user} />
             )}
             {tab === "docs" && (
               <DocsTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
@@ -554,6 +622,7 @@ export default function App() {
       {view === "pricing" && (
         <PricingPage
           user={user}
+          activeGuildId={activeGuildId}
           onLogin={discordLogin}
           onInvite={discordInvite}
           onShowDashboard={() => setView("servers")}

@@ -16,6 +16,7 @@ export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user,
       title: "Utility",
       items: [
         { id: "utils", label: "URL Crawler", icon: "travel_explore" },
+        { id: "billing", label: "Billing & Plans", icon: "credit_card" },
       ],
     },
   ];

@@ -9,7 +9,7 @@ from io import BytesIO
 from datetime import datetime, timezone, timedelta
 import time
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event, get_channel_config, get_web_search,get_total_questions,get_server_plan,get_questions_since
+from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event, get_channel_config, get_web_search,get_total_questions,get_server_plan,get_questions_since, PLAN_LIMITS
 from python.query import query_graphlit, query_graphlit_web, query_with_temp_kb_spec
 from python.ingest import read_ocr_async
 
@@ -211,20 +211,27 @@ async def on_message(message):
             await message.channel.send("Please configure the bot on the dashboard.")
             return
         server_plan = get_server_plan(str(message.guild.id))
+        plan = "free"
+        max_limit = 50
+        billing_date = None
         if server_plan:
-            max_limit = server_plan.get("max_limit_questions", 100)
             plan = server_plan.get("plan", "free")
-            if plan == "free":
-                if (get_total_questions(str(message.guild.id)) or 0)>=max_limit:
-                    await message.channel.send(
-                    f"⚠️ This server has reached its **{max_limit} question limit** on the free plan. "
-                    f"Please ask a mod or admin to upgrade to **Pro** on the dashboard."
-                    )
-                    return
-            if plan == "paid" and (get_questions_since(str(message.guild.id), server_plan.get("billing_date")) or 0) >= max_limit:
+            max_limit = server_plan.get("max_limit_questions", PLAN_LIMITS.get(plan, 50))
+            billing_date = server_plan.get("billing_date")
+            
+        if plan == "free":
+            if (get_total_questions(str(message.guild.id)) or 0) >= max_limit:
                 await message.channel.send(
-                    f"⚠️ This server has reached its **{max_limit} question limit** on the paid plan. "
-                    f"Please ask a mod or admin to upgrade to **Upper Tier** on the dashboard."
+                    f"⚠️ This server has reached its **{max_limit} question limit** on the free plan. "
+                    f"Please ask a mod or admin to upgrade on the dashboard."
+                )
+                return
+        else:
+            asked_in_cycle = get_questions_since(str(message.guild.id), billing_date) if billing_date else (get_total_questions(str(message.guild.id)) or 0)
+            if asked_in_cycle >= max_limit:
+                await message.channel.send(
+                    f"⚠️ This server has reached its **{max_limit} question limit** on the {plan.capitalize()} plan. "
+                    f"Please ask a mod or admin to upgrade on the dashboard."
                 )
                 return
         channel_info = get_channel_config(str(message.guild.id), str(message.channel.id))
@@ -308,22 +315,29 @@ async def on_reaction_add(reaction, user):
 @commands.cooldown(4, 60, commands.BucketType.user)
 async def ask(ctx, *, question: str = None):
     server_plan = get_server_plan(str(ctx.guild.id))
+    plan = "free"
+    max_limit = 50
+    billing_date = None
     if server_plan:
-        max_limit = server_plan.get("max_limit_questions", 100)
         plan = server_plan.get("plan", "free")
-        if plan == "free":
-            if (get_total_questions(str(ctx.guild.id)) or 0)>=max_limit:
-                await ctx.send(
+        max_limit = server_plan.get("max_limit_questions", PLAN_LIMITS.get(plan, 50))
+        billing_date = server_plan.get("billing_date")
+        
+    if plan == "free":
+        if (get_total_questions(str(ctx.guild.id)) or 0) >= max_limit:
+            await ctx.send(
                 f"⚠️ This server has reached its **{max_limit} question limit** on the free plan. "
-                f"Please ask a mod or admin to upgrade to **Pro** on the dashboard."
-                )
-                return
-        if plan == "paid" and (get_questions_since(str(ctx.guild.id), server_plan.get("billing_date")) or 0) >= max_limit:
-                await ctx.send(
-                    f"⚠️ This server has reached its **{max_limit} question limit** on the paid plan. "
-                    f"Please ask a mod or admin to upgrade to **Upper Tier** on the dashboard."
-                )
-                return
+                f"Please ask a mod or admin to upgrade on the dashboard."
+            )
+            return
+    else:
+        asked_in_cycle = get_questions_since(str(ctx.guild.id), billing_date) if billing_date else (get_total_questions(str(ctx.guild.id)) or 0)
+        if asked_in_cycle >= max_limit:
+            await ctx.send(
+                f"⚠️ This server has reached its **{max_limit} question limit** on the {plan.capitalize()} plan. "
+                f"Please ask a mod or admin to upgrade on the dashboard."
+            )
+            return
     start_time = time.time()
     if ctx.message.attachments:
         attachment = ctx.message.attachments[0]

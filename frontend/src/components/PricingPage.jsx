@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { API_BASE } from "../utils/api.js";
 
 function Icon({ name, size = 20, fill = 0, style = {} }) {
   return (
@@ -249,17 +250,15 @@ const TIERS = [
     icon: "explore",
     badge: null,
     base: {
-      messages: 200,
+      messages: 50,
       docs: 5,
-      servers: 1,
       storage: "25 MB",
     },
     overage: null,
     features: [
-      { text: "200 bot messages / month", on: true },
+      { text: "50 bot messages / month", on: true },
       { text: "Up to 5 uploaded documents", on: true },
       { text: "PDF & plain text support", on: true },
-      { text: "1 Discord server", on: true },
       { text: "Source citations on answers", on: true },
       { text: "25 MB document storage", on: true },
       { text: "URL / website ingestion", on: false },
@@ -275,26 +274,24 @@ const TIERS = [
     id: "starter",
     name: "Starter",
     tagline: "For small communities getting serious",
-    monthlyPrice: 12,
-    yearlyPrice: 9,
+    monthlyPrice: 25,
+    yearlyPrice: 19,
     color: "blue",
     icon: "bolt",
     badge: null,
     base: {
-      messages: 2000,
-      docs: 30,
-      servers: 3,
+      messages: 200,
+      docs: 10,
       storage: "500 MB",
     },
     overage: {
-      messages: "$0.004 / extra message",
-      storage: "$0.05 / extra 100 MB",
+      messages: "$0.04 / extra message",
+      storage: "$0.10 / extra 100 MB",
     },
     features: [
-      { text: "2,000 bot messages / month", on: true },
-      { text: "Up to 30 uploaded documents", on: true },
+      { text: "200 bot messages / month", on: true },
+      { text: "Up to 10 uploaded documents", on: true },
       { text: "PDF, DOCX, XLSX & images", on: true },
-      { text: "Up to 3 Discord servers", on: true },
       { text: "Source citations on answers", on: true },
       { text: "500 MB document storage", on: true },
       { text: "URL / website ingestion (5 URLs)", on: true },
@@ -310,27 +307,25 @@ const TIERS = [
     id: "growth",
     name: "Growth",
     tagline: "For active, growing communities",
-    monthlyPrice: 39,
-    yearlyPrice: 29,
+    monthlyPrice: 59,
+    yearlyPrice: 45,
     color: "red",
     icon: "trending_up",
     badge: "Most Popular",
     featured: true,
     base: {
-      messages: 10000,
-      docs: 150,
-      servers: 10,
+      messages: 500,
+      docs: 30,
       storage: "5 GB",
     },
     overage: {
-      messages: "$0.003 / extra message",
-      storage: "$0.04 / extra GB",
+      messages: "$0.03 / extra message",
+      storage: "$0.08 / extra GB",
     },
     features: [
-      { text: "10,000 bot messages / month", on: true },
-      { text: "Up to 150 uploaded documents", on: true },
+      { text: "500 bot messages / month", on: true },
+      { text: "Up to 30 uploaded documents", on: true },
       { text: "All file types supported", on: true },
-      { text: "Up to 10 Discord servers", on: true },
       { text: "Source citations on answers", on: true },
       { text: "5 GB document storage", on: true },
       { text: "Unlimited URL ingestion + auto-sync", on: true },
@@ -352,20 +347,18 @@ const TIERS = [
     icon: "workspace_premium",
     badge: null,
     base: {
-      messages: 40000,
-      docs: 500,
-      servers: 25,
+      messages: 800,
+      docs: 50,
       storage: "25 GB",
     },
     overage: {
-      messages: "$0.002 / extra message",
-      storage: "$0.03 / extra GB",
+      messages: "$0.02 / extra message",
+      storage: "$0.05 / extra GB",
     },
     features: [
-      { text: "40,000 bot messages / month", on: true },
-      { text: "Up to 500 documents", on: true },
+      { text: "800 bot messages / month", on: true },
+      { text: "Up to 50 documents", on: true },
       { text: "All file types supported", on: true },
-      { text: "Up to 25 Discord servers", on: true },
       { text: "Source citations on answers", on: true },
       { text: "25 GB document storage", on: true },
       { text: "Unlimited URL ingestion + auto-sync", on: true },
@@ -391,7 +384,6 @@ const TIERS = [
     base: {
       messages: "Unlimited",
       docs: "Unlimited",
-      servers: "Unlimited",
       storage: "Custom",
     },
     overage: null,
@@ -399,7 +391,6 @@ const TIERS = [
       { text: "Unlimited bot messages", on: true },
       { text: "Unlimited documents", on: true },
       { text: "All file types supported", on: true },
-      { text: "Unlimited Discord servers", on: true },
       { text: "Source citations on answers", on: true },
       { text: "Custom storage allocation", on: true },
       { text: "Dedicated URL sync pipelines", on: true },
@@ -414,9 +405,8 @@ const TIERS = [
 ];
 
 const COMPARE_FEATURES = [
-  { label: "Messages / month",       free: "200",         starter: "2,000",     growth: "10,000",        pro: "40,000",          enterprise: "Unlimited" },
-  { label: "Document uploads",       free: "5",           starter: "30",        growth: "150",           pro: "500",             enterprise: "Unlimited" },
-  { label: "Discord servers",        free: "1",           starter: "3",         growth: "10",            pro: "25",              enterprise: "Unlimited" },
+  { label: "Messages / month",       free: "50",          starter: "200",       growth: "500",           pro: "800",             enterprise: "Unlimited" },
+  { label: "Document uploads",       free: "5",           starter: "10",        growth: "30",            pro: "50",              enterprise: "Unlimited" },
   { label: "Storage",                free: "25 MB",       starter: "500 MB",    growth: "5 GB",          pro: "25 GB",           enterprise: "Custom" },
   { label: "PDF & DOCX support",     free: true,          starter: true,        growth: true,            pro: true,              enterprise: true },
   { label: "Image / OCR support",    free: false,         starter: true,        growth: true,            pro: true,              enterprise: true },
@@ -471,7 +461,16 @@ function CellVal({ v }) {
   return <span style={{ fontSize:13,color:"var(--navy)",fontWeight:500 }}>{v}</span>;
 }
 
-export default function PricingPage({ user, onLogin, onShowDashboard ,onBack}) {
+export default function PricingPage({ 
+  user, 
+  activeGuildId, 
+  onLogin, 
+  onShowDashboard, 
+  onBack,
+  onInvite,
+  onShowPrivacy,
+  onShowTerms
+}) {
   const [annual, setAnnual] = useState(true);
   const [faq, setFaq] = useState(null);
   const [scrolled, setScrolled] = useState(false);
@@ -569,7 +568,7 @@ export default function PricingPage({ user, onLogin, onShowDashboard ,onBack}) {
               </span>
             )}
           </div>
-          <p className="a4" style={{ fontSize:12,color:"var(--muted2)" }}>14-day free trial on all paid plans. No credit card required.</p>
+          <p className="a4" style={{ fontSize:12,color:"var(--muted2)" }}>7-day free trial on all paid plans. No credit card required.</p>
         </div>
       </section>
 
@@ -666,10 +665,9 @@ export default function PricingPage({ user, onLogin, onShowDashboard ,onBack}) {
                       {[
                         ["chat_bubble", `${tier.base.messages} messages`],
                         ["description", `${tier.base.docs} documents`],
-                        ["dns", `${tier.base.servers} server${typeof tier.base.servers === "number" && tier.base.servers > 1 ? "s" : ""}`],
                         ["storage", `${tier.base.storage} storage`],
                       ].map(([icon, val], j) => (
-                        <div key={j} style={{ display:"flex",alignItems:"center",gap:7,fontSize:12,color:"var(--muted)",marginBottom: j < 3 ? 5 : 0 }}>
+                        <div key={j} style={{ display:"flex",alignItems:"center",gap:7,fontSize:12,color:"var(--muted)",marginBottom: j < 2 ? 5 : 0 }}>
                           <Icon name={icon} size={13} fill={1} style={{ color: isFeatured ? "var(--accent-deep)" : c.text, flexShrink:0 }} />
                           {val}
                         </div>
@@ -696,7 +694,16 @@ export default function PricingPage({ user, onLogin, onShowDashboard ,onBack}) {
 
                     {/* CTA */}
                     <button
-                      onClick={isEnterprise ? undefined : onLogin}
+                      onClick={
+                        isEnterprise
+                          ? undefined
+                          : () => {
+                              const qs = new URLSearchParams();
+                              if (activeGuildId) qs.append("guild_id", activeGuildId);
+                              qs.append("plan", tier.id);
+                              window.location.href = `${API_BASE}/patreon/checkout?${qs.toString()}`;
+                            }
+                      }
                       style={{
                         width:"100%",
                         display:"flex",alignItems:"center",justifyContent:"center",gap:9,

@@ -18,6 +18,15 @@ engine = create_engine(
 )
 DB = sessionmaker(bind=engine)
 
+PLAN_LIMITS = {
+    "free": 50,
+    "starter": 200,
+    "growth": 500,
+    "pro": 800,
+    "enterprise": 1000000
+}
+
+
 def add_server(guild_id: str, name: str) -> None:
     with DB() as s:
         s.execute(text("""INSERT INTO servers (server_id, server_name) VALUES (:id, :name) ON CONFLICT DO NOTHING"""),{"id": str(guild_id), "name": name},)
@@ -936,3 +945,46 @@ def get_questions_since(server_id: str, billing_date) -> int:
             {"server_id": server_id, "billing_date": billing_date}
         )
         return result.scalar() or 0
+
+
+def update_server_plan_status(server_id: str, plan: str, max_limit: int, patreon_user_id: str = None, patreon_email: str = None) -> int:
+    with DB() as s:
+        result = s.execute(
+            text("""
+                INSERT INTO server_plans (server_id, plan, max_limit_questions, patreon_user_id, patreon_email, updated_at)
+                VALUES (:server_id, :plan, :max_limit, :patreon_user_id, :patreon_email, NOW())
+                ON CONFLICT (server_id) DO UPDATE SET
+                    plan = EXCLUDED.plan,
+                    max_limit_questions = EXCLUDED.max_limit_questions,
+                    patreon_user_id = COALESCE(EXCLUDED.patreon_user_id, server_plans.patreon_user_id),
+                    patreon_email = COALESCE(EXCLUDED.patreon_email, server_plans.patreon_email),
+                    updated_at = NOW()
+            """),
+            {
+                "server_id": server_id,
+                "plan": plan,
+                "max_limit": max_limit,
+                "patreon_user_id": patreon_user_id,
+                "patreon_email": patreon_email
+            },
+        )
+        s.commit()
+        return result.rowcount
+
+
+def get_servers_by_admin(discord_id: str) -> list[str]:
+    with DB() as s:
+        rows = s.execute(
+            text("SELECT guild_id FROM guild_admins WHERE discord_id = :discord_id"),
+            {"discord_id": discord_id},
+        ).fetchall()
+        return [row[0] for row in rows]
+
+
+def get_admin_by_email(email: str) -> Optional[str]:
+    with DB() as s:
+        row = s.execute(
+            text("SELECT discord_id FROM admin_users WHERE email = :email"),
+            {"email": email},
+        ).fetchone()
+        return row[0] if row else None

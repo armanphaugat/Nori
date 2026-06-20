@@ -129,7 +129,13 @@ export default function ChannelsTab({
     setChannelConfigs([]); setConfigStatus(null); setShowAddConfig(false);
     setWebSearchEnabled(false);
     if (guildId) { load(guildId); loadChannelConfigs(guildId); }
-  }, [guildId, load, initialGuildName, loadChannelConfigs]);
+  }, [guildId]);
+
+  useEffect(() => {
+    if (initialGuildName) {
+      setGuildName(initialGuildName);
+    }
+  }, [initialGuildName]);
 
   useEffect(() => {
     const h = (e) => {
