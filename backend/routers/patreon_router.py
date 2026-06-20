@@ -26,7 +26,6 @@ PATREON_WEBHOOK_SECRET = os.getenv("PATREON_WEBHOOK_SECRET", "")
 async def patreon_checkout(
     guild_id: Optional[str] = Query(None),
     plan: Optional[str] = Query(None),
-    user: dict = Depends(verify_access_token)
 ):
     """
     Redirects the user to the Patreon campaign/checkout page or specific plan checkout URL.
