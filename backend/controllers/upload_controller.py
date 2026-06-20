@@ -57,8 +57,14 @@ async def handle_upload_website(
     plan = server_plan.get("plan", "free")
     counts=get_uploads_count_by_type(guild_id)
     total_url_count=counts.get("url",0)
+    if plan=="starter" and total_url_count>=10:
+        raise HTTPException(status_code=403,detail="Starter plan limit reached: you've used all 10 URL slots. Upgrade to Growth or higher to add more.")
+    if plan=="growth" and total_url_count>=30:
+        raise HTTPException(status_code=403,detail="Growth plan limit reached: you've used all 30 URL slots. Upgrade to Pro to add more.")
+    if plan=="pro" and total_url_count>=50:
+        raise HTTPException(status_code=403,detail="Pro plan limit reached: you've used all 50 URL slots. Contact us if you need more capacity.")
     if plan=="free" and total_url_count>=5:
-        raise HTTPException(status_code=403,detail="Please Upgrade To the Premium Plan")
+        raise HTTPException(status_code=403,detail="Free plan limit reached: you've used all 5 URL slots. Upgrade to Starter or higher to add more.")
     url = url.strip()
     if not re.match(r"https?://", url):
         raise HTTPException(status_code=400, detail="'url' must start with http:// or https://")
@@ -115,10 +121,14 @@ async def handle_upload_url(
     plan = server_plan.get("plan", "free")
     counts=get_uploads_count_by_type(guild_id)
     total_url_count=counts.get("url",0)
+    if plan=="starter" and total_url_count>=10:
+        raise HTTPException(status_code=403,detail="Starter plan limit reached: you've used all 10 URL slots. Upgrade to Growth or higher to add more.")
+    if plan=="growth" and total_url_count>=30:
+        raise HTTPException(status_code=403,detail="Growth plan limit reached: you've used all 30 URL slots. Upgrade to Pro to add more.")
+    if plan=="pro" and total_url_count>=50:
+        raise HTTPException(status_code=403,detail="Pro plan limit reached: you've used all 50 URL slots. Contact us if you need more capacity.")
     if plan=="free" and total_url_count>=5:
-        raise HTTPException(status_code=403,detail="Please Upgrade To the Premium Plan")
-    if not re.match(r"https?://", url):
-        raise HTTPException(status_code=400, detail="'url' must start with http:// or https://")
+        raise HTTPException(status_code=403,detail="Free plan limit reached: you've used all 5 URL slots. Upgrade to Starter or higher to add more.")
     try:
         content_id = await add_url_graphlit(guild_id, url)
         if not content_id:
@@ -170,8 +180,14 @@ async def handle_upload_file(
     plan = server_plan.get("plan", "free")
     counts=get_uploads_count_by_type(guild_id)
     total_file_count=counts.get("file",0)
+    if plan=="starter" and total_file_count>=10:
+        raise HTTPException(status_code=403,detail="Starter plan limit reached: you've used all 10 file slots. Upgrade to Growth or higher to add more.")
+    if plan=="growth" and total_file_count>=30:
+        raise HTTPException(status_code=403,detail="Growth plan limit reached: you've used all 30 file slots. Upgrade to Pro to add more.")
+    if plan=="pro" and total_file_count>=50:
+        raise HTTPException(status_code=403,detail="Pro plan limit reached: you've used all 50 file slots. Contact us if you need more capacity.")
     if plan=="free" and total_file_count>=3:
-        raise HTTPException(status_code=403,detail="Please Upgrade To the Premium Plan")
+        raise HTTPException(status_code=403,detail="Free plan limit reached: you've used all 3 file slots. Upgrade to Starter or higher to add more.")
     ext = os.path.splitext(file.filename or "")[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -187,15 +203,12 @@ async def handle_upload_file(
     file_bytes = await file.read()
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Uploaded file is empty")
-
-    # derive upload kind for logging
     if ext in {".xlsx", ".xls"}:
-        kind = "pdf"   # reuse closest type or add "xlsx" to your uploads CHECK constraint
+        kind = "pdf"
     elif ext == ".docx":
-        kind = "pdf"   # same — extend the constraint if you want exact types
+        kind = "pdf"
     else:
         kind = "pdf"
-
     try:
         content_id = None
 
