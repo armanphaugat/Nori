@@ -105,7 +105,7 @@ async def get_answer(guild_id: str, question: str, language: str, tone: str, prv
 
     if is_no_kb_response(answer):
         print("[get_answer] KB had no answer, falling back to web search")
-        web_search_info = get_web_search(guild_id)
+        web_search_info = await get_web_search(guild_id)
         if not web_search_info:
             return "I don't Have Information in Current Knowledge Base & Web Search is Paused By Admin"
         try:
@@ -151,7 +151,7 @@ async def send_answer_with_feedback(channel, user, guild_id: str, question: str,
 
 async def notify_mod_channel(guild, channel, user, question: str):
     try:
-        row = get_mod_channel(str(guild.id))
+        row = await get_mod_channel(str(guild.id))
         if not row:
             print("[notify_mod_channel] No mod channel configured")
             return
@@ -198,43 +198,37 @@ async def on_message(message):
         return
     if message.guild is None:
         return
-    info = get_server(str(message.guild.id))
+    info = await get_server(str(message.guild.id))
     if info and info.get("is_paused"):
         await message.channel.send("The Bot is Paused By The Admin/Owner Of The Servers")
         return
-    channels = get_channels(str(message.guild.id))
+    if info is None:
+            await message.channel.send("Please configure the bot on the dashboard.")
+            return
+    channels = await get_channels(str(message.guild.id))
     watch_ids = [c["channel_id"] for c in channels]
     if str(message.channel.id) in watch_ids or str(message.channel.id) in watched_threads:
         print(f"[on_message] Message in watched channel '{message.channel.name}' from {message.author.name}")
-        info = get_server(str(message.guild.id))
-        if info is None:
-            await message.channel.send("Please configure the bot on the dashboard.")
-            return
-        server_plan = get_server_plan(str(message.guild.id))
-        plan = "free"
-        max_limit = 50
-        billing_date = None
-        if server_plan:
-            plan = server_plan.get("plan", "free")
-            max_limit = server_plan.get("max_limit_questions", PLAN_LIMITS.get(plan, 50))
-            billing_date = server_plan.get("billing_date")
-            
+        server_plan = await get_server_plan(str(message.guild.id))
+        plan = server_plan.get("plan", "free")
+        max_limit = server_plan.get("max_limit_questions") or 50
+        billing_date = server_plan.get("billing_date") or None
         if plan == "free":
-            if (get_total_questions(str(message.guild.id)) or 0) >= max_limit:
+            if (await get_total_questions(str(message.guild.id)) or 0) >= max_limit:
                 await message.channel.send(
                     f"⚠️ This server has reached its **{max_limit} question limit** on the free plan. "
                     f"Please ask a mod or admin to upgrade on the dashboard."
                 )
                 return
         else:
-            asked_in_cycle = get_questions_since(str(message.guild.id), billing_date) if billing_date else (get_total_questions(str(message.guild.id)) or 0)
+            asked_in_cycle = await get_questions_since(str(message.guild.id), billing_date) if billing_date else (await get_total_questions(str(message.guild.id)) or 0)
             if asked_in_cycle >= max_limit:
                 await message.channel.send(
                     f"⚠️ This server has reached its **{max_limit} question limit** on the {plan.capitalize()} plan. "
                     f"Please ask a mod or admin to upgrade on the dashboard."
                 )
                 return
-        channel_info = get_channel_config(str(message.guild.id), str(message.channel.id))
+        channel_info = await get_channel_config(str(message.guild.id), str(message.channel.id))
         language = channel_info.get("language", "english") if channel_info else "english"
         tone = channel_info.get("tone", "professional") if channel_info else "professional"
         prv_messages = await get_user_message_from_channel(message.channel.id)
@@ -243,7 +237,7 @@ async def on_message(message):
             async with message.channel.typing():
                 result = await query_with_temp_kb_spec(str(message.guild.id), message.content, language, tone, prv_messages)
                 if is_no_kb_response(result):
-                    web_search_info = get_web_search(str(message.guild.id))
+                    web_search_info = await get_web_search(str(message.guild.id))
                     if web_search_info:
                         result = await query_graphlit_web(str(message.guild.id), message.content, language, tone, prv_messages)
                     else:
@@ -251,10 +245,10 @@ async def on_message(message):
             latency_ms = round((time.time() - start_time) * 1000, 2)
             await send_answer_with_feedback(message.channel, message.author, str(message.guild.id), message.content, result)
             if is_no_kb_response(result):
-                log_question_event(str(message.guild.id), str(message.author.id), False, latency_ms)
+                await log_question_event(str(message.guild.id), str(message.author.id), False, latency_ms)
                 await notify_mod_channel(message.guild, message.channel, message.author, message.content)
             else:
-                log_question_event(str(message.guild.id), str(message.author.id), True, latency_ms)
+                await log_question_event(str(message.guild.id), str(message.author.id), True, latency_ms)
             return
         start_time = time.time()
         async with message.channel.typing():
@@ -262,10 +256,10 @@ async def on_message(message):
         latency_ms = round((time.time() - start_time) * 1000, 2)
         await send_answer_with_feedback(message.channel, message.author, str(message.guild.id), message.content, answer)
         if is_no_kb_response(answer):
-            log_question_event(str(message.guild.id), str(message.author.id), False, latency_ms)
+            await log_question_event(str(message.guild.id), str(message.author.id), False, latency_ms)
             await notify_mod_channel(message.guild, message.channel, message.author, message.content)
         else:
-            log_question_event(str(message.guild.id), str(message.author.id), True, latency_ms)
+            await log_question_event(str(message.guild.id), str(message.author.id), True, latency_ms)
         return
 
     await bot.process_commands(message)
@@ -286,7 +280,7 @@ async def on_reaction_add(reaction, user):
     print(f"[on_reaction_add] User {user.name} reacted {reaction.emoji} to message {message_id}")
 
     if str(reaction.emoji) == "👎":
-        row = get_mod_channel(str(data["guild_id"]))
+        row = await get_mod_channel(str(data["guild_id"]))
         if row:
             mod_channel = bot.get_channel(int(row["mod_channel"]))
             if mod_channel:
@@ -314,31 +308,25 @@ async def on_reaction_add(reaction, user):
 @bot.command()
 @commands.cooldown(4, 60, commands.BucketType.user)
 async def ask(ctx, *, question: str = None):
-    server_plan = get_server_plan(str(ctx.guild.id))
-    plan = "free"
-    max_limit = 50
-    billing_date = None
-    if server_plan:
-        plan = server_plan.get("plan", "free")
-        max_limit = server_plan.get("max_limit_questions", PLAN_LIMITS.get(plan, 50))
-        billing_date = server_plan.get("billing_date")
-        
+    server_plan = await get_server_plan(str(ctx.guild.id))
+    plan = server_plan.get("plan", "free")
+    max_limit = server_plan.get("max_limit_questions") or 50
+    billing_date = server_plan.get("billing_date") or None
     if plan == "free":
-        if (get_total_questions(str(ctx.guild.id)) or 0) >= max_limit:
+        if (await get_total_questions(str(ctx.guild.id)) or 0) >= max_limit:
             await ctx.send(
                 f"⚠️ This server has reached its **{max_limit} question limit** on the free plan. "
                 f"Please ask a mod or admin to upgrade on the dashboard."
             )
             return
     else:
-        asked_in_cycle = get_questions_since(str(ctx.guild.id), billing_date) if billing_date else (get_total_questions(str(ctx.guild.id)) or 0)
+        asked_in_cycle = await get_questions_since(str(ctx.guild.id), billing_date) if billing_date else (await get_total_questions(str(ctx.guild.id)) or 0)
         if asked_in_cycle >= max_limit:
             await ctx.send(
                 f"⚠️ This server has reached its **{max_limit} question limit** on the {plan.capitalize()} plan. "
                 f"Please ask a mod or admin to upgrade on the dashboard."
             )
             return
-    start_time = time.time()
     if ctx.message.attachments:
         attachment = ctx.message.attachments[0]
         mb_size = attachment.size / (1024 * 1024)
@@ -351,7 +339,7 @@ async def ask(ctx, *, question: str = None):
     if not question:
         await ctx.send("No question provided. Usage: `-ask <your question>`")
         return
-    channel_info = get_channel_config(str(ctx.guild.id), str(ctx.channel.id))
+    channel_info = await get_channel_config(str(ctx.guild.id), str(ctx.channel.id))
     language = channel_info.get("language", "english") if channel_info else "english"
     tone = channel_info.get("tone", "professional") if channel_info else "professional"
     prv_messages = await get_user_message_from_channel(ctx.channel.id)
@@ -360,7 +348,7 @@ async def ask(ctx, *, question: str = None):
         async with ctx.typing():
             result = await query_with_temp_kb_spec(str(ctx.guild.id), question, language, tone, prv_messages)
             if is_no_kb_response(result):
-                web_search_info = get_web_search(str(ctx.guild.id))
+                web_search_info = await get_web_search(str(ctx.guild.id))
                 if web_search_info:
                     result = await query_graphlit_web(str(ctx.guild.id), question, language, tone, prv_messages)
                 else:
@@ -368,10 +356,10 @@ async def ask(ctx, *, question: str = None):
         latency_ms = round((time.time() - start_time) * 1000, 2)
         await send_answer_with_feedback(ctx.channel, ctx.author, str(ctx.guild.id), question, result)
         if is_no_kb_response(result):
-            log_question_event(str(ctx.guild.id), str(ctx.author.id), False, latency_ms)
+            await log_question_event(str(ctx.guild.id), str(ctx.author.id), False, latency_ms)
             await notify_mod_channel(ctx.guild, ctx.channel, ctx.author, question)
         else:
-            log_question_event(str(ctx.guild.id), str(ctx.author.id), True, latency_ms)
+            await log_question_event(str(ctx.guild.id), str(ctx.author.id), True, latency_ms)
         return
     print(f"[ask] {ctx.author.name} asked: {question[:60]}")
     async with ctx.typing():
@@ -379,10 +367,10 @@ async def ask(ctx, *, question: str = None):
     latency_ms = round((time.time() - start_time) * 1000, 2)
     await send_answer_with_feedback(ctx.channel, ctx.author, str(ctx.guild.id), question, answer)
     if is_no_kb_response(answer):
-        log_question_event(str(ctx.guild.id), str(ctx.author.id), False, latency_ms)
+        await log_question_event(str(ctx.guild.id), str(ctx.author.id), False, latency_ms)
         await notify_mod_channel(ctx.guild, ctx.channel, ctx.author, question)
     else:
-        log_question_event(str(ctx.guild.id), str(ctx.author.id), True, latency_ms)
+        await log_question_event(str(ctx.guild.id), str(ctx.author.id), True, latency_ms)
 
 
 @bot.event

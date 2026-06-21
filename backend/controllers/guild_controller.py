@@ -10,7 +10,7 @@ from dbhelper.db_helper import (
     get_server,
     get_user_guild_ids,
     add_guild_admin,
-    remove_guild_admin,
+    remove_guild_admin,add_server
 )
 
 DISCORD_API      = os.getenv("DISCORD_API", "https://discord.com/api/v10")
@@ -22,7 +22,7 @@ _eligible_cache: dict[str, tuple[float, dict]] = {}
 async def handle_get_guilds(
     user: dict = Depends(verify_access_token),
 ) -> dict:
-    row = get_admin_user(user["discord_id"])
+    row = await get_admin_user(user["discord_id"])
     if not row:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -130,7 +130,7 @@ async def handle_get_eligible_guilds(
         if now - ts < CACHE_TTL:
             return cached
 
-    row = get_admin_user(uid)
+    row = await get_admin_user(uid)
     if not row:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -154,8 +154,9 @@ async def handle_get_eligible_guilds(
             is_admin = is_owner or bool(int(g.get("permissions", 0)) & ADMIN_PERMISSION)
             if not is_admin:
                 continue
+            await add_server(g["id"], g["name"])
             role = "owner" if is_owner else "admin"
-            add_guild_admin(
+            await add_guild_admin(
                 guild_id=g["id"],
                 discord_id=uid,
                 role=role,
@@ -163,9 +164,9 @@ async def handle_get_eligible_guilds(
             )
             synced_ids.add(g["id"])
 
-        current_db_guilds = get_user_guild_ids(uid)
+        current_db_guilds = await get_user_guild_ids(uid)
         for stale_guild_id in current_db_guilds - synced_ids:
-            remove_guild_admin(stale_guild_id, uid)
+            await remove_guild_admin(stale_guild_id, uid)
     except Exception as e:
         print(f"[handle_get_eligible_guilds] Admin sync failed: {e}")
 
@@ -179,7 +180,7 @@ async def handle_get_eligible_guilds(
                     if g.get("icon") else None
                 ),
                 "owner":      g.get("owner", False),
-                "registered": bool(get_server(g["id"])),
+                "registered": bool(await get_server(g["id"])),
             }
             for g in guilds
             if g.get("owner") or (int(g.get("permissions", 0)) & ADMIN_PERMISSION)

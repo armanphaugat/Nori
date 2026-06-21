@@ -13,14 +13,14 @@ async def handle_add_server(
     name:     str = Form(...),
     user:     dict = Depends(verify_access_token),
 ) -> dict:
-    add_server(guild_id, name)
-    add_guild_admin(
+    await add_server(guild_id, name)
+    await add_guild_admin(
         guild_id=guild_id,
         discord_id=user["discord_id"],
         role="owner",
         granted_by=user["discord_id"],
     )
-    upsert_server_plan(
+    await upsert_server_plan(
         server_id=guild_id,
         plan="free",
         max_limit_questions=100,
@@ -32,7 +32,7 @@ async def handle_update_max_token(
     guild_id: str = Form(...),
     k:        int = Form(...),
 ) -> dict:
-    _require_server_updated(update_max_tokens(guild_id, k), "max_tokens")
+    _require_server_updated(await update_max_tokens(guild_id, k), "max_tokens")
     return {"status": "success", "message": "Max tokens updated successfully"}
 
 
@@ -40,7 +40,7 @@ async def handle_update_pause(
     guild_id: str = Form(...),
     is_paused: bool = Form(...),
 ) -> dict:
-    _require_server_updated(update_pause_status(guild_id, is_paused), "pause status")
+    _require_server_updated(await update_pause_status(guild_id, is_paused), "pause status")
     return {"status": "success", "message": "Bot pause status updated successfully"}
 
 
@@ -48,7 +48,7 @@ async def handle_get_server_config(
     guild_id: str = Query(...),
     user: dict = Depends(require_guild_admin_query),
 ) -> dict:
-    row = get_server(guild_id)
+    row = await get_server(guild_id)
     if not row:
         raise HTTPException(status_code=404, detail="Server not found — register it first via /server/add")
     return {
@@ -72,7 +72,7 @@ async def handle_get_user_servers_with_status(
     if not discord_id:
         raise HTTPException(status_code=401, detail="User not authenticated")
     try:
-        servers = get_user_servers_with_config_status(discord_id)
+        servers = await get_user_servers_with_config_status(discord_id)
         return {
             "status": "success",
             "count": len(servers),
@@ -86,7 +86,7 @@ async def handle_get_all_servers_with_status(
     user: dict = Depends(verify_access_token),
 ) -> dict:
     try:
-        servers = get_all_servers_with_config_status()
+        servers = await get_all_servers_with_config_status()
         configured   = len([s for s in servers if s["config_status"] == "configured"])
         partial      = len([s for s in servers if s["config_status"] == "partial"])
         unconfigured = len([s for s in servers if s["config_status"] == "unconfigured"])
@@ -107,7 +107,7 @@ async def handle_get_web_search(
     guild_id: str = Query(...),
     user: dict = Depends(require_guild_admin_query),
 ) -> dict:
-    row = get_web_search(guild_id)
+    row = await get_web_search(guild_id)
     if not row:
         raise HTTPException(status_code=404, detail="Server not found — register it first via /server/add")
     return {
@@ -120,7 +120,7 @@ async def handle_update_web_search(
     trigger:bool=Form(...),
     user: dict = Depends(require_guild_admin),
 ) -> dict:
-    row = update_web_search(guild_id,trigger)
+    row = await update_web_search(guild_id,trigger)
     if not row:
         raise HTTPException(status_code=404, detail="Server not found — register it first via /server/add")
     return {

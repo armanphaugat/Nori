@@ -145,7 +145,7 @@ async def discord_callback(
     username = f"{me['username']}#{me.get('discriminator', '0')}"
 
     # 4. Upsert admin_users row
-    upsert_admin_user(
+    await upsert_admin_user(
         discord_id=me["id"],
         username=username,
         avatar=me.get("avatar"),
@@ -157,7 +157,7 @@ async def discord_callback(
 
     # 5. Create session — store only the hash
     raw_refresh = secrets.token_urlsafe(32)
-    create_session(
+    await create_session(
         discord_id=me["id"],
         refresh_token_hash=_hash_token(raw_refresh),
         expires_at=datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
@@ -182,7 +182,7 @@ async def refresh_tokens(
     if not rt:
         raise HTTPException(status_code=401, detail="No refresh token")
     token_hash = _hash_token(rt)
-    session = get_session_by_hash(token_hash)
+    session = await get_session_by_hash(token_hash)
     if not session:
         raise HTTPException(status_code=401, detail="Refresh token not found")
     if session["revoked"]:
@@ -190,15 +190,15 @@ async def refresh_tokens(
     if session["expires_at"] < datetime.now(timezone.utc):
         raise HTTPException(status_code=401, detail="Refresh token expired")
 
-    revoke_session(session["id"])
+    await revoke_session(session["id"])
     new_raw_refresh = secrets.token_urlsafe(32)
-    create_session(
+    await create_session(
         discord_id=session["discord_id"],
         refresh_token_hash=_hash_token(new_raw_refresh),
         expires_at=datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
     )
 
-    user = get_admin_user(session["discord_id"])
+    user = await get_admin_user(session["discord_id"])
     access_token = _make_access_token(
         session["discord_id"],
         user.get("cached_guild_ids", []),
@@ -217,9 +217,9 @@ async def logout(
 ) -> dict:
     if rt:
         token_hash = _hash_token(rt)
-        session = get_session_by_hash(token_hash)
+        session = await get_session_by_hash(token_hash)
         if session:
-            revoke_session(session["id"])
+            await revoke_session(session["id"])
 
     _clear_refresh_cookie(response)
     return {"detail": "Logged out"}
@@ -227,7 +227,7 @@ async def logout(
 
 @auth_router.get("/me")
 async def get_me(user: dict = Depends(verify_access_token)) -> dict:
-    row = get_admin_user(user["discord_id"])
+    row = await get_admin_user(user["discord_id"])
     if not row:
         raise HTTPException(status_code=404, detail="User not found")
     return {
@@ -241,7 +241,7 @@ async def get_me(user: dict = Depends(verify_access_token)) -> dict:
 
 @auth_router.get("/sessions")
 async def list_sessions(user: dict = Depends(verify_access_token)) -> dict:
-    sessions = get_user_sessions(user["discord_id"])
+    sessions = await get_user_sessions(user["discord_id"])
     safe = [
         {
             "id": str(s["id"]),
@@ -261,7 +261,7 @@ async def revoke_other_session(
     session_id: str,
     user: dict = Depends(verify_access_token),
 ) -> dict:
-    success = revoke_session_by_id(session_id, owner_discord_id=user["discord_id"])
+    success = await revoke_session_by_id(session_id, owner_discord_id=user["discord_id"])
     if not success:
         raise HTTPException(status_code=404, detail="Session not found or not yours")
     return {"detail": "Session revoked"}
