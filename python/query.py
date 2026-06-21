@@ -362,17 +362,6 @@ async def query_with_temp_kb_spec(
             except Exception as e:
                 print(f"[WARN] Failed to delete temp KB spec: {e}")
 
-
-async def check_content_states(server_id: str):
-    content_ids = await get_content_ids(server_id)
-    for cid in content_ids:
-        result = await graphlit.client.get_content(id=cid)
-        c = result.content
-        print(f"ID: {cid}")
-        print(f"  Name: {c.name}")
-        print(f"  State: {c.state}")       # Should be INGESTED not INGESTING/FAILED
-        print(f"  Type: {c.type}")
-        print(f"  Text length: {len(c.markdown or '') if c.markdown else 0}")
  
 
  

@@ -119,7 +119,6 @@ def is_no_kb_response(answer: str) -> bool:
 
 
 async def get_answer(guild_id: str, question: str, language: str, tone: str, prv_messages: str) -> str:
-    await check_content_states(guild_id)
     print(f"[get_answer] Querying KB for: {question[:60]}")
     try:
         answer = await asyncio.wait_for(query_graphlit(guild_id, question, language, tone, prv_messages), timeout=30.0)
