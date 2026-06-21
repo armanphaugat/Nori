@@ -10,7 +10,7 @@ from datetime import datetime, timezone, timedelta
 import time
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event, get_channel_config, get_web_search,get_total_questions,get_server_plan,get_questions_since, PLAN_LIMITS
-from python.query import query_graphlit, query_graphlit_web, query_with_temp_kb_spec,check_content_states
+from python.query import query_graphlit, query_graphlit_web, query_with_temp_kb_spec
 from python.ingest import read_ocr_async
 
 load_dotenv()

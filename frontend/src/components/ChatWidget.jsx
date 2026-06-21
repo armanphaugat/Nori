@@ -21,6 +21,199 @@ export default function ChatWidget({ guildId, guildName }) {
   const bottomRef = useRef(null);
   const inputRef  = useRef(null);
 
+  const [position, setPosition] = useState({ x: null, y: null });
+  const [isDragging, setIsDragging] = useState(false);
+  const containerRef = useRef(null);
+  const dragStart = useRef({
+    mouseX: 0,
+    mouseY: 0,
+    rightOffset: 0,
+    bottomOffset: 0,
+    width: 0,
+    height: 0,
+    isFab: false,
+    startX: 0,
+    startY: 0,
+    hasMoved: false,
+  });
+
+  const handleMouseDownHeader = (e) => {
+    if (e.target.closest("button")) return;
+    e.preventDefault();
+    const currentRight = position.x !== null ? position.x : 24;
+    const currentBottom = position.y !== null ? position.y : 24;
+    dragStart.current = {
+      mouseX: e.clientX,
+      mouseY: e.clientY,
+      rightOffset: currentRight,
+      bottomOffset: currentBottom,
+      width: 390,
+      height: 614,
+      isFab: false,
+      hasMoved: false,
+    };
+    setIsDragging(true);
+  };
+
+  const handleTouchStartHeader = (e) => {
+    if (e.target.closest("button")) return;
+    const touch = e.touches[0];
+    const currentRight = position.x !== null ? position.x : 24;
+    const currentBottom = position.y !== null ? position.y : 24;
+    dragStart.current = {
+      mouseX: touch.clientX,
+      mouseY: touch.clientY,
+      rightOffset: currentRight,
+      bottomOffset: currentBottom,
+      width: 390,
+      height: 614,
+      isFab: false,
+      hasMoved: false,
+    };
+    setIsDragging(true);
+  };
+
+  const handleMouseDownFab = (e) => {
+    const currentRight = position.x !== null ? position.x : 24;
+    const currentBottom = position.y !== null ? position.y : 24;
+    const rect = e.currentTarget.getBoundingClientRect();
+    dragStart.current = {
+      mouseX: e.clientX,
+      mouseY: e.clientY,
+      rightOffset: currentRight,
+      bottomOffset: currentBottom,
+      width: open ? 390 : rect.width,
+      height: open ? 614 : rect.height,
+      isFab: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      hasMoved: false,
+    };
+    setIsDragging(true);
+  };
+
+  const handleTouchStartFab = (e) => {
+    const touch = e.touches[0];
+    const currentRight = position.x !== null ? position.x : 24;
+    const currentBottom = position.y !== null ? position.y : 24;
+    const rect = e.currentTarget.getBoundingClientRect();
+    dragStart.current = {
+      mouseX: touch.clientX,
+      mouseY: touch.clientY,
+      rightOffset: currentRight,
+      bottomOffset: currentBottom,
+      width: open ? 390 : rect.width,
+      height: open ? 614 : rect.height,
+      isFab: true,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      hasMoved: false,
+    };
+    setIsDragging(true);
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e) => {
+      const deltaX = e.clientX - dragStart.current.mouseX;
+      const deltaY = e.clientY - dragStart.current.mouseY;
+      
+      let newRight = dragStart.current.rightOffset - deltaX;
+      let newBottom = dragStart.current.bottomOffset - deltaY;
+
+      const { width, height } = dragStart.current;
+
+      newRight = Math.max(0, Math.min(newRight, window.innerWidth - width));
+      newBottom = Math.max(0, Math.min(newBottom, window.innerHeight - height));
+
+      if (dragStart.current.isFab) {
+        const dist = Math.sqrt(
+          Math.pow(e.clientX - dragStart.current.startX, 2) +
+          Math.pow(e.clientY - dragStart.current.startY, 2)
+        );
+        if (dist > 5) {
+          dragStart.current.hasMoved = true;
+        }
+      }
+
+      setPosition({ x: newRight, y: newBottom });
+    };
+
+    const handleTouchMove = (e) => {
+      if (e.touches.length === 0) return;
+      const touch = e.touches[0];
+      const deltaX = touch.clientX - dragStart.current.mouseX;
+      const deltaY = touch.clientY - dragStart.current.mouseY;
+
+      let newRight = dragStart.current.rightOffset - deltaX;
+      let newBottom = dragStart.current.bottomOffset - deltaY;
+
+      const { width, height } = dragStart.current;
+
+      newRight = Math.max(0, Math.min(newRight, window.innerWidth - width));
+      newBottom = Math.max(0, Math.min(newBottom, window.innerHeight - height));
+
+      if (dragStart.current.isFab) {
+        const dist = Math.sqrt(
+          Math.pow(touch.clientX - dragStart.current.startX, 2) +
+          Math.pow(touch.clientY - dragStart.current.startY, 2)
+        );
+        if (dist > 5) {
+          dragStart.current.hasMoved = true;
+        }
+      }
+
+      setPosition({ x: newRight, y: newBottom });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      setTimeout(() => {
+        if (dragStart.current) {
+          dragStart.current.hasMoved = false;
+        }
+      }, 50);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("touchend", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleMouseUp);
+    };
+  }, [isDragging]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (position.x !== null && position.y !== null) {
+        const width = open ? 390 : 145;
+        const height = open ? 614 : 54;
+        const newRight = Math.max(0, Math.min(position.x, window.innerWidth - width));
+        const newBottom = Math.max(0, Math.min(position.y, window.innerHeight - height));
+        if (newRight !== position.x || newBottom !== position.y) {
+          setPosition({ x: newRight, y: newBottom });
+        }
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [position, open]);
+
+  const handleFabClick = (e) => {
+    if (dragStart.current.hasMoved) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    setOpen(o => !o);
+  };
+
   const suggestions = [
     { label: "Channel Management", q: "How do I configure channels?" },
     { label: "Knowledge Base", q: "How do I upload new documents?" },
@@ -136,31 +329,56 @@ export default function ChatWidget({ guildId, guildName }) {
     <>
       <style dangerouslySetInnerHTML={{ __html: WIDGET_CSS }} />
 
-      {/* ── Chat panel ── */}
-      <div style={{
-        position: "fixed", bottom: 88, right: 24, width: 390, height: 550,
-        background: "var(--surface)",
-        border: "1px solid var(--border2)",
-        borderRadius: 24,
-        boxShadow: "0 16px 48px rgba(43,45,66,0.15), 0 2px 8px rgba(43,45,66,0.05)",
-        zIndex: 200,
-        display: "flex", flexDirection: "column", overflow: "hidden",
-        transform: open ? "scale(1) translateY(0)" : "scale(0.92) translateY(18px)",
-        opacity: open ? 1 : 0,
-        pointerEvents: open ? "all" : "none",
-        transition: "transform .35s cubic-bezier(0.16,1,0.3,1), opacity .25s ease",
-        transformOrigin: "bottom right",
-      }}>
+      {/* ── Fixed Position Draggable Wrapper Container ── */}
+      <div
+        ref={containerRef}
+        style={{
+          position: "fixed",
+          bottom: position.y !== null ? position.y : 24,
+          right: position.x !== null ? position.x : 24,
+          zIndex: 200,
+          pointerEvents: "none",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-end",
+        }}
+      >
+        {/* Chat panel */}
+        <div 
+          style={{
+            position: "absolute",
+            bottom: 64,
+            right: 0,
+            width: 390, height: 550,
+            background: "var(--surface)",
+            border: "1px solid var(--border2)",
+            borderRadius: 24,
+            boxShadow: "0 16px 48px rgba(43,45,66,0.15), 0 2px 8px rgba(43,45,66,0.05)",
+            zIndex: 200,
+            display: "flex", flexDirection: "column", overflow: "hidden",
+            transform: open ? "scale(1) translateY(0)" : "scale(0.92) translateY(18px)",
+            opacity: open ? 1 : 0,
+            pointerEvents: open ? "all" : "none",
+            transition: "transform .35s cubic-bezier(0.16,1,0.3,1), opacity .25s ease",
+            transformOrigin: "bottom right",
+          }}
+        >
 
-        {/* Header */}
-        <div style={{
-          padding: "16px 20px",
-          borderBottom: "1px solid var(--border)",
-          display: "flex", alignItems: "center", gap: 12,
-          background: "linear-gradient(135deg, var(--navy) 0%, #1e2229 100%)",
-          flexShrink: 0,
-          boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-        }}>
+          {/* Header */}
+          <div 
+            onMouseDown={handleMouseDownHeader}
+            onTouchStart={handleTouchStartHeader}
+            style={{
+              padding: "16px 20px",
+              borderBottom: "1px solid var(--border)",
+              display: "flex", alignItems: "center", gap: 12,
+              background: "linear-gradient(135deg, var(--navy) 0%, #1e2229 100%)",
+              flexShrink: 0,
+              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+              cursor: isDragging ? "grabbing" : "grab",
+              userSelect: "none",
+            }}
+          >
           <BotAvatar size={36} />
           <div style={{ flex: 1 }}>
             <div style={{
@@ -435,14 +653,18 @@ export default function ChatWidget({ guildId, guildName }) {
 
       {/* ── FAB toggle ── */}
       <button
-        onClick={() => setOpen(o => !o)}
+        onMouseDown={handleMouseDownFab}
+        onTouchStart={handleTouchStartFab}
+        onClick={handleFabClick}
         className="fancy-fab"
         style={{
-          position: "fixed", bottom: 24, right: 24, zIndex: 210,
+          position: "relative",
+          zIndex: 210,
+          pointerEvents: "all",
           padding: open ? "0" : "10px 20px 10px 14px",
           width: open ? 54 : "auto", height: 54,
           borderRadius: open ? "50%" : 99,
-          cursor: "pointer",
+          cursor: isDragging ? "grabbing" : "pointer",
           display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
           transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
           border: "none",
@@ -459,6 +681,7 @@ export default function ChatWidget({ guildId, guildName }) {
           </>
         )}
       </button>
+    </div>
     </>
   );
 }
