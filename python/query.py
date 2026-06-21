@@ -124,7 +124,7 @@ async def get_or_create_kb_spec(server_id: str, language: str, tone: str) -> str
             service_type=ModelServiceTypes.OPEN_AI,
             system_prompt=build_kb_system_prompt(language, tone),
             retrieval_strategy=RetrievalStrategyInput(
-                type=RetrievalStrategyTypes.RETRIEVAL,
+                type=RetrievalStrategyTypes.CHUNK,
                 content_limit=15,
             ),
             open_ai=OpenAIModelPropertiesInput(
