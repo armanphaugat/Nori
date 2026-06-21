@@ -113,7 +113,6 @@ RULES:
 
 
 async def get_or_create_kb_spec(server_id: str, language: str, tone: str) -> str:
-    # FIXED: Added 'await' to resolve the coroutine into a string
     existing_spec_id = await get_kb_spec_id(server_id)
     if existing_spec_id:
         return existing_spec_id
@@ -141,7 +140,6 @@ async def get_or_create_kb_spec(server_id: str, language: str, tone: str) -> str
 
 
 async def get_or_create_web_spec(server_id: str, language: str, tone: str) -> str:
-    # FIXED: Added 'await' to resolve the coroutine into a string
     existing_spec_id = await get_web_spec_id(server_id)
     if existing_spec_id:
         return existing_spec_id
