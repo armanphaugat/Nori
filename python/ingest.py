@@ -157,20 +157,54 @@ async def add_website_graphlit(server_id: str, url: str):
 
 async def add_word_graphlit(server_id: str, file):
     try:
-        text = read_word(file)
-        response = await graphlit.client.ingest_text(text=text, is_synchronous=True)
-        await add_content_id(server_id, str(response.ingest_text.id))
-        return response.ingest_text.id
+        if isinstance(file, BytesIO):
+            file.seek(0)
+            file = file.read()
+        base64_data = base64.b64encode(file).decode("utf-8")
+        response = await graphlit.client.ingest_encoded_file(
+            name=f"{server_id}_upload.docx",
+            data=base64_data,
+            mime_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            is_synchronous=True
+        )
+        if not response:
+            print("No ingestion Done")
+            return 0
+        await add_content_id(server_id, str(response.ingest_encoded_file.id))
+        return response.ingest_encoded_file.id
+
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
         return 0
 
-async def add_image_graphlit(server_id: str, file):
+async def add_image_graphlit(server_id: str, file_path: str):
     try:
-        text = read_ocr(file)
-        response = await graphlit.client.ingest_text(text=text, is_synchronous=True)
-        await add_content_id(server_id, str(response.ingest_text.id))
-        return response.ingest_text.id
+        import base64
+        
+        with open(file_path, "rb") as f:
+            file_data = base64.b64encode(f.read()).decode("utf-8")
+        
+        ext = file_path.split(".")[-1].lower()
+        mime_types = {
+            "jpg": "image/jpeg",
+            "jpeg": "image/jpeg",
+            "png": "image/png",
+            "gif": "image/gif",
+            "webp": "image/webp"
+        }
+        mime_type = mime_types.get(ext, "image/jpeg")
+        
+        response = await graphlit.client.ingest_encoded_file(
+            name=file_path,
+            data=file_data,
+            mime_type=mime_type,
+            is_synchronous=True
+        )
+        content_id = response.ingest_encoded_file.id
+        await add_content_id(server_id, str(content_id))
+        print(f"[{server_id}] Image ingested → {content_id}")
+        return content_id
+
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
         return 0
