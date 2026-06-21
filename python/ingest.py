@@ -13,7 +13,7 @@ from dbhelper.db_helper import *
 import base64
 import pandas as pd
 from dotenv import load_dotenv
-from graphlit_api import FeedTypes, WebFeedPropertiesInput,FeedInput
+from graphlit_api import FeedSchedulePolicyInput, FeedTypes, TimedPolicyRecurrenceTypes, WebFeedPropertiesInput,FeedInput
 load_dotenv()
 env_id = os.getenv("GRAPHLIT_ENVIRONMENT_ID")
 org_key = os.getenv("GRAPHLIT_ORGANIZATION_ID") or os.getenv("GRAPHLIT_ORGANIZATION_KEY")
@@ -142,10 +142,10 @@ async def add_website_graphlit(server_id: str, url: str):
                 name=f"{server_id}_feed",
                 type=FeedTypes.WEB,
                 web=WebFeedPropertiesInput(uri=url),
-                schedulePolicy={
-                    "recurrenceType": "REPEAT",
-                    "repeatInterval": "P1D"
-                }
+                schedule_policy=FeedSchedulePolicyInput(
+                    recurrence_type=TimedPolicyRecurrenceTypes.REPEAT,
+                    repeat_interval="P1D"
+                )
             )
         )
         feed_id = response.create_feed.id

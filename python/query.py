@@ -6,7 +6,7 @@ load_dotenv(override=True)
 from graphlit import Graphlit
 from dbhelper.db_helper import (
     get_kb_spec_id, get_web_spec_id, save_spec_id,
-    get_content_ids, get_feed_ids, get_web_search
+    get_content_ids, get_feed_ids, get_web_search,delete_spec_id
 )
 from graphlit_api import (
     SpecificationInput, SpecificationTypes, ModelServiceTypes,
@@ -39,84 +39,64 @@ def is_small_talk(question: str) -> bool:
 
 def build_kb_system_prompt(language: str = "english", tone: str = "professional") -> str:
     return f"""
-You are a helpful knowledge base assistant. You answer questions based on provided documents.
-Always respond in {language}. Your tone should be {tone}.
+You are a helpful knowledge base assistant. Answer questions based on provided documents.
+Always respond in {language} with a {tone} tone.
 
 CONVERSATION HANDLING:
-- For greetings (e.g. "hi", "hello", "hey"): respond warmly and invite the user to ask a question
-- For thanks or farewells (e.g. "thank you", "bye", "that's all"): respond naturally and {tone}ly
-- For small talk or non-question statements: engage briefly and redirect toward how you can help
-- For compliments or feedback: acknowledge them graciously
-These conversational responses do NOT require citing sources.
+- Greetings/farewells/small talk: respond naturally, no sources needed
+- Compliments: acknowledge graciously
 
 ANSWERING RULES:
-- Answer from the provided documents, including reasonable inferences from the content
-- If the topic is covered in the documents, provide a helpful and accurate answer
-- If the answer truly cannot be found or reasonably inferred from the documents, output ONLY:
+- Answer from documents. If partially covered, share what you know.
+- Make reasonable inferences from document content.
+- If the topic is completely absent from documents, output EXACTLY this phrase and nothing else:
 I don't have this information
+- Never fabricate facts or use outside knowledge.
 
-FORBIDDEN when answer is not in documents:
-- DO NOT guess or fabricate facts
-- DO NOT use your own training knowledge on topics not in documents
-- DO NOT add any text before or after the phrase above
+CRITICAL: When you have no information, you MUST output ONLY the exact phrase:
+I don't have this information
+Do NOT rephrase it. Do NOT add any other text. Do NOT say "I currently do not have" or any variation.
 
-If the answer IS in the documents:
-1. Provide a clear, accurate answer
-2. Do not mention source IDs or document references
-3. Keep answer under 1800 characters
-4. Use bullet points or numbered lists if appropriate
-
-RULES:
-- Be helpful and {tone}
-- Never make up information
-- Always respond in {language}
+FORMAT (only when answer exists):
+- Clear, helpful answers under 1800 characters
+- Use bullet points or numbered lists when appropriate
+- Do not mention source IDs or document references
 """
 
 
 def build_web_system_prompt(language: str = "english", tone: str = "professional") -> str:
     return f"""
-You are a web search assistant. You answer questions based on provided search results.
-Always respond in {language}. Your tone should be {tone}.
+You are a helpful web search assistant. Answer questions based on provided search results.
+Always respond in {language} with a {tone} tone.
 
 CONVERSATION HANDLING:
-- For greetings (e.g. "hi", "hello", "hey"): respond warmly and invite the user to ask a question
-- For thanks or farewells (e.g. "thank you", "bye", "that's all"): respond naturally and {tone}ly
-- For small talk or non-question statements: engage briefly and redirect toward how you can help
-- For compliments or feedback: acknowledge them graciously
-These conversational responses do NOT require citations.
+- Greetings/farewells/small talk: respond naturally, no citations needed
 
 ANSWERING RULES:
-- Answer from the provided search results, including reasonable inferences from the content
-- If the search results contain relevant information, provide a helpful and accurate answer
-- If the answer truly cannot be found in the search results, output ONLY:
-I don't have this information
+- Answer from search results. Share partial information if fully covered answer isn't available.
+- Make reasonable inferences from search results.
+- Only say "I don't have this information" if results contain nothing relevant.
+- Never fabricate facts or invent URLs.
 
-FORBIDDEN when answer is not in search results:
-- DO NOT guess or fabricate facts
-- DO NOT fabricate URLs or sources
-- DO NOT use your own training knowledge on topics not in search results
-- DO NOT add any text before or after the phrase above
-
-If the answer IS in the search results:
-1. Provide a clear, accurate answer
-2. Cite sources with URL or site name
-3. Keep answer under 1800 characters
-4. Use bullet points or numbered lists if appropriate
-
-RULES:
-- Only answer from search results provided
-- Always cite sources
-- Never make up information
+FORMAT:
+- Clear, helpful answers under 1800 characters
+- Always cite sources with URL or site name
+- Use bullet points or numbered lists when appropriate
 - Prefer recent and authoritative sources
-- Always respond in {language}
 """
 
 
 async def get_or_create_kb_spec(server_id: str, language: str, tone: str) -> str:
     existing_spec_id = await get_kb_spec_id(server_id)
     if existing_spec_id:
-        return existing_spec_id
-        
+        # Verify it still exists in Graphlit before returning
+        try:
+            await graphlit.client.get_specification(id=existing_spec_id)
+            return existing_spec_id
+        except Exception:
+            print(f"[WARN] Cached spec {existing_spec_id} not found in Graphlit, recreating...")
+            await delete_spec_id(server_id, "kb")  # clear stale ID from DB
+
     spec_response = await graphlit.client.create_specification(
         specification=SpecificationInput(
             name=f"{server_id}_kb_spec",
@@ -124,8 +104,8 @@ async def get_or_create_kb_spec(server_id: str, language: str, tone: str) -> str
             service_type=ModelServiceTypes.OPEN_AI,
             system_prompt=build_kb_system_prompt(language, tone),
             retrieval_strategy=RetrievalStrategyInput(
-                type=RetrievalStrategyTypes.CHUNK,
-                content_limit=15,
+                type=RetrievalStrategyTypes.CONTENT,
+                content_limit=5,
             ),
             open_ai=OpenAIModelPropertiesInput(
                 model=OpenAIModels.GPT4O_MINI_128K,
@@ -135,6 +115,7 @@ async def get_or_create_kb_spec(server_id: str, language: str, tone: str) -> str
         )
     )
     spec_id = spec_response.create_specification.id
+    print(f"[SPEC] Created new KB spec: {spec_id}")
     await save_spec_id(server_id, "kb", spec_id)
     return spec_id
 

@@ -1003,7 +1003,26 @@ async def update_server_plan_status(
         )
         await s.commit()
         return result.rowcount
-
+    
+async def delete_spec_id(server_id: str, spec_type: str) -> int:
+    async with AsyncDB() as s:
+        if spec_type == "kb":
+            result = await s.execute(
+                text("UPDATE servers SET kb_spec_id = NULL WHERE server_id = :server_id"),
+                {"server_id": server_id},
+            )
+        elif spec_type == "web":
+            result = await s.execute(
+                text("UPDATE servers SET web_spec_id = NULL WHERE server_id = :server_id"),
+                {"server_id": server_id},
+            )
+        else:
+            result = await s.execute(
+                text("UPDATE servers SET kb_spec_id = NULL, web_spec_id = NULL WHERE server_id = :server_id"),
+                {"server_id": server_id},
+            )
+        await s.commit()
+        return result.rowcount
 
 
 
