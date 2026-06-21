@@ -96,7 +96,7 @@ def read_video(file):
 async def add_url_graphlit(server_id: str, url: str):
     try:
         response = await graphlit.client.ingest_uri(url, is_synchronous=True)
-        add_content_id(server_id, response.ingest_uri.id)
+        await add_content_id(server_id, response.ingest_uri.id)
         print("Url Addded")
         return response.ingest_uri.id
     except Exception as e:
@@ -117,7 +117,7 @@ async def add_pdf_graphlit(server_id: str, pdf):
         if not response:
             print("No ingestion Done")
             return 0
-        add_content_id(server_id, response.ingest_encoded_file.id)
+        await add_content_id(server_id, response.ingest_encoded_file.id)
         return response.ingest_encoded_file.id
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
@@ -129,7 +129,7 @@ async def add_text_graphlit(server_id: str, faq_text: str):
         if not response:
             print("Not Able To Add Text To Graphlit")
             return 0
-        add_content_id(server_id, str(response.ingest_text.id))
+        await add_content_id(server_id, str(response.ingest_text.id))
         return response.ingest_text.id
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
@@ -150,7 +150,7 @@ async def add_website_graphlit(server_id: str, url: str):
         )
         feed_id = response.create_feed.id
         print(f"[DEBUG] Feed created: {feed_id} for server: {server_id}")
-        add_feed_id(server_id, str(feed_id))
+        await add_feed_id(server_id, str(feed_id))
         return feed_id
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
@@ -159,7 +159,7 @@ async def add_word_graphlit(server_id: str, file):
     try:
         text = read_word(file)
         response = await graphlit.client.ingest_text(text=text, is_synchronous=True)
-        add_content_id(server_id, str(response.ingest_text.id))
+        await add_content_id(server_id, str(response.ingest_text.id))
         return response.ingest_text.id
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
@@ -169,7 +169,7 @@ async def add_image_graphlit(server_id: str, file):
     try:
         text = read_ocr(file)
         response = await graphlit.client.ingest_text(text=text, is_synchronous=True)
-        add_content_id(server_id, str(response.ingest_text.id))
+        await add_content_id(server_id, str(response.ingest_text.id))
         return response.ingest_text.id
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
@@ -179,7 +179,7 @@ async def add_video_graphlit(server_id: str, file):
     try:
         text = read_video(file)
         response = await graphlit.client.ingest_text(text=text, is_synchronous=True)
-        add_content_id(server_id, str(response.ingest_text.id))
+        await add_content_id(server_id, str(response.ingest_text.id))
         return response.ingest_text.id
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")

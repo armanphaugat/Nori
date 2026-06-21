@@ -107,14 +107,14 @@ async def patreon_webhook(request: Request):
     if discord_id:
         admin_discord_id = discord_id
     elif email:
-        admin_discord_id = get_admin_by_email(email)
+        admin_discord_id = await get_admin_by_email(email)
 
     if not admin_discord_id:
         print(f"[Patreon Webhook] No matching admin user found for email={email}, discord_id={discord_id}")
         return {"status": "ignored", "reason": "user_not_found"}
 
     # Resolve servers managed by this user
-    servers = get_servers_by_admin(admin_discord_id)
+    servers = await get_servers_by_admin(admin_discord_id)
     if not servers:
         print(f"[Patreon Webhook] Admin user {admin_discord_id} has no servers registered in dashboard")
         return {"status": "ignored", "reason": "no_servers"}
@@ -148,7 +148,7 @@ async def patreon_webhook(request: Request):
 
     updated_servers = []
     for server_id in servers:
-        update_server_plan_status(server_id, next_plan, limit, patron_user_id, email)
+        await update_server_plan_status(server_id, next_plan, limit, patron_user_id, email)
         updated_servers.append(server_id)
 
     print(f"[Patreon Webhook] Updated servers {updated_servers} plan to '{next_plan}' (limit: {limit}, email: {email})")
@@ -178,12 +178,12 @@ async def simulate_webhook(
     if discord_id:
         resolved_discord_id = discord_id
     elif email:
-        resolved_discord_id = get_admin_by_email(email)
+        resolved_discord_id = await get_admin_by_email(email)
 
     if not resolved_discord_id:
         raise HTTPException(status_code=404, detail="No matching admin user found in database")
 
-    servers = get_servers_by_admin(resolved_discord_id)
+    servers = await get_servers_by_admin(resolved_discord_id)
     if not servers:
         return {"status": "no_servers_found", "discord_id": resolved_discord_id}
 
@@ -200,7 +200,7 @@ async def simulate_webhook(
 
     updated = []
     for server_id in servers:
-        update_server_plan_status(server_id, next_plan, limit, None, email)
+        await update_server_plan_status(server_id, next_plan, limit, None, email)
         updated.append(server_id)
 
     return {
@@ -220,7 +220,7 @@ async def get_plan(
     """
     Fetch active plan name and limit details for a specific server.
     """
-    plan_info = get_server_plan(guild_id)
+    plan_info = await get_server_plan(guild_id)
     if not plan_info:
         return {
             "server_id": guild_id,
@@ -248,13 +248,13 @@ async def get_usage(
     """
     Retrieve message/question limits and current period usage.
     """
-    plan_info = get_server_plan(guild_id)
+    plan_info = await get_server_plan(guild_id)
     billing_date = plan_info.get("billing_date") if plan_info else None
     
     if billing_date:
-        asked_count = get_questions_since(guild_id, billing_date)
+        asked_count = await get_questions_since(guild_id, billing_date)
     else:
-        asked_count = get_total_questions(guild_id) or 0
+        asked_count = await get_total_questions(guild_id) or 0
         
     return {
         "guild_id": guild_id,

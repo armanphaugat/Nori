@@ -3,9 +3,18 @@ import os
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from dotenv import load_dotenv
 load_dotenv(override=True)
-from dbhelper.db_helper import *
 from graphlit import Graphlit
-from graphlit_api import *
+from dbhelper.db_helper import (
+    get_kb_spec_id, get_web_spec_id, save_spec_id,
+    get_content_ids, get_feed_ids, get_web_search
+)
+from graphlit_api import (
+    SpecificationInput, SpecificationTypes, ModelServiceTypes,
+    RetrievalStrategyInput, RetrievalStrategyTypes,
+    OpenAIModelPropertiesInput, OpenAIModels,
+    ConversationInput, EntityReferenceInput, ContentCriteriaInput,
+    SearchServiceTypes
+)
 
 env_id = os.getenv("GRAPHLIT_ENVIRONMENT_ID")
 org_key = os.getenv("GRAPHLIT_ORGANIZATION_ID") or os.getenv("GRAPHLIT_ORGANIZATION_KEY")
@@ -30,7 +39,7 @@ def is_small_talk(question: str) -> bool:
 
 def build_kb_system_prompt(language: str = "english", tone: str = "professional") -> str:
     return f"""
-You are a STRICT knowledge base assistant. You ONLY answer from provided documents.
+You are a helpful knowledge base assistant. You answer questions based on provided documents.
 Always respond in {language}. Your tone should be {tone}.
 
 CONVERSATION HANDLING:
@@ -40,32 +49,25 @@ CONVERSATION HANDLING:
 - For compliments or feedback: acknowledge them graciously
 These conversational responses do NOT require citing sources.
 
-STRICT RULE - ZERO EXCEPTIONS - HIGHEST PRIORITY:
-If the answer is NOT explicitly found word-for-word in the provided knowledge base documents,
-you MUST output ONLY this exact phrase and NOTHING else:
+ANSWERING RULES:
+- Answer from the provided documents, including reasonable inferences from the content
+- If the topic is covered in the documents, provide a helpful and accurate answer
+- If the answer truly cannot be found or reasonably inferred from the documents, output ONLY:
 I don't have this information
 
 FORBIDDEN when answer is not in documents:
-- DO NOT guess
-- DO NOT say "it's possible that..."
-- DO NOT say "assuming that..."
-- DO NOT ask for clarification
-- DO NOT provide generic advice
-- DO NOT use your own training knowledge
-- DO NOT add any text before or after the phrase
+- DO NOT guess or fabricate facts
+- DO NOT use your own training knowledge on topics not in documents
+- DO NOT add any text before or after the phrase above
 
-You are NOT a general assistant.
-You CANNOT use knowledge outside the provided documents.
-
-If the answer IS explicitly in the documents:
+If the answer IS in the documents:
 1. Provide a clear, accurate answer
 2. Do not mention source IDs or document references
 3. Keep answer under 1800 characters
 4. Use bullet points or numbered lists if appropriate
 
 RULES:
-- Be helpful and {tone} ONLY when answering from documents
-- Always cite sources
+- Be helpful and {tone}
 - Never make up information
 - Always respond in {language}
 """
@@ -73,7 +75,7 @@ RULES:
 
 def build_web_system_prompt(language: str = "english", tone: str = "professional") -> str:
     return f"""
-You are a web search assistant. You ONLY answer from provided search results.
+You are a web search assistant. You answer questions based on provided search results.
 Always respond in {language}. Your tone should be {tone}.
 
 CONVERSATION HANDLING:
@@ -83,19 +85,17 @@ CONVERSATION HANDLING:
 - For compliments or feedback: acknowledge them graciously
 These conversational responses do NOT require citations.
 
-STRICT RULE - ZERO EXCEPTIONS - HIGHEST PRIORITY:
-If the search results do NOT contain a relevant answer,
-you MUST output ONLY this exact phrase and NOTHING else:
+ANSWERING RULES:
+- Answer from the provided search results, including reasonable inferences from the content
+- If the search results contain relevant information, provide a helpful and accurate answer
+- If the answer truly cannot be found in the search results, output ONLY:
 I don't have this information
 
 FORBIDDEN when answer is not in search results:
-- DO NOT guess
-- DO NOT say "it's possible that..."
-- DO NOT say "assuming that..."
-- DO NOT ask for clarification
-- DO NOT use your own training knowledge
+- DO NOT guess or fabricate facts
 - DO NOT fabricate URLs or sources
-- DO NOT add any text before or after the phrase
+- DO NOT use your own training knowledge on topics not in search results
+- DO NOT add any text before or after the phrase above
 
 If the answer IS in the search results:
 1. Provide a clear, accurate answer
@@ -113,9 +113,11 @@ RULES:
 
 
 async def get_or_create_kb_spec(server_id: str, language: str, tone: str) -> str:
-    existing_spec_id = get_kb_spec_id(server_id)
+    # FIXED: Added 'await' to resolve the coroutine into a string
+    existing_spec_id = await get_kb_spec_id(server_id)
     if existing_spec_id:
         return existing_spec_id
+        
     spec_response = await graphlit.client.create_specification(
         specification=SpecificationInput(
             name=f"{server_id}_kb_spec",
@@ -124,22 +126,23 @@ async def get_or_create_kb_spec(server_id: str, language: str, tone: str) -> str
             system_prompt=build_kb_system_prompt(language, tone),
             retrieval_strategy=RetrievalStrategyInput(
                 type=RetrievalStrategyTypes.CONTENT,
-                content_limit=5,
+                content_limit=7,
             ),
             open_ai=OpenAIModelPropertiesInput(
-            model=OpenAIModels.GPT4O_MINI_128K,
-            temperature=0.2,
-            completion_token_limit=1000,
+                model=OpenAIModels.GPT4O_MINI_128K,
+                temperature=0.2,
+                completion_token_limit=1000,
             ),
         )
     )
     spec_id = spec_response.create_specification.id
-    save_spec_id(server_id, "kb", spec_id)
+    await save_spec_id(server_id, "kb", spec_id)
     return spec_id
 
 
 async def get_or_create_web_spec(server_id: str, language: str, tone: str) -> str:
-    existing_spec_id = get_web_spec_id(server_id)
+    # FIXED: Added 'await' to resolve the coroutine into a string
+    existing_spec_id = await get_web_spec_id(server_id)
     if existing_spec_id:
         return existing_spec_id
 
@@ -153,22 +156,20 @@ async def get_or_create_web_spec(server_id: str, language: str, tone: str) -> st
                 model=OpenAIModels.GPT4O_MINI_128K,
                 temperature=0.3,
                 completion_token_limit=500,
-                
             ),
         )
     )
     spec_id = spec_response.create_specification.id
-    save_spec_id(server_id, "web", spec_id)
+    await save_spec_id(server_id, "web", spec_id)
     return spec_id
-
 
 async def query_graphlit(server_id: str, question: str, language: str = "english", tone: str = "professional", prv_messages: str = "") -> str:
     print("Query Graphlit Called")
     if is_small_talk(question):
         return "Hello! How can I help you today?"
     try:
-        content_ids = get_content_ids(server_id)
-        feed_ids = get_feed_ids(server_id)
+        content_ids = await get_content_ids(server_id)
+        feed_ids = await get_feed_ids(server_id)
     except Exception as e:
         print(f"[WARN] DB fetch content/feed ids failed: {e}")
         content_ids, feed_ids = [], []
@@ -176,6 +177,9 @@ async def query_graphlit(server_id: str, question: str, language: str = "english
         return "No knowledge base found for this server."
     spec_id = await get_or_create_kb_spec(server_id, language, tone)
     conversation_id = None
+    print(f"[query_graphlit] content_ids={content_ids}")
+    print(f"[query_graphlit] feed_ids={feed_ids}")
+    print(f"[query_graphlit] spec_id={spec_id}")
     try:
         conv_response = await graphlit.client.create_conversation(
             conversation=ConversationInput(
@@ -294,8 +298,8 @@ async def query_with_temp_kb_spec(
     spec_id = None
     conversation_id = None
     try:
-        content_ids = get_content_ids(server_id)
-        feed_ids = get_feed_ids(server_id)
+        content_ids = await get_content_ids(server_id)
+        feed_ids = await get_feed_ids(server_id)
     except Exception as e:
         print(f"[WARN] DB fetch content/feed ids failed: {e}")
         content_ids, feed_ids = [], []
@@ -359,6 +363,18 @@ async def query_with_temp_kb_spec(
                 print(f"[temp_kb_spec] Deleted temp spec {spec_id}")
             except Exception as e:
                 print(f"[WARN] Failed to delete temp KB spec: {e}")
+
+
+async def check_content_states(server_id: str):
+    content_ids = await get_content_ids(server_id)
+    for cid in content_ids:
+        result = await graphlit.client.get_content(id=cid)
+        c = result.content
+        print(f"ID: {cid}")
+        print(f"  Name: {c.name}")
+        print(f"  State: {c.state}")       # Should be INGESTED not INGESTING/FAILED
+        print(f"  Type: {c.type}")
+        print(f"  Text length: {len(c.markdown or '') if c.markdown else 0}")
  
 
  
