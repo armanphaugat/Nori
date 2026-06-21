@@ -73,15 +73,24 @@ def is_no_kb_response(answer: str) -> bool:
         "outside my expertise",
         "don't have access",
         "no results",
+        "no knowledge base found",
+        "web search is paused",
+        "query timed out",
+        "web search timed out",
+        "error querying knowledge base",
+        "error during web search",
+        "web search is temporarily unavailable",
+        "i don't know",
+        "i don't have information",
     ]
     for phrase in no_answer_phrases:
         if phrase in answer_lower:
             return True
     patterns = [
-        r"i\s+(?:don't|do not|cannot|can't)\s+(?:know|answer|help|assist)",
+        r"i\s+(?:don't|do not|cannot|can't)\s+(?:know|answer|help|assist|have)",
         r"(?:apologize|sorry).*?(?:don't|do not|cannot|can't)\s+(?:know|have|find|provide)",
         r"unfortunately.*?(?:don't|do not|cannot|can't)\s+(?:know|have|find|provide)",
-        r"no\s+(?:answer|information|data|results|matches?)",
+        r"no\s+(?:answer|information|data|results|matches?|knowledge\s+base)",
         r"not\s+(?:in|part of|covered|included).*?(?:knowledge|information|database|kb)",
     ]
     for pattern in patterns:
