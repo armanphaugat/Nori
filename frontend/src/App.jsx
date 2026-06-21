@@ -81,8 +81,13 @@ function Dashboard({
     if (window.location.hash.includes("tab=billing")) {
       return "billing";
     }
-    return "channels";
+    return LS.str("wb_active_tab") || "channels";
   });
+
+  const changeTab = (t) => {
+    setTab(t);
+    LS.strSet("wb_active_tab", t);
+  };
   const [activePlan, setActivePlan] = useState("free");
 
   useEffect(() => {
@@ -161,7 +166,7 @@ function Dashboard({
     <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "var(--bg)" }}>
       <Sidebar
         tab={tab}
-        onTab={setTab}
+        onTab={changeTab}
         activeGuild={activeGuild}
         onSwitchServer={onSwitchServer}
         user={user}
@@ -191,7 +196,8 @@ function Dashboard({
             <span style={{ height: 16, width: 1, background: "var(--border2)" }} />
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               {[
-                { label: "Docs", href: "#", onClick: (e) => { e.preventDefault(); setTab("docs"); } },
+                { label: "Reload", href: "#", onClick: (e) => { e.preventDefault(); window.location.reload(); } },
+                { label: "Docs", href: "#", onClick: (e) => { e.preventDefault(); changeTab("docs"); } },
                 { label: "Invite", href: "https://discord.gg/eBRgsseN" },
                 { label: "Discord", href: activeGuild?.id ? `https://discord.com/channels/${activeGuild.id}` : "https://discord.com" },
               ].map(({ label, href, onClick }) => (
@@ -201,16 +207,17 @@ function Dashboard({
                   onClick={onClick}
                   target={href !== "#" ? "_blank" : undefined}
                   rel={href !== "#" ? "noopener noreferrer" : undefined}
-                  style={{ fontSize: 13, fontWeight: 550, color: "var(--muted)", textDecoration: "none", padding: "4px 10px", borderRadius: "var(--r-sm)", transition: "all var(--tr)" }}
+                  style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 550, color: "var(--muted)", textDecoration: "none", padding: "4px 10px", borderRadius: "var(--r-sm)", transition: "all var(--tr)" }}
                   onMouseEnter={e => { e.currentTarget.style.color = "var(--navy)"; e.currentTarget.style.background = "var(--navy-light)"; }}
                   onMouseLeave={e => { e.currentTarget.style.color = "var(--muted)"; e.currentTarget.style.background = "transparent"; }}
                 >
+                  {label === "Reload" && <Icon name="refresh" size={13} style={{ marginRight: 2 }} />}
                   {label}
                 </a>
               ))}
               <a
                 href="#"
-                onClick={(e) => { e.preventDefault(); setTab("billing"); }}
+                onClick={(e) => { e.preventDefault(); changeTab("billing"); }}
                 style={{ 
                   fontSize: 11, fontWeight: 700, color: "#fff", textDecoration: "none", 
                   display: "flex", alignItems: "center", gap: 4, padding: "5px 12px", 
@@ -494,11 +501,17 @@ export default function App() {
           if (activated && redirectedGuildId) {
             sessionStorage.removeItem("pending_guild_redirect");
             handleActivateServer(redirectedGuildId);
+          } else if (activeGuildId) {
+            setView("dashboard");
           } else {
             setView("servers");
           }
         } catch (_) {
-          setView("servers");
+          if (activeGuildId) {
+            setView("dashboard");
+          } else {
+            setView("servers");
+          }
         }
         setBooting(false);
         return;
@@ -511,14 +524,22 @@ export default function App() {
           setUser(u);
           LS.set("wb_user", u);
           try { const { guilds: dg } = await API.getGuilds(); setDiscordGuilds(dg || []); } catch (_) {}
-          setView("servers");
+          if (activeGuildId) {
+            setView("dashboard");
+          } else {
+            setView("servers");
+          }
         } catch (_) {
           setToken(null);
           LS.rm("wb_user");
         }
       } else if (storedToken && user) {
         try { const { guilds: dg } = await API.getGuilds(); setDiscordGuilds(dg || []); } catch (_) {}
-        setView("servers");
+        if (activeGuildId) {
+          setView("dashboard");
+        } else {
+          setView("servers");
+        }
       }
       setBooting(false);
     })();
@@ -587,6 +608,7 @@ export default function App() {
     LS.rm("wb_user");
     LS.rm("wb_guilds");
     LS.rm("wb_active_guild");
+    LS.rm("wb_active_tab");
     setUser(null);
     setGuilds([]);
     setActiveGuildId(null);
@@ -655,7 +677,12 @@ export default function App() {
           guilds={guilds}
           discordGuilds={discordGuilds}
           activeGuildId={activeGuildId}
-          onSwitchServer={() => setView("servers")}
+          onSwitchServer={() => {
+            setActiveGuildId(null);
+            LS.rm("wb_active_guild");
+            LS.rm("wb_active_tab");
+            setView("servers");
+          }}
           onActivate={handleActivateServer}
           onLogout={handleLogout}
           onGuildsChange={handleGuildsChange}
