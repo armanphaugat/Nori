@@ -30,7 +30,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
   const vidRef = useRef(null); const audRef = useRef(null);
 
   const ALLOWED = {
-    doc: [".pdf", ".docx"],
+    doc: [".pdf", ".docx", ".txt"],
     img: [".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".webp"],
     vid: [".mp4"],
     aud: [".mp3", ".wav", ".m4a"],
@@ -247,7 +247,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
           )}
         </Card>
 
-        <FileSection label="Documents" hint=".pdf, .docx"                            iconName="description" accentColor="var(--accent)"       files={docFiles} setFiles={setDocFiles} inputRef={docRef} accept=".pdf,.docx"                    type="doc" />
+        <FileSection label="Documents" hint=".pdf, .docx, .txt"                      iconName="description" accentColor="var(--accent)"       files={docFiles} setFiles={setDocFiles} inputRef={docRef} accept=".pdf,.docx,.txt"                type="doc" />
         <FileSection label="Images"    hint=".png, .jpg, .jpeg, .tiff, .bmp, .webp"  iconName="image"       accentColor="var(--accent-deep)"   files={imgFiles} setFiles={setImgFiles} inputRef={imgRef} accept=".png,.jpg,.jpeg,.tiff,.bmp,.webp" type="img" />
         <FileSection label="Video"     hint=".mp4"                                   iconName="videocam"    accentColor="var(--slate)"         files={vidFiles} setFiles={setVidFiles} inputRef={vidRef} accept=".mp4"                            type="vid" />
         <FileSection label="Audio"     hint=".mp3, .wav, .m4a"                       iconName="headphones"  accentColor="var(--navy-mid)"      files={audFiles} setFiles={setAudFiles} inputRef={audRef} accept=".mp3,.wav,.m4a"                  type="aud" />

@@ -11,6 +11,7 @@ PyJWT                        # FIX: was missing — used as `import jwt` in midd
 # ─── Database ─────────────────────────────────────────────────────────────────
 sqlalchemy
 psycopg2-binary              # FIX: was missing — postgres driver for SQLAlchemy
+asyncpg                      # FIX: was missing — async postgres driver for SQLAlchemy
 
 # ─── Cache / Queue ────────────────────────────────────────────────────────────
 redis
