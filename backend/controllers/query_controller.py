@@ -78,8 +78,8 @@ async def handle_query(request: Request) -> dict:
 
     try:
         answer = await query_graphlit(server,question)
-        if is_no_kb_response(answer):
-            answer= await query_graphlit_web(server,question)
+        #if is_no_kb_response(answer):
+            #answer= await query_graphlit_web(server,question)
         return {"answer": answer}
     except Exception as e:
         print(f"[handle_query] Error: {e}")

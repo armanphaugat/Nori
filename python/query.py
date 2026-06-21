@@ -124,8 +124,8 @@ async def get_or_create_kb_spec(server_id: str, language: str, tone: str) -> str
             service_type=ModelServiceTypes.OPEN_AI,
             system_prompt=build_kb_system_prompt(language, tone),
             retrieval_strategy=RetrievalStrategyInput(
-                type=RetrievalStrategyTypes.CONTENT,
-                content_limit=7,
+                type=RetrievalStrategyTypes.RETRIEVAL,
+                content_limit=15,
             ),
             open_ai=OpenAIModelPropertiesInput(
                 model=OpenAIModels.GPT4O_MINI_128K,
@@ -206,6 +206,12 @@ async def query_graphlit(server_id: str, question: str, language: str = "english
             correlation_id=None
         )
         result = response.prompt_conversation
+
+        # DEBUG LOGS
+        print(f"[DEBUG] result={result}")
+        print(f"[DEBUG] citations={result.message.citations if result and result.message else 'NONE'}")
+        print(f"[DEBUG] raw answer={result.message.message if result and result.message else 'NONE'}")
+
         if result is None or result.message is None or result.message.message is None:
             return "I don't know"
         return result.message.message[:1800]

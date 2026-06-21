@@ -10,7 +10,7 @@ from datetime import datetime, timezone, timedelta
 import time
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event, get_channel_config, get_web_search,get_total_questions,get_server_plan,get_questions_since, PLAN_LIMITS
-from python.query import query_graphlit, query_graphlit_web, query_with_temp_kb_spec
+from python.query import query_graphlit, query_graphlit_web
 from python.ingest import read_ocr_async
 
 load_dotenv()
@@ -102,16 +102,6 @@ def is_no_kb_response(answer: str) -> bool:
     ]
     for phrase in no_answer_phrases:
         if phrase in answer_lower:
-            return True
-    patterns = [
-        r"i\s+(?:don't|do not|cannot|can't)\s+(?:know|answer|help|assist|have)",
-        r"(?:apologize|sorry).*?(?:don't|do not|cannot|can't)\s+(?:know|have|find|provide)",
-        r"unfortunately.*?(?:don't|do not|cannot|can't)\s+(?:know|have|find|provide)",
-        r"no\s+(?:answer|information|data|results|matches?|knowledge\s+base)",
-        r"not\s+(?:in|part of|covered|included).*?(?:knowledge|information|database|kb)",
-    ]
-    for pattern in patterns:
-        if re.search(pattern, answer_lower):
             return True
     if len(answer_lower) < 10 and any(word in answer_lower for word in ["no", "cannot", "can't", "don't"]):
         return True
