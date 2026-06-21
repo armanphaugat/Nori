@@ -11,7 +11,7 @@ async def handle_add_channel(
 ) -> dict:
     try:
         for channel in channel_id:
-            set_channel(guild_id, channel)
+            await set_channel(guild_id, channel)
         return {"status": "success", "message": "Channel(s) added successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to add channel: {e}")
@@ -22,7 +22,7 @@ async def handle_delete_channel(
     channel_id: str = Form(...),
 ) -> dict:
     try:
-        remove_channel(guild_id, channel_id)
+        await remove_channel(guild_id, channel_id)
         return {"status": "success", "message": "Channel deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete channel: {e}")
@@ -33,7 +33,7 @@ async def handle_add_mod_channel(
     channel_id: str = Form(...),
 ) -> dict:
     try:
-        insert_mod_channel(guild_id, channel_id)
+        await insert_mod_channel(guild_id, channel_id)
         return {"status": "success", "message": "Mod channel added successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to add mod channel: {e}")
@@ -45,8 +45,8 @@ async def handle_get_channels(
     from dbhelper.db_helper import get_channels
     from dbhelper.db_helper import get_mod_channel
     try:
-        channels    = get_channels(guild_id)        # list of {"channel_id": "..."}
-        mod_row     = get_mod_channel(guild_id)     # {"mod_channel": "..." | None}
+        channels    = await get_channels(guild_id)        # list of {"channel_id": "..."}
+        mod_row     = await get_mod_channel(guild_id)     # {"mod_channel": "..." | None}
         return {
             "status":      "success",
             "channel_ids": [c["channel_id"] for c in channels],
@@ -60,11 +60,8 @@ async def handle_add_support_channel(
     channel_id: Optional[str] = Form(None),
     user: dict = Depends(require_guild_admin),
 ) -> dict:
-    # 1. Mock commands.Bot.run BEFORE importing bot.bot
     from discord.ext import commands
     commands.Bot.run = lambda *args, **kwargs: None
-
-    # 2. Import the bot and create_support_channel
     from bot.bot import bot, create_support_channel
     import os
     import discord
@@ -72,24 +69,16 @@ async def handle_add_support_channel(
     try:
         guild_id_int = int(guild_id)
         channel_id_int = int(channel_id) if channel_id else None
-
-        # 3. Log the bot in via REST if not already logged in
         if not bot.http.token:
             bot_token = os.getenv("DISCORD_BOT_KEY")
             if not bot_token:
                 raise HTTPException(status_code=500, detail="DISCORD_BOT_KEY not found in environment")
             await bot.login(bot_token)
-
-        # 4. Fetch the guild and cache it internally
         guild = await bot.fetch_guild(guild_id_int)
         bot._connection._add_guild(guild)
-
-        # 5. Fetch channels and cache them inside the guild object
         channels = await guild.fetch_channels()
         for chan in channels:
             guild._add_channel(chan)
-
-        # 6. Check if we are creating a new support channel, and if it already exists
         if not channel_id_int:
             category = discord.utils.get(guild.categories, name="Vault Bot")
             text_channel = None
@@ -99,7 +88,6 @@ async def handle_add_support_channel(
                 )
 
             if category and text_channel:
-                # Update permissions to make it read-only for users if it already exists
                 try:
                     overwrites = text_channel.overwrites
                     default_overwrite = overwrites.get(guild.default_role) or discord.PermissionOverwrite()
@@ -131,10 +119,7 @@ async def handle_add_support_channel(
                     "status": "success",
                     "message": "Category Channel Created"
                 }
-
-        # 7. Execute the original create_support_channel function from bot.py
         result = await create_support_channel(guild_id_int, channel_id_int)
-
         if result:
             return {
                 "status": "success",
@@ -150,7 +135,7 @@ async def handle_add_support_channel(
     
 async def handle_add_channel_config(guild_id: str = Form(...),channel_id:str = Form(...),language: str =Form(default="english"),tone: str = Form(default="professional"),user: dict = Depends(require_guild_admin),) -> dict:
     try:
-        result=insert_channel_config(guild_id,channel_id,language,tone)
+        result=await insert_channel_config(guild_id,channel_id,language,tone)
         if result:
             return {
                 "status": "success",
@@ -166,7 +151,7 @@ async def handle_add_channel_config(guild_id: str = Form(...),channel_id:str = F
     
 async def handle_update_channel_config(guild_id: str = Form(...),channel_id: str = Form(...),language: str = Form(default=None),tone: str = Form(default=None),user: dict = Depends(require_guild_admin),) -> dict:
     try:
-        result = update_channel_config(guild_id, channel_id, language, tone)
+        result = await update_channel_config(guild_id, channel_id, language, tone)
         if result:
             return {
                 "status": "success",
@@ -181,7 +166,7 @@ async def handle_update_channel_config(guild_id: str = Form(...),channel_id: str
         raise HTTPException(status_code=500, detail=f"Failed to update channel config: {e}")
 async def handle_delete_channel_config(guild_id: str = Form(...),channel_id: str = Form(...),user: dict = Depends(require_guild_admin),) -> dict:
     try:
-        result = delete_channel_config(guild_id, channel_id)
+        result = await delete_channel_config(guild_id, channel_id)
         if result:
             return {
                 "status": "success",
@@ -200,7 +185,7 @@ async def handle_get_all_channel_configs(
     user: dict = Depends(require_guild_admin_query),
 ) -> dict:
     try:
-        result = get_all_channel_configs(guild_id)
+        result = await get_all_channel_configs(guild_id)
         if result:
             return {
                 "status": "success",

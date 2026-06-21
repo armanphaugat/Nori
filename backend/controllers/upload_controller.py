@@ -29,7 +29,7 @@ async def handle_get_all_uploads(
     guild_id: str = Query(...),
     user: dict = Depends(require_guild_admin_query),
 ) -> list:
-    return get_all_uploads(guild_id)
+    return await get_all_uploads(guild_id)
 
 
 async def handle_get_sub_urls(
@@ -39,7 +39,7 @@ async def handle_get_sub_urls(
     url = url.strip()
     if not re.match(r"https?://", url):
         raise HTTPException(status_code=400, detail="'url' must start with http:// or https://")
-    result = get_sub_urls(url)
+    result = await get_sub_urls(url)
     if result["error"]:
         raise HTTPException(status_code=400, detail=result["error"])
     return result
@@ -53,9 +53,9 @@ async def handle_upload_website(
     guild_id = guild_id.strip()
     if not guild_id:
         raise HTTPException(status_code=400, detail="'guild_id' cannot be empty")
-    server_plan = get_server_plan(str(guild_id))
+    server_plan = await get_server_plan(str(guild_id))
     plan = server_plan.get("plan", "free")
-    counts=get_uploads_count_by_type(guild_id)
+    counts=await get_uploads_count_by_type(guild_id)
     total_url_count=counts.get("url",0)
     if plan=="starter" and total_url_count>=10:
         raise HTTPException(status_code=403,detail="Starter plan limit reached: you've used all 10 URL slots. Upgrade to Growth or higher to add more.")
@@ -71,7 +71,7 @@ async def handle_upload_website(
     try:
         feed_id = await add_website_graphlit(guild_id, url)
         if not feed_id:
-            log_upload(
+            await log_upload(
                 guild_id=guild_id,
                 user_id=user["discord_id"],
                 username=user["username"],
@@ -81,7 +81,7 @@ async def handle_upload_website(
                 error="Graphlit ingestion returned no feed_id (see backend logs for the underlying error)",
             )
             raise HTTPException(status_code=502, detail="Failed to create website feed in knowledge base")
-        log_upload(
+        await log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
@@ -95,7 +95,7 @@ async def handle_upload_website(
     except HTTPException:
         raise
     except Exception as e:
-        log_upload(
+        await log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
@@ -117,9 +117,9 @@ async def handle_upload_url(
     if not guild_id:
         raise HTTPException(status_code=400, detail="'guild_id' cannot be empty")
     url = url.strip()
-    server_plan = get_server_plan(str(guild_id))
+    server_plan = await get_server_plan(str(guild_id))
     plan = server_plan.get("plan", "free")
-    counts=get_uploads_count_by_type(guild_id)
+    counts=await get_uploads_count_by_type(guild_id)
     total_url_count=counts.get("url",0)
     if plan=="starter" and total_url_count>=10:
         raise HTTPException(status_code=403,detail="Starter plan limit reached: you've used all 10 URL slots. Upgrade to Growth or higher to add more.")
@@ -132,7 +132,7 @@ async def handle_upload_url(
     try:
         content_id = await add_url_graphlit(guild_id, url)
         if not content_id:
-            log_upload(
+            await log_upload(
                 guild_id=guild_id,
                 user_id=user["discord_id"],
                 username=user["username"],
@@ -142,7 +142,7 @@ async def handle_upload_url(
                 error="Graphlit ingestion returned no content_id (see backend logs for the underlying error)",
             )
             raise HTTPException(status_code=502, detail="Failed to ingest URL into knowledge base")
-        log_upload(
+        await log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
@@ -155,7 +155,7 @@ async def handle_upload_url(
     except HTTPException:
         raise
     except Exception as e:
-        log_upload(
+        await log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
@@ -176,9 +176,9 @@ async def handle_upload_file(
     guild_id = guild_id.strip()
     if not guild_id:
         raise HTTPException(status_code=400, detail="'guild_id' cannot be empty")
-    server_plan = get_server_plan(str(guild_id))
+    server_plan = await get_server_plan(str(guild_id))
     plan = server_plan.get("plan", "free")
-    counts=get_uploads_count_by_type(guild_id)
+    counts=await get_uploads_count_by_type(guild_id)
     total_file_count=counts.get("file",0)
     if plan=="starter" and total_file_count>=10:
         raise HTTPException(status_code=403,detail="Starter plan limit reached: you've used all 10 file slots. Upgrade to Growth or higher to add more.")
@@ -225,7 +225,7 @@ async def handle_upload_file(
             content_id = await add_video_graphlit(guild_id, BytesIO(file_bytes))
 
         if not content_id:
-            log_upload(
+            await log_upload(
                 guild_id=guild_id,
                 user_id=user["discord_id"],
                 username=user["username"],
@@ -236,7 +236,7 @@ async def handle_upload_file(
             )
             raise HTTPException(status_code=502, detail=f"Failed to ingest {ext} into knowledge base")
 
-        log_upload(
+        await log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
@@ -250,7 +250,7 @@ async def handle_upload_file(
     except HTTPException:
         raise
     except Exception as e:
-        log_upload(
+        await log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
@@ -278,7 +278,7 @@ async def handle_upload_faq(
         content_id = await add_text_graphlit(guild_id, faq_text)
         if not content_id:
             raise HTTPException(status_code=500, detail="Failed to store FAQ text")
-        log_upload(
+        await log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
@@ -291,7 +291,7 @@ async def handle_upload_faq(
     except HTTPException:
         raise
     except Exception as e:
-        log_upload(
+        await log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
@@ -311,7 +311,7 @@ async def handle_delete_upload(
     user: dict = Depends(require_guild_admin_query),
 ) -> dict:
     try:
-        row = get_upload_by_id(upload_id, guild_id)
+        row = await get_upload_by_id(upload_id, guild_id)
         if not row:
             raise HTTPException(status_code=404, detail="Upload not found")
 
@@ -322,14 +322,14 @@ async def handle_delete_upload(
             success = await delete_feed_graphlit(feed_id)
             if not success:
                 raise HTTPException(status_code=502, detail="Failed to delete feed from Graphlit")
-            remove_feed_id(guild_id, feed_id)
+            await remove_feed_id(guild_id, feed_id)
         elif content_id:
             success = await delete_content_graphlit(content_id)
             if not success:
                 raise HTTPException(status_code=502, detail="Failed to delete content from Graphlit")
-            remove_content_id(guild_id, content_id)
+            await remove_content_id(guild_id, content_id)
 
-        deleted = remove_upload(upload_id, guild_id)
+        deleted = await remove_upload(upload_id, guild_id)
         if not deleted:
             raise HTTPException(status_code=404, detail="Upload not found in DB")
 
@@ -373,7 +373,7 @@ async def handle_upload_contacts(
         if res["status"] == "error":
             raise Exception(res["error"])
 
-        log_upload(
+        await log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
@@ -384,7 +384,7 @@ async def handle_upload_contacts(
         )
         return {"status": "success", "message": f"Ingested {res['chunks']} contact record(s) successfully"}
     except Exception as e:
-        log_upload(
+        await log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
@@ -403,7 +403,7 @@ async def handle_upload_channel_messages(guild_id:str=Form(...),channel_id:str=F
         messages=await get_message_from_channel(server_id_int,channel_id_int,time)
         for m in messages:
             content_id=await add_text_graphlit(guild_id,m)
-            log_upload(
+            await log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
@@ -420,18 +420,20 @@ async def handle_get_my_uploads(
     user: dict = Depends(verify_access_token),
 ) -> list:
     try:
-        with DB() as s:
-            rows = s.execute(
-                text("""
-                    SELECT u.*, s.server_name 
-                    FROM uploads u 
-                    JOIN servers s ON u.server_id = s.server_id 
-                    WHERE u.uploaded_by = :uid 
-                    ORDER BY u.uploaded_at DESC
-                """),
-                {"uid": user["discord_id"]},
+        async with AsyncDB() as s:
+            rows = (
+                await s.execute(
+                    text("""
+                        SELECT u.*, s.server_name 
+                        FROM uploads u 
+                        JOIN servers s ON u.server_id = s.server_id 
+                        WHERE u.uploaded_by = :uid 
+                        ORDER BY u.uploaded_at DESC
+                    """),
+                    {"uid": user["discord_id"]},
+                )
             ).mappings().all()
-            
+
             result = []
             for r in rows:
                 row_dict = dict(r)

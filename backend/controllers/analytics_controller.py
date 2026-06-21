@@ -7,7 +7,7 @@ async def handle_get_analytics_summary(guild_id: str = Query(...)) -> dict:
     if not guild_id.strip():
         raise HTTPException(status_code=400, detail="'guild_id' is required")
     try:
-        summary =get_analytics_summary(guild_id)
+        summary =await get_analytics_summary(guild_id)
         if not summary:
             raise HTTPException(status_code=404, detail="No analytics found for this server")
         return {"status": "success", "data": summary}
@@ -20,7 +20,7 @@ async def handle_get_recent_events(guild_id: str = Query(...),limit:int=Query(50
     if not guild_id.strip():
         raise HTTPException(status_code=400,detail="No Guild Id Found")
     try:
-        recent_events=get_recent_events(guild_id,limit)
+        recent_events=await get_recent_events(guild_id,limit)
         if not recent_events:
             raise HTTPException(status_code=404,detail="No Recent Event Found")
         return {"status": "success", "data": recent_events}
@@ -33,7 +33,7 @@ async def handle_get_all_analytics(guild_id: str = Query(...),limit:int=Query(30
     if not guild_id.strip():
         raise HTTPException(status_code=400,detail="No Guild Id Found")
     try:
-        analytics=get_analytics(guild_id,limit)
+        analytics=await get_analytics(guild_id,limit)
         if not analytics:
             raise HTTPException(status_code=404,detail="No Analytics Found")
         return {"status": "success", "data": analytics}
