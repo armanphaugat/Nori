@@ -1024,5 +1024,57 @@ async def delete_spec_id(server_id: str, spec_type: str) -> int:
         await s.commit()
         return result.rowcount
 
+async def save_conversation_id(server_id: str, conversation_id: str, question: str = "", answer: str = "") -> int:
+    async with AsyncDB() as s:
+        result = await s.execute(
+            text("""
+                INSERT INTO conversation_history (server_id, conversation_id, question, answer)
+                VALUES (:server_id, :conversation_id, :question, :answer)
+                ON CONFLICT (conversation_id) DO NOTHING
+            """),
+            {
+                "server_id": server_id,
+                "conversation_id": conversation_id,
+                "question": question,
+                "answer": answer,
+            },
+        )
+        await s.commit()
+        return result.rowcount
+
+
+async def get_conversation_ids(server_id: str, limit: int = 20) -> list[str]:
+    async with AsyncDB() as s:
+        result = await s.execute(
+            text("""
+                SELECT conversation_id FROM conversation_history
+                WHERE server_id = :server_id
+                ORDER BY created_at DESC
+                LIMIT :limit
+            """),
+            {"server_id": server_id, "limit": limit},
+        )
+        rows = result.fetchall()
+        return [row[0] for row in rows]
+
+
+async def delete_old_conversations(server_id: str, keep: int = 20) -> list[str]:
+    async with AsyncDB() as s:
+        result = await s.execute(
+            text("""
+                DELETE FROM conversation_history
+                WHERE id IN (
+                    SELECT id FROM conversation_history
+                    WHERE server_id = :server_id
+                    ORDER BY created_at DESC
+                    OFFSET :keep
+                )
+                RETURNING conversation_id
+            """),
+            {"server_id": server_id, "keep": keep},
+        )
+        await s.commit()
+        rows = result.fetchall()
+        return [row[0] for row in rows]
 
 
