@@ -89,13 +89,12 @@ FORMAT:
 async def get_or_create_kb_spec(server_id: str, language: str, tone: str) -> str:
     existing_spec_id = await get_kb_spec_id(server_id)
     if existing_spec_id:
-        # Verify it still exists in Graphlit before returning
         try:
             await graphlit.client.get_specification(id=existing_spec_id)
             return existing_spec_id
         except Exception:
             print(f"[WARN] Cached spec {existing_spec_id} not found in Graphlit, recreating...")
-            await delete_spec_id(server_id, "kb")  # clear stale ID from DB
+            await delete_spec_id(server_id, "kb")
 
     spec_response = await graphlit.client.create_specification(
         specification=SpecificationInput(
@@ -105,7 +104,7 @@ async def get_or_create_kb_spec(server_id: str, language: str, tone: str) -> str
             system_prompt=build_kb_system_prompt(language, tone),
             retrieval_strategy=RetrievalStrategyInput(
                 type=RetrievalStrategyTypes.CONTENT,
-                content_limit=5,
+                content_limit=10,
             ),
             open_ai=OpenAIModelPropertiesInput(
                 model=OpenAIModels.GPT4O_MINI_128K,

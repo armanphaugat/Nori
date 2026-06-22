@@ -40,11 +40,24 @@ export default function CrawlerTab({ guildId, onGoToOverview }) {
     if (!selected.size) return;
     setIngesting(true); setStatus(null);
     try {
-      const d = await API.upload(guildId, [], [...selected].join("\n"));
-      setStatus({ ok: true, msg: `${d.urls_processed || selected.size} URL(s) ingested` });
+      let successCount = 0;
+      const errors = [];
+      for (const url of selected) {
+        try {
+          await API.uploadWebsite(guildId, url);
+          successCount++;
+        } catch (e) {
+          errors.push(`${url}: ${e.message}`);
+        }
+      }
+      if (errors.length) {
+        setStatus({ ok: false, msg: `${successCount} ingested, ${errors.length} failed:\n${errors.join("\n")}` });
+      } else {
+        setStatus({ ok: true, msg: `${successCount} URL(s) ingested successfully` });
+      }
     } catch (e) { setStatus({ ok: false, msg: e.message }); }
     setIngesting(false);
-  };
+};
 
   if (!guildId) return (
     <div>
