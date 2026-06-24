@@ -190,6 +190,16 @@ export default function ChannelsTab({
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
+  const handlePauseClick = () => {
+    if (!isPaused) {
+      const confirmDeactivate = window.confirm(
+        "Warning: Deactivating the bot will stop it from responding to any questions in your Discord server. Are you sure you want to proceed?"
+      );
+      if (!confirmDeactivate) return;
+    }
+    onTogglePause();
+  };
+
   const handleToggleWebSearch = async () => {
     if (!guildId) return;
     setTogglingWebSearch(true);
@@ -358,36 +368,36 @@ export default function ChannelsTab({
         {guildId && loaded && (
           <div style={{ display: "flex", gap: 12, flexShrink: 0, marginTop: 4 }}>
 
-            {/* ── Pause Button ── */}
+            {/* ── Pause / Deactivate Button ── */}
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
               <button
-                onClick={onTogglePause}
+                onClick={handlePauseClick}
                 disabled={togglingPause}
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 8,
                   padding: "9px 20px", borderRadius: "var(--r-full)",
-                  background: isPaused ? "var(--red-dim)" : "var(--surface)",
-                  border: `1px solid ${isPaused ? "var(--red-border)" : "var(--border2)"}`,
+                  background: isPaused ? "rgba(16, 185, 129, 0.08)" : "rgba(220, 38, 38, 0.08)",
+                  border: isPaused ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid rgba(220, 38, 38, 0.3)",
                   cursor: togglingPause ? "not-allowed" : "pointer",
                   transition: "all var(--tr)",
                   fontSize: 13.5, fontWeight: 600,
-                  color: isPaused ? "var(--accent-deep)" : "var(--muted)",
+                  color: isPaused ? "rgb(16, 185, 129)" : "rgb(220, 38, 38)",
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
                   opacity: togglingPause ? 0.7 : 1,
                 }}
-                onMouseEnter={e => { if (!togglingPause) { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(43,45,66,0.1)"; } }}
+                onMouseEnter={e => { if (!togglingPause) { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = isPaused ? "0 4px 12px rgba(16, 185, 129, 0.15)" : "0 4px 12px rgba(220, 38, 38, 0.15)"; } }}
                 onMouseLeave={e => { if (!togglingPause) { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; } }}
               >
                 {togglingPause ? (
                   <><Spinner size={14} /><span>Updating…</span></>
                 ) : isPaused ? (
-                  <><Icon name="pause_circle" size={17} style={{ color: "var(--accent-deep)" }} /><span>Bot Paused</span></>
+                  <><Icon name="play_circle" size={17} style={{ color: "rgb(16, 185, 129)" }} /><span>Activate Bot</span></>
                 ) : (
-                  <><Icon name="play_circle" size={17} style={{ color: "var(--muted)" }} /><span>Bot Active</span></>
+                  <><Icon name="block" size={17} style={{ color: "rgb(220, 38, 38)" }} /><span>Deactivate Bot</span></>
                 )}
               </button>
               <span style={{ fontSize: 11, color: "var(--muted)", textAlign: "center" }}>
-                {isPaused ? "Click to resume the bot" : "Click to pause the bot"}
+                {isPaused ? "Bot is currently inactive" : "Bot is currently active"}
               </span>
             </div>
 

@@ -126,6 +126,8 @@ export const API = {
   getAnalytics:          (gid)         => apiFetch(`/analytics/summary?guild_id=${encodeURIComponent(gid)}`),
   getRecentAnalytics:    (gid, limit = 50) => apiFetch(`/analytics/recent-analytics?guild_id=${encodeURIComponent(gid)}&limit=${limit}`),
   getAllAnalytics:        (gid, limit = 30) => apiFetch(`/analytics/all-analytics?guild_id=${encodeURIComponent(gid)}&limit=${limit}`),
+  getAnalyticsByChannel:  (channelId, limit = 50) => apiFetch(`/analytics/analytics-by-channel?channel_id=${encodeURIComponent(channelId)}&limit=${limit}`),
+  getAnalyticsByAllChannels: (gid, limit = 50) => apiFetch(`/analytics/analytics-by-all-channels?guild_id=${encodeURIComponent(gid)}&limit=${limit}`),
   getServerPlan:           (gid)                     => apiFetch(`/patreon/plan?guild_id=${encodeURIComponent(gid)}`),
   getQuestionsUsage:       (gid)                     => apiFetch(`/patreon/usage?guild_id=${encodeURIComponent(gid)}`),
   uploadChannelMessages: (gid, channelId, time) => {
