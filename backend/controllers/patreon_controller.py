@@ -144,6 +144,10 @@ async def handle_patreon_webhook(request: Request) -> dict:
 
     updated_servers = []
     for server_id in servers:
+        existing = await get_server_plan(server_id)
+        if existing and existing.get("custom_limit"):
+            print(f"[Patreon Webhook] Skipping {server_id} — custom limit set")
+            continue  # don't overwrite
         await update_server_plan_status(server_id, next_plan, limit, patron_user_id, email)
         updated_servers.append(server_id)
 
@@ -195,6 +199,9 @@ async def handle_simulate_webhook(
 
     updated = []
     for server_id in servers:
+        existing = await get_server_plan(server_id)
+        if existing and existing.get("custom_limit"):
+            continue
         await update_server_plan_status(server_id, next_plan, limit, None, email)
         updated.append(server_id)
 
