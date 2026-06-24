@@ -246,41 +246,16 @@ export default function UploadTab({ guildId, onGoToOverview }) {
 
       {status && <div style={{ marginBottom: 16 }}><StatusBadge {...status} /></div>}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16, marginBottom: 24 }}>
-
-        {/* Document URLs */}
-        <Card>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <div style={{ width: 38, height: 38, borderRadius: "var(--r-md)", background: "var(--red-dim)", border: "1px solid var(--red-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Icon name="link" size={19} style={{ color: "var(--accent)" }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--navy)" }}>Document URLs</div>
-              <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 300 }}>One specific page/doc URL per line</div>
-            </div>
-          </div>
-          <textarea className="kb-input kb-mono" value={docUrls} onChange={e => setDocUrls(e.target.value)} rows={4}
-            placeholder={"https://docs.example.com/getting-started\nhttps://yoursite.com/privacy-policy"}
-            style={{ resize: "vertical", lineHeight: 1.6 }} />
-          {docUrls.trim() && (
-            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-              <Btn onClick={doDocUrlUpload} disabled={docUrlUploading} variant="primary" style={{ flex: 1, justifyContent: "center" }}>
-                {docUrlUploading ? <><Spinner size={14} color="#fff" /> Ingesting…</> : <><Icon name="cloud_upload" size={16} /> Upload to Vector Store</>}
-              </Btn>
-              <Btn onClick={() => setDocUrls("")} disabled={docUrlUploading} variant="ghost">Clear</Btn>
-            </div>
-          )}
-        </Card>
-
-        {/* Website URL / Crawler */}
+      {/* Website URL / Crawler - Bigger Section */}
+      <div style={{ marginBottom: 24 }}>
         <Card>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
             <div style={{ width: 38, height: 38, borderRadius: "var(--r-md)", background: "var(--red-dim)", border: "1px solid var(--red-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Icon name="language" size={19} style={{ color: "var(--accent-deep)" }} />
             </div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--navy)" }}>Website URL</div>
-              <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 300 }}>Ingest site URLs or crawl to discover links</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--navy)" }}>Website URL & Crawler</div>
+              <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 300 }}>Ingest site URLs or crawl to discover links in a wider view</div>
             </div>
           </div>
 
@@ -292,6 +267,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
             padding: 3,
             marginBottom: 14,
             border: "1px solid var(--border)",
+            maxWidth: 340
           }}>
             <button
               onClick={() => setUrlMode("quick")}
@@ -333,11 +309,11 @@ export default function UploadTab({ guildId, onGoToOverview }) {
 
           {urlMode === "quick" ? (
             <>
-              <textarea className="kb-input kb-mono" value={websiteUrls} onChange={e => setWebsiteUrls(e.target.value)} rows={4}
+              <textarea className="kb-input kb-mono" value={websiteUrls} onChange={e => setWebsiteUrls(e.target.value)} rows={3}
                 placeholder={"https://docs.example.com\nhttps://yoursite.com"}
                 style={{ resize: "vertical", lineHeight: 1.6 }} />
               {websiteUrls.trim() && (
-                <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <div style={{ display: "flex", gap: 8, marginTop: 10, maxWidth: 340 }}>
                   <Btn onClick={doWebsiteUpload} disabled={websiteUploading} variant="primary" style={{ flex: 1, justifyContent: "center" }}>
                     {websiteUploading ? <><Spinner size={14} color="#fff" /> Saving URL…</> : <><Icon name="link" size={16} /> Save URL</>}
                   </Btn>
@@ -366,7 +342,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
                     <Btn onClick={() => setSelectedUrls(new Set(filteredUrls))} variant="ghost" style={{ padding: "2px 8px", fontSize: 11, minHeight: 28, borderRadius: "6px" }}>All</Btn>
                     <Btn onClick={() => setSelectedUrls(new Set())} variant="ghost" style={{ padding: "2px 8px", fontSize: 11, minHeight: 28, borderRadius: "6px" }}>Clear</Btn>
                   </div>
-                  <div style={{ maxHeight: 200, overflowY: "auto", background: "var(--surface)" }}>
+                  <div style={{ maxHeight: 250, overflowY: "auto", background: "var(--surface)" }}>
                     {filteredUrls.map((u, i) => {
                       const sel = selectedUrls.has(u);
                       return (
@@ -383,7 +359,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
                             display: "flex", alignItems: "center", justifyItems: "center", justifyContent: "center",
                             color: "#fff", fontSize: 9, fontWeight: 700, transition: "all var(--tr)"
                           }}>{sel ? "✓" : ""}</div>
-                          <span style={{ fontSize: 11.5, color: "var(--navy)", fontFamily: "monospace", wordBreak: "break-all", flex: 1, lineHeight: 1.4 }}>{u}</span>
+                          <span style={{ fontSize: 12, color: "var(--navy)", fontFamily: "monospace", wordBreak: "break-all", flex: 1, lineHeight: 1.4 }}>{u}</span>
                           <a href={u} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ color: "var(--accent)", fontSize: 11, flexShrink: 0, textDecoration: "none", display: "flex", alignItems: "center" }}>
                             <Icon name="open_in_new" size={13} />
                           </a>
@@ -391,7 +367,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
                       );
                     })}
                   </div>
-                  <div style={{ padding: "10px 12px", borderTop: "1px solid var(--border2)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, background: "var(--surface-2)" }}>
+                  <div style={{ padding: "10px 12px", borderTop: "1px solid var(--border2)", display: "flex", alignItems: "center", justifyItems: "center", justifyContent: "space-between", gap: 12, background: "var(--surface-2)" }}>
                     <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>
                       {selectedUrls.size > 0 ? `${selectedUrls.size} selected` : "Select links to ingest"}
                     </span>
@@ -401,6 +377,33 @@ export default function UploadTab({ guildId, onGoToOverview }) {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16, marginBottom: 24 }}>
+
+        {/* Document URLs */}
+        <Card>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 38, height: 38, borderRadius: "var(--r-md)", background: "var(--red-dim)", border: "1px solid var(--red-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name="link" size={19} style={{ color: "var(--accent)" }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--navy)" }}>Document URLs</div>
+              <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 300 }}>One specific page/doc URL per line</div>
+            </div>
+          </div>
+          <textarea className="kb-input kb-mono" value={docUrls} onChange={e => setDocUrls(e.target.value)} rows={4}
+            placeholder={"https://docs.example.com/getting-started\nhttps://yoursite.com/privacy-policy"}
+            style={{ resize: "vertical", lineHeight: 1.6 }} />
+          {docUrls.trim() && (
+            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+              <Btn onClick={doDocUrlUpload} disabled={docUrlUploading} variant="primary" style={{ flex: 1, justifyContent: "center" }}>
+                {docUrlUploading ? <><Spinner size={14} color="#fff" /> Ingesting…</> : <><Icon name="cloud_upload" size={16} /> Upload to Vector Store</>}
+              </Btn>
+              <Btn onClick={() => setDocUrls("")} disabled={docUrlUploading} variant="ghost">Clear</Btn>
             </div>
           )}
         </Card>
