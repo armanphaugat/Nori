@@ -1,6 +1,6 @@
 from fastapi import HTTPException, Query
 
-from dbhelper.db_helper import get_analytics_summary,get_recent_events,get_analytics
+from dbhelper.db_helper import get_all_channels_unique_members, get_analytics_summary,get_recent_events,get_analytics,get_channel_unique_members
 
 
 async def handle_get_analytics_summary(guild_id: str = Query(...)) -> dict:
@@ -41,5 +41,29 @@ async def handle_get_all_analytics(guild_id: str = Query(...),limit:int=Query(30
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch analytics: {e}{e}")
-
     
+async def handle_get_analytics_by_channel(channel_id: str = Query(...), limit: int = Query(50)):
+    if not channel_id.strip():
+        raise HTTPException(status_code=400, detail="No Channel Id Found")
+    try:
+        analytics = await get_channel_unique_members(channel_id)
+        if not analytics:
+            raise HTTPException(status_code=404, detail="No Analytics Found for this channel")
+        return {"status": "success", "data": analytics}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch analytics: {e}")
+    
+async def handle_get_analytics_by_all_channels(guild_id: str = Query(...), limit: int = Query(50)):
+    if not guild_id.strip():
+        raise HTTPException(status_code=400, detail="No Guild Id Found")
+    try:
+        analytics = await get_all_channels_unique_members(guild_id)
+        if not analytics:
+            raise HTTPException(status_code=404, detail="No Analytics Found for this guild")
+        return {"status": "success", "data": analytics}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch analytics: {e}")

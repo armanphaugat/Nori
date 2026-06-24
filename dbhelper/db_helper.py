@@ -1078,5 +1078,51 @@ async def delete_old_conversations(server_id: str, keep: int = 20) -> list[str]:
         await s.commit()
         rows = result.fetchall()
         return [row[0] for row in rows]
+    
+async def get_channel_unique_members(channel_id: str) -> list[dict]:
+    async with AsyncDB() as s:
+        result = await s.execute(
+            text("""
+                SELECT 
+                    DISTINCT user_id,
+                    COUNT(*) as total_questions,
+                    SUM(CASE WHEN answered THEN 1 ELSE 0 END) as answered_questions,
+                    AVG(latency_ms) as avg_latency_ms,
+                    MIN(asked_at) as first_question,
+                    MAX(asked_at) as last_question
+                FROM question_events
+                WHERE message_link LIKE :channel_pattern
+                GROUP BY user_id
+                ORDER BY total_questions DESC
+            """),
+            {
+                "channel_pattern": f"%/{channel_id}/%"
+            }
+        )
+        rows = result.mappings().all()
+        return [dict(row) for row in rows]
+
+
+async def get_all_channels_unique_members(server_id: str) -> list[dict]:
+    async with AsyncDB() as s:
+        result = await s.execute(
+            text("""
+                SELECT
+                    SPLIT_PART(message_link, '/', 6) as channel_id,
+                    user_id,
+                    COUNT(*) as total_questions,
+                    SUM(CASE WHEN answered THEN 1 ELSE 0 END) as answered_questions,
+                    AVG(latency_ms) as avg_latency_ms,
+                    MIN(asked_at) as first_question,
+                    MAX(asked_at) as last_question
+                FROM question_events
+                WHERE message_link IS NOT NULL AND message_link LIKE :server_pattern
+                GROUP BY channel_id, user_id
+                ORDER BY channel_id, total_questions DESC
+            """),
+            {"server_pattern": f"%/{server_id}/%"}
+        )
+        rows = result.mappings().all()
+        return [dict(row) for row in rows]
 
 
