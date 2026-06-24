@@ -1,6 +1,6 @@
 import os
 import time
-
+import asyncio
 import httpx
 from fastapi import Depends, HTTPException, status
 
@@ -12,12 +12,9 @@ from dbhelper.db_helper import (
     add_guild_admin,
     remove_guild_admin,add_server
 )
-
+DISCORD_BOT_KEY = os.getenv("DISCORD_BOT_KEY")
 DISCORD_API      = os.getenv("DISCORD_API", "https://discord.com/api/v10")
 ADMIN_PERMISSION = 0x8
-CACHE_TTL        = 30
-
-_eligible_cache: dict[str, tuple[float, dict]] = {}
 
 async def handle_get_guilds(
     user: dict = Depends(verify_access_token),
@@ -123,12 +120,7 @@ async def handle_get_eligible_guilds(
     user: dict = Depends(verify_access_token),
 ) -> dict:
     uid = user["discord_id"]
-    now = time.time()
-
-    if uid in _eligible_cache:
-        ts, cached = _eligible_cache[uid]
-        if now - ts < CACHE_TTL:
-            return cached
+    BOT_USER_ID = "1463510548808208415"
 
     row = await get_admin_user(uid)
     if not row:
@@ -140,22 +132,34 @@ async def handle_get_eligible_guilds(
             headers={"Authorization": f"Bearer {row['discord_access_token']}"},
             timeout=10,
         )
-
-    if resp.status_code == 401:
-        raise HTTPException(status_code=401, detail="Discord token expired")
-    if resp.status_code != 200:
-        raise HTTPException(status_code=502, detail=f"Discord API error: {resp.status_code}")
-    guilds = resp.json()
-
+        if resp.status_code == 401:
+            raise HTTPException(status_code=401, detail="Discord token expired")
+        if resp.status_code != 200:
+            raise HTTPException(status_code=502, detail=f"Discord API error: {resp.status_code}")
+        guilds = resp.json()
+        admin_guilds = [
+            g for g in guilds
+            if g.get("owner") or (int(g.get("permissions", 0)) & ADMIN_PERMISSION)
+        ]
+        async def is_bot_in_guild(guild_id: str) -> bool:
+            try:
+                r = await client.get(
+                    f"{DISCORD_API}/guilds/{guild_id}/members/{BOT_USER_ID}",
+                    headers={"Authorization": f"Bot {DISCORD_BOT_KEY}"},  # Bot token here
+                    timeout=10,
+                )
+                return r.status_code == 200
+            except Exception:
+                return False
+        presence_results = await asyncio.gather(
+            *[is_bot_in_guild(g["id"]) for g in admin_guilds]
+        )
     try:
         synced_ids = set()
-        for g in guilds:
+        for g in admin_guilds:
             is_owner = g.get("owner", False)
-            is_admin = is_owner or bool(int(g.get("permissions", 0)) & ADMIN_PERMISSION)
-            if not is_admin:
-                continue
-            await add_server(g["id"], g["name"])
             role = "owner" if is_owner else "admin"
+            await add_server(g["id"], g["name"])
             await add_guild_admin(
                 guild_id=g["id"],
                 discord_id=uid,
@@ -163,29 +167,29 @@ async def handle_get_eligible_guilds(
                 granted_by=uid,
             )
             synced_ids.add(g["id"])
-
         current_db_guilds = await get_user_guild_ids(uid)
         for stale_guild_id in current_db_guilds - synced_ids:
             await remove_guild_admin(stale_guild_id, uid)
     except Exception as e:
         print(f"[handle_get_eligible_guilds] Admin sync failed: {e}")
-
-    result = {
-        "guilds": [
-            {
-                "id":         g["id"],
-                "name":       g["name"],
-                "icon":       (
-                    f"https://cdn.discordapp.com/icons/{g['id']}/{g['icon']}.png"
-                    if g.get("icon") else None
-                ),
-                "owner":      g.get("owner", False),
-                "registered": bool(await get_server(g["id"])),
-            }
-            for g in guilds
-            if g.get("owner") or (int(g.get("permissions", 0)) & ADMIN_PERMISSION)
-        ]
+    def format_guild(g: dict) -> dict:
+        return {
+            "id":    g["id"],
+            "name":  g["name"],
+            "icon":  (
+                f"https://cdn.discordapp.com/icons/{g['id']}/{g['icon']}.png"
+                if g.get("icon") else None
+            ),
+            "owner": g.get("owner", False),
+        }
+    bot_present     = []
+    bot_not_present = []
+    for g, bot_here in zip(admin_guilds, presence_results):
+        if bot_here:
+            bot_present.append(format_guild(g))
+        else:
+            bot_not_present.append(format_guild(g))
+    return {
+        "bot_present":     bot_present,      # user is admin + bot is in guild
+        "bot_not_present": bot_not_present,  # user is admin + bot is NOT in guild
     }
-
-    _eligible_cache[uid] = (now, result)
-    return result

@@ -261,18 +261,20 @@ async def log_question_event(
     user_id: str,
     answered: bool,
     latency_ms: Optional[float] = None,
+    message_link: Optional[str] = None,
 ) -> None:
     async with AsyncDB() as s:
         await s.execute(
             text("""
-                INSERT INTO question_events (server_id, user_id, answered, latency_ms)
-                VALUES (:sid, :uid, :answered, :latency_ms)
+                INSERT INTO question_events (server_id, user_id, answered, latency_ms, message_link)
+                VALUES (:sid, :uid, :answered, :latency_ms, :message_link)
             """),
             {
                 "sid": str(guild_id),
                 "uid": str(user_id),
                 "answered": answered,
                 "latency_ms": latency_ms,
+                "message_link": message_link,
             },
         )
         await s.commit()

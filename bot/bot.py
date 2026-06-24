@@ -235,10 +235,10 @@ async def on_message(message):
         latency_ms = round((time.time() - start_time) * 1000, 2)
         await send_answer_with_feedback(message.channel, message.author, str(message.guild.id), message.content, answer)
         if is_no_kb_response(answer):
-            await log_question_event(str(message.guild.id), str(message.author.id), False, latency_ms)
+            await log_question_event(str(message.guild.id), str(message.author.name), False, latency_ms,message.jump_url)
             await notify_mod_channel(message.guild, message.channel, message.author, message.content)
         else:
-            await log_question_event(str(message.guild.id), str(message.author.id), True, latency_ms)
+            await log_question_event(str(message.guild.id), str(message.author.name), True, latency_ms,message.jump_url)
         return
     await bot.process_commands(message)
 
@@ -311,10 +311,10 @@ async def ask(ctx, *, question: str = None):
     latency_ms = round((time.time() - start_time) * 1000, 2)
     await send_answer_with_feedback(ctx.channel, ctx.author, str(ctx.guild.id), question, answer)
     if is_no_kb_response(answer):
-        await log_question_event(str(ctx.guild.id), str(ctx.author.id), False, latency_ms)
+        await log_question_event(str(ctx.guild.id), str(ctx.author.name), False, latency_ms,ctx.message.jump_url)
         await notify_mod_channel(ctx.guild, ctx.channel, ctx.author, question)
     else:
-        await log_question_event(str(ctx.guild.id), str(ctx.author.id), True, latency_ms)
+        await log_question_event(str(ctx.guild.id), str(ctx.author.name), True, latency_ms,ctx.message.jump_url)
 
 
 @bot.event
