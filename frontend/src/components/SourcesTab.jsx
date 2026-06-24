@@ -5,12 +5,12 @@ import {
   SectionHeader, NoServerSelected,
 } from "./Common.jsx";
 
-export default function SourcesTab({ guildId, onGoToOverview, user }) {
+export default function SourcesTab({ guildId, onGoToOverview, user, onTab }) {
   const [uploads, setUploads]           = useState([]);
   const [loadingUploads, setLoadingUploads] = useState(false);
   const [searchQuery, setSearchQuery]   = useState("");
   const [filterType, setFilterType]     = useState("all");
-  const [scope, setScope]               = useState("this-server-mine");
+  const [scope, setScope]               = useState("this-server-all");
   const [inspectUpload, setInspectUpload] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting]         = useState(false);
@@ -123,13 +123,13 @@ export default function SourcesTab({ guildId, onGoToOverview, user }) {
         {/* Filters row */}
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           {/* Scope toggles */}
-          <button onClick={() => setScope("this-server-mine")} style={pillStyle(scope === "this-server-mine")}>
-            <Icon name="person" size={13} style={{ color: scope === "this-server-mine" ? "var(--accent-deep)" : "var(--muted2)" }} />
-            My Uploads
-          </button>
           <button onClick={() => setScope("this-server-all")} style={pillStyle(scope === "this-server-all")}>
             <Icon name="group" size={13} style={{ color: scope === "this-server-all" ? "var(--accent-deep)" : "var(--muted2)" }} />
             All Uploads
+          </button>
+          <button onClick={() => setScope("this-server-mine")} style={pillStyle(scope === "this-server-mine")}>
+            <Icon name="person" size={13} style={{ color: scope === "this-server-mine" ? "var(--accent-deep)" : "var(--muted2)" }} />
+            My Uploads
           </button>
 
           <span style={{ width: 1, height: 18, background: "var(--border2)", margin: "0 2px" }} />
@@ -141,14 +141,13 @@ export default function SourcesTab({ guildId, onGoToOverview, user }) {
             </button>
           ))}
 
-          {/* Refresh */}
+          {/* Add Sources */}
           <Btn
-            onClick={() => loadUploads(guildId)}
-            disabled={loadingUploads}
-            variant="ghost"
+            onClick={() => onTab("upload")}
+            variant="primary"
             style={{ padding: "6px 14px", fontSize: 13, minHeight: 34 }}
           >
-            {loadingUploads ? <Spinner size={13} /> : <><Icon name="refresh" size={15} /> Refresh</>}
+            <Icon name="add" size={15} /> Add Source
           </Btn>
         </div>
       </div>

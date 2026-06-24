@@ -20,8 +20,10 @@ function Icon({ name, size = 20, fill = 0, style = {} }) {
 
 function DiscordIcon({ size = 16 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.101 18.079.11 18.1.128 18.115a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
+    <svg width={size} height={size} viewBox="0 0 256 256" fill="currentColor" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <g transform="translate(0, 28.5)">
+        <path d="M216.856 16.597A208.502 208.502 0 0 0 164.042 0c-2.275 4.113-4.933 9.645-6.766 14.046-19.692-2.961-39.203-2.961-58.533 0-1.832-4.4-4.55-9.933-6.846-14.046a207.809 207.809 0 0 0-52.855 16.638C5.618 67.147-3.443 116.4 1.087 164.956c22.169 16.555 43.653 26.612 64.775 33.193A161.094 161.094 0 0 0 79.735 175.3a136.413 136.413 0 0 1-21.846-10.632 108.636 108.636 0 0 0 5.356-4.237c42.122 19.702 87.89 19.702 129.51 0a131.66 131.66 0 0 0 5.355 4.237 136.07 136.07 0 0 1-21.886 10.653c4.006 8.02 8.638 15.67 13.873 22.848 21.142-6.58 42.646-16.637 64.815-33.213 5.316-56.288-9.08-105.09-38.056-148.36ZM85.474 135.095c-12.645 0-23.015-11.805-23.015-26.18s10.149-26.2 23.015-26.2c12.867 0 23.236 11.804 23.015 26.2.02 14.375-10.148 26.18-23.015 26.18Zm85.051 0c-12.645 0-23.014-11.805-23.014-26.18s10.148-26.2 23.014-26.2c12.867 0 23.236 11.804 23.015 26.2 0 14.375-10.148 26.18-23.015 26.18Z" />
+      </g>
     </svg>
   );
 }
@@ -228,14 +230,29 @@ const CSS = `
     box-shadow: 0 4px 16px rgba(239,35,60,0.08);
   }
 
+  .show600 { display: none; }
+
+  @media(max-width:1150px) {
+    nav {
+      padding: 0 24px !important;
+    }
+    .pricing-hero {
+      padding: 96px 24px 48px !important;
+    }
+  }
   @media(max-width:900px) {
     .tiers-grid { grid-template-columns: repeat(2, 1fr) !important; }
     .hide900 { display: none !important; }
+    nav {
+      padding: 0 16px !important;
+    }
   }
   @media(max-width:600px) {
     .tiers-grid { grid-template-columns: 1fr !important; }
-    .pricing-hero { padding: 100px 24px 48px !important; }
+    .pricing-hero { padding: 96px 24px 48px !important; }
     section { padding-left: 24px !important; padding-right: 24px !important; }
+    .hide600 { display: none !important; }
+    .show600 { display: inline !important; }
   }
 `;
 
@@ -515,31 +532,36 @@ export default function PricingPage({
     alt="VaultBot"
     style={{ width:30,height:30,borderRadius:8,objectFit:"contain",mixBlendMode:"multiply" }}
   />
-  <span style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>VaultBot</span>
+  <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>VaultBot</span>
 </div>
-        <div className="hide900" style={{ display:"flex",alignItems:"center",gap:2 }}>
-  <button
-    onClick={onBack}
-    className="nav-link"
-    style={{ display:"flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,color:"var(--muted)",background:"none",border:"none",cursor:"pointer",transition:"all var(--tr)" }}
-  >
-    <Icon name="arrow_back" size={15} /> Back
-  </button>
+        <div style={{ display:"flex",alignItems:"center",gap:12 }}>
+          {/* Menu links - hidden below 900px */}
+          <div className="hide900" style={{ display:"flex",alignItems:"center",gap:2 }}>
+            <button
+              onClick={onBack}
+              className="nav-link"
+              style={{ display:"flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,color:"var(--muted)",background:"none",border:"none",cursor:"pointer",transition:"all var(--tr)" }}
+            >
+              <Icon name="arrow_back" size={15} /> Back
+            </button>
+            {[["Plans","#pricing"],["Compare","#pricing"],["FAQ","#faq"]].map(([l,h],i) => (
+              <a key={i} href={h} className="nav-link" style={{ padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,letterSpacing:"0.02em",color:"var(--muted)",textDecoration:"none",transition:"all var(--tr)" }}>{l}</a>
+            ))}
+          </div>
 
-  {[["Plans","#pricing"],["Compare","#pricing"],["FAQ","#faq"]].map(([l,h],i) => (
-    <a key={i} href={h} className="nav-link" style={{ padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,letterSpacing:"0.02em",color:"var(--muted)",textDecoration:"none",transition:"all var(--tr)" }}>{l}</a>
-  ))}
-
-  {user ? (
-    <button onClick={onShowDashboard} className="btn-sm" style={{ marginLeft:12,display:"flex",alignItems:"center",gap:8,padding:"8px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:"var(--surface1)",color:"var(--navy)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
-      <Icon name="grid_view" size={15} /> Dashboard
-    </button>
-  ) : (
-    <button onClick={onLogin} className="btn-sm" style={{ marginLeft:12,display:"flex",alignItems:"center",gap:8,padding:"8px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:"var(--surface1)",color:"var(--navy)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
-      <DiscordIcon /> Login with Discord
-    </button>
-  )}
-</div>
+          {/* Primary CTA - always visible */}
+          {user ? (
+            <button onClick={onShowDashboard} className="btn-sm" style={{ display:"flex",alignItems:"center",gap:8,padding:"8px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:"var(--surface1)",color:"var(--navy)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
+              <Icon name="grid_view" size={15} /> Dashboard
+            </button>
+          ) : (
+            <button onClick={onLogin} className="btn-sm" style={{ display:"flex",alignItems:"center",gap:8,padding:"8px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:"var(--surface1)",color:"var(--navy)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
+              <DiscordIcon />
+              <span className="hide600">Login with Discord</span>
+              <span className="show600">Login</span>
+            </button>
+          )}
+        </div>
       </nav>
 
       {/* HERO */}

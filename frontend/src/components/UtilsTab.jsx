@@ -91,7 +91,7 @@ export default function UtilsTab({ guildId, onGoToOverview, user }) {
             />
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-            {[["this-server-mine", "person", "My Uploads"], ["this-server-all", "group", "All Uploads"]].map(([val, icon, label]) => (
+            {[["this-server-all", "group", "All Uploads"], ["this-server-mine", "person", "My Uploads"]].map(([val, icon, label]) => (
               <button key={val} onClick={() => setScope(val)} style={{
                 padding: "5px 13px", borderRadius: 99,
                 border: `1.5px solid ${scope === val ? "var(--accent)" : "var(--border2)"}`,

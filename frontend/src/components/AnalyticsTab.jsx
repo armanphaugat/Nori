@@ -34,18 +34,23 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
   const [history, setHistory] = useState([]);
   const [recentEvents, setRecentEvents] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isReloading, setIsReloading] = useState(false);
   const [status, setStatus] = useState(null);
   const [hasNoData, setHasNoData] = useState(false);
   const [hoveredCell, setHoveredCell] = useState(null);
 
-  const loadAnalytics = useCallback(async (id) => {
+  const loadAnalytics = useCallback(async (id, silent = false) => {
     if (!id) {
       setSummary(null);
       setHistory([]);
       setRecentEvents([]);
       return;
     }
-    setLoading(true);
+    if (silent) {
+      setIsReloading(true);
+    } else {
+      setLoading(true);
+    }
     setStatus(null);
     setHasNoData(false);
 
@@ -58,7 +63,11 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
       } catch (err) {
         if (err.message.includes("404") || err.message.toLowerCase().includes("no analytics")) {
           setHasNoData(true);
-          setLoading(false);
+          if (silent) {
+            setIsReloading(false);
+          } else {
+            setLoading(false);
+          }
           return;
         }
         throw err;
@@ -96,7 +105,11 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
     } catch (err) {
       setStatus({ ok: false, msg: `Failed to load analytics: ${err.message}` });
     } finally {
-      setLoading(false);
+      if (silent) {
+        setIsReloading(false);
+      } else {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -196,11 +209,48 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
   if (hasNoData) {
     return (
       <div className="au">
-        <SectionHeader
-          label="Server Dashboard"
-          title="Server Analytics"
-          subtitle="Track member queries, response latency, and Bot query volume statistics."
-        />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 20, marginBottom: 20 }}>
+          <SectionHeader
+            label="Server Dashboard"
+            title="Server Analytics"
+            subtitle="Track member queries, response latency, and Bot query volume statistics."
+          />
+          {guildId && (
+            <div style={{ display: "flex", gap: 12, flexShrink: 0, marginTop: 4 }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+                <button
+                  onClick={() => loadAnalytics(guildId, true)}
+                  disabled={isReloading}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 8,
+                    padding: "7px 16px", borderRadius: "var(--r-full)",
+                    background: isReloading ? "var(--surface-3)" : "var(--surface)",
+                    border: `1px solid ${isReloading ? "var(--border-dark)" : "var(--border2)"}`,
+                    cursor: isReloading ? "not-allowed" : "pointer",
+                    transition: "all var(--tr)",
+                    fontSize: 12.5, fontWeight: 600,
+                    color: "var(--muted)",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    opacity: isReloading ? 0.7 : 1,
+                    boxSizing: "border-box",
+                    height: 34,
+                  }}
+                  onMouseEnter={e => { if (!isReloading) { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(43,45,66,0.08)"; e.currentTarget.style.color = "var(--navy)"; e.currentTarget.style.borderColor = "var(--navy-light)"; } }}
+                  onMouseLeave={e => { if (!isReloading) { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.color = "var(--muted)"; e.currentTarget.style.borderColor = "var(--border2)"; } }}
+                >
+                  {isReloading ? (
+                    <><Spinner size={12} /><span>Refreshing…</span></>
+                  ) : (
+                    <><Icon name="refresh" size={15} style={{ color: "var(--muted)" }} /><span>Refresh</span></>
+                  )}
+                </button>
+                <span style={{ fontSize: 11, color: "var(--muted)", textAlign: "center" }}>
+                  {isReloading ? "Refreshing..." : "Refresh analytics metrics"}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
         <Card style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "64px 32px", textAlign: "center", gap: 18, border: "1.5px dashed var(--border)" }}>
           <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--accent-l)", border: "1px solid rgba(196,30,30,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Icon name="bar_chart" size={28} style={{ color: "var(--accent)" }} />
@@ -238,11 +288,48 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
 
   return (
     <div className="au" style={{ width: "100%", display: "flex", flexDirection: "column", gap: 24 }}>
-      <SectionHeader
-        label="Server Dashboard"
-        title="Server Analytics"
-        subtitle="Track member queries, response latency, and Bot query volume statistics."
-      />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 20, marginBottom: 20 }}>
+        <SectionHeader
+          label="Server Dashboard"
+          title="Server Analytics"
+          subtitle="Track member queries, response latency, and Bot query volume statistics."
+        />
+        {guildId && (
+          <div style={{ display: "flex", gap: 12, flexShrink: 0, marginTop: 4 }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+              <button
+                onClick={() => loadAnalytics(guildId, true)}
+                disabled={isReloading}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  padding: "7px 16px", borderRadius: "var(--r-full)",
+                  background: isReloading ? "var(--surface-3)" : "var(--surface)",
+                  border: `1px solid ${isReloading ? "var(--border-dark)" : "var(--border2)"}`,
+                  cursor: isReloading ? "not-allowed" : "pointer",
+                  transition: "all var(--tr)",
+                  fontSize: 12.5, fontWeight: 600,
+                  color: "var(--muted)",
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  opacity: isReloading ? 0.7 : 1,
+                  boxSizing: "border-box",
+                  height: 34,
+                }}
+                onMouseEnter={e => { if (!isReloading) { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(43,45,66,0.08)"; e.currentTarget.style.color = "var(--navy)"; e.currentTarget.style.borderColor = "var(--navy-light)"; } }}
+                onMouseLeave={e => { if (!isReloading) { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.color = "var(--muted)"; e.currentTarget.style.borderColor = "var(--border2)"; } }}
+              >
+                {isReloading ? (
+                  <><Spinner size={12} /><span>Refreshing…</span></>
+                ) : (
+                  <><Icon name="refresh" size={15} style={{ color: "var(--muted)" }} /><span>Refresh</span></>
+                )}
+              </button>
+              <span style={{ fontSize: 11, color: "var(--muted)", textAlign: "center" }}>
+                {isReloading ? "Refreshing..." : "Refresh analytics metrics"}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
 
       {status && <StatusBadge {...status} />}
 
@@ -299,7 +386,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>{avgLatency}ms</span>
+            <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>{(avgLatency / 1000).toFixed(2)}s</span>
             <span style={{ fontSize: 11, color: "var(--text-s)" }}>bot response</span>
           </div>
         </Card>
@@ -561,7 +648,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
                             border: `1px solid ${isLatencyFast ? "rgba(26,122,74,0.15)" : "rgba(179,92,0,0.15)"}`,
                           }}
                         >
-                          {latency ? `${latency.toFixed(0)} ms` : "—"}
+                          {latency ? `${(latency / 1000).toFixed(2)} s` : "—"}
                         </span>
                       </td>
                     </tr>

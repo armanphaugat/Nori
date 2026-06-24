@@ -6,16 +6,15 @@ export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user,
     {
       title: "Configuration",
       items: [
-        { id: "channels",  label: "Channels",        icon: "forum" },
+        { id: "channels",  label: "General Settings", icon: "settings" },
         { id: "upload",    label: "Knowledge Base",   icon: "storage" },
         { id: "sources",   label: "Ingested Sources", icon: "folder_open" },
         { id: "analytics", label: "Analytics",        icon: "analytics" },
       ],
     },
     {
-      title: "Utility",
+      title: "Billing",
       items: [
-        { id: "utils", label: "URL Crawler", icon: "travel_explore" },
         { id: "billing", label: "Billing & Plans", icon: "credit_card" },
       ],
     },
@@ -205,54 +204,7 @@ export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user,
         {!isCollapsed && <span>Switch Server</span>}
       </button>
 
-      {/* ── Active server pill ── */}
-      {activeGuild && (
-        <div
-          title={isCollapsed ? activeGuild.name : undefined}
-          style={{
-            padding: isCollapsed ? "10px 0" : "14px 16px",
-            borderRadius: "var(--r-md)",
-            background: "var(--red-dim)",
-            border: "1px solid var(--red-border)",
-            marginBottom: 24,
-            display: "flex", alignItems: "center",
-            justifyContent: isCollapsed ? "center" : "flex-start",
-            gap: isCollapsed ? 0 : 12,
-          }}
-        >
-          {serverIconUrl ? (
-            <img
-              src={serverIconUrl}
-              alt={activeGuild.name}
-              style={{ width: 36, height: 36, borderRadius: "50%", border: "1.5px solid var(--red-border)", flexShrink: 0, objectFit: "cover" }}
-            />
-          ) : (
-            <div style={{
-              width: 36, height: 36, borderRadius: "50%",
-              background: "linear-gradient(135deg, var(--accent-deep) 0%, var(--accent) 100%)",
-              color: "#fff", display: "flex", alignItems: "center",
-              justifyContent: "center", fontSize: 13, fontWeight: 800, flexShrink: 0,
-              fontFamily: "'Outfit', sans-serif",
-            }}>
-              {(activeGuild.name || "SV").slice(0, 2).toUpperCase()}
-            </div>
-          )}
-          {!isCollapsed && (
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{
-                fontSize: 13.5, fontWeight: 700, color: "var(--accent-deep)",
-                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                fontFamily: "'Outfit', sans-serif",
-              }} title={activeGuild.name}>
-                {activeGuild.name}
-              </div>
-              <div style={{ display: "flex", alignItems: "center", marginTop: 2 }}>
-                <span style={{ fontSize: 11, color: "var(--muted)", fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 500 }}>Connected</span>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+
 
       {/* ── Navigation groups ── */}
       <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: 22, overflow: "auto" }}>

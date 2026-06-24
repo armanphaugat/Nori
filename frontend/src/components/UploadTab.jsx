@@ -2,12 +2,22 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { API } from "../utils/api.js";
 import {
   Spinner, StatusBadge, Btn, Icon, Card,
-  SectionHeader, NoServerSelected,
+  SectionHeader, NoServerSelected, Tag,
 } from "./Common.jsx";
 
 export default function UploadTab({ guildId, onGoToOverview }) {
   const [docUrls, setDocUrls]   = useState("");
   const [websiteUrls, setWebsiteUrls] = useState("");
+
+  // URL Crawler / Scanner states
+  const [urlMode, setUrlMode] = useState("quick"); // "quick" or "scan"
+  const [baseUrl, setBaseUrl] = useState("");
+  const [allUrls, setAllUrls] = useState([]);
+  const [selectedUrls, setSelectedUrls] = useState(new Set());
+  const [urlFilter, setUrlFilter] = useState("");
+  const [crawling, setCrawling] = useState(false);
+  const [ingestingUrls, setIngestingUrls] = useState(false);
+  const [hasResult, setHasResult] = useState(false);
   const [docFiles, setDocFiles] = useState([]);
   const [imgFiles, setImgFiles] = useState([]);
   const [vidFiles, setVidFiles] = useState([]);
@@ -87,6 +97,45 @@ export default function UploadTab({ guildId, onGoToOverview }) {
     catch (e) { setStatus({ ok: false, msg: e.message }); }
     setWebsiteUploading(false);
   };
+
+  const doCrawl = async () => {
+    if (!baseUrl.trim()) return;
+    setCrawling(true); setStatus(null); setSelectedUrls(new Set()); setHasResult(false);
+    try {
+      const d = await API.getSubUrls(baseUrl.trim());
+      if (d.error) throw new Error(d.error);
+      setAllUrls(d.sub_urls || []); setHasResult(true);
+    } catch (e) { setStatus({ ok: false, msg: e.message }); }
+    setCrawling(false);
+  };
+
+  const toggleUrl = (u) => setSelectedUrls(s => { const n = new Set(s); n.has(u) ? n.delete(u) : n.add(u); return n; });
+
+  const doCrawlIngest = async () => {
+    if (!guildId) { setStatus({ ok: false, msg: "No server selected" }); return; }
+    if (!selectedUrls.size) return;
+    setIngestingUrls(true); setStatus(null);
+    try {
+      let successCount = 0;
+      const errors = [];
+      for (const url of selectedUrls) {
+        try {
+          await API.uploadWebsite(guildId, url);
+          successCount++;
+        } catch (e) {
+          errors.push(`${url}: ${e.message}`);
+        }
+      }
+      if (errors.length) {
+        setStatus({ ok: false, msg: `${successCount} ingested, ${errors.length} failed:\n${errors.join("\n")}` });
+      } else {
+        setStatus({ ok: true, msg: `${successCount} URL(s) ingested successfully` });
+      }
+    } catch (e) { setStatus({ ok: false, msg: e.message }); }
+    setIngestingUrls(false);
+  };
+
+  const filteredUrls = urlFilter ? allUrls.filter(u => u.toLowerCase().includes(urlFilter.toLowerCase())) : allUrls;
 
   const doSectionUpload = async (type, files, setFiles, label) => {
     if (!guildId) { setStatus({ ok: false, msg: "No server selected" }); return; }
@@ -223,26 +272,135 @@ export default function UploadTab({ guildId, onGoToOverview }) {
           )}
         </Card>
 
-        {/* Website Crawler */}
+        {/* Website URL / Crawler */}
         <Card>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
             <div style={{ width: 38, height: 38, borderRadius: "var(--r-md)", background: "var(--red-dim)", border: "1px solid var(--red-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Icon name="language" size={19} style={{ color: "var(--accent-deep)" }} />
             </div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--navy)" }}>Website Crawler</div>
-              <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 300 }}>One website root URL per line</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--navy)" }}>Website URL</div>
+              <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 300 }}>Ingest site URLs or crawl to discover links</div>
             </div>
           </div>
-          <textarea className="kb-input kb-mono" value={websiteUrls} onChange={e => setWebsiteUrls(e.target.value)} rows={4}
-            placeholder={"https://docs.example.com\nhttps://yoursite.com"}
-            style={{ resize: "vertical", lineHeight: 1.6 }} />
-          {websiteUrls.trim() && (
-            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-              <Btn onClick={doWebsiteUpload} disabled={websiteUploading} variant="primary" style={{ flex: 1, justifyContent: "center" }}>
-                {websiteUploading ? <><Spinner size={14} color="#fff" /> Starting Crawler…</> : <><Icon name="settings_input_antenna" size={16} /> Crawl Website</>}
-              </Btn>
-              <Btn onClick={() => setWebsiteUrls("")} disabled={websiteUploading} variant="ghost">Clear</Btn>
+
+          {/* Mode Switcher */}
+          <div style={{
+            display: "flex",
+            background: "var(--surface-2)",
+            borderRadius: "var(--r-sm)",
+            padding: 3,
+            marginBottom: 14,
+            border: "1px solid var(--border)",
+          }}>
+            <button
+              onClick={() => setUrlMode("quick")}
+              style={{
+                flex: 1,
+                padding: "6px 12px",
+                fontSize: 12,
+                fontWeight: 600,
+                borderRadius: "6px",
+                border: "none",
+                cursor: "pointer",
+                background: urlMode === "quick" ? "var(--surface)" : "transparent",
+                color: urlMode === "quick" ? "var(--navy)" : "var(--muted)",
+                boxShadow: urlMode === "quick" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+                transition: "all var(--tr)",
+              }}
+            >
+              Quick Add
+            </button>
+            <button
+              onClick={() => setUrlMode("scan")}
+              style={{
+                flex: 1,
+                padding: "6px 12px",
+                fontSize: 12,
+                fontWeight: 600,
+                borderRadius: "6px",
+                border: "none",
+                cursor: "pointer",
+                background: urlMode === "scan" ? "var(--surface)" : "transparent",
+                color: urlMode === "scan" ? "var(--navy)" : "var(--muted)",
+                boxShadow: urlMode === "scan" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+                transition: "all var(--tr)",
+              }}
+            >
+              Scan & Discover
+            </button>
+          </div>
+
+          {urlMode === "quick" ? (
+            <>
+              <textarea className="kb-input kb-mono" value={websiteUrls} onChange={e => setWebsiteUrls(e.target.value)} rows={4}
+                placeholder={"https://docs.example.com\nhttps://yoursite.com"}
+                style={{ resize: "vertical", lineHeight: 1.6 }} />
+              {websiteUrls.trim() && (
+                <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                  <Btn onClick={doWebsiteUpload} disabled={websiteUploading} variant="primary" style={{ flex: 1, justifyContent: "center" }}>
+                    {websiteUploading ? <><Spinner size={14} color="#fff" /> Saving URL…</> : <><Icon name="link" size={16} /> Save URL</>}
+                  </Btn>
+                  <Btn onClick={() => setWebsiteUrls("")} disabled={websiteUploading} variant="ghost">Clear</Btn>
+                </div>
+              )}
+            </>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", gap: 10 }}>
+                <input className="kb-input" value={baseUrl} onChange={e => setBaseUrl(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && doCrawl()}
+                  placeholder="https://docs.example.com" style={{ flex: 1, fontFamily: "monospace", fontSize: 13 }} />
+                <Btn onClick={doCrawl} disabled={crawling || !baseUrl.trim()} style={{ flexShrink: 0, padding: "8px 14px", minHeight: 38 }}>
+                  {crawling ? <><Spinner size={14}/> Scanning…</> : <><Icon name="travel_explore" size={16}/> Discover</>}
+                </Btn>
+              </div>
+
+              {hasResult && (
+                <div style={{ border: "1px solid var(--border2)", borderRadius: "var(--r-md)", overflow: "hidden", marginTop: 8, background: "var(--surface-2)" }}>
+                  <div style={{ padding: "8px 12px", borderBottom: "1px solid var(--border2)", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <Tag variant="neutral" style={{ fontSize: 10, padding: "2px 8px" }}>{allUrls.length} found</Tag>
+                    {selectedUrls.size > 0 && <Tag variant="success" style={{ fontSize: 10, padding: "2px 8px" }}>{selectedUrls.size} selected</Tag>}
+                    <input className="kb-input" value={urlFilter} onChange={e => setUrlFilter(e.target.value)}
+                      placeholder="Filter…" style={{ flex: 1, minWidth: 80, height: 28, padding: "3px 8px", fontSize: 12, borderRadius: "6px" }} />
+                    <Btn onClick={() => setSelectedUrls(new Set(filteredUrls))} variant="ghost" style={{ padding: "2px 8px", fontSize: 11, minHeight: 28, borderRadius: "6px" }}>All</Btn>
+                    <Btn onClick={() => setSelectedUrls(new Set())} variant="ghost" style={{ padding: "2px 8px", fontSize: 11, minHeight: 28, borderRadius: "6px" }}>Clear</Btn>
+                  </div>
+                  <div style={{ maxHeight: 200, overflowY: "auto", background: "var(--surface)" }}>
+                    {filteredUrls.map((u, i) => {
+                      const sel = selectedUrls.has(u);
+                      return (
+                        <div key={i} onClick={() => toggleUrl(u)} style={{
+                          display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
+                          borderBottom: "1px solid var(--border)", cursor: "pointer",
+                          background: sel ? "var(--red-dim)" : "transparent",
+                          transition: "background var(--tr)"
+                        }}>
+                          <div style={{
+                            width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                            border: `1.5px solid ${sel ? "var(--accent)" : "var(--border2)"}`,
+                            background: sel ? "var(--accent)" : "transparent",
+                            display: "flex", alignItems: "center", justifyItems: "center", justifyContent: "center",
+                            color: "#fff", fontSize: 9, fontWeight: 700, transition: "all var(--tr)"
+                          }}>{sel ? "✓" : ""}</div>
+                          <span style={{ fontSize: 11.5, color: "var(--navy)", fontFamily: "monospace", wordBreak: "break-all", flex: 1, lineHeight: 1.4 }}>{u}</span>
+                          <a href={u} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ color: "var(--accent)", fontSize: 11, flexShrink: 0, textDecoration: "none", display: "flex", alignItems: "center" }}>
+                            <Icon name="open_in_new" size={13} />
+                          </a>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{ padding: "10px 12px", borderTop: "1px solid var(--border2)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, background: "var(--surface-2)" }}>
+                    <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>
+                      {selectedUrls.size > 0 ? `${selectedUrls.size} selected` : "Select links to ingest"}
+                    </span>
+                    <Btn onClick={doCrawlIngest} disabled={ingestingUrls || !selectedUrls.size} variant="primary" style={{ minHeight: 30, height: 30, padding: "4px 12px", fontSize: 12, borderRadius: "6px" }}>
+                      {ingestingUrls ? <><Spinner size={12} color="#fff" /> Ingesting…</> : `Ingest (${selectedUrls.size})`}
+                    </Btn>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </Card>

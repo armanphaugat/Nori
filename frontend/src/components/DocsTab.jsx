@@ -57,7 +57,7 @@ export default function DocsTab({ guildId, onGoToOverview }) {
   const SUB_TABS = [
     { id: "members_qa", label: "User Q&A & Command", icon: "forum" },
     { id: "tickets", label: "Support Ticket System", icon: "confirmation_number" },
-    { id: "admin_setup", label: "Admin: Channel & Style Setup", icon: "settings_suggest" },
+    { id: "admin_setup", label: "Admin: General & Style Setup", icon: "settings_suggest" },
     { id: "admin_kb", label: "Admin: Knowledge Base", icon: "upload_file" },
     { id: "admin_search_analytics", label: "Admin: Web Search & Control", icon: "analytics" },
   ];
@@ -279,7 +279,7 @@ export default function DocsTab({ guildId, onGoToOverview }) {
             <div className="au">
               <h3 style={{ fontSize: 18, color: "var(--navy)", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
                 <Icon name="supervisor_account" size={20} style={{ color: "var(--accent)" }} />
-                Admin: Channel & Personality Configuration
+                Admin: General & Personality Configuration
               </h3>
               <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.6, marginBottom: 16 }}>
                 Configure where VaultBot responds, what personality it uses, and where it logs user feedback.
@@ -290,7 +290,7 @@ export default function DocsTab({ guildId, onGoToOverview }) {
                 To set channels where the bot responds to direct text messages:
               </p>
               <ol style={{ fontSize: 13, color: "var(--muted)", paddingLeft: 20, lineHeight: 1.7, marginBottom: 12 }}>
-                <li>Select the <strong>Channels</strong> tab on the dashboard menu.</li>
+                 <li>Select the <strong>General Settings</strong> tab on the dashboard menu.</li>
                 <li>Under the dropdown list, select the text channel you want the bot to watch.</li>
                 <li>Click the <strong>Add Monitored Channel</strong> button. The channel will appear in the table below.</li>
               </ol>
@@ -309,7 +309,7 @@ export default function DocsTab({ guildId, onGoToOverview }) {
                 The bot alerts staff when users are unsatisfied or when questions fail. To configure:
               </p>
               <ol style={{ fontSize: 13, color: "var(--muted)", paddingLeft: 20, lineHeight: 1.7, marginBottom: 12 }}>
-                <li>Navigate to the Channels tab.</li>
+                 <li>Navigate to the General Settings tab.</li>
                 <li>Locate the selector labeled <strong>Configure Moderator Alert Channel</strong>.</li>
                 <li>Select a staff-only channel and confirm. The bot will automatically push rich logs here when users click Thumbs Down (👎).</li>
               </ol>
@@ -399,7 +399,7 @@ export default function DocsTab({ guildId, onGoToOverview }) {
               <ul style={{ fontSize: 13, color: "var(--muted)", paddingLeft: 20, lineHeight: 1.7, marginBottom: 12 }}>
                 <li><strong>Total Questions</strong>: Metric detailing daily question counts.</li>
                 <li><strong>Answer Rate</strong>: Percentage of questions answered successfully.</li>
-                <li><strong>Response Latency</strong>: Average response speed in milliseconds.</li>
+                <li><strong>Response Latency</strong>: Average response speed in seconds.</li>
                 <li><strong>Recent Events Log</strong>: Detailed query table containing timestamps, active user IDs, answered status, and latency speeds.</li>
               </ul>
 

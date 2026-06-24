@@ -16,8 +16,16 @@ export default function LegalPage({ type, onBack }) {
       padding: "80px 24px 64px",
       fontFamily: "'Plus Jakarta Sans', sans-serif"
     }}>
+      <style>{`
+        @media(max-width:1150px) {
+          .legal-nav { padding: 0 24px !important; }
+        }
+        @media(max-width:900px) {
+          .legal-nav { padding: 0 16px !important; }
+        }
+      `}</style>
       {/* ── Navbar header ── */}
-      <nav style={{
+      <nav className="legal-nav" style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 200, height: 64,
         display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "0 64px",
@@ -82,7 +90,7 @@ export default function LegalPage({ type, onBack }) {
 
               <h3 style={{ fontSize: 16, color: "var(--navy)", marginTop: 24, marginBottom: 10 }}>4. User Rights & Data Deletion</h3>
               <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.7, marginBottom: 12 }}>
-                You maintain absolute ownership of your knowledge base files and configurations. You can delete uploaded files, crawler URL feeds, channel settings, or individual FAQ logs at any time from the dashboard. Deletion requests instantly invoke deletion calls to the underlying Supabase and Graphlit servers.
+                You maintain absolute ownership of your knowledge base files and configurations. You can delete uploaded files, crawler URL feeds, general settings, or individual FAQ logs at any time from the dashboard. Deletion requests instantly invoke deletion calls to the underlying Supabase and Graphlit servers.
               </p>
 
               <h3 style={{ fontSize: 16, color: "var(--navy)", marginTop: 24, marginBottom: 10 }}>5. Third-Party Services</h3>

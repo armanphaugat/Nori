@@ -18,13 +18,57 @@ const LANGUAGES = [
   { value: "russian",    label: "Russian" },
 ];
 
-const TONES = [
-  { value: "professional", label: "Professional" },
-  { value: "formal",       label: "Formal" },
-  { value: "casual",       label: "Casual" },
-  { value: "friendly",     label: "Friendly" },
-  { value: "sarcastic",    label: "Sarcastic" },
-];
+
+const ToggleSwitch = ({ checked, onChange, disabled }) => {
+  return (
+    <label style={{
+      position: "relative",
+      display: "inline-flex",
+      alignItems: "center",
+      cursor: disabled ? "not-allowed" : "pointer",
+      userSelect: "none",
+    }}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        disabled={disabled}
+        style={{
+          position: "absolute",
+          width: 1,
+          height: 1,
+          padding: 0,
+          margin: -1,
+          overflow: "hidden",
+          clip: "rect(0, 0, 0, 0)",
+          border: 0,
+        }}
+      />
+      <div style={{
+        position: "relative",
+        width: 38,
+        height: 20,
+        background: checked ? "var(--accent)" : "var(--surface-3)",
+        border: "1.5px solid var(--border2)",
+        borderRadius: 20,
+        transition: "background-color 0.2s ease, border-color 0.2s ease",
+        opacity: disabled ? 0.6 : 1,
+      }}>
+        <div style={{
+          position: "absolute",
+          top: 1.5,
+          left: checked ? 19 : 1.5,
+          width: 14,
+          height: 14,
+          background: "white",
+          borderRadius: "50%",
+          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.15)",
+          transition: "left 0.2s ease",
+        }} />
+      </div>
+    </label>
+  );
+};
 
 export default function ChannelsTab({
   guildId, guildName: initialGuildName = "",
@@ -300,7 +344,7 @@ export default function ChannelsTab({
 
   if (!guildId) return (
     <div>
-      <SectionHeader label="Bot Configuration" title="Channel Management" subtitle="Control which Discord channels the bot responds in." />
+      <SectionHeader label="Bot Configuration" title="General Settings" subtitle="Control which Discord channels the bot responds in." />
       <NoServerSelected onGoToOverview={onGoToOverview} />
     </div>
   );
@@ -309,7 +353,7 @@ export default function ChannelsTab({
     <div>
       {/* ── Header row ── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 20, marginBottom: 28 }}>
-        <SectionHeader label="Bot Configuration" title="Channel Management" subtitle="Control which Discord channels the bot responds in." />
+        <SectionHeader label="Bot Configuration" title="General Settings" subtitle="Control which Discord channels the bot responds in." />
 
         {guildId && loaded && (
           <div style={{ display: "flex", gap: 12, flexShrink: 0, marginTop: 4 }}>
@@ -323,7 +367,7 @@ export default function ChannelsTab({
                   display: "inline-flex", alignItems: "center", gap: 8,
                   padding: "9px 20px", borderRadius: "var(--r-full)",
                   background: isPaused ? "var(--red-dim)" : "var(--surface)",
-                  border: `1.5px solid ${isPaused ? "var(--red-border)" : "var(--border2)"}`,
+                  border: `1px solid ${isPaused ? "var(--red-border)" : "var(--border2)"}`,
                   cursor: togglingPause ? "not-allowed" : "pointer",
                   transition: "all var(--tr)",
                   fontSize: 13.5, fontWeight: 600,
@@ -347,38 +391,42 @@ export default function ChannelsTab({
               </span>
             </div>
 
-            {/* ── Web Search Button ── */}
+            {/* ── Web Search Toggle ── */}
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
-              <button
-                onClick={handleToggleWebSearch}
-                disabled={togglingWebSearch}
+              <div
                 style={{
-                  display: "inline-flex", alignItems: "center", gap: 8,
+                  display: "inline-flex", alignItems: "center", gap: 10,
                   padding: "9px 20px", borderRadius: "var(--r-full)",
-                  background: webSearchEnabled ? "rgba(59,130,246,0.1)" : "var(--surface)",
-                  border: `1.5px solid ${webSearchEnabled ? "rgba(59,130,246,0.45)" : "var(--border2)"}`,
-                  cursor: togglingWebSearch ? "not-allowed" : "pointer",
+                  background: webSearchEnabled ? "rgba(59,130,246,0.08)" : "var(--surface)",
+                  border: `1.5px solid ${webSearchEnabled ? "rgba(59,130,246,0.35)" : "var(--border2)"}`,
+                  boxSizing: "border-box",
+                  height: 40,
                   transition: "all var(--tr)",
                   fontSize: 13.5, fontWeight: 600,
                   color: webSearchEnabled ? "rgb(37,99,235)" : "var(--muted)",
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  opacity: togglingWebSearch ? 0.7 : 1,
                 }}
-                onMouseEnter={e => { if (!togglingWebSearch) { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(59,130,246,0.12)"; } }}
-                onMouseLeave={e => { if (!togglingWebSearch) { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; } }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = `0 4px 12px ${webSearchEnabled ? "rgba(59,130,246,0.12)" : "rgba(43,45,66,0.08)"}`; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}
               >
-                {togglingWebSearch ? (
-                  <><Spinner size={14} /><span>Updating…</span></>
-                ) : webSearchEnabled ? (
-                  <><Icon name="travel_explore" size={17} style={{ color: "rgb(37,99,235)" }} /><span>Web Search On</span></>
-                ) : (
-                  <><Icon name="search_off" size={17} style={{ color: "var(--muted)" }} /><span>Web Search Off</span></>
-                )}
-              </button>
+                <Icon
+                  name={webSearchEnabled ? "travel_explore" : "search_off"}
+                  size={17}
+                  style={{ color: webSearchEnabled ? "rgb(37,99,235)" : "var(--muted)" }}
+                />
+                <span>Web Search</span>
+                <ToggleSwitch
+                  checked={webSearchEnabled}
+                  onChange={handleToggleWebSearch}
+                  disabled={togglingWebSearch}
+                />
+              </div>
               <span style={{ fontSize: 11, color: "var(--muted)", textAlign: "center" }}>
-                {webSearchEnabled ? "Web Searches The Question" : "Do Not Web Searches The Question"}
+                {togglingWebSearch ? "Updating…" : webSearchEnabled ? "Web Search is enabled" : "Web Search is disabled"}
               </span>
             </div>
+
+
 
           </div>
         )}
@@ -408,7 +456,7 @@ export default function ChannelsTab({
             <Tag variant={isPaused ? "warn" : "success"}>
               {isPaused ? "Paused" : "Active"}
             </Tag>
-            <Tag variant={webSearchEnabled ? "info" : "default"}>
+            <Tag variant={webSearchEnabled ? "success" : "neutral"}>
               {webSearchEnabled ? "Web Search On" : "Web Search Off"}
             </Tag>
           </div>
@@ -428,9 +476,12 @@ export default function ChannelsTab({
 
             {/* Active Bot Channels */}
             <Card>
-              <div style={{ fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, marginBottom: 16, color: "var(--navy)" }}>
+              <div style={{ fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, color: "var(--navy)" }}>
                 <Icon name="tag" size={17} style={{ color: "var(--accent)" }} /> Active Bot Channels
               </div>
+              <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 16, lineHeight: 1.5, fontWeight: 300 }}>
+                Select the channels where VaultBot is allowed to respond to user questions. In these channels, users do not need a bot prefix command to ask.
+              </p>
 
               {channels.length === 0 ? (
                 <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 14, textAlign: "center", padding: "10px 0" }}>
@@ -480,9 +531,12 @@ export default function ChannelsTab({
 
             {/* Mod / Log Channel */}
             <Card>
-              <div style={{ fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, marginBottom: 16, color: "var(--navy)" }}>
+              <div style={{ fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, color: "var(--navy)" }}>
                 <Icon name="shield" size={17} style={{ color: "var(--accent)" }} /> Mod / Log Channel
               </div>
+              <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 16, lineHeight: 1.5, fontWeight: 300 }}>
+                Select a staff-only channel where VaultBot will post logs of unsatisfied responses (thumbs down feedback) and query error alerts.
+              </p>
 
               {modChannel && (
                 <div style={{
@@ -655,18 +709,23 @@ export default function ChannelsTab({
                       ))}
                     </select>
                   </div>
-                  {/* Tone select */}
+                  {/* Tone input */}
                   <div>
                     <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 5 }}>Tone</div>
-                    <select
-                      style={{ ...SelectStyle, width: "100%" }}
+                    <input
+                      type="text"
+                      style={{
+                        height: 36, padding: "0 10px", fontSize: 13,
+                        background: "var(--surface)", border: "1.5px solid var(--border2)",
+                        borderRadius: "var(--r-md)", color: "var(--navy)",
+                        outline: "none", width: "100%",
+                        fontFamily: "'Plus Jakarta Sans', sans-serif",
+                      }}
+                      placeholder="e.g. professional, friendly, casual"
+                      maxLength={100}
                       value={newConfigTone}
                       onChange={e => setNewConfigTone(e.target.value)}
-                    >
-                      {TONES.map(t => (
-                        <option key={t.value} value={t.value}>{t.label}</option>
-                      ))}
-                    </select>
+                    />
                   </div>
                   {/* Add button */}
                   <Btn
@@ -736,12 +795,22 @@ export default function ChannelsTab({
 
                     {/* Tone */}
                     {editingConfigId === cfg.channel_id ? (
-                      <select style={{ ...SelectStyle, width: "100%" }} value={editTone} onChange={e => setEditTone(e.target.value)}>
-                        {TONES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                      </select>
+                      <input
+                        type="text"
+                        style={{
+                          height: 36, padding: "0 10px", fontSize: 13,
+                          background: "var(--surface)", border: "1.5px solid var(--border2)",
+                          borderRadius: "var(--r-md)", color: "var(--navy)",
+                          outline: "none", width: "100%",
+                          fontFamily: "'Plus Jakarta Sans', sans-serif",
+                        }}
+                        maxLength={100}
+                        value={editTone}
+                        onChange={e => setEditTone(e.target.value)}
+                      />
                     ) : (
                       <Tag variant="success" style={{ fontSize: 12 }}>
-                        {TONES.find(t => t.value === cfg.tone)?.label || cfg.tone}
+                        {cfg.tone}
                       </Tag>
                     )}
 

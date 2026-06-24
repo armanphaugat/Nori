@@ -19,7 +19,6 @@ import Sidebar from "./components/Sidebar.jsx";
 import ChannelsTab from "./components/ChannelsTab.jsx";
 import UploadTab from "./components/UploadTab.jsx";
 import SourcesTab from "./components/SourcesTab.jsx";
-import CrawlerTab from "./components/CrawlerTab.jsx";
 import ChatWidget from "./components/ChatWidget.jsx";
 import PricingPage from "./components/PricingPage.jsx";
 import AnalyticsTab from "./components/AnalyticsTab.jsx";
@@ -77,17 +76,48 @@ function Dashboard({
   onGuildsChange,
   onShowPricing
 }) {
-  const [tab, setTab] = useState(() => {
-    if (window.location.hash.includes("tab=billing")) {
-      return "billing";
+  const getTabFromUrl = () => {
+    const params = new URLSearchParams(window.location.search);
+    const urlTab = params.get("tab");
+    const validTabs = ["channels", "upload", "sources", "analytics", "billing", "docs"];
+    if (urlTab && validTabs.includes(urlTab)) {
+      return urlTab;
     }
+    const hash = window.location.hash.replace("#", "");
+    if (hash && validTabs.includes(hash)) {
+      return hash;
+    }
+    return null;
+  };
+
+  const [tab, setTab] = useState(() => {
+    const urlTab = getTabFromUrl();
+    if (urlTab) return urlTab;
     return LS.str("wb_active_tab") || "channels";
   });
 
   const changeTab = (t) => {
     setTab(t);
     LS.strSet("wb_active_tab", t);
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", t);
+    url.searchParams.set("page", "dashboard");
+    if (activeGuildId) {
+      url.searchParams.set("guild_id", activeGuildId);
+    }
+    window.history.pushState({}, "", url.pathname + url.search + url.hash);
   };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const urlTab = getTabFromUrl();
+      if (urlTab) {
+        setTab(urlTab);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
   const [activePlan, setActivePlan] = useState("free");
 
   useEffect(() => {
@@ -141,11 +171,10 @@ function Dashboard({
   const activeGuild = guilds.find(g => g.id === activeGuildId) || null;
 
   const tabLabels = {
-    channels: "Channel Management",
+    channels: "General Settings",
     upload: "Knowledge Base",
     sources: "Ingested Sources",
     analytics: "Analytics",
-    utils: "URL Crawler",
     billing: "Billing & Plans",
     docs: "Setup Documentation",
   };
@@ -177,7 +206,6 @@ function Dashboard({
         {/* ── Top Header Bar ── */}
         <header style={{ 
           height: 64,
-          borderBottom: "1px solid var(--border)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -196,7 +224,6 @@ function Dashboard({
             <span style={{ height: 16, width: 1, background: "var(--border2)" }} />
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               {[
-                { label: "Reload", href: "#", onClick: (e) => { e.preventDefault(); window.location.reload(); } },
                 { label: "Docs", href: "#", onClick: (e) => { e.preventDefault(); changeTab("docs"); } },
                 { label: "Invite", href: "https://discord.gg/eBRgsseN" },
                 { label: "Discord", href: activeGuild?.id ? `https://discord.com/channels/${activeGuild.id}` : "https://discord.com" },
@@ -211,7 +238,6 @@ function Dashboard({
                   onMouseEnter={e => { e.currentTarget.style.color = "var(--navy)"; e.currentTarget.style.background = "var(--navy-light)"; }}
                   onMouseLeave={e => { e.currentTarget.style.color = "var(--muted)"; e.currentTarget.style.background = "transparent"; }}
                 >
-                  {label === "Reload" && <Icon name="refresh" size={13} style={{ marginRight: 2 }} />}
                   {label}
                 </a>
               ))}
@@ -349,13 +375,10 @@ function Dashboard({
               <UploadTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
             )}
             {tab === "sources" && (
-              <SourcesTab guildId={activeGuildId} onGoToOverview={onSwitchServer} user={user} />
+              <SourcesTab guildId={activeGuildId} onGoToOverview={onSwitchServer} user={user} onTab={changeTab} />
             )}
             {tab === "analytics" && (
               <AnalyticsTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
-            )}
-            {tab === "utils" && (
-              <CrawlerTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
             )}
             {tab === "billing" && (
               <BillingTab guildId={activeGuildId} onGoToOverview={onSwitchServer} user={user} />
@@ -423,12 +446,77 @@ function BootScreen() {
 
 // ── Root App ──────────────────────────────────────────────────────────────────
 export default function App() {
-  const [view, setView] = useState("landing");
+  const getViewFromUrl = () => {
+    const params = new URLSearchParams(window.location.search);
+    const page = params.get("page");
+    const validViews = ["landing", "pricing", "servers", "dashboard", "privacy", "terms"];
+    if (page && validViews.includes(page)) {
+      return page;
+    }
+    return null;
+  };
+
+  const getTabFromUrl = () => {
+    const params = new URLSearchParams(window.location.search);
+    const urlTab = params.get("tab");
+    const validTabs = ["channels", "upload", "sources", "analytics", "billing", "docs"];
+    if (urlTab && validTabs.includes(urlTab)) {
+      return urlTab;
+    }
+    const hash = window.location.hash.replace("#", "");
+    if (hash && validTabs.includes(hash)) {
+      return hash;
+    }
+    return null;
+  };
+
+  const [view, setView] = useState(() => {
+    const urlView = getViewFromUrl();
+    if (urlView) return urlView;
+    return "landing";
+  });
+
+  const navigateTo = (newView) => {
+    setView(newView);
+    const url = new URL(window.location.href);
+    url.searchParams.set("page", newView);
+    if (newView !== "dashboard") {
+      url.searchParams.delete("tab");
+      url.searchParams.delete("guild_id");
+    } else {
+      if (activeGuildId) {
+        url.searchParams.set("guild_id", activeGuildId);
+      }
+    }
+    window.history.pushState({}, "", url.pathname + url.search + url.hash);
+  };
+
   const [user, setUser] = useState(LS.get("wb_user", null));
   const [guilds, setGuilds] = useState(LS.get("wb_guilds", []));
   const [discordGuilds, setDiscordGuilds] = useState([]);
   const [booting, setBooting] = useState(true);
-  const [activeGuildId, setActiveGuildId] = useState(LS.str("wb_active_guild") || null);
+  const [activeGuildId, setActiveGuildId] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlGuildId = params.get("guild_id");
+    if (urlGuildId) return urlGuildId;
+    return LS.str("wb_active_guild") || null;
+  });
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const urlView = getViewFromUrl();
+      if (urlView) {
+        setView(urlView);
+      }
+      const params = new URLSearchParams(window.location.search);
+      const urlGuildId = params.get("guild_id");
+      if (urlGuildId) {
+        setActiveGuildId(urlGuildId);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   useEffect(() => {
     const hash = window.location.hash;
@@ -547,7 +635,21 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (view === "dashboard" && !activeGuildId) setView("servers");
+    if (view === "dashboard" && !activeGuildId) {
+      setView("servers");
+      return;
+    }
+    const url = new URL(window.location.href);
+    url.searchParams.set("page", view);
+    if (view === "dashboard") {
+      if (activeGuildId) {
+        url.searchParams.set("guild_id", activeGuildId);
+      }
+    } else {
+      url.searchParams.delete("tab");
+      url.searchParams.delete("guild_id");
+    }
+    window.history.replaceState({}, "", url.pathname + url.search + url.hash);
   }, [view, activeGuildId]);
 
   const handleGuildsChange = (updated) => {
@@ -635,10 +737,10 @@ export default function App() {
           user={user}
           onLogin={discordLogin}
           onInvite={discordInvite}
-          onShowDashboard={() => setView("servers")}
-          onShowPricing={() => setView("pricing")}
-          onShowPrivacy={() => setView("privacy")}
-          onShowTerms={() => setView("terms")}
+          onShowDashboard={() => navigateTo("servers")}
+          onShowPricing={() => navigateTo("pricing")}
+          onShowPrivacy={() => navigateTo("privacy")}
+          onShowTerms={() => navigateTo("terms")}
         />
       )}
       {view === "pricing" && (
@@ -647,11 +749,11 @@ export default function App() {
           activeGuildId={activeGuildId}
           onLogin={discordLogin}
           onInvite={discordInvite}
-          onShowDashboard={() => setView("servers")}
-          onShowPrivacy={() => setView("privacy")}
-          onShowTerms={() => setView("terms")}
+          onShowDashboard={() => navigateTo("servers")}
+          onShowPrivacy={() => navigateTo("privacy")}
+          onShowTerms={() => navigateTo("terms")}
           onBack={(hash) => {
-            setView("landing");
+            navigateTo("landing");
             if (hash) {
               setTimeout(() => {
                 const el = document.getElementById(hash.replace("#", ""));
@@ -681,18 +783,18 @@ export default function App() {
             setActiveGuildId(null);
             LS.rm("wb_active_guild");
             LS.rm("wb_active_tab");
-            setView("servers");
+            navigateTo("servers");
           }}
           onActivate={handleActivateServer}
           onLogout={handleLogout}
           onGuildsChange={handleGuildsChange}
-          onShowPricing={() => setView("pricing")}
+          onShowPricing={() => navigateTo("pricing")}
         />
       )}
       {(view === "privacy" || view === "terms") && (
         <LegalPage
           type={view}
-          onBack={() => setView("landing")}
+          onBack={() => navigateTo("landing")}
         />
       )}
     </>
