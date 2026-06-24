@@ -5,6 +5,83 @@ import {
   SectionHeader, NoServerSelected,
 } from "./Common.jsx";
 
+// ─── HELPER FUNCTIONS & SUB-COMPONENTS ──────────────────────────────────────────
+
+const isUrl = (item) => {
+  const name = item.name || "";
+  return item.type === "url" || name.startsWith("http://") || name.startsWith("https://");
+};
+
+const getDomain = (urlStr) => {
+  try {
+    const url = new URL(urlStr);
+    return url.hostname;
+  } catch (_) {
+    return "";
+  }
+};
+
+const typeIcon = t => ({
+  pdf: "picture_as_pdf", url: "language",
+  faq: "quiz", text: "forum",
+}[t] ?? "description");
+
+const FaviconContainer = ({ item }) => {
+  const isUrlType = isUrl(item);
+  const domain = isUrlType ? getDomain(item.name) : "";
+  const [imgFailed, setImgFailed] = useState(false);
+
+  if (isUrlType && domain && !imgFailed) {
+    return (
+      <img
+        src={`https://www.google.com/s2/favicons?sz=64&domain=${domain}`}
+        alt="logo"
+        style={{ width: 18, height: 18, borderRadius: "50%", objectFit: "contain", flexShrink: 0 }}
+        onError={() => setImgFailed(true)}
+      />
+    );
+  }
+
+  return (
+    <div style={{
+      width: 18, height: 18, borderRadius: "50%",
+      background: "var(--red-dim)", display: "flex",
+      alignItems: "center", justifyContent: "center", flexShrink: 0
+    }}>
+      <Icon name={typeIcon(item.type)} size={11} style={{ color: "var(--accent)" }} />
+    </div>
+  );
+};
+
+const LoadingState = () => (
+  <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: "80px 20px" }}>
+    <Spinner size={32} />
+  </div>
+);
+
+const EmptyState = ({ onTab }) => (
+  <Card style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, padding: "60px 20px", textAlign: "center" }}>
+    <Icon name="inbox" size={40} style={{ color: "var(--text-m)", opacity: 0.5 }} />
+    <div>
+      <h4 style={{ fontSize: 16, fontWeight: 600, color: "var(--navy)", marginBottom: 4 }}>No sources ingested yet</h4>
+      <p style={{ fontSize: 13, color: "var(--text-s)", fontWeight: 300 }}>Upload files or add web search crawls to start training your bot.</p>
+    </div>
+    <Btn onClick={() => onTab("upload")} variant="primary" style={{ marginTop: 8 }}>
+      <Icon name="add" size={16} /> Add First Source
+    </Btn>
+  </Card>
+);
+
+const NoMatchesState = () => (
+  <Card style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "50px 20px", textAlign: "center" }}>
+    <Icon name="search_off" size={36} style={{ color: "var(--text-m)", opacity: 0.6 }} />
+    <div>
+      <h4 style={{ fontSize: 15, fontWeight: 600, color: "var(--navy)", marginBottom: 4 }}>No matching sources found</h4>
+      <p style={{ fontSize: 13, color: "var(--text-s)", fontWeight: 300 }}>Try adjusting your search keywords or active filters.</p>
+    </div>
+  </Card>
+);
+
 export default function SourcesTab({ guildId, onGoToOverview, user, onTab }) {
   const [uploads, setUploads]           = useState([]);
   const [loadingUploads, setLoadingUploads] = useState(false);
@@ -15,6 +92,7 @@ export default function SourcesTab({ guildId, onGoToOverview, user, onTab }) {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting]         = useState(false);
   const [status, setStatus]             = useState(null);
+  const [showFilters, setShowFilters]   = useState(false);
 
   const loadUploads = useCallback(async (id) => {
     if (!id) { setUploads([]); return; }
@@ -45,22 +123,15 @@ export default function SourcesTab({ guildId, onGoToOverview, user, onTab }) {
     setDeleting(false);
   };
 
-  // ── type → icon map ──
-  const typeIcon = t => ({
-    pdf: "picture_as_pdf", url: "language",
-    faq: "quiz", text: "forum",
-  }[t] ?? "description");
-
-  // ── pill toggle style helper ──
+  // pill toggle style helper
   const pillStyle = (active) => ({
     padding: "6px 14px", borderRadius: "var(--r-full)",
-    border: `1px solid ${active ? "var(--accent)" : "var(--border2)"}`,
+    border: `1.5px solid ${active ? "var(--accent)" : "var(--border2)"}`,
     background: active ? "var(--red-dim)" : "var(--surface)",
     color: active ? "var(--accent-deep)" : "var(--muted)",
-    fontSize: 12.5, fontWeight: 600, cursor: "pointer",
+    fontSize: 12, fontWeight: 600, cursor: "pointer",
     display: "inline-flex", alignItems: "center", gap: 6,
     transition: "all var(--tr)", fontFamily: "'Plus Jakarta Sans', sans-serif",
-    letterSpacing: "0.02em",
   });
 
   if (!guildId) return (
@@ -74,7 +145,7 @@ export default function SourcesTab({ guildId, onGoToOverview, user, onTab }) {
     </div>
   );
 
-  // ── filtered rows ──
+  // filtered rows
   const filtered = uploads.filter(u => {
     if (scope === "this-server-mine" && u.uploaded_by !== user?.discord_id) return false;
     const name = (u.name || u.url || u.filename || u.source || "").toLowerCase();
@@ -85,9 +156,76 @@ export default function SourcesTab({ guildId, onGoToOverview, user, onTab }) {
 
   return (
     <div style={{ width: "100%", boxSizing: "border-box" }}>
+      <style>{`
+        .data-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 13px;
+        }
+        .data-table th {
+          background: transparent !important;
+          border-bottom: 1.5px solid var(--border2) !important;
+          font-weight: 500 !important;
+          font-size: 12.5px !important;
+          color: var(--muted) !important;
+          text-transform: none !important;
+          letter-spacing: normal !important;
+          padding: 12px 20px !important;
+          font-family: 'Plus Jakarta Sans', sans-serif !important;
+        }
+        .data-table td {
+          padding: 14px 20px !important;
+          border-bottom: 1px solid var(--border2) !important;
+          color: var(--navy) !important;
+          vertical-align: middle !important;
+        }
+        .data-table tr:hover td {
+          background: var(--surface-2) !important;
+        }
+        .kb-source-link {
+          color: var(--navy) !important;
+          text-decoration: none !important;
+          font-weight: 600 !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          gap: 6px !important;
+          transition: color var(--tr) !important;
+        }
+        .kb-source-link:hover {
+          color: var(--accent) !important;
+          text-decoration: underline !important;
+        }
+        .kb-source-link .material-symbols-outlined {
+          opacity: 0.5;
+          transition: opacity var(--tr), color var(--tr);
+        }
+        .kb-source-link:hover .material-symbols-outlined {
+          opacity: 1 !important;
+          color: var(--accent) !important;
+        }
+      `}</style>
+
       <SectionHeader
         label="Knowledge Base"
-        title="Ingested Sources"
+        title={
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span>Ingested Sources</span>
+            <span style={{
+              fontSize: 13,
+              fontWeight: 600,
+              background: "var(--surface-3)",
+              border: "1px solid var(--border)",
+              color: "var(--text-s)",
+              padding: "2px 8px",
+              borderRadius: "10px",
+              lineHeight: 1,
+              display: "inline-flex",
+              alignItems: "center"
+            }}>
+              {uploads.length}
+            </span>
+          </div>
+        }
         subtitle="View, inspect, or delete processed files and database content connected to your server."
       />
 
@@ -102,164 +240,188 @@ export default function SourcesTab({ guildId, onGoToOverview, user, onTab }) {
         display: "flex", alignItems: "center", justifyContent: "space-between",
         marginBottom: 14, gap: 12, flexWrap: "wrap",
       }}>
-        {/* Search */}
-        <div style={{ position: "relative", flex: "1 1 240px", minWidth: 200 }}>
-          <span style={{
-            position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
-            color: "var(--muted2)", pointerEvents: "none",
-          }}>
-            <Icon name="search" size={16} />
-          </span>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Search sources…"
-            className="kb-input"
-            style={{ paddingLeft: 36 }}
-          />
-        </div>
+        {/* Left side filters */}
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flex: "1 1 auto" }}>
+          {/* Search */}
+          <div style={{ position: "relative", width: 240 }}>
+            <span style={{
+              position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
+              color: "var(--muted2)", pointerEvents: "none",
+            }}>
+              <Icon name="search" size={16} />
+            </span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Filter by name..."
+              className="kb-input"
+              style={{ paddingLeft: 36, height: 34, paddingTop: 0, paddingBottom: 0, fontSize: 13 }}
+            />
+          </div>
 
-        {/* Filters row */}
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-          {/* Scope toggles */}
-          <button onClick={() => setScope("this-server-all")} style={pillStyle(scope === "this-server-all")}>
-            <Icon name="group" size={13} style={{ color: scope === "this-server-all" ? "var(--accent-deep)" : "var(--muted2)" }} />
-            All Uploads
-          </button>
-          <button onClick={() => setScope("this-server-mine")} style={pillStyle(scope === "this-server-mine")}>
-            <Icon name="person" size={13} style={{ color: scope === "this-server-mine" ? "var(--accent-deep)" : "var(--muted2)" }} />
-            My Uploads
-          </button>
-
-          <span style={{ width: 1, height: 18, background: "var(--border2)", margin: "0 2px" }} />
-
-          {/* Type filters */}
-          {["all", "pdf", "url", "faq", "text"].map(t => (
-            <button key={t} onClick={() => setFilterType(t)} style={pillStyle(filterType === t)}>
-              {t === "all" ? "All" : t.toUpperCase()}
-            </button>
-          ))}
-
-          {/* Add Sources */}
-          <Btn
-            onClick={() => onTab("upload")}
-            variant="primary"
-            style={{ padding: "6px 14px", fontSize: 13, minHeight: 34 }}
+          {/* Filter button */}
+          <button 
+            onClick={() => setShowFilters(!showFilters)} 
+            style={{
+              padding: "6px 14px", 
+              borderRadius: "var(--r-md)",
+              border: `1.5px solid ${showFilters || filterType !== "all" || scope !== "this-server-all" ? "var(--accent)" : "var(--border2)"}`,
+              background: showFilters || filterType !== "all" || scope !== "this-server-all" ? "var(--red-dim)" : "var(--surface)",
+              color: showFilters || filterType !== "all" || scope !== "this-server-all" ? "var(--accent-deep)" : "var(--navy)",
+              fontSize: 13, 
+              fontWeight: 600, 
+              cursor: "pointer",
+              display: "inline-flex", 
+              alignItems: "center", 
+              gap: 6,
+              transition: "all var(--tr)",
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              height: 34,
+            }}
           >
-            <Icon name="add" size={15} /> Add Source
-          </Btn>
+            <Icon name="filter_list" size={15} />
+            Filter
+          </button>
         </div>
+
+        {/* Right side: Add Sources */}
+        <Btn
+          onClick={() => onTab("upload")}
+          variant="primary"
+          style={{ padding: "6px 14px", fontSize: 13, minHeight: 34 }}
+        >
+          <Icon name="add" size={15} /> Add Source
+        </Btn>
       </div>
 
-      {/* ── Table ── */}
-      <Card pad="0" style={{ overflow: "hidden" }}>
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Source Name</th>
-              <th>Type</th>
-              <th>Status</th>
-              <th style={{ textAlign: "right", paddingRight: 20 }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {uploads.length === 0 && !loadingUploads ? (
+      {/* Expanded filters row */}
+      {showFilters && (
+        <div style={{
+          display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center",
+          background: "var(--surface-2)", padding: "10px 16px", borderRadius: "var(--r-md)",
+          border: "1.5px solid var(--border2)", marginBottom: 14,
+          animation: "fadeIn .15s ease",
+        }}>
+          {/* Scope toggles */}
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginRight: 4 }}>Scope:</span>
+            <button onClick={() => setScope("this-server-all")} style={pillStyle(scope === "this-server-all")}>
+              <Icon name="group" size={13} style={{ color: scope === "this-server-all" ? "var(--accent-deep)" : "var(--muted2)" }} />
+              All Uploads
+            </button>
+            <button onClick={() => setScope("this-server-mine")} style={pillStyle(scope === "this-server-mine")}>
+              <Icon name="person" size={13} style={{ color: scope === "this-server-mine" ? "var(--accent-deep)" : "var(--muted2)" }} />
+              My Uploads
+            </button>
+          </div>
+
+          <span style={{ width: 1, height: 18, background: "var(--border2)" }} />
+
+          {/* Type filters */}
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginRight: 4 }}>Type:</span>
+            {["all", "pdf", "url", "faq", "text"].map(t => (
+              <button key={t} onClick={() => setFilterType(t)} style={pillStyle(filterType === t)}>
+                {t === "all" ? "All" : t.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Main View Area ── */}
+      {loadingUploads ? (
+        <LoadingState />
+      ) : uploads.length === 0 ? (
+        <EmptyState onTab={onTab} />
+      ) : filtered.length === 0 ? (
+        <NoMatchesState />
+      ) : (
+        <Card pad="0" style={{ overflow: "hidden" }}>
+          <table className="data-table">
+            <thead>
               <tr>
-                <td colSpan={4} style={{ textAlign: "center", color: "var(--muted2)", padding: "40px 20px" }}>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-                    <Icon name="inbox" size={28} style={{ color: "var(--muted2)", opacity: 0.5 }} />
-                    <span style={{ fontSize: 14 }}>No uploads yet</span>
-                  </div>
-                </td>
+                <th style={{ paddingLeft: 20 }}>Name</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th style={{ textAlign: "right", paddingRight: 20 }}>Actions</th>
               </tr>
-            ) : loadingUploads ? (
-              <tr>
-                <td colSpan={4} style={{ textAlign: "center", padding: "40px 20px" }}>
-                  <Spinner size={20} />
-                </td>
-              </tr>
-            ) : filtered.length === 0 ? (
-              <tr>
-                <td colSpan={4} style={{ textAlign: "center", color: "var(--muted2)", padding: "32px 20px", fontSize: 14 }}>
-                  No matching sources found
-                </td>
-              </tr>
-            ) : (
-              filtered.map((u, i) => {
+            </thead>
+            <tbody>
+              {filtered.map((u, i) => {
+                const isUrlType = isUrl(u);
+                const displayName = u.name || u.url || u.filename || u.source || "—";
                 const s = (u.status || "completed").toLowerCase();
                 const isOk     = ["completed", "processed", "ok"].includes(s);
                 const isFailed = ["failed", "error"].includes(s);
-                const displayName = u.name || u.url || u.filename || u.source || "—";
 
                 return (
                   <tr key={i}>
-                    {/* Name */}
-                    <td style={{ maxWidth: 260 }}>
+                    {/* Logo/Favicon + Name / URL in same cell */}
+                    <td style={{ paddingLeft: 20 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{
-                          width: 30, height: 30, borderRadius: "var(--r-sm)", flexShrink: 0,
-                          background: "var(--red-dim)", border: "1px solid var(--red-border)",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                        }}>
-                          <Icon name={typeIcon(u.type)} size={15} fill style={{ color: "var(--accent-deep)" }} />
-                        </div>
-                        <span style={{
-                          fontSize: 13, color: "var(--text)", fontFamily: "'DM Mono', monospace",
-                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200,
-                        }}>
-                          {displayName}
-                        </span>
+                        <FaviconContainer item={u} />
+                        {isUrlType ? (
+                          <a 
+                            href={u.name.startsWith("http") ? u.name : `https://${u.name}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="kb-source-link"
+                          >
+                            {u.name} <Icon name="open_in_new" size={12} />
+                          </a>
+                        ) : (
+                          <span style={{ fontWeight: 600, color: "var(--navy)" }}>{displayName}</span>
+                        )}
                       </div>
                     </td>
 
                     {/* Type */}
-                    <td>
-                      <Tag variant="slate">{u.type || "url"}</Tag>
+                    <td style={{ fontSize: 13, color: "var(--muted)", textTransform: "capitalize", fontWeight: 400 }}>
+                      {u.type || "url"}
                     </td>
 
                     {/* Status */}
                     <td>
                       {isOk ? (
-                        <Tag variant="success">
-                          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e", display: "inline-block" }} />
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 500, color: "var(--navy)" }}>
+                          <span style={{ width: 7, height: 7, borderRadius: 1.5, background: "#22c55e", display: "inline-block", flexShrink: 0 }} />
                           Ingested
-                        </Tag>
+                        </div>
                       ) : isFailed ? (
-                        <Tag variant="error">
-                          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--accent)", display: "inline-block" }} />
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 500, color: "var(--navy)" }}>
+                          <span style={{ width: 7, height: 7, borderRadius: 1.5, background: "var(--accent)", display: "inline-block", flexShrink: 0 }} />
                           Failed
-                        </Tag>
+                        </div>
                       ) : (
-                        <Tag variant="warn">
-                          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#eab308", display: "inline-block" }} />
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 500, color: "var(--navy)" }}>
+                          <span style={{ width: 7, height: 7, borderRadius: 1.5, background: "#eab308", display: "inline-block", flexShrink: 0 }} />
                           Processing
-                        </Tag>
+                        </div>
                       )}
                     </td>
 
                     {/* Actions */}
-                    <td style={{ textAlign: "right", paddingRight: 16 }}>
+                    <td style={{ textAlign: "right", paddingRight: 20 }}>
                       <div style={{ display: "inline-flex", gap: 6 }}>
                         <button
                           onClick={() => setInspectUpload(u)}
                           title="Inspect Metadata"
                           style={{
-                            background: "var(--surface-2)", border: "1px solid var(--border2)",
+                            background: "var(--bg-s)", border: "1px solid var(--border)",
                             borderRadius: "var(--r-sm)", width: 30, height: 30,
-                            color: "var(--muted)", cursor: "pointer",
+                            color: "var(--text-s)", cursor: "pointer",
                             display: "inline-flex", alignItems: "center", justifyContent: "center",
                             transition: "all var(--tr)",
                           }}
                           onMouseEnter={e => {
-                            e.currentTarget.style.background = "var(--red-dim)";
-                            e.currentTarget.style.borderColor = "var(--red-border)";
-                            e.currentTarget.style.color = "var(--accent-deep)";
+                            e.currentTarget.style.background = "var(--accent-l)";
+                            e.currentTarget.style.color = "var(--accent)";
                           }}
                           onMouseLeave={e => {
-                            e.currentTarget.style.background = "var(--surface-2)";
-                            e.currentTarget.style.borderColor = "var(--border2)";
-                            e.currentTarget.style.color = "var(--muted)";
+                            e.currentTarget.style.background = "var(--bg-s)";
+                            e.currentTarget.style.color = "var(--text-s)";
                           }}
                         >
                           <Icon name="info" size={14} />
@@ -268,19 +430,17 @@ export default function SourcesTab({ guildId, onGoToOverview, user, onTab }) {
                           onClick={() => setDeleteTarget(u)}
                           title="Delete Source"
                           style={{
-                            background: "rgba(239,35,60,0.05)", border: "1px solid var(--red-border)",
+                            background: "var(--accent-l)", border: "1px solid var(--border)",
                             borderRadius: "var(--r-sm)", width: 30, height: 30,
-                            color: "var(--accent-deep)", cursor: "pointer",
+                            color: "var(--accent)", cursor: "pointer",
                             display: "inline-flex", alignItems: "center", justifyContent: "center",
                             transition: "all var(--tr)",
                           }}
                           onMouseEnter={e => {
-                            e.currentTarget.style.background = "rgba(239,35,60,0.12)";
-                            e.currentTarget.style.borderColor = "var(--accent)";
+                            e.currentTarget.style.background = "rgba(239,35,60,0.15)";
                           }}
                           onMouseLeave={e => {
-                            e.currentTarget.style.background = "rgba(239,35,60,0.05)";
-                            e.currentTarget.style.borderColor = "var(--red-border)";
+                            e.currentTarget.style.background = "var(--accent-l)";
                           }}
                         >
                           <Icon name="delete" size={14} />
@@ -289,11 +449,11 @@ export default function SourcesTab({ guildId, onGoToOverview, user, onTab }) {
                     </td>
                   </tr>
                 );
-              })
-            )}
-          </tbody>
-        </table>
-      </Card>
+              })}
+            </tbody>
+          </table>
+        </Card>
+      )}
 
       {/* ── Metadata inspector modal ── */}
       {inspectUpload && (

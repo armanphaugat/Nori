@@ -246,7 +246,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
 
       {status && <div style={{ marginBottom: 16 }}><StatusBadge {...status} /></div>}
 
-      {/* Website URL / Crawler - Bigger Section */}
+      {/* Web Search & Website Crawler - Bigger Section */}
       <div style={{ marginBottom: 24 }}>
         <Card>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
@@ -254,8 +254,8 @@ export default function UploadTab({ guildId, onGoToOverview }) {
               <Icon name="language" size={19} style={{ color: "var(--accent-deep)" }} />
             </div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--navy)" }}>Website URL & Crawler</div>
-              <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 300 }}>Ingest site URLs or crawl to discover links in a wider view</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--navy)" }}>Web Search & Website Crawler</div>
+              <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 300 }}>Ingest site URLs, crawl to discover links, or query search engines in a wider view</div>
             </div>
           </div>
 
