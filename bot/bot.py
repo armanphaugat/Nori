@@ -8,6 +8,8 @@ import re
 from io import BytesIO
 from datetime import datetime, timezone, timedelta
 import time
+
+from utils.GROQ_AS_LAYER import detect_question
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event, get_channel_config, get_web_search,get_total_questions,get_server_plan,get_questions_since
 from python.query import query_graphlit, query_graphlit_web
@@ -228,7 +230,7 @@ async def on_message(message):
         return
     channels = await get_channels(str(message.guild.id))
     watch_ids = [c["channel_id"] for c in channels]
-    if str(message.channel.id) in watch_ids or str(message.channel.id) in watched_threads:
+    if str(message.channel.id) in watch_ids or str(message.channel.id) in watched_threads or detect_question(message.content):
         print(f"[on_message] Message in watched channel '{message.channel.name}' from {message.author.name}")
         if await check_plan_limit(str(message.guild.id), message.channel):
             return
