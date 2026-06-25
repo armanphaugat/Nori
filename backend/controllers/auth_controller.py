@@ -151,17 +151,19 @@ async def handle_discord_login() -> RedirectResponse:
     return RedirectResponse(url=f"{DISCORD_OAUTH_URL}?{params}")
 
 
-async def handle_discord_invite() -> RedirectResponse:
+async def handle_discord_invite(guild_id: str | None = None) -> RedirectResponse:
     state  = _generate_state()
-    params = urlencode({
+    params = {
         "client_id":     DISCORD_CLIENT_ID,
         "redirect_uri":  DISCORD_REDIRECT_URI,
         "response_type": "code",
         "scope":         "identify guilds guilds.members.read email bot applications.commands",
         "permissions":   "8",
         "state":         state,
-    })
-    return RedirectResponse(url=f"{DISCORD_OAUTH_URL}?{params}")
+    }
+    if guild_id:
+        params["guild_id"] = guild_id
+    return RedirectResponse(url=f"{DISCORD_OAUTH_URL}?{urlencode(params)}")
 
 
 async def handle_discord_callback(code: str, state: str, request: Request) -> RedirectResponse:

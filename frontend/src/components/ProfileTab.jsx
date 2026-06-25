@@ -373,10 +373,21 @@ export default function ProfileTab({
                       <div
                         key={s.id}
                         className="profile-server-card addable"
+                        style={{ 
+                          cursor: "pointer", 
+                          opacity: 0.75,
+                          filter: "grayscale(70%)",
+                          transition: "all var(--tr)"
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.opacity = 1; e.currentTarget.style.filter = "grayscale(0%)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.opacity = 0.75; e.currentTarget.style.filter = "grayscale(70%)"; }}
+                        onClick={() => {
+                          window.location.href = `${API_BASE}/auth/invite?guild_id=${s.id}`;
+                        }}
                       >
                         <div className="profile-server-icon">
                           {iconUrl ? (
-                            <img src={iconUrl} alt={s.name} style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.8 }} />
+                            <img src={iconUrl} alt={s.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           ) : (
                             s.name.slice(0, 2).toUpperCase()
                           )}
@@ -390,15 +401,13 @@ export default function ProfileTab({
                           </div>
                         </div>
                         <Btn
-                          onClick={() => handleSetupBot(s)}
-                          disabled={isAdding}
                           variant="ghost"
                           style={{
                             padding: "4px 10px", minHeight: 28, fontSize: 11.5,
                             borderColor: "var(--red-border)", color: "var(--accent-deep)"
                           }}
                         >
-                          {isAdding ? <Spinner size={12} /> : "Add Bot"}
+                          Invite
                         </Btn>
                       </div>
                     );

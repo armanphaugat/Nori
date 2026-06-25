@@ -265,38 +265,6 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
               )}
             </div>
 
-            {/* Invite banner */}
-            <div style={{
-              width: "100%", maxWidth: 680,
-              background: "var(--red-dim)", border: "1px solid var(--red-border)",
-              borderRadius: "var(--r-lg)", padding: "18px 22px",
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              gap: 16, flexWrap: "wrap",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 260 }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: 12,
-                  background: "var(--navy)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  flexShrink: 0, boxShadow: "0 4px 12px rgba(43,45,66,0.2)",
-                  color: "#fff",
-                }}>
-                  <DiscordIcon size={22} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--navy)", marginBottom: 2 }}>
-                    Add VaultBot to a new server
-                  </div>
-                  <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.4, fontWeight: 300 }}>
-                    Invite the bot where you have admin access.
-                  </div>
-                </div>
-              </div>
-              <Btn variant="primary" onClick={handleInviteNewServer} style={{ flexShrink: 0 }}>
-                <Icon name="add" size={16} /> Invite to Discord
-              </Btn>
-            </div>
-
             {/* Server grid */}
             {loading ? (
               <div style={{ padding: "32px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
@@ -313,48 +281,91 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
                 <div>No servers match your filter.</div>
               </div>
             ) : (
-              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 28, width: "100%", maxWidth: 680 }}>
-                {filteredConfigured.map((server, idx) => {
-                  const iconUrl = getServerIcon(server.id, server.icon);
-                  return (
-                    <div key={server.id} className="vb-server-card"
-                      style={{ animationDelay: `${idx * 0.05}s` }}
-                      onClick={() => onActivate(server.id, server)}>
-                      <div className="vb-server-avatar configured">
-                        {iconUrl ? (
-                          <img src={iconUrl} alt={server.name}
-                            style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
-                        ) : (
-                          <span style={{ fontSize: 22, fontWeight: 800, color: "#fff", fontFamily: "'Outfit', sans-serif" }}>
-                            {server.name.slice(0, 2).toUpperCase()}
-                          </span>
-                        )}
-                      </div>
-                      <div className="vb-server-label configured">{server.name}</div>
+              <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 40 }}>
+                {/* Configured Section */}
+                {filteredConfigured.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--navy)", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 18, borderBottom: "1px solid var(--border)", paddingBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                      <Icon name="verified" size={15} style={{ color: "var(--accent)" }} />
+                      <span>Active Servers ({filteredConfigured.length})</span>
                     </div>
-                  );
-                })}
-                {filteredAddable.map((guild, idx) => {
-                  const iconUrl     = getServerIcon(guild.id, guild.icon);
-                  const isAdding    = addingId === guild.id;
-                  return (
-                    <div key={guild.id} className="vb-server-card"
-                      style={{ animationDelay: `${(filteredConfigured.length + idx) * 0.05}s` }}
-                      onClick={() => !isAdding && handleSetupBot(guild)}>
-                      <div className="vb-server-avatar addable">
-                        {isAdding ? <Spinner size={22} /> : iconUrl ? (
-                          <img src={iconUrl} alt={guild.name}
-                            style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover", opacity: .75 }} />
-                        ) : (
-                          <span style={{ fontSize: 20, fontWeight: 700, color: "var(--muted)", fontFamily: "'Outfit', sans-serif" }}>
-                            {guild.name.slice(0, 2).toUpperCase()}
-                          </span>
-                        )}
-                      </div>
-                      <div className="vb-server-label">{guild.name}</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", gap: 28 }}>
+                      {filteredConfigured.map((server, idx) => {
+                        const iconUrl = getServerIcon(server.id, server.icon);
+                        return (
+                          <div key={server.id} className="vb-server-card"
+                            style={{ animationDelay: `${idx * 0.05}s` }}
+                            onClick={() => onActivate(server.id, server)}>
+                            <div className="vb-server-avatar configured">
+                              {iconUrl ? (
+                                <img src={iconUrl} alt={server.name}
+                                  style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                              ) : (
+                                <span style={{ fontSize: 22, fontWeight: 800, color: "#fff", fontFamily: "'Outfit', sans-serif" }}>
+                                  {server.name.slice(0, 2).toUpperCase()}
+                                </span>
+                              )}
+                            </div>
+                            <div className="vb-server-label configured">{server.name}</div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
+                  </div>
+                )}
+
+                {/* Addable Section */}
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 18, borderBottom: "1px solid var(--border)", paddingBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                    <Icon name="add_circle" size={15} />
+                    <span>Available to Setup ({filteredAddable.length})</span>
+                  </div>
+                  {filteredAddable.length === 0 ? (
+                    <div style={{
+                      padding: "32px", textAlign: "center",
+                      background: "var(--surface-2)", border: "1px dashed var(--border2)",
+                      borderRadius: "var(--r-md)", color: "var(--muted)", fontSize: 13,
+                      maxWidth: 680, width: "100%", marginTop: 4
+                    }}>
+                      No available servers
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", gap: 28 }}>
+                      {filteredAddable.map((guild, idx) => {
+                        const iconUrl = getServerIcon(guild.id, guild.icon);
+                        const isAdding = addingId === guild.id;
+                        return (
+                          <div key={guild.id} className="vb-server-card addable-card"
+                            style={{ 
+                              animationDelay: `${(filteredConfigured.length + idx) * 0.05}s`,
+                              opacity: 0.65,
+                              filter: "grayscale(100%)",
+                              transition: "all 0.2s ease",
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.opacity = 1; e.currentTarget.style.filter = "grayscale(0%)"; }}
+                            onMouseLeave={e => { e.currentTarget.style.opacity = 0.65; e.currentTarget.style.filter = "grayscale(100%)"; }}
+                            onClick={() => {
+                              if (!isAdding) {
+                                window.location.href = `${API_BASE}/auth/invite?guild_id=${guild.id}`;
+                              }
+                            }}>
+                            <div className="vb-server-avatar addable">
+                              {isAdding ? <Spinner size={22} /> : iconUrl ? (
+                                <img src={iconUrl} alt={guild.name}
+                                  style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                              ) : (
+                                <span style={{ fontSize: 20, fontWeight: 700, color: "var(--muted)", fontFamily: "'Outfit', sans-serif" }}>
+                                  {guild.name.slice(0, 2).toUpperCase()}
+                                </span>
+                              )}
+                            </div>
+                            <div className="vb-server-label">{guild.name}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
