@@ -448,3 +448,37 @@ async def handle_get_my_uploads(
     except Exception as e:
         print(f"[handle_get_my_uploads] Error: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch user uploads")
+    
+
+async def handle_add_github_repo(repo_url: str = Form(...), guild_id: str = Form(...),personal_access_token: str = Form(default=None),user: dict = Depends(require_guild_admin)) -> dict:
+    try:
+        repo_url = repo_url.strip()
+        if not re.match(r"https?://", repo_url):
+            raise HTTPException(status_code=400, detail="'repo_url' must start with http:// or https://")
+        content_id = await add_github_repo_graphlit(guild_id, repo_url, personal_access_token)
+        if not content_id:
+            raise HTTPException(status_code=502, detail="Failed to ingest GitHub repository into knowledge base")
+        await log_upload(
+            guild_id=guild_id,
+            user_id=user["discord_id"],
+            username=user["username"],
+            kind="github",
+            name=repo_url,
+            content_id=content_id,
+            status="ok",
+        )
+        return {"status": "success", "message": "GitHub repository ingested"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        await log_upload(
+            guild_id=guild_id,
+            user_id=user["discord_id"],
+            username=user["username"],
+            kind="github",
+            name=repo_url,
+            status="failed",
+            error=str(e),
+        )
+        print(f"[upload_github_rep] Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to ingest GitHub repository")

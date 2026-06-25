@@ -218,3 +218,23 @@ async def add_video_graphlit(server_id: str, file):
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
         return 0
+
+async def add_github_repo_graphlit(server_id: str, repo_url: str, personal_access_token: str = None):
+    try:
+        repo_config = {
+            "uri": repo_url
+        }
+        if personal_access_token:
+            repo_config["github"] = {
+                "personalAccessToken": personal_access_token
+            }
+        response = await graphlit.client.ingest_github_repository(
+            repository=repo_config,
+            is_synchronous=True
+        )
+        await add_content_id(server_id, str(response.ingest_github_repository.id))
+        return response.ingest_github_repository.id
+        
+    except Exception as e:
+        print(f"[{server_id}] Failed: {e}")
+        return 0
