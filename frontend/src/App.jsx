@@ -25,6 +25,7 @@ import AnalyticsTab from "./components/AnalyticsTab.jsx";
 import DocsTab from "./components/DocsTab.jsx";
 import LegalPage from "./components/LegalPage.jsx";
 import BillingTab from "./components/BillingTab.jsx";
+import ProfileTab from "./components/ProfileTab.jsx";
 
 const BADGE_STYLES = {
   free: {
@@ -79,7 +80,7 @@ function Dashboard({
   const getTabFromUrl = () => {
     const params = new URLSearchParams(window.location.search);
     const urlTab = params.get("tab");
-    const validTabs = ["channels", "upload", "sources", "analytics", "billing", "docs"];
+    const validTabs = ["channels", "upload", "sources", "analytics", "billing", "docs", "profile"];
     if (urlTab && validTabs.includes(urlTab)) {
       return urlTab;
     }
@@ -137,6 +138,7 @@ function Dashboard({
 
   const badge = BADGE_STYLES[activePlan] || BADGE_STYLES.free;
   const [showServerDropdown, setShowServerDropdown] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [togglingPause, setTogglingPause] = useState(false);
 
   const handleTogglePause = async () => {
@@ -162,6 +164,9 @@ function Dashboard({
       if (!e.target.closest('[data-dropdown="server-select"]')) {
         setShowServerDropdown(false);
       }
+      if (!e.target.closest('[data-dropdown="profile-select"]')) {
+        setShowProfileDropdown(false);
+      }
     };
     document.addEventListener("mousedown", handleOutside);
     return () => document.removeEventListener("mousedown", handleOutside);
@@ -177,6 +182,7 @@ function Dashboard({
     analytics: "Analytics",
     billing: "Billing & Plans",
     docs: "Setup Documentation",
+    profile: "My Profile",
   };
 
   const getAvatarUrl = (u) => {
@@ -339,19 +345,65 @@ function Dashboard({
                 </div>
               )}
 
-              {/* User Avatar */}
+              {/* User Avatar & Dropdown */}
               {user && (
-                <div style={{ display: "flex", alignItems: "center", gap: 8, borderLeft: "1px solid var(--border)", paddingLeft: 16 }}>
-                  {getAvatarUrl(user) ? (
-                    <img src={getAvatarUrl(user)} alt={user.username} style={{ width: 28, height: 28, borderRadius: "50%", border: "2px solid var(--border2)", objectFit: "cover" }} />
-                  ) : (
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--navy)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff" }}>
-                      {(user.username || "U").slice(0, 2).toUpperCase()}
+                <div style={{ position: "relative" }} data-dropdown="profile-select">
+                  <div
+                    onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 8, borderLeft: "1px solid var(--border)", paddingLeft: 16,
+                      cursor: "pointer", userSelect: "none", paddingTop: 4, paddingBottom: 4
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.opacity = 0.85; }}
+                    onMouseLeave={e => { e.currentTarget.style.opacity = 1; }}
+                  >
+                    {getAvatarUrl(user) ? (
+                      <img src={getAvatarUrl(user)} alt={user.username} style={{ width: 28, height: 28, borderRadius: "50%", border: "2px solid var(--border2)", objectFit: "cover" }} />
+                    ) : (
+                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--navy)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff" }}>
+                        {(user.username || "U").slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "var(--navy)" }}>
+                      {user.username}
+                    </span>
+                    <Icon name="expand_more" size={14} style={{ color: "var(--navy)", marginLeft: 2, transform: showProfileDropdown ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+                  </div>
+
+                  {showProfileDropdown && (
+                    <div style={{
+                      position: "absolute", top: "100%", right: 0, marginTop: 8,
+                      width: 200, background: "var(--surface)",
+                      border: "1px solid var(--border2)",
+                      borderRadius: "var(--r-md)",
+                      boxShadow: "var(--shadow-lg)", zIndex: 200,
+                      overflow: "hidden", display: "flex", flexDirection: "column",
+                    }}>
+                      <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)", fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>
+                        Logged in as <strong style={{ color: "var(--navy)" }}>{user.username}</strong>
+                      </div>
+                      
+                      <div
+                        onClick={() => { changeTab("profile"); setShowProfileDropdown(false); }}
+                        style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", cursor: "pointer", fontSize: 12.5, fontWeight: 600, color: "var(--navy)", transition: "background 0.2s" }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = "var(--surface-2)"}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
+                      >
+                        <Icon name="person" size={16} style={{ color: "var(--slate)" }} />
+                        <span>My Profile</span>
+                      </div>
+
+                      <div
+                        onClick={() => { onLogout(); setShowProfileDropdown(false); }}
+                        style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderTop: "1px solid var(--border)", cursor: "pointer", fontSize: 12.5, fontWeight: 600, color: "var(--accent-deep)", transition: "background 0.2s" }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = "var(--red-dim)"}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
+                      >
+                        <Icon name="logout" size={16} style={{ color: "var(--accent)" }} />
+                        <span>Sign Out</span>
+                      </div>
                     </div>
                   )}
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--navy)" }}>
-                    {user.username}
-                  </span>
                 </div>
               )}
             </div>
@@ -385,6 +437,17 @@ function Dashboard({
             )}
             {tab === "docs" && (
               <DocsTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
+            )}
+            {tab === "profile" && (
+              <ProfileTab
+                user={user}
+                guilds={guilds}
+                onLogout={onLogout}
+                onGoToOverview={onSwitchServer}
+                onActivate={onActivate}
+                onGuildsChange={onGuildsChange}
+                onTab={changeTab}
+              />
             )}
           </div>
         </div>
@@ -459,7 +522,7 @@ export default function App() {
   const getTabFromUrl = () => {
     const params = new URLSearchParams(window.location.search);
     const urlTab = params.get("tab");
-    const validTabs = ["channels", "upload", "sources", "analytics", "billing", "docs"];
+    const validTabs = ["channels", "upload", "sources", "analytics", "billing", "docs", "profile"];
     if (urlTab && validTabs.includes(urlTab)) {
       return urlTab;
     }

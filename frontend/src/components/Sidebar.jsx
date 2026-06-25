@@ -13,9 +13,10 @@ export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user,
       ],
     },
     {
-      title: "Billing",
+      title: "Account",
       items: [
-        { id: "billing", label: "Billing & Plans", icon: "credit_card" },
+        { id: "profile",   label: "My Profile",       icon: "person" },
+        { id: "billing",   label: "Billing & Plans",  icon: "credit_card" },
       ],
     },
   ];
@@ -268,61 +269,7 @@ export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user,
         flexDirection: "column",
         gap: 6,
       }}>
-        {user && (
-          <div
-            title={isCollapsed ? `${user.username} (Server Manager)` : undefined}
-            style={{
-              display: "flex", alignItems: "center",
-              justifyContent: isCollapsed ? "center" : "flex-start",
-              gap: isCollapsed ? 0 : 10,
-              padding: isCollapsed ? "8px 0" : "8px 10px",
-              marginBottom: isCollapsed ? 0 : 6,
-            }}
-          >
-            <div style={{
-              width: 32, height: 32, borderRadius: "50%",
-              background: "linear-gradient(135deg, var(--accent-deep) 0%, var(--accent) 100%)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 12, fontWeight: 800, color: "#fff", flexShrink: 0,
-              fontFamily: "'Outfit', sans-serif",
-            }}>
-              {(user.username || "U").slice(0, 1).toUpperCase()}
-            </div>
-            {!isCollapsed && (
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{
-                  fontSize: 13, fontWeight: 600, color: "var(--navy)",
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
-                }}>
-                  {user.username || "Admin"}
-                </div>
-                <div style={{ fontSize: 11, color: "var(--muted2)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Server Manager</div>
-              </div>
-            )}
-          </div>
-        )}
 
-        <button
-          onClick={onLogout}
-          title="Sign out"
-          style={{
-            display: "flex", alignItems: "center",
-            justifyContent: isCollapsed ? "center" : "flex-start",
-            gap: isCollapsed ? 0 : 8,
-            padding: isCollapsed ? "9px 0" : "9px 12px", borderRadius: "var(--r-md)",
-            fontSize: 13, fontWeight: 600, color: "var(--accent-deep)",
-            cursor: "pointer", border: "none",
-            background: "transparent",
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-            transition: "all var(--tr)", width: "100%", textAlign: "left",
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = "var(--red-dim)"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
-        >
-          <Icon name="logout" size={16} style={{ color: "var(--accent-deep)", flexShrink: 0 }} />
-          {!isCollapsed && <span>Sign out</span>}
-        </button>
 
         {/* ── Collapse / Expand Toggle Button ── */}
         <button

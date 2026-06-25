@@ -16,9 +16,8 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
   try {
     setLoading(true);
     const res = await API.getEligibleGuilds();
-    const g   = res.guilds || [];
-    setConfiguredServers(g.filter(x => x.registered).map(x => ({ id: x.id, name: x.name, icon: x.icon })));
-    setAddableServers(g.filter(x => !x.registered));
+    setConfiguredServers(res.bot_present || []);
+    setAddableServers(res.bot_not_present || []);
   } catch (e) {
     if (e.message.includes("429") && retries > 0) {
       await new Promise(r => setTimeout(r, delay));
