@@ -262,13 +262,12 @@ async def log_question_event(
     answered: bool,
     latency_ms: Optional[float] = None,
     message_link: Optional[str] = None,
-    confidence_score: Optional[float] = None,
 ) -> None:
     async with AsyncDB() as s:
         await s.execute(
             text("""
-                INSERT INTO question_events (server_id, user_id, answered, latency_ms, message_link, confidence_score)
-                VALUES (:sid, :uid, :answered, :latency_ms, :message_link, :confidence_score)
+                INSERT INTO question_events (server_id, user_id, answered, latency_ms, message_link)
+                VALUES (:sid, :uid, :answered, :latency_ms, :message_link)
             """),
             {
                 "sid": str(guild_id),
@@ -276,7 +275,6 @@ async def log_question_event(
                 "answered": answered,
                 "latency_ms": latency_ms,
                 "message_link": message_link,
-                "confidence_score": confidence_score,
             },
         )
         await s.commit()
@@ -318,7 +316,6 @@ async def get_analytics_summary(guild_id: str) -> Optional[dict]:
                         COUNT(*)                                             AS queries_identified,
                         COUNT(*) FILTER (WHERE answered = true)             AS answered,
                         COUNT(*) FILTER (WHERE answered = false)            AS unanswered,
-                        COUNT(*) FILTER (WHERE answered = true AND (confidence_score >= 0.8 OR confidence_score IS NULL)) AS answered_above_80_confidence,
                         ROUND(
                             100.0 * COUNT(*) FILTER (WHERE answered = true)
                             / NULLIF(COUNT(*), 0), 1

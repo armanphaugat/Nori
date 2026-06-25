@@ -316,7 +316,6 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
   const avgLatency = Number(summary?.avg_latency_ms || 0);
   const totalMessagesProcessed = Number(summary?.total_messages_processed || 0);
   const queriesIdentified = Number(summary?.queries_identified || 0);
-  const answeredAbove80Confidence = Number(summary?.answered_above_80_confidence || 0);
 
   const getAggregatedChannelAnalytics = () => {
     const agg = {};
@@ -432,19 +431,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
           </div>
         </Card>
 
-        {/* Card 3: Queries Answered with >80% confidence */}
-        <Card className="card-hover" style={{ display: "flex", flexDirection: "column", gap: 8, padding: 20 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-s)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Confidence Answers (&gt;80%)</span>
-            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(26,122,74,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Icon name="verified" size={14} style={{ color: "var(--success)" }} />
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>{answeredAbove80Confidence}</span>
-            <span style={{ fontSize: 11, color: "var(--text-s)" }}>({((answeredAbove80Confidence / (totalQuestions || 1)) * 100).toFixed(0)}% of queries)</span>
-          </div>
-        </Card>
+
 
 
         {/* Card 5: Total Users Served */}
