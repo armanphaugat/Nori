@@ -57,6 +57,8 @@ export default function DocsTab({ guildId, onGoToOverview }) {
   const SUB_TABS = [
     { id: "members_qa", label: "User Q&A & Command", icon: "forum" },
     { id: "tickets", label: "Support Ticket System", icon: "confirmation_number" },
+    { id: "profile_servers", label: "Profile & Server Mgmt", icon: "manage_accounts" },
+    { id: "billing_patreon", label: "Billing & Patreon Plan", icon: "payments" },
     { id: "admin_setup", label: "Admin: General & Style Setup", icon: "settings_suggest" },
     { id: "admin_kb", label: "Admin: Knowledge Base", icon: "upload_file" },
     { id: "admin_search_analytics", label: "Admin: Web Search & Control", icon: "analytics" },
@@ -271,6 +273,123 @@ export default function DocsTab({ guildId, onGoToOverview }) {
               <Alert type="tip" title="Channel Permissions">
                 VaultBot configures the base support channel permissions so that general members cannot send messages directly. They must use the ticketing button to query, avoiding channel clutter.
               </Alert>
+            </div>
+          )}
+
+          {/* ── SUBTAB: PROFILE & SERVER MANAGEMENT ── */}
+          {activeSubTab === "profile_servers" && (
+            <div className="au">
+              <h3 style={{ fontSize: 18, color: "var(--navy)", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+                <Icon name="manage_accounts" size={20} style={{ color: "var(--accent)" }} />
+                Profile & Server Management
+              </h3>
+              <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.6, marginBottom: 16 }}>
+                Manage your Discord account link, switch server management focus, and invite the bot to new guilds.
+              </p>
+
+              <h4 style={{ fontSize: 14, color: "var(--navy)", marginTop: 18, marginBottom: 6 }}>1. Profile Settings Overview</h4>
+              <p style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.5, marginBottom: 12 }}>
+                In the <strong>Profile</strong> tab, you can view your primary account metadata retrieved from Discord:
+              </p>
+              <ul style={{ fontSize: 13, color: "var(--muted)", paddingLeft: 20, lineHeight: 1.7, marginBottom: 16 }}>
+                <li><strong>Avatar & Username</strong>: Displays your Discord avatar image and username tag.</li>
+                <li><strong>Discord ID</strong>: Displays your unique snowflake ID (with a one-click copy button next to it for quick reference).</li>
+                <li><strong>Email Address</strong>: The email address linked to your Discord account.</li>
+                <li><strong>Role Designation</strong>: Your administrative access role (e.g. <code>Server Manager</code>).</li>
+              </ul>
+
+              <h4 style={{ fontSize: 14, color: "var(--navy)", marginTop: 18, marginBottom: 6 }}>2. Relocated Sign Out Button</h4>
+              <p style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.5, marginBottom: 12 }}>
+                To optimize the dashboard's layout, the <strong>Sign Out</strong> button has been relocated from the bottom-left sidebar to the top-right corner of the Profile card. Use this button to log out of the dashboard session securely.
+              </p>
+
+              <h4 style={{ fontSize: 14, color: "var(--navy)", marginTop: 18, marginBottom: 6 }}>3. Server Selection & Bot Installation</h4>
+              <p style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.5, marginBottom: 12 }}>
+                The Profile section acts as the central hub for managing which Discord server you are administering:
+              </p>
+              <ul style={{ fontSize: 13, color: "var(--muted)", paddingLeft: 20, lineHeight: 1.7, marginBottom: 16 }}>
+                <li><strong>Active Servers</strong>: Shows all guilds where you are an admin and VaultBot is already configured. Clicking on a server card instantly switches the active dashboard session to that server, taking you directly to its channel settings.</li>
+                <li><strong>Available to Setup</strong>: Lists eligible servers where you have manager permissions but VaultBot is not yet present. Clicking the <strong>Invite</strong> button prompts the Discord bot invitation dialog.</li>
+                <li><strong>Add to New Server</strong>: Opens the general bot invite URL in a new window to install VaultBot on a completely new Discord server.</li>
+              </ul>
+            </div>
+          )}
+
+          {/* ── SUBTAB: BILLING & PATREON PLAN ── */}
+          {activeSubTab === "billing_patreon" && (
+            <div className="au">
+              <h3 style={{ fontSize: 18, color: "var(--navy)", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+                <Icon name="payments" size={20} style={{ color: "var(--accent)" }} />
+                Billing & Patreon Plan Integration
+              </h3>
+              <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.6, marginBottom: 16 }}>
+                Monitor your server's message credits, learn about our subscription tiers, and link Patreon pledges for premium features.
+              </p>
+
+              <h4 style={{ fontSize: 14, color: "var(--navy)", marginTop: 18, marginBottom: 6 }}>1. Tracking Usage & Message Limits</h4>
+              <p style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.5, marginBottom: 12 }}>
+                Each subscription plan grants your server a monthly question quota. You can inspect usage in the <strong>Billing</strong> tab:
+              </p>
+              <ul style={{ fontSize: 13, color: "var(--muted)", paddingLeft: 20, lineHeight: 1.7, marginBottom: 16 }}>
+                <li><strong>Current Plan Card</strong>: Displays active plan name, price, monthly limits, and core features.</li>
+                <li><strong>Usage Meter</strong>: A visual, dynamic progress bar indicating how many questions have been asked by server users relative to your monthly limit (resets every billing cycle).</li>
+              </ul>
+
+              <Alert type="warning" title="Limit Enforcement">
+                If the server exceeds its monthly question limit, the bot will stop answering questions in chat and reply with a notice instructing moderators/admins to upgrade on the dashboard.
+              </Alert>
+
+              <h4 style={{ fontSize: 14, color: "var(--navy)", marginTop: 18, marginBottom: 6 }}>2. Upgrading via Patreon Integration</h4>
+              <p style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.5, marginBottom: 12 }}>
+                Upgrading your server plan is handled securely through Patreon:
+              </p>
+              <ol style={{ fontSize: 13, color: "var(--muted)", paddingLeft: 20, lineHeight: 1.7, marginBottom: 16 }}>
+                <li>On the <strong>Billing</strong> tab, click the <strong>Upgrade on Patreon</strong> button (or <strong>Manage Pledge on Patreon</strong> if already pledged).</li>
+                <li>You will be redirected to Patreon to choose or manage your subscription tier.</li>
+                <li><strong>Important:</strong> Ensure that you link your Discord account in your Patreon settings (Patreon &rarr; Profile Settings &rarr; Connected Apps &rarr; Discord). This allows the dashboard to associate your pledge with your Discord identity automatically.</li>
+              </ol>
+
+              <h4 style={{ fontSize: 14, color: "var(--navy)", marginTop: 18, marginBottom: 6 }}>3. Available Subscription Tiers</h4>
+              <div style={{ 
+                overflowX: "auto", 
+                margin: "20px 0", 
+                border: "1px solid var(--border2)", 
+                borderRadius: "var(--r-md)",
+                boxShadow: "var(--shadow-sm)"
+              }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, textAlign: "left", background: "white" }}>
+                  <thead>
+                    <tr style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border2)", color: "var(--navy)" }}>
+                      <th style={{ padding: "12px 16px", fontWeight: 700 }}>Tier</th>
+                      <th style={{ padding: "12px 16px", fontWeight: 700 }}>Price</th>
+                      <th style={{ padding: "12px 16px", fontWeight: 700 }}>Monthly Questions</th>
+                      <th style={{ padding: "12px 16px", fontWeight: 700 }}>Knowledge Limits</th>
+                      <th style={{ padding: "12px 16px", fontWeight: 700 }}>Supported Types</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { name: "Free", price: "$0/mo", limit: "50", kb: "5 Documents", types: "PDF, TXT" },
+                      { name: "Starter", price: "$25/mo", limit: "200", kb: "10 Documents + 5 URLs", types: "PDF, DOCX, XLSX, Images" },
+                      { name: "Growth", price: "$59/mo", limit: "500", kb: "30 Documents", types: "All Files + Custom Persona + Analytics" },
+                      { name: "Pro", price: "$99/mo", limit: "800", kb: "50 Documents", types: "All Files + Advanced Analytics + Multi-Persona" },
+                      { name: "Paid Premium", price: "Patreon Pledge", limit: "1,000,000", kb: "Unlimited Documents", types: "All Files + Priority Response Speed" }
+                    ].map((item, idx) => (
+                      <tr key={idx} style={{ 
+                        borderBottom: idx === 4 ? "none" : "1px solid var(--border)", 
+                        color: "var(--muted)",
+                        background: idx % 2 === 1 ? "var(--surface-2)" : "white"
+                      }}>
+                        <td style={{ padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>{item.name}</td>
+                        <td style={{ padding: "12px 16px", fontWeight: 500, color: "var(--accent-deep)" }}>{item.price}</td>
+                        <td style={{ padding: "12px 16px" }}>{item.limit}</td>
+                        <td style={{ padding: "12px 16px" }}>{item.kb}</td>
+                        <td style={{ padding: "12px 16px", fontSize: 12 }}>{item.types}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 

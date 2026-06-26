@@ -587,7 +587,7 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     const token = hashParams.get("token") || hashParams.get("access_token") || params.get("token") || params.get("access_token");
 
-    let redirectedGuildId = hashParams.get("guild_id") || params.get("guild_id");
+    let redirectedGuildId = hashParams.get("guild_id");
     if (redirectedGuildId) {
       sessionStorage.setItem("pending_guild_redirect", redirectedGuildId);
     } else {
