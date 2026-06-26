@@ -1128,3 +1128,30 @@ async def get_all_channels_unique_members(server_id: str) -> list[dict]:
         return [dict(row) for row in rows]
 
 
+async def add_watched_thread(thread_id: str, server_id: str, channel_id: str) -> None:
+    async with AsyncDB() as s:
+        await s.execute(
+            text("""
+                INSERT INTO watched_threads (thread_id, server_id, channel_id)
+                VALUES (:thread_id, :server_id, :channel_id)
+                ON CONFLICT DO NOTHING
+            """),
+            {"thread_id": thread_id, "server_id": server_id, "channel_id": channel_id}
+        )
+        await s.commit()
+
+
+async def remove_watched_thread(thread_id: str) -> None:
+    async with AsyncDB() as s:
+        await s.execute(
+            text("DELETE FROM watched_threads WHERE thread_id = :thread_id"),
+            {"thread_id": thread_id}
+        )
+        await s.commit()
+
+
+async def get_watched_threads() -> set:
+    async with AsyncDB() as s:
+        result = await s.execute(text("SELECT thread_id FROM watched_threads"))
+        rows = result.mappings().all()
+        return {row["thread_id"] for row in rows}

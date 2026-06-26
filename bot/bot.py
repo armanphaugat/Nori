@@ -11,7 +11,7 @@ import time
 
 from utils.GROQ_AS_LAYER import detect_question
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event, get_channel_config, get_web_search,get_total_questions,get_server_plan,get_questions_since
+from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event, get_channel_config, get_web_search,get_total_questions,get_server_plan,get_questions_since,get_watched_threads,remove_watched_thread,add_watched_thread
 from python.query import query_graphlit, query_graphlit_web
 from python.ingest import read_ocr_async
 
@@ -21,7 +21,7 @@ DISCORD_BOT_KEY = os.getenv("DISCORD_BOT_KEY")
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='-', intents=intents, help_command=None)
 pending_feedback: dict = {}
-watched_threads: dict = {}
+watched_threads: set = set()
 
 
 class CloseTicketButton(discord.ui.View):
@@ -40,7 +40,8 @@ class CloseTicketButton(discord.ui.View):
             await interaction.response.send_message("❌ This is not a ticket thread.", ephemeral=True)
             return
         await interaction.response.send_message("🔒 Closing your ticket...", ephemeral=True)
-        watched_threads.pop(str(thread.id), None)
+        watched_threads.discard(str(thread.id))
+        await remove_watched_thread(str(thread.id))
         try:
             await thread.delete()
         except discord.HTTPException as e:
@@ -195,6 +196,8 @@ async def notify_mod_channel(guild, channel, user, question: str):
 async def on_ready():
     bot.add_view(TicketButton())
     bot.add_view(CloseTicketButton())
+    global watched_threads
+    watched_threads = await get_watched_threads()
     print(f"[on_ready] Logged in as {bot.user}")
     print(f"[on_ready] Connected to {len(bot.guilds)} server(s)")
 
@@ -357,7 +360,8 @@ async def create_user_thread(channel: discord.TextChannel, user: discord.Member)
         invitable=False,
         reason=f"Support Ticket For {user}"
     )
-    watched_threads[str(thread.id)] = thread
+    watched_threads.add(str(thread.id))
+    await add_watched_thread(str(thread.id), str(channel.guild.id), str(channel.id))
     await thread.add_user(user)
     await thread.send(embed=ticket_welcome_embed(user), view=CloseTicketButton())
     return thread
@@ -367,7 +371,8 @@ async def delete_user_thread(channel: discord.TextChannel, user: discord.Member)
     thread = await get_user_thread(channel, user)
     if not thread:
         return None
-    watched_threads.pop(str(thread.id), None)
+    watched_threads.discard(str(thread.id))
+    await remove_watched_thread(str(thread.id))
     await thread.delete()
     return True
 
