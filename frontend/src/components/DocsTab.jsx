@@ -209,7 +209,12 @@ export default function DocsTab({ guildId, onGoToOverview }) {
                 -ask What is the refund policy for premium subscriptions?
               </div>
 
-              <h4 style={{ fontSize: 14, color: "var(--navy)", marginTop: 18, marginBottom: 6 }}>3. Submitting Attachments (OCR & Voice Transcripts)</h4>
+              <h4 style={{ fontSize: 14, color: "var(--navy)", marginTop: 18, marginBottom: 6 }}>3. AI-Powered Question Detection (Global Auto-Reply)</h4>
+              <p style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.5, marginBottom: 12 }}>
+                VaultBot incorporates a Llama 3-powered intent classifier that dynamically analyzes incoming messages. If a member asks a question (direct, indirect, or implied) in any channel on the server, the bot automatically classifies the message intent and responds. This enables seamless, zero-prefix auto-responses across your server without requiring administrators to explicitly designate monitored channels for every scenario.
+              </p>
+
+              <h4 style={{ fontSize: 14, color: "var(--navy)", marginTop: 18, marginBottom: 6 }}>4. Submitting Attachments (OCR & Voice Transcripts)</h4>
               <p style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.5, marginBottom: 12 }}>
                 You can feed images or audio/video media directly into your query using the <code>-ask</code> command:
               </p>
@@ -218,7 +223,7 @@ export default function DocsTab({ guildId, onGoToOverview }) {
                 <li><strong>Voice Submissions (Whisper)</strong>: Drag-and-drop an audio file (MP3, WAV) or video file (MP4, MOV) under 10MB into the chat box. Type your question with the <code>-ask</code> prefix. The bot will transcribe the voice content locally using the OpenAI Whisper model and query the resulting text.</li>
               </ul>
 
-              <h4 style={{ fontSize: 14, color: "var(--navy)", marginTop: 18, marginBottom: 6 }}>4. Performance Rating & Moderator Reporting</h4>
+              <h4 style={{ fontSize: 14, color: "var(--navy)", marginTop: 18, marginBottom: 6 }}>5. Performance Rating & Moderator Reporting</h4>
               <p style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.5, marginBottom: 12 }}>
                 Each bot answer is appended with Thumbs Up (👍) and Thumbs Down (👎) reaction emojis, active for 120 seconds:
               </p>
