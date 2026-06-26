@@ -23,7 +23,7 @@ const getDomain = (urlStr) => {
 
 const typeIcon = t => ({
   pdf: "picture_as_pdf", url: "language",
-  faq: "quiz", text: "forum",
+  faq: "quiz", text: "forum", github: "code",
 }[t] ?? "description");
 
 const FaviconContainer = ({ item }) => {
@@ -321,9 +321,9 @@ export default function SourcesTab({ guildId, onGoToOverview, user, onTab }) {
           {/* Type filters */}
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginRight: 4 }}>Type:</span>
-            {["all", "pdf", "url", "faq", "text"].map(t => (
+            {["all", "pdf", "url", "faq", "text", "github"].map(t => (
               <button key={t} onClick={() => setFilterType(t)} style={pillStyle(filterType === t)}>
-                {t === "all" ? "All" : t.toUpperCase()}
+                {t === "all" ? "All" : t === "github" ? "GitHub" : t.toUpperCase()}
               </button>
             ))}
           </div>

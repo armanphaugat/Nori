@@ -137,4 +137,13 @@ export const API = {
     f.append("time", time);
     return apiFetch("/upload/channel-messages", { method: "POST", body: f, isForm: true });
   },
+  addGithubRepo: (gid, repoUrl, personalAccessToken = null) => {
+    const f = new FormData();
+    f.append("guild_id", gid);
+    f.append("repo_url", repoUrl);
+    if (personalAccessToken) {
+      f.append("personal_access_token", personalAccessToken);
+    }
+    return apiFetch("/upload/add-github-repo", { method: "POST", body: f, isForm: true });
+  },
 };

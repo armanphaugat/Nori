@@ -8,6 +8,9 @@ import {
 export default function UploadTab({ guildId, onGoToOverview }) {
   const [docUrls, setDocUrls]   = useState("");
   const [websiteUrls, setWebsiteUrls] = useState("");
+  const [repoUrl, setRepoUrl]   = useState("");
+  const [pat, setPat]           = useState("");
+  const [repoUploading, setRepoUploading] = useState(false);
 
   // URL Crawler / Scanner states
   const [urlMode, setUrlMode] = useState("quick"); // "quick" or "scan"
@@ -153,6 +156,21 @@ export default function UploadTab({ guildId, onGoToOverview }) {
     try { const d = await API.addFaq(guildId, faqText.trim()); setStatus({ ok: true, msg: d.message || "FAQ added" }); setFaqText(""); }
     catch (e) { setStatus({ ok: false, msg: e.message }); }
     setFaqUploading(false);
+  };
+
+  const doRepoUpload = async () => {
+    if (!guildId) { setStatus({ ok: false, msg: "No server selected" }); return; }
+    if (!repoUrl.trim()) { setStatus({ ok: false, msg: "Repository URL is required" }); return; }
+    setRepoUploading(true); setStatus(null);
+    try {
+      const d = await API.addGithubRepo(guildId, repoUrl.trim(), pat.trim() || null);
+      setStatus({ ok: true, msg: d.message || "GitHub repository ingested" });
+      setRepoUrl("");
+      setPat("");
+    } catch (e) {
+      setStatus({ ok: false, msg: e.message });
+    }
+    setRepoUploading(false);
   };
 
   const doChannelMessagesUpload = async () => {
@@ -431,6 +449,35 @@ export default function UploadTab({ guildId, onGoToOverview }) {
             style={{ marginTop: 10, width: "100%", justifyContent: "center" }}>
             {faqUploading ? <><Spinner size={14} color="#fff" /> Adding FAQ…</> : <><Icon name="add_circle" size={16} /> Add to Vector Store</>}
           </Btn>
+        </Card>
+
+        {/* GitHub Repository */}
+        <Card>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 38, height: 38, borderRadius: "var(--r-md)", background: "var(--red-dim)", border: "1px solid var(--red-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name="code" size={19} style={{ color: "var(--accent)" }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--navy)" }}>GitHub Repository</div>
+              <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 300 }}>Ingest public/private repository code</div>
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 6 }}>Repository URL</label>
+              <input type="text" className="kb-input" value={repoUrl} onChange={e => setRepoUrl(e.target.value)}
+                placeholder="https://github.com/owner/repo" style={{ height: 40 }} />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 6 }}>Personal Access Token <span style={{ fontWeight: 400, color: "var(--muted2)" }}>(optional)</span></label>
+              <input type="password" className="kb-input" value={pat} onChange={e => setPat(e.target.value)}
+                placeholder="ghp_xxxxxxxxxxxxxxxx" style={{ height: 40 }} />
+            </div>
+            <Btn onClick={doRepoUpload} disabled={repoUploading || !repoUrl.trim()} variant="primary"
+              style={{ marginTop: 8, width: "100%", justifyContent: "center" }}>
+              {repoUploading ? <><Spinner size={14} color="#fff" /> Ingesting Repo…</> : <><Icon name="cloud_upload" size={16} /> Ingest Repository</>}
+            </Btn>
+          </div>
         </Card>
 
         {/* Discord Channel History */}
