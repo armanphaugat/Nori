@@ -12,7 +12,8 @@ from dbhelper.db_helper import (
     add_guild_admin,
     remove_guild_admin,add_server
 )
-DISCORD_BOT_KEY = os.getenv("DISCORD_BOT_KEY")
+DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
+BOT_USER_ID=os.getenv("DISCORD_CLIENT_ID")
 DISCORD_API      = os.getenv("DISCORD_API", "https://discord.com/api/v10")
 ADMIN_PERMISSION = 0x8
 
@@ -120,8 +121,6 @@ async def handle_get_eligible_guilds(
     user: dict = Depends(verify_access_token),
 ) -> dict:
     uid = user["discord_id"]
-    BOT_USER_ID = "1463510548808208415"
-
     row = await get_admin_user(uid)
     if not row:
         raise HTTPException(status_code=404, detail="User not found")
@@ -145,7 +144,7 @@ async def handle_get_eligible_guilds(
             try:
                 r = await client.get(
                     f"{DISCORD_API}/guilds/{guild_id}/members/{BOT_USER_ID}",
-                    headers={"Authorization": f"Bot {DISCORD_BOT_KEY}"},  # Bot token here
+                    headers={"Authorization": f"Bot {DISCORD_BOT_TOKEN}"},  # Bot token here
                     timeout=10,
                 )
                 return r.status_code == 200

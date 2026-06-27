@@ -19,7 +19,8 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
     setConfiguredServers(res.bot_present || []);
     setAddableServers(res.bot_not_present || []);
   } catch (e) {
-    if (e.message.includes("429") && retries > 0) {
+    if (retries > 0) {
+      // retry on ANY error (429, 502, network blip)
       await new Promise(r => setTimeout(r, delay));
       return loadStatuses(retries - 1, delay * 2);
     }
