@@ -8,7 +8,7 @@ async def get_sub_urls(url: str) -> dict:
     try:
         headers = {
             "User-Agent": (
-                "Mozilla/5.0 (compatible; Q-Arag-Bot/1.0; +https://github.com/armanphaugat)"
+                "Mozilla/5.0 (compatible; Nori-Bot/1.0; +https://github.com/armanphaugat)"
             )
         }
         response = await asyncio.get_event_loop().run_in_executor(None,functools.partial(requests.get, url, headers=headers, timeout=15))

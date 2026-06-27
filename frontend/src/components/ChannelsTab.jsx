@@ -490,7 +490,7 @@ export default function ChannelsTab({
                 <Icon name="tag" size={17} style={{ color: "var(--accent)" }} /> Active Bot Channels
               </div>
               <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 16, lineHeight: 1.5, fontWeight: 300 }}>
-                Select the channels where VaultBot is allowed to respond to user questions. In these channels, users do not need a bot prefix command to ask.
+                Select the channels where Nori is allowed to respond to user questions. In these channels, users do not need a bot prefix command to ask.
               </p>
 
               {channels.length === 0 ? (
@@ -545,7 +545,7 @@ export default function ChannelsTab({
                 <Icon name="shield" size={17} style={{ color: "var(--accent)" }} /> Mod / Log Channel
               </div>
               <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 16, lineHeight: 1.5, fontWeight: 300 }}>
-                Select a staff-only channel where VaultBot will post logs of unsatisfied responses (thumbs down feedback) and query error alerts.
+                Select a staff-only channel where Nori will post logs of unsatisfied responses (thumbs down feedback) and query error alerts.
               </p>
 
               {modChannel && (

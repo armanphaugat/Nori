@@ -40,12 +40,7 @@ const BADGE_STYLES = {
     label: "Starter Plan",
     icon: "verified"
   },
-  growth: {
-    bg: "linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%)",
-    shadow: "rgba(239, 35, 60, 0.25)",
-    label: "Growth Plan",
-    icon: "verified"
-  },
+
   pro: {
     bg: "linear-gradient(135deg, #3d3f58 0%, var(--navy) 100%)",
     shadow: "rgba(43, 45, 66, 0.25)",
@@ -477,7 +472,7 @@ function BootScreen() {
         }}>
           <img
             src="/LOGO.png"
-            alt="VaultBot"
+            alt="Nori"
             style={{
               width: "100%", height: "100%",
               objectFit: "contain",
@@ -493,7 +488,7 @@ function BootScreen() {
 
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--navy)" }}>
-            Vault<span style={{ color: "var(--accent)" }}>Bot</span>
+            No<span style={{ color: "var(--accent)" }}>ri</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--muted)" }}>
             <span>Loading your workspace</span>
@@ -589,9 +584,9 @@ export default function App() {
 
     let redirectedGuildId = hashParams.get("guild_id");
     if (redirectedGuildId) {
-      sessionStorage.setItem("pending_guild_redirect", redirectedGuildId);
+      localStorage.setItem("pending_guild_redirect", redirectedGuildId);
     } else {
-      redirectedGuildId = sessionStorage.getItem("pending_guild_redirect");
+      redirectedGuildId = localStorage.getItem("pending_guild_redirect");
     }
 
     (async () => {
@@ -638,7 +633,7 @@ export default function App() {
                   };
                   finalConfigured = [...mappedConfigured.filter(g => g.id !== redirectedGuildId), newServer];
                   activated = true;
-                  sessionStorage.removeItem("pending_guild_redirect");
+                  localStorage.removeItem("pending_guild_redirect");
                 } catch (e) {
                   console.error("Auto add server failed:", e);
                 }
@@ -649,8 +644,21 @@ export default function App() {
             LS.set("wb_guilds", finalConfigured);
           } catch (_) {}
 
+          const pendingPlan = localStorage.getItem("pending_checkout_plan");
+          if (pendingPlan) {
+            const pendingGuild = localStorage.getItem("pending_checkout_guild_id") || activeGuildId || redirectedGuildId;
+            localStorage.removeItem("pending_checkout_plan");
+            localStorage.removeItem("pending_checkout_guild_id");
+            
+            const qs = new URLSearchParams();
+            if (pendingGuild) qs.append("guild_id", pendingGuild);
+            qs.append("plan", pendingPlan);
+            window.location.href = `${API_BASE}/patreon/checkout?${qs.toString()}`;
+            return;
+          }
+
           if (activated && redirectedGuildId) {
-            sessionStorage.removeItem("pending_guild_redirect");
+            localStorage.removeItem("pending_guild_redirect");
             handleActivateServer(redirectedGuildId);
           } else if (activeGuildId) {
             setView("dashboard");
@@ -675,6 +683,19 @@ export default function App() {
           setUser(u);
           LS.set("wb_user", u);
           try { const { guilds: dg } = await API.getGuilds(); setDiscordGuilds(dg || []); } catch (_) {}
+          const pendingPlan = localStorage.getItem("pending_checkout_plan");
+          if (pendingPlan) {
+            const pendingGuild = localStorage.getItem("pending_checkout_guild_id") || activeGuildId;
+            localStorage.removeItem("pending_checkout_plan");
+            localStorage.removeItem("pending_checkout_guild_id");
+            
+            const qs = new URLSearchParams();
+            if (pendingGuild) qs.append("guild_id", pendingGuild);
+            qs.append("plan", pendingPlan);
+            window.location.href = `${API_BASE}/patreon/checkout?${qs.toString()}`;
+            return;
+          }
+
           if (activeGuildId) {
             setView("dashboard");
           } else {
@@ -686,6 +707,19 @@ export default function App() {
         }
       } else if (storedToken && user) {
         try { const { guilds: dg } = await API.getGuilds(); setDiscordGuilds(dg || []); } catch (_) {}
+        const pendingPlan = localStorage.getItem("pending_checkout_plan");
+        if (pendingPlan) {
+          const pendingGuild = localStorage.getItem("pending_checkout_guild_id") || activeGuildId;
+          localStorage.removeItem("pending_checkout_plan");
+          localStorage.removeItem("pending_checkout_guild_id");
+          
+          const qs = new URLSearchParams();
+          if (pendingGuild) qs.append("guild_id", pendingGuild);
+          qs.append("plan", pendingPlan);
+          window.location.href = `${API_BASE}/patreon/checkout?${qs.toString()}`;
+          return;
+        }
+
         if (activeGuildId) {
           setView("dashboard");
         } else {

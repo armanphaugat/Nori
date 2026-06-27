@@ -531,7 +531,7 @@ export default function SourcesTab({ guildId, onGoToOverview, user, onTab }) {
                 Permanent Consequence
               </div>
               <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.65, fontWeight: 300 }}>
-                VaultBot will instantly forget all information parsed from this document. Members will no longer receive answers sourced from this content. This action cannot be undone.
+                Nori will instantly forget all information parsed from this document. Members will no longer receive answers sourced from this content. This action cannot be undone.
               </div>
             </div>
 

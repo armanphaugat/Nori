@@ -321,40 +321,6 @@ const TIERS = [
     ctaStyle: "ghost",
   },
   {
-    id: "growth",
-    name: "Growth",
-    tagline: "For active, growing communities",
-    monthlyPrice: 59,
-    yearlyPrice: 45,
-    color: "red",
-    icon: "trending_up",
-    badge: "Most Popular",
-    featured: true,
-    base: {
-      messages: 500,
-      docs: 30,
-      storage: "5 GB",
-    },
-    overage: {
-      messages: "$0.03 / extra message",
-      storage: "$0.08 / extra GB",
-    },
-    features: [
-      { text: "500 bot messages / month", on: true },
-      { text: "Up to 30 uploaded documents", on: true },
-      { text: "All file types supported", on: true },
-      { text: "Source citations on answers", on: true },
-      { text: "5 GB document storage", on: true },
-      { text: "Unlimited URL ingestion + auto-sync", on: true },
-      { text: "Image & OCR support", on: true },
-      { text: "Full analytics dashboard", on: true },
-      { text: "Custom bot persona & name", on: true },
-      { text: "Email support (48h response)", on: false },
-    ],
-    cta: "Start Free Trial",
-    ctaStyle: "primary",
-  },
-  {
     id: "pro",
     name: "Pro",
     tagline: "For power users and large servers",
@@ -362,7 +328,8 @@ const TIERS = [
     yearlyPrice: 79,
     color: "navy",
     icon: "workspace_premium",
-    badge: null,
+    badge: "Most Popular",
+    featured: true,
     base: {
       messages: 800,
       docs: 50,
@@ -422,28 +389,28 @@ const TIERS = [
 ];
 
 const COMPARE_FEATURES = [
-  { label: "Messages / month",       free: "50",          starter: "200",       growth: "500",           pro: "800",             enterprise: "Unlimited" },
-  { label: "Document uploads",       free: "5",           starter: "10",        growth: "30",            pro: "50",              enterprise: "Unlimited" },
-  { label: "Storage",                free: "25 MB",       starter: "500 MB",    growth: "5 GB",          pro: "25 GB",           enterprise: "Custom" },
-  { label: "PDF & DOCX support",     free: true,          starter: true,        growth: true,            pro: true,              enterprise: true },
-  { label: "Image / OCR support",    free: false,         starter: true,        growth: true,            pro: true,              enterprise: true },
-  { label: "URL ingestion",          free: false,         starter: "5 URLs",    growth: "Unlimited",     pro: "Unlimited",       enterprise: "Unlimited" },
-  { label: "Auto-sync URLs",         free: false,         starter: false,       growth: true,            pro: true,              enterprise: true },
-  { label: "Analytics dashboard",    free: false,         starter: false,       growth: true,            pro: "Advanced",        enterprise: "Custom" },
-  { label: "Custom bot persona",     free: false,         starter: false,       growth: true,            pro: "Multiple",        enterprise: "White-label" },
-  { label: "Web search fallback",    free: false,         starter: false,       growth: true,            pro: true,              enterprise: true },
-  { label: "Priority support",       free: false,         starter: false,       growth: false,           pro: "24h email",       enterprise: "Dedicated SLA" },
-  { label: "SSO / audit logs",       free: false,         starter: false,       growth: false,           pro: false,             enterprise: true },
-  { label: "Overage billing",        free: "None",        starter: "Yes",       growth: "Yes",           pro: "Yes",             enterprise: "Custom" },
+  { label: "Messages / month",       free: "50",          starter: "200",       pro: "800",             enterprise: "Unlimited" },
+  { label: "Document uploads",       free: "5",           starter: "10",        pro: "50",              enterprise: "Unlimited" },
+  { label: "Storage",                free: "25 MB",       starter: "500 MB",    pro: "25 GB",           enterprise: "Custom" },
+  { label: "PDF & DOCX support",     free: true,          starter: true,        pro: true,              enterprise: true },
+  { label: "Image / OCR support",    free: false,         starter: true,        pro: true,              enterprise: true },
+  { label: "URL ingestion",          free: false,         starter: "5 URLs",    pro: "Unlimited",       enterprise: "Unlimited" },
+  { label: "Auto-sync URLs",         free: false,         starter: false,       pro: true,              enterprise: true },
+  { label: "Analytics dashboard",    free: false,         starter: false,       pro: "Advanced",        enterprise: "Custom" },
+  { label: "Custom bot persona",     free: false,         starter: false,       pro: "Multiple",        enterprise: "White-label" },
+  { label: "Web search fallback",    free: false,         starter: false,       pro: true,              enterprise: true },
+  { label: "Priority support",       free: false,         starter: false,       pro: "24h email",       enterprise: "Dedicated SLA" },
+  { label: "SSO / audit logs",       free: false,         starter: false,       pro: false,             enterprise: true },
+  { label: "Overage billing",        free: "None",        starter: "Yes",       pro: "Yes",             enterprise: "Custom" },
 ];
 
 const FAQS = [
-  { q: "What counts as a 'message'?", a: "Every time a server member sends a question and VaultBot responds, that's one message. Commands, setup interactions, and analytics views don't count. You can monitor usage in real time on the dashboard." },
-  { q: "What happens if I exceed my monthly message limit?", a: "On Starter, Growth, and Pro plans you can continue using the bot, we simply bill the overage at the per-message rate shown on your plan. We'll send you an email alert at 80% and 100% of your base allocation so there are no surprises." },
+  { q: "What counts as a 'message'?", a: "Every time a server member sends a question and Nori responds, that's one message. Commands, setup interactions, and analytics views don't count. You can monitor usage in real time on the dashboard." },
+  { q: "What happens if I exceed my monthly message limit?", a: "On Starter and Pro plans you can continue using the bot, we simply bill the overage at the per-message rate shown on your plan. We'll send you an email alert at 80% and 100% of your base allocation so there are no surprises." },
   { q: "Can I switch plans mid-month?", a: "Yes. Upgrades take effect instantly; you'll be charged a prorated amount for the remainder of the billing period. Downgrades take effect at the start of your next billing cycle." },
   { q: "What is the free trial for paid plans?", a: "Every paid plan comes with a 14-day free trial with full access to all plan features. No credit card is required to start the trial, you only enter payment details if you decide to continue." },
   { q: "Do documents count against my limit permanently?", a: "Deleted documents are removed from your storage and no longer count. You can replace or rotate your content library as often as you like within your plan's document slot limit." },
-  { q: "What does 'white-label' mean in the Enterprise plan?", a: "Your bot gets a fully custom name, avatar, and brand identity with zero mention of VaultBot anywhere in the interface. Members interact with your bot, not ours." },
+  { q: "What does 'white-label' mean in the Enterprise plan?", a: "Your bot gets a fully custom name, avatar, and brand identity with zero mention of Nori anywhere in the interface. Members interact with your bot, not ours." },
   { q: "Is there a discount for annual billing?", a: "Yes, switching to annual billing saves you roughly 25% compared to monthly pricing across all paid plans. You can toggle between billing periods on this page to see the exact rates." },
 ];
 
@@ -526,13 +493,13 @@ export default function PricingPage({
         borderBottom:`1px solid ${scrolled ? "rgba(43,45,66,0.15)" : "var(--border)"}`,
         transition:"all 0.3s ease",
       }}>
-        <div onClick={onBack} style={{ textDecoration:"none",display:"flex",alignItems:"center",gap:10,cursor:"pointer" }}>
+        <div onClick={onBack} style={{ textDecoration:"none",display:"flex",alignItems:"center",gap:12,cursor:"pointer" }}>
   <img
     src="/LOGO.png"
-    alt="VaultBot"
-    style={{ width:30,height:30,borderRadius:8,objectFit:"contain",mixBlendMode:"multiply" }}
+    alt="Nori"
+    style={{ width:44,height:44,objectFit:"contain" }}
   />
-  <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>VaultBot</span>
+  <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>Nori</span>
 </div>
         <div style={{ display:"flex",alignItems:"center",gap:12 }}>
           {/* Menu links - hidden below 900px */}
@@ -597,7 +564,7 @@ export default function PricingPage({
       {/* TIER CARDS */}
       <section id="pricing" style={{ padding:"0 64px 96px",position:"relative",zIndex:1 }}>
         <div style={{ maxWidth:1300,margin:"0 auto" }}>
-          <div className="tiers-grid" style={{ display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:16,alignItems:"stretch" }}>
+          <div className="tiers-grid" style={{ display:"grid",gridTemplateColumns:`repeat(${TIERS.length},1fr)`,gap:16,alignItems:"stretch" }}>
             {TIERS.map((tier, i) => {
               const price = getPrice(tier);
               const savings = getSavings(tier);
@@ -720,6 +687,14 @@ export default function PricingPage({
                         isEnterprise
                           ? undefined
                           : () => {
+                              if (!user) {
+                                localStorage.setItem("pending_checkout_plan", tier.id);
+                                if (activeGuildId) {
+                                  localStorage.setItem("pending_checkout_guild_id", activeGuildId);
+                                }
+                                onLogin();
+                                return;
+                              }
                               const qs = new URLSearchParams();
                               if (activeGuildId) qs.append("guild_id", activeGuildId);
                               qs.append("plan", tier.id);
@@ -828,8 +803,8 @@ export default function PricingPage({
               <thead>
                 <tr style={{ background:"var(--navy)" }}>
                   <th style={{ padding:"16px 20px",textAlign:"left",fontWeight:600,fontSize:11,letterSpacing:"0.06em",textTransform:"uppercase",color:"rgba(255,255,255,0.45)",borderBottom:"1px solid rgba(255,255,255,0.1)",width:"28%" }}>Feature</th>
-                  {["Free","Starter","Growth","Pro","Enterprise"].map((h, i) => (
-                    <th key={i} style={{ padding:"16px 10px",fontWeight:700,fontSize:11,letterSpacing:"0.05em",textTransform:"uppercase",textAlign:"center",color: h === "Growth" ? "var(--accent)" : "rgba(255,255,255,0.6)",borderBottom: h === "Growth" ? "2px solid var(--accent)" : "1px solid rgba(255,255,255,0.1)",background: h === "Growth" ? "rgba(239,35,60,0.1)" : "transparent" }}>{h}</th>
+                  {["Free","Starter","Pro","Enterprise"].map((h, i) => (
+                    <th key={i} style={{ padding:"16px 10px",fontWeight:700,fontSize:11,letterSpacing:"0.05em",textTransform:"uppercase",textAlign:"center",color: h === "Pro" ? "var(--accent)" : "rgba(255,255,255,0.6)",borderBottom: h === "Pro" ? "2px solid var(--accent)" : "1px solid rgba(255,255,255,0.1)",background: h === "Pro" ? "rgba(239,35,60,0.1)" : "transparent" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -837,8 +812,8 @@ export default function PricingPage({
                 {COMPARE_FEATURES.map((row, i) => (
                   <tr key={i} className="compare-row" style={{ borderBottom:"1px solid var(--border)" }}>
                     <td style={{ padding:"13px 20px",color:"var(--navy)",fontWeight:500,background: i%2===0 ? "white" : "var(--surface2)" }}>{row.label}</td>
-                    {["free","starter","growth","pro","enterprise"].map((plan, j) => (
-                      <td key={j} style={{ padding:"13px 10px",textAlign:"center",background: plan==="growth" ? "rgba(239,35,60,0.02)" : i%2===0 ? "white" : "var(--surface2)" }}>
+                    {["free","starter","pro","enterprise"].map((plan, j) => (
+                      <td key={j} style={{ padding:"13px 10px",textAlign:"center",background: plan==="pro" ? "rgba(239,35,60,0.02)" : i%2===0 ? "white" : "var(--surface2)" }}>
                         <CellVal v={row[plan]} />
                       </td>
                     ))}
@@ -883,13 +858,13 @@ export default function PricingPage({
         <div style={{ position:"relative",zIndex:1,maxWidth:760,margin:"0 auto" }}>
           <SectionLabel text="Get Started Free" />
           <h2 style={{ fontFamily:"'Outfit', sans-serif",fontWeight:700,fontSize:"clamp(28px,4.5vw,56px)",color:"white",letterSpacing:"-0.01em",lineHeight:1.08,marginBottom:14 }}>Start free. Scale only when you're ready.</h2>
-          <p style={{ fontSize:17,color:"rgba(255,255,255,0.55)",marginBottom:40,maxWidth:460,margin:"0 auto 36px",fontWeight:300,lineHeight:1.75 }}>No credit card. No commitment. Just upload your first document and watch VaultBot go to work.</p>
+          <p style={{ fontSize:17,color:"rgba(255,255,255,0.55)",marginBottom:40,maxWidth:460,margin:"0 auto 36px",fontWeight:300,lineHeight:1.75 }}>No credit card. No commitment. Just upload your first document and watch Nori go to work.</p>
           <div style={{ display:"flex",justifyContent:"center",gap:14,flexWrap:"wrap" }}>
             <button onClick={onInvite} className="btn-primary glow-red" style={{ display:"flex",alignItems:"center",gap:10,padding:"15px 30px",borderRadius:12,fontSize:15,fontWeight:600,background:"var(--accent)",color:"white",border:"none",cursor:"pointer",boxShadow:"0 0 28px var(--red-glow)",transition:"all var(--tr)" }}>
-              <DiscordIcon size={16} /> Add VaultBot Free
+              <DiscordIcon size={16} /> Add Nori Free
               <Icon name="arrow_forward" size={16} />
             </button>
-            <a href="mailto:support@vaultbot.dev" style={{ display:"flex",alignItems:"center",gap:8,padding:"15px 24px",borderRadius:12,fontSize:15,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",textDecoration:"none",transition:"all var(--tr)" }}>
+            <a href="mailto:support@nori.dev" style={{ display:"flex",alignItems:"center",gap:8,padding:"15px 24px",borderRadius:12,fontSize:15,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",textDecoration:"none",transition:"all var(--tr)" }}>
               <Icon name="mail" size={16} fill={1} /> Talk to Sales
             </a>
           </div>
@@ -902,26 +877,26 @@ export default function PricingPage({
         <div style={{ maxWidth:1200,margin:"0 auto",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:20 }}>
           <div style={{ display:"flex",alignItems:"center",gap:10 }}>
             <div style={{
-              width: 28, height: 28,
+              width: 30, height: 30,
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>
               <img
                 src="/LOGO.png"
-                alt="VaultBot"
+                alt="Nori"
                 style={{
                   width: "100%", height: "100%",
                   objectFit: "contain",
                 }}
               />
             </div>
-            <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:20,color:"var(--navy)" }}>VaultBot</span>
+            <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:20,color:"var(--navy)" }}>Nori</span>
           </div>
           <div style={{ display:"flex",gap:24,flexWrap:"wrap" }}>
             {[
               { label: "Features", href: "#features", onClick: (e) => { e.preventDefault(); onBack?.("#features"); } },
               { label: "How it Works", href: "#howitworks", onClick: (e) => { e.preventDefault(); onBack?.("#howitworks"); } },
               { label: "Pricing", onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
-              { label: "Support", href: "mailto:support@vaultbot.dev" },
+              { label: "Support", href: "mailto:support@nori.dev" },
               { label: "Privacy Policy", onClick: onShowPrivacy },
               { label: "Terms & Conditions", onClick: onShowTerms },
             ].map((item, i) => (
@@ -951,8 +926,8 @@ export default function PricingPage({
           </div>
         </div>
         <div style={{ maxWidth:1200,margin:"24px auto 0",paddingTop:20,borderTop:"1px solid var(--border2)",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap" }}>
-          <span style={{ fontSize:12,color:"var(--muted2)" }}>© 2026 VaultBot · Not affiliated with Discord Inc.</span>
-          <a href="mailto:support@vaultbot.dev" style={{ fontSize:12,color:"var(--accent-deep)",textDecoration:"none",fontWeight:600,transition:"color var(--tr)" }} onMouseEnter={e => e.currentTarget.style.color = "var(--navy)"} onMouseLeave={e => e.currentTarget.style.color = "var(--accent-deep)"}>support@vaultbot.dev</a>
+          <span style={{ fontSize:12,color:"var(--muted2)" }}>© 2026 Nori · Not affiliated with Discord Inc.</span>
+          <a href="mailto:support@nori.dev" style={{ fontSize:12,color:"var(--accent-deep)",textDecoration:"none",fontWeight:600,transition:"color var(--tr)" }} onMouseEnter={e => e.currentTarget.style.color = "var(--navy)"} onMouseLeave={e => e.currentTarget.style.color = "var(--accent-deep)"}>support@nori.dev</a>
           <span style={{ fontSize:12,color:"var(--muted2)" }}>Your docs. Your bot. Your community.</span>
         </div>
       </footer>

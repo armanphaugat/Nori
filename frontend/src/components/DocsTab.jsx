@@ -158,12 +158,12 @@ export default function DocsTab({ guildId, onGoToOverview }) {
                 User Q&A & Interaction Walkthrough
               </h3>
               <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.6, marginBottom: 16 }}>
-                VaultBot acts as a factual assistant inside your Discord server. It parses questions, scans vector databases, and executes search queries to return accurate responses.
+                Nori acts as a factual assistant inside your Discord server. It parses questions, scans vector databases, and executes search queries to return accurate responses.
               </p>
 
               <h4 style={{ fontSize: 14, color: "var(--navy)", marginTop: 18, marginBottom: 6 }}>1. Asking Questions in Monitored Channels</h4>
               <p style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.5, marginBottom: 12 }}>
-                Server administrators designate specific text channels (such as <code>#faq</code>, <code>#helpdesk</code>, or <code>#general</code>) for VaultBot to monitor. In these channels, you do not need prefix commands:
+                Server administrators designate specific text channels (such as <code>#faq</code>, <code>#helpdesk</code>, or <code>#general</code>) for Nori to monitor. In these channels, you do not need prefix commands:
               </p>
               <ol style={{ fontSize: 13, color: "var(--muted)", paddingLeft: 20, lineHeight: 1.7, marginBottom: 12 }}>
                 <li>Navigate to the monitored text channel using the Discord channel list on the left.</li>
@@ -182,7 +182,7 @@ export default function DocsTab({ guildId, onGoToOverview }) {
               }}>
                 <div style={{ fontWeight: 700, color: "var(--navy)", marginBottom: 4 }}>User:</div>
                 <div style={{ color: "var(--muted)", marginBottom: 10 }}>How do I change my profile password?</div>
-                <div style={{ fontWeight: 700, color: "var(--accent)", marginBottom: 4 }}>VaultBot:</div>
+                <div style={{ fontWeight: 700, color: "var(--accent)", marginBottom: 4 }}>Nori:</div>
                 <div style={{ color: "var(--muted)" }}>
                   To change your password: 1) Click Settings in the bottom left, 2) Select "My Account", 3) Click the "Change Password" button.
                 </div>
@@ -211,7 +211,7 @@ export default function DocsTab({ guildId, onGoToOverview }) {
 
               <h4 style={{ fontSize: 14, color: "var(--navy)", marginTop: 18, marginBottom: 6 }}>3. AI-Powered Question Detection (Global Auto-Reply)</h4>
               <p style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.5, marginBottom: 12 }}>
-                VaultBot incorporates a Llama 3-powered intent classifier that dynamically analyzes incoming messages. If a member asks a question (direct, indirect, or implied) in any channel on the server, the bot automatically classifies the message intent and responds. This enables seamless, zero-prefix auto-responses across your server without requiring administrators to explicitly designate monitored channels for every scenario.
+                Nori incorporates a Llama 3-powered intent classifier that dynamically analyzes incoming messages. If a member asks a question (direct, indirect, or implied) in any channel on the server, the bot automatically classifies the message intent and responds. This enables seamless, zero-prefix auto-responses across your server without requiring administrators to explicitly designate monitored channels for every scenario.
               </p>
 
               <h4 style={{ fontSize: 14, color: "var(--navy)", marginTop: 18, marginBottom: 6 }}>4. Submitting Attachments (OCR & Voice Transcripts)</h4>
@@ -271,12 +271,12 @@ export default function DocsTab({ guildId, onGoToOverview }) {
               <ol style={{ fontSize: 13, color: "var(--muted)", paddingLeft: 20, lineHeight: 1.7, marginBottom: 16 }}>
                 <li>User clicks the <code>Create Query</code> button in the main support channel.</li>
                 <li>The bot generates a private Discord thread named <code>ticket-yourusername</code>.</li>
-                <li>The user receives a notification. Inside the thread, they can type any question directly. VaultBot listens to all messages in the thread and answers without requiring the <code>-ask</code> prefix.</li>
+                <li>The user receives a notification. Inside the thread, they can type any question directly. Nori listens to all messages in the thread and answers without requiring the <code>-ask</code> prefix.</li>
                 <li>User clicks the red <code>Close Ticket</code> button, and the thread is purged from the server list.</li>
               </ol>
 
               <Alert type="tip" title="Channel Permissions">
-                VaultBot configures the base support channel permissions so that general members cannot send messages directly. They must use the ticketing button to query, avoiding channel clutter.
+                Nori configures the base support channel permissions so that general members cannot send messages directly. They must use the ticketing button to query, avoiding channel clutter.
               </Alert>
             </div>
           )}
@@ -313,9 +313,9 @@ export default function DocsTab({ guildId, onGoToOverview }) {
                 The Profile section acts as the central hub for managing which Discord server you are administering:
               </p>
               <ul style={{ fontSize: 13, color: "var(--muted)", paddingLeft: 20, lineHeight: 1.7, marginBottom: 16 }}>
-                <li><strong>Active Servers</strong>: Shows all guilds where you are an admin and VaultBot is already configured. Clicking on a server card instantly switches the active dashboard session to that server, taking you directly to its channel settings.</li>
-                <li><strong>Available to Setup</strong>: Lists eligible servers where you have manager permissions but VaultBot is not yet present. Clicking the <strong>Invite</strong> button prompts the Discord bot invitation dialog.</li>
-                <li><strong>Add to New Server</strong>: Opens the general bot invite URL in a new window to install VaultBot on a completely new Discord server.</li>
+                <li><strong>Active Servers</strong>: Shows all guilds where you are an admin and Nori is already configured. Clicking on a server card instantly switches the active dashboard session to that server, taking you directly to its channel settings.</li>
+                <li><strong>Available to Setup</strong>: Lists eligible servers where you have manager permissions but Nori is not yet present. Clicking the <strong>Invite</strong> button prompts the Discord bot invitation dialog.</li>
+                <li><strong>Add to New Server</strong>: Opens the general bot invite URL in a new window to install Nori on a completely new Discord server.</li>
               </ul>
             </div>
           )}
@@ -376,9 +376,8 @@ export default function DocsTab({ guildId, onGoToOverview }) {
                     {[
                       { name: "Free", price: "$0/mo", limit: "50", kb: "5 Documents", types: "PDF, TXT" },
                       { name: "Starter", price: "$25/mo", limit: "200", kb: "10 Documents + 5 URLs", types: "PDF, DOCX, XLSX, Images" },
-                      { name: "Growth", price: "$59/mo", limit: "500", kb: "30 Documents", types: "All Files + Custom Persona + Analytics" },
                       { name: "Pro", price: "$99/mo", limit: "800", kb: "50 Documents", types: "All Files + Advanced Analytics + Multi-Persona" },
-                      { name: "Paid Premium", price: "Patreon Pledge", limit: "1,000,000", kb: "Unlimited Documents", types: "All Files + Priority Response Speed" }
+                      { name: "Custom", price: "Custom Pricing", limit: "Unlimited", kb: "Unlimited Documents", types: "White-label + Dedicated SLA" }
                     ].map((item, idx) => (
                       <tr key={idx} style={{ 
                         borderBottom: idx === 4 ? "none" : "1px solid var(--border)", 
@@ -406,7 +405,7 @@ export default function DocsTab({ guildId, onGoToOverview }) {
                 Admin: General & Personality Configuration
               </h3>
               <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.6, marginBottom: 16 }}>
-                Configure where VaultBot responds, what personality it uses, and where it logs user feedback.
+                Configure where Nori responds, what personality it uses, and where it logs user feedback.
               </p>
 
               <h4 style={{ fontSize: 14, color: "var(--navy)", marginTop: 18, marginBottom: 6 }}>1. Registering Monitored Channels</h4>
@@ -529,7 +528,7 @@ export default function DocsTab({ guildId, onGoToOverview }) {
 
               <h4 style={{ fontSize: 14, color: "var(--navy)", marginTop: 18, marginBottom: 6 }}>3. Pausing bot responses</h4>
               <p style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.5, marginBottom: 12 }}>
-                If you need to perform server maintenance: click the <strong>Pause Bot</strong> toggle button in the header dashboard menu. When active, VaultBot ignores user queries and replies with a maintenance message.
+                If you need to perform server maintenance: click the <strong>Pause Bot</strong> toggle button in the header dashboard menu. When active, Nori ignores user queries and replies with a maintenance message.
               </p>
             </div>
           )}

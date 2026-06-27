@@ -23,7 +23,6 @@ AsyncDB = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession
 PLAN_LIMITS = {
     "free": 50,
     "starter": 200,
-    "growth": 500,
     "pro": 800,
     "enterprise": 1000000,
 }
@@ -31,7 +30,6 @@ PLAN_LIMITS = {
 PLAN_URL_LIMITS = {
     "free": 5,
     "starter": 10,
-    "growth": 30,
     "pro": 50,
     "enterprise": 1000000,
 }
@@ -39,7 +37,6 @@ PLAN_URL_LIMITS = {
 PLAN_FILE_LIMITS = {
     "free": 3,
     "starter": 10,
-    "growth": 30,
     "pro": 50,
     "enterprise": 1000000,
 }

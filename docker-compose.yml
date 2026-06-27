@@ -1,6 +1,6 @@
 version: "3.9"
 
-# Q-ARAG — production stack (Oracle Cloud / any Docker host)
+# Nori — production stack (Oracle Cloud / any Docker host)
 #
 # Services:
 #   redis    → API key rotation + BullMQ

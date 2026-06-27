@@ -312,7 +312,7 @@ export default function ProfileTab({
                   padding: 24, background: "var(--surface-2)", border: "1px dashed var(--border2)",
                   borderRadius: "var(--r-md)", color: "var(--muted)", fontSize: 13.5, textAlign: "center"
                 }}>
-                  No active VaultBot servers found. Use the section below to add the bot to your Discord servers.
+                  No active Nori servers found. Use the section below to add the bot to your Discord servers.
                 </div>
               ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>

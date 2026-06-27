@@ -10,7 +10,7 @@ from backend.routers.analytics_router import *
 from backend.routers.guild_router import *
 from backend.routers.patreon_router import *
 
-app = FastAPI(title="Q-ARAG API", version="1.0.0")
+app = FastAPI(title="Nori API", version="1.0.0")
 
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3001")
 origins = list({

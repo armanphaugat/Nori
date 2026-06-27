@@ -32,10 +32,10 @@ export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user,
 
   // ─── Resize & Collapse States ───
   const [isCollapsed, setIsCollapsed] = useState(() => {
-    return localStorage.getItem("vaultbot_sidebar_collapsed") === "true";
+    return localStorage.getItem("nori_sidebar_collapsed") === "true";
   });
   const [width, setWidth] = useState(() => {
-    const saved = localStorage.getItem("vaultbot_sidebar_width");
+    const saved = localStorage.getItem("nori_sidebar_width");
     return saved ? parseInt(saved, 10) : 260;
   });
   const [isDragging, setIsDragging] = useState(false);
@@ -52,7 +52,7 @@ export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user,
       window.getSelection()?.removeAllRanges();
       const newWidth = Math.max(200, Math.min(450, e.clientX));
       setWidth(newWidth);
-      localStorage.setItem("vaultbot_sidebar_width", newWidth);
+      localStorage.setItem("nori_sidebar_width", newWidth);
     };
 
     const handleMouseUp = () => {
@@ -76,7 +76,7 @@ export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user,
       if (isSmall && !wasSmall) {
         setIsCollapsed(true);
       } else if (!isSmall && wasSmall) {
-        const savedCollapsed = localStorage.getItem("vaultbot_sidebar_collapsed") === "true";
+        const savedCollapsed = localStorage.getItem("nori_sidebar_collapsed") === "true";
         setIsCollapsed(savedCollapsed);
       }
       wasSmall = isSmall;
@@ -95,7 +95,7 @@ export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user,
   const toggleCollapse = () => {
     const next = !isCollapsed;
     setIsCollapsed(next);
-    localStorage.setItem("vaultbot_sidebar_collapsed", String(next));
+    localStorage.setItem("nori_sidebar_collapsed", String(next));
   };
 
   return (
@@ -136,7 +136,7 @@ export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user,
 
       {/* ── Logo ── */}
       <div style={{
-        display: "flex", alignItems: "center", gap: 10,
+        display: "flex", alignItems: "center", gap: 12,
         padding: isCollapsed ? "4px 0 22px" : "4px 4px 22px",
         justifyContent: isCollapsed ? "center" : "flex-start",
         borderBottom: "1px solid var(--border)",
@@ -144,8 +144,8 @@ export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user,
         overflow: "hidden",
       }}>
         <div style={{
-          width: 34,
-          height: 34,
+          width: 42,
+          height: 42,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -153,7 +153,7 @@ export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user,
         }}>
           <img
             src="/LOGO.png"
-            alt="VaultBot"
+            alt="Nori"
             style={{
               width: "100%", height: "100%",
               objectFit: "contain",
@@ -166,7 +166,7 @@ export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user,
             fontWeight: 800, fontSize: 21,
             color: "var(--navy)", letterSpacing: "-0.025em",
             whiteSpace: "nowrap",
-          }}>VaultBot</span>
+          }}>Nori</span>
         )}
       </div>
 

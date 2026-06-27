@@ -287,7 +287,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
           <div>
             <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--text)", marginBottom: 6, fontFamily: "'Outfit', sans-serif" }}>No Analytics Recorded Yet</h2>
             <p style={{ fontSize: 14, color: "var(--text-s)", maxWidth: 520, lineHeight: 1.6, margin: "0 auto", fontWeight: 300 }}>
-              VaultBot has not processed any search queries on this server. Once members start asking questions in the configured Discord channels, details of response metrics and bot usage will populate here instantly.
+              Nori has not processed any search queries on this server. Once members start asking questions in the configured Discord channels, details of response metrics and bot usage will populate here instantly.
             </p>
           </div>
           <div style={{ width: "100%", maxWidth: 440, background: "var(--bg-s)", padding: 16, borderRadius: "var(--r-md)", border: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 10, textAlign: "left" }}>
@@ -685,7 +685,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
           </div>
 
           <div style={{ overflowX: "auto" }}>
-            <table className="data-table">
+            <table className="data-table no-lines">
               <thead>
                 <tr>
                   <th style={{ width: 220 }}>Channel ID / Name</th>
@@ -754,7 +754,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
         </div>
 
         <div style={{ overflowX: "auto" }}>
-          <table className="data-table">
+          <table className="data-table no-lines">
             <thead>
               <tr>
                 <th style={{ width: 150 }}>User ID</th>

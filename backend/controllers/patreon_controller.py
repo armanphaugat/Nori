@@ -16,7 +16,7 @@ from dbhelper.db_helper import (
     PLAN_LIMITS
 )
 
-PATREON_CAMPAIGN_URL = os.getenv("PATREON_CAMPAIGN_URL", "https://www.patreon.com/VaultBotBilling")
+PATREON_CAMPAIGN_URL = os.getenv("PATREON_CAMPAIGN_URL", "https://www.patreon.com/NoriBilling")
 PATREON_WEBHOOK_SECRET = os.getenv("PATREON_WEBHOOK_SECRET", "")
 
 
@@ -131,9 +131,6 @@ async def handle_patreon_webhook(request: Request) -> dict:
             elif "pro" in title:
                 next_plan = "pro"
                 break
-            elif "growth" in title:
-                next_plan = "growth"
-                break
             elif "starter" in title:
                 next_plan = "starter"
                 break
@@ -167,7 +164,7 @@ async def handle_patreon_webhook(request: Request) -> dict:
 async def handle_simulate_webhook(
     discord_id: Optional[str] = Form(default=None),
     email: Optional[str] = Form(default=None),
-    status: str = Form(...),  # e.g., "active_patron", "inactive", "starter", "growth", "pro", "paid"
+    status: str = Form(...),  # e.g., "active_patron", "inactive", "starter", "pro", "paid"
     plan: Optional[str] = Form(default=None)
 ) -> dict:
     """

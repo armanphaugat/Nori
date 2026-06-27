@@ -142,14 +142,14 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
         display: "flex", justifyContent: "space-between", alignItems: "center",
         boxSizing: "border-box", zIndex: 10, position: "relative",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{
-            width: 32, height: 32,
+            width: 44, height: 44,
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
             <img
               src="/LOGO.png"
-              alt="VaultBot"
+              alt="Nori"
               style={{
                 width: "100%", height: "100%",
                 objectFit: "contain",
@@ -159,7 +159,7 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
           <span style={{
             fontFamily: "'Outfit', sans-serif",
             fontWeight: 600, fontSize: 21, color: "var(--navy)",
-          }}>VaultBot</span>
+          }}>Nori</span>
         </div>
 
         {user && (

@@ -85,6 +85,8 @@ const GLOBAL_CSS = `
     color:var(--text-s); vertical-align:middle;
   }
   .data-table tr:hover td { background:var(--bg-e); color:var(--text); }
+  .data-table.no-lines th, .data-table.no-lines td { border-bottom: none !important; }
+
 
   .drop-zone {
     border:1.5px dashed var(--border); border-radius:var(--r-md);

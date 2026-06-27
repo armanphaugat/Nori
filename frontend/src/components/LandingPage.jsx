@@ -271,7 +271,7 @@ const FEATS = [
   { icon:"tune",           fill:1, color:"red",   title:"Make It Sound Like You",       desc:"Give your bot a name, a personality, and a tone that matches your community. It's your brand, not ours." },
   { icon:"forum",          fill:1, color:"slate",  title:"Pick Which Channels It Uses",  desc:"The bot only shows up where you want it. Keep it focused, on-topic, and out of your off-topic channels." },
   { icon:"bar_chart",      fill:1, color:"red",   title:"See What's Being Asked",       desc:"A clean dashboard shows you the most common questions so you can fill gaps and improve over time." },
-  { icon:"sync",           fill:1, color:"slate",  title:"Always Up to Date",            desc:"Set it and forget it. VaultBot checks your URLs regularly and pulls in any new content automatically." },
+  { icon:"sync",           fill:1, color:"slate",  title:"Always Up to Date",            desc:"Set it and forget it. Nori checks your URLs regularly and pulls in any new content automatically." },
   { icon:"image_search",   fill:1, color:"red",   title:"Works on Screenshots Too",     desc:"Upload an image or screenshot and the bot reads the text inside it, no retyping anything by hand." },
   { icon:"translate",      fill:1, color:"slate",  title:"Speaks Your Members' Language","desc":"No matter what language someone asks in, the bot detects it and responds in kind. Every time." },
   { icon:"link",           fill:1, color:"red",   title:"Always Shows Its Sources",     desc:"Every answer links back to the exact document or page it came from. Full transparency, no mystery." },
@@ -292,11 +292,11 @@ const STEPS = [
 
 
 const COMP = [
-  ["Answers From Your Own Documents",    "yes","yes",     "Generic bots guess or pull from the internet. VaultBot only uses what you give it."],
+  ["Answers From Your Own Documents",    "yes","yes",     "Generic bots guess or pull from the internet. Nori only uses what you give it."],
   ["PDF & File Uploads",                 "yes","yes",     "Most bots can't read your files at all, let alone answer questions from them."],
   ["Crawl and Import Websites",          "yes","no",      "Other bots don't scan URLs or sync entire documentation sites automatically."],
   ["Keeps Content Automatically Fresh",  "yes","no",      "No other bot monitors your URLs and pulls updates without you lifting a finger."],
-  ["Custom Bot Personality",             "yes","no",      "Others offer basic command prefixes. VaultBot lets you write full custom AI personas."],
+  ["Custom Bot Personality",             "yes","no",      "Others offer basic command prefixes. Nori lets you write full custom AI personas."],
   ["Usage Analytics Dashboard",          "yes","no",      "No visual view of what questions are being asked or where answers are coming from."],
 ];
 
@@ -389,7 +389,7 @@ function CarouselSlider() {
           letterSpacing:"0.02em"
         }}>
           <Icon name="lock" size={10} style={{ color:"rgba(255,255,255,0.3)" }} />
-          <span>discord.com/channels/vaultbot/demo</span>
+          <span>discord.com/channels/nori/demo</span>
         </div>
       </div>
 
@@ -575,15 +575,15 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
         borderBottom:`1px solid ${scrolled ? "rgba(43,45,66,0.15)" : "var(--border)"}`,
         transition:"all 0.3s ease",
       }}>
-        <a href="#" style={{ textDecoration:"none",display:"flex",alignItems:"center",gap:10 }}>
-          <div style={{ width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center" }}>
+        <a href="#" style={{ textDecoration:"none",display:"flex",alignItems:"center",gap:12 }}>
+          <div style={{ width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center" }}>
             <img
               src="/LOGO.png"
-              alt="VaultBot"
+              alt="Nori"
               style={{ width:"100%",height:"100%",objectFit:"contain" }}
             />
           </div>
-          <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>VaultBot</span>
+          <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>Nori</span>
         </a>
         <div style={{ display:"flex",alignItems:"center",gap:12 }}>
           {/* Menu links - hidden below 900px */}
@@ -632,7 +632,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
             </h1>
 
             <p className="a2" style={{ fontSize:18,lineHeight:1.8,color:"var(--muted)",maxWidth:500,marginBottom:38,fontWeight:300 }}>
-              Stop answering the same questions every day. VaultBot learns from your documents, PDFs, and websites, then handles member questions inside Discord, around the clock.
+              Stop answering the same questions every day. Nori learns from your documents, PDFs, and websites, then handles member questions inside Discord, around the clock.
             </p>
 
             <div className="a3" style={{ display:"flex",gap:12,flexWrap:"wrap",marginBottom:24 }}>
@@ -718,7 +718,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
                   letterSpacing:"0.02em"
                 }}>
                   <Icon name="lock" size={10} style={{ color:"rgba(255,255,255,0.3)" }} />
-                  <span>discord.com/channels/vaultbot</span>
+                  <span>discord.com/channels/nori</span>
                 </div>
               </div>
               
@@ -726,7 +726,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
               <div style={{ background:"#2f3136", position:"relative" }}>
                 <img
                   src="/CHAT.png"
-                  alt="VaultBot in action"
+                  alt="Nori in action"
                   style={{ width:"100%",display:"block",objectFit:"contain" }}
                 />
                 {/* Glass reflection overlay */}
@@ -756,14 +756,14 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
             <div className="rv"><SectionLabel text="Feature Tour" /></div>
             <div className="rv"><H2>Take a Tour of the Interface</H2></div>
             <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.8,maxWidth:560,margin:"0 auto",fontWeight:300 }}>
-              Explore how VaultBot integrates into your channels. Flip through the features below to preview how answers, source citations, and documents appear inside Discord.
+              Explore how Nori integrates into your channels. Flip through the features below to preview how answers, source citations, and documents appear inside Discord.
             </p>
           </div>
 
           <div style={{ display:"flex",gap:32,flexWrap:"wrap",alignItems:"flex-start" }}>
             {/* LEFT — question selector */}
             <div style={{ flex:"1 1 340px",display:"flex",flexDirection:"column",gap:12 }}>
-              <div style={{ fontSize:12,fontWeight:700,color:"var(--muted2)",letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:4 }}>What VaultBot Can Do</div>
+              <div style={{ fontSize:12,fontWeight:700,color:"var(--muted2)",letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:4 }}>What Nori Can Do</div>
 
                {[
                  { icon:"picture_as_pdf", label:"Reads your PDFs & documents",    sub:"Answers directly from uploaded files" },
@@ -931,9 +931,9 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
           {/* Header */}
           <div style={{ textAlign:"center", marginBottom:52 }}>
             <div className="rv"><SectionLabel text="How We Compare" /></div>
-            <div className="rv"><H2>What you actually get when you add VaultBot</H2></div>
+            <div className="rv"><H2>What you actually get when you add Nori</H2></div>
             <p className="rv" style={{ fontSize:17, color:"var(--muted)", lineHeight:1.8, maxWidth:600, margin:"0 auto", fontWeight:300 }}>
-              Other Discord bots give scripted replies. VaultBot actually reads your content and answers from it.
+              Other Discord bots give scripted replies. Nori actually reads your content and answers from it.
             </p>
           </div>
 
@@ -978,7 +978,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
               <thead>
                 <tr style={{ background:"var(--navy)" }}>
                   <th style={{ padding:"16px 24px", fontWeight:600, fontSize:11, letterSpacing:"0.06em", textTransform:"uppercase", color:"rgba(255,255,255,0.45)", borderBottom:"1px solid rgba(255,255,255,0.1)", textAlign:"left" }}>Capability</th>
-                  {["VaultBot","Other Bots","What's Missing"].map((h,i) => (
+                  {["Nori","Other Bots","What's Missing"].map((h,i) => (
                     <th key={i} style={{ padding:"16px 24px", fontWeight:700, fontSize:11, letterSpacing:"0.06em", textTransform:"uppercase", borderBottom:i===0?"2px solid var(--accent)":"1px solid rgba(255,255,255,0.1)", textAlign:i===2?"left":"center", color:i===0?"var(--accent)":"rgba(255,255,255,0.45)", background:i===0?"rgba(239,35,60,0.1)":"transparent" }}>{h}</th>
                   ))}
                 </tr>
@@ -1029,10 +1029,10 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
           <div style={{ maxWidth:860,margin:"0 auto",borderRadius:28,padding:"80px 60px",display:"inline-block",width:"100%",border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.04)" }}>
             <div className="rv"><SectionLabel text="Get Started Free" /></div>
             <h2 className="rv" style={{ fontFamily:"'Outfit', sans-serif",fontWeight:700,fontSize:"clamp(30px,5vw,60px)",color:"white",letterSpacing:"-0.01em",lineHeight:1.08,marginBottom:16 }}>Ready to stop answering the same question twice?</h2>
-            <p className="rv" style={{ fontSize:18,color:"rgba(255,255,255,0.55)",marginBottom:44,maxWidth:480,margin:"0 auto 40px",fontWeight:300 }}>Add VaultBot to your server in minutes. It's free to start and your members will notice the difference immediately.</p>
+            <p className="rv" style={{ fontSize:18,color:"rgba(255,255,255,0.55)",marginBottom:44,maxWidth:480,margin:"0 auto 40px",fontWeight:300 }}>Add Nori to your server in minutes. It's free to start and your members will notice the difference immediately.</p>
             <div className="rv" style={{ display:"flex",justifyContent:"center",gap:14,flexWrap:"wrap" }}>
               <button onClick={onInvite} className="btn-primary glow-red" style={{ display:"flex",alignItems:"center",gap:10,padding:"16px 32px",borderRadius:14,fontSize:16,fontWeight:600,background:"var(--accent)",color:"white",border:"none",cursor:"pointer",boxShadow:"0 0 28px var(--red-glow)",transition:"all var(--tr)" }}>
-                <DiscordIcon size={18} /> Add VaultBot to Discord
+                <DiscordIcon size={18} /> Add Nori to Discord
               </button>
               <button onClick={onShowPricing} className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"16px 26px",borderRadius:14,fontSize:16,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",cursor:"pointer",transition:"all var(--tr)" }}>
                 <Icon name="payments" size={18} /> View Pricing Plans
@@ -1051,17 +1051,17 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
         <div style={{ maxWidth:1200, margin:"0 auto", display:"flex", justifyContent:"space-between", alignItems:"center", gap:20, flexWrap:"wrap" }}>
           <div style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap" }}>
             <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-              <div style={{ width:24, height:24, display:"flex", alignItems:"center", justifyItems:"center", justifyContent:"center" }}>
+              <div style={{ width:30, height:30, display:"flex", alignItems:"center", justifyItems:"center", justifyContent:"center" }}>
                 <img
                   src="/LOGO.png"
-                  alt="VaultBot"
+                  alt="Nori"
                   style={{ width:"100%", height:"100%", objectFit:"contain" }}
                 />
               </div>
-              <span style={{ fontFamily:"'Outfit', sans-serif", fontWeight:600, fontSize:17, color:"var(--navy)" }}>VaultBot</span>
+              <span style={{ fontFamily:"'Outfit', sans-serif", fontWeight:600, fontSize:17, color:"var(--navy)" }}>Nori</span>
             </div>
             <span style={{ height:12, width:1, background:"var(--border2)" }} />
-            <span style={{ fontSize:12, color:"var(--muted2)" }}>© 2026 VaultBot · Not affiliated with Discord Inc.</span>
+            <span style={{ fontSize:12, color:"var(--muted2)" }}>© 2026 Nori · Not affiliated with Discord Inc.</span>
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:24, flexWrap:"wrap" }}>
             <ul style={{ display:"flex", gap:16, listStyle:"none", padding:0, margin:0, flexWrap:"wrap", alignItems:"center" }}>
@@ -1099,7 +1099,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
               ))}
             </ul>
             <span style={{ height:12, width:1, background:"var(--border2)" }} />
-            <a href="mailto:support@vaultbot.dev" style={{ fontSize:12.5, color:"var(--accent-deep)", textDecoration:"none", fontWeight:600, transition:"color var(--tr)" }} onMouseEnter={e => e.currentTarget.style.color = "var(--navy)"} onMouseLeave={e => e.currentTarget.style.color = "var(--accent-deep)"}>support@vaultbot.dev</a>
+            <a href="mailto:support@nori.dev" style={{ fontSize:12.5, color:"var(--accent-deep)", textDecoration:"none", fontWeight:600, transition:"color var(--tr)" }} onMouseEnter={e => e.currentTarget.style.color = "var(--navy)"} onMouseLeave={e => e.currentTarget.style.color = "var(--accent-deep)"}>support@nori.dev</a>
           </div>
         </div>
       </footer>

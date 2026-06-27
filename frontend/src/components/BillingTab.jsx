@@ -24,15 +24,6 @@ const TIER_DETAILS = {
     max: 200,
     features: ["200 bot messages / month", "Up to 10 documents", "PDF, DOCX, XLSX & images", "URL / website ingestion (5 URLs)"]
   },
-  growth: {
-    name: "Growth Tier",
-    tagline: "For active, growing communities.",
-    price: "$59/mo",
-    color: "var(--accent)",
-    bg: "rgba(239,35,60,0.08)",
-    max: 500,
-    features: ["500 bot messages / month", "Up to 30 documents", "All file types supported", "Custom bot persona & name", "Analytics dashboard"]
-  },
   pro: {
     name: "Pro Tier",
     tagline: "For power users and large servers.",
@@ -254,7 +245,7 @@ export default function BillingTab({ guildId, onGoToOverview, user }) {
       </h3>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 20, alignItems: "stretch", marginBottom: 24 }}>
-        {["free", "starter", "growth", "pro", "enterprise"].map((id) => {
+        {["free", "starter", "pro", "enterprise"].map((id) => {
           const tier = TIER_DETAILS[id];
           const isCurrent = activePlanId === id;
           
@@ -304,7 +295,7 @@ export default function BillingTab({ guildId, onGoToOverview, user }) {
                 <Btn
                   onClick={
                     id === "enterprise"
-                      ? () => window.location.href = "mailto:support@vaultbot.dev"
+                      ? () => window.location.href = "mailto:support@nori.dev"
                       : id === "free"
                       ? undefined
                       : () => {

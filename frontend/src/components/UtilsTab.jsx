@@ -281,7 +281,7 @@ export default function UtilsTab({ guildId, onGoToOverview, user }) {
               <div style={{ background: "var(--red-dim)", padding: 14, borderRadius: "var(--r-md)", border: "1px solid var(--red-border)", marginBottom: 20 }}>
                 <div style={{ fontSize: 11, color: "var(--accent-deep)", fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>Permanent consequences</div>
                 <div style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.6, fontWeight: 300 }}>
-                  VaultBot will immediately forget all information from this source. This action cannot be undone.
+                  Nori will immediately forget all information from this source. This action cannot be undone.
                 </div>
               </div>
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
