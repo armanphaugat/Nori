@@ -295,7 +295,7 @@ export default function BillingTab({ guildId, onGoToOverview, user }) {
                 <Btn
                   onClick={
                     id === "enterprise"
-                      ? () => window.location.href = "mailto:support@nori.dev"
+                      ? () => window.open("https://discord.gg/WrpaytBfN", "_blank")
                       : id === "free"
                       ? undefined
                       : () => {

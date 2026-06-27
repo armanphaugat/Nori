@@ -455,7 +455,7 @@ export default function PricingPage({
   onShowPrivacy,
   onShowTerms
 }) {
-  const [annual, setAnnual] = useState(true);
+  const [annual, setAnnual] = useState(false);
   const [faq, setFaq] = useState(null);
   const [scrolled, setScrolled] = useState(false);
 
@@ -685,7 +685,7 @@ export default function PricingPage({
                     <button
                       onClick={
                         isEnterprise
-                          ? undefined
+                          ? () => window.open("https://discord.gg/WrpaytBfN", "_blank")
                           : () => {
                               if (!user) {
                                 localStorage.setItem("pending_checkout_plan", tier.id);
@@ -864,7 +864,7 @@ export default function PricingPage({
               <DiscordIcon size={16} /> Add Nori Free
               <Icon name="arrow_forward" size={16} />
             </button>
-            <a href="mailto:support@nori.dev" style={{ display:"flex",alignItems:"center",gap:8,padding:"15px 24px",borderRadius:12,fontSize:15,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",textDecoration:"none",transition:"all var(--tr)" }}>
+            <a href="https://discord.gg/WrpaytBfN" target="_blank" rel="noopener noreferrer" style={{ display:"flex",alignItems:"center",gap:8,padding:"15px 24px",borderRadius:12,fontSize:15,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",textDecoration:"none",transition:"all var(--tr)" }}>
               <Icon name="mail" size={16} fill={1} /> Talk to Sales
             </a>
           </div>
@@ -896,7 +896,7 @@ export default function PricingPage({
               { label: "Features", href: "#features", onClick: (e) => { e.preventDefault(); onBack?.("#features"); } },
               { label: "How it Works", href: "#howitworks", onClick: (e) => { e.preventDefault(); onBack?.("#howitworks"); } },
               { label: "Pricing", onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
-              { label: "Support", href: "mailto:support@nori.dev" },
+              { label: "Support", href: "https://discord.gg/WrpaytBfN" },
               { label: "Privacy Policy", onClick: onShowPrivacy },
               { label: "Terms & Conditions", onClick: onShowTerms },
             ].map((item, i) => (
@@ -927,7 +927,7 @@ export default function PricingPage({
         </div>
         <div style={{ maxWidth:1200,margin:"24px auto 0",paddingTop:20,borderTop:"1px solid var(--border2)",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap" }}>
           <span style={{ fontSize:12,color:"var(--muted2)" }}>© 2026 Nori · Not affiliated with Discord Inc.</span>
-          <a href="mailto:support@nori.dev" style={{ fontSize:12,color:"var(--accent-deep)",textDecoration:"none",fontWeight:600,transition:"color var(--tr)" }} onMouseEnter={e => e.currentTarget.style.color = "var(--navy)"} onMouseLeave={e => e.currentTarget.style.color = "var(--accent-deep)"}>support@nori.dev</a>
+          <a href="mailto:support@noribot.dev" style={{ fontSize:12,color:"var(--accent-deep)",textDecoration:"none",fontWeight:600,transition:"color var(--tr)" }} onMouseEnter={e => e.currentTarget.style.color = "var(--navy)"} onMouseLeave={e => e.currentTarget.style.color = "var(--accent-deep)"}>support@noribot.dev</a>
           <span style={{ fontSize:12,color:"var(--muted2)" }}>Your docs. Your bot. Your community.</span>
         </div>
       </footer>

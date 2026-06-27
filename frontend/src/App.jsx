@@ -226,7 +226,7 @@ function Dashboard({
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               {[
                 { label: "Docs", href: "#", onClick: (e) => { e.preventDefault(); changeTab("docs"); } },
-                { label: "Invite", href: "https://discord.gg/eBRgsseN" },
+                { label: "Invite", href: "https://discord.gg/WrpaytBfN" },
                 { label: "Discord", href: activeGuild?.id ? `https://discord.com/channels/${activeGuild.id}` : "https://discord.com" },
               ].map(({ label, href, onClick }) => (
                 <a

@@ -1099,7 +1099,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
               ))}
             </ul>
             <span style={{ height:12, width:1, background:"var(--border2)" }} />
-            <a href="mailto:support@nori.dev" style={{ fontSize:12.5, color:"var(--accent-deep)", textDecoration:"none", fontWeight:600, transition:"color var(--tr)" }} onMouseEnter={e => e.currentTarget.style.color = "var(--navy)"} onMouseLeave={e => e.currentTarget.style.color = "var(--accent-deep)"}>support@nori.dev</a>
+            <a href="mailto:support@noribot.dev" style={{ fontSize:12.5, color:"var(--accent-deep)", textDecoration:"none", fontWeight:600, transition:"color var(--tr)" }} onMouseEnter={e => e.currentTarget.style.color = "var(--navy)"} onMouseLeave={e => e.currentTarget.style.color = "var(--accent-deep)"}>support@noribot.dev</a>
           </div>
         </div>
       </footer>
