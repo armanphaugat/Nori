@@ -13,7 +13,7 @@ from dbhelper.db_helper import *
 import base64
 import pandas as pd
 from dotenv import load_dotenv
-from graphlit_api import FeedSchedulePolicyInput, FeedTypes, TimedPolicyRecurrenceTypes, WebFeedPropertiesInput,FeedInput
+from graphlit_api import *
 load_dotenv()
 env_id = os.getenv("GRAPHLIT_ENVIRONMENT_ID")
 org_key = os.getenv("GRAPHLIT_ORGANIZATION_ID") or os.getenv("GRAPHLIT_ORGANIZATION_KEY")
@@ -219,22 +219,40 @@ async def add_video_graphlit(server_id: str, file):
         print(f"[{server_id}] Failed: {e}")
         return 0
 
-async def add_github_repo_graphlit(server_id: str, repo_url: str, personal_access_token: str = None):
+async def add_github_repo_graphlit(server_id: str, repo_url: str, personal_access_token: str | None = None):
     try:
-        repo_config = {
-            "uri": repo_url
-        }
-        if personal_access_token:
-            repo_config["github"] = {
-                "personalAccessToken": personal_access_token
-            }
-        response = await graphlit.client.ingest_github_repository(
-            repository=repo_config,
-            is_synchronous=True
+        parts = repo_url.rstrip("/").split("/")
+        repo_name = parts[-1]
+        repo_owner = parts[-2]
+        token = personal_access_token or os.environ.get("GITHUB_PERSONAL_ACCESS_TOKEN")
+        response = await graphlit.client.create_feed(
+            feed=FeedInput(
+                name=f"f{repo_name}-{server_id}",
+                type=FeedTypes.SITE,
+                site=SiteFeedPropertiesInput(
+                    type=FeedServiceTypes.GIT_HUB,
+                    is_recursive=True,
+                    github=GitHubFeedPropertiesInput(
+                        authentication_type=GitHubAuthenticationTypes.PERSONAL_ACCESS_TOKEN if token else None,
+                        repository_owner=repo_owner,
+                        repository_name=repo_name,
+                        personal_access_token=token,
+                    ),
+                ),
+            )
         )
-        await add_content_id(server_id, str(response.ingest_github_repository.id))
-        return response.ingest_github_repository.id
-        
+        result = response.create_feed
+        feed_id = result.id
+        while True:
+            response = await graphlit.client.is_feed_done(id=feed_id)
+            result = response.is_feed_done
+            if result.result:
+                break
+            await asyncio.sleep(2)
+
+        await add_feed_id(server_id, feed_id)
+        return feed_id
+
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
         return 0

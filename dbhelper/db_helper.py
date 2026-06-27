@@ -1152,3 +1152,17 @@ async def get_watched_threads() -> set:
         result = await s.execute(text("SELECT thread_id FROM watched_threads"))
         rows = result.mappings().all()
         return {row["thread_id"] for row in rows}
+    
+async def get_github_ingested_count(guild_id: str) -> int:
+    async with AsyncDB() as s:
+        result = await s.execute(
+            text("""
+                SELECT COUNT(*) 
+                FROM uploads
+                WHERE server_id = :sid
+                  AND type = 'github'
+                  AND status = 'ok'
+            """),
+            {"sid": str(guild_id)},
+        )
+        return result.scalar() or 0
