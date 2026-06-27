@@ -3,35 +3,34 @@ fastapi
 uvicorn[standard]
 python-multipart
 python-dotenv
-httpx                        # used in auth_controller for Discord OAuth calls
+httpx
 
 # ─── Auth ─────────────────────────────────────────────────────────────────────
-PyJWT                        # FIX: was missing — used as `import jwt` in middleware/auth.py
+PyJWT
 
 # ─── Database ─────────────────────────────────────────────────────────────────
 sqlalchemy
-psycopg2-binary              # FIX: was missing — postgres driver for SQLAlchemy
-asyncpg                      # FIX: was missing — async postgres driver for SQLAlchemy
+psycopg2-binary
+asyncpg
 
 # ─── Cache / Queue ────────────────────────────────────────────────────────────
-redis
-redis[asyncio]               # needed by BullMQ async worker
-bullmq                       # FIX: was missing — used in utils/BullMQ.py
+# ─── Cache / Queue ────────────────────────────────────────────────────────────
+redis>=4.6.0
+bullmq==2.25.2
 
-# ─── LangChain / RAG stack ────────────────────────────────────────────────────
+# ─── LangChain (used in utils/web_search.py only) ────────────────────────────
 langchain-core
-langchain-community
-langchain-huggingface
 langchain-groq
-langchain-text-splitters
+
+# ─── RAG / ML stack ───────────────────────────────────────────────────────────
 faiss-cpu
 sentence-transformers
-rank-bm25                  
+rank-bm25
 PyPDF2
-pdfplumber                 
+pdfplumber
 docx2txt
-pandas                      
-openpyxl                     
+pandas
+openpyxl
 pytesseract
 Pillow
 beautifulsoup4
@@ -42,3 +41,4 @@ tavily-python
 exa-py
 graphlit-client
 discord.py
+groq

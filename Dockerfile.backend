@@ -42,7 +42,7 @@ COPY utils/     ./utils/
 COPY prompt.txt ./prompt.txt
 COPY scripts/start-app.sh ./scripts/start-app.sh
 
-RUN chmod +x ./scripts/start-app.sh
+RUN sed -i 's/\r//' ./scripts/start-app.sh && chmod +x ./scripts/start-app.sh
 
 EXPOSE 8000
 

@@ -9,8 +9,8 @@ from io import BytesIO
 from datetime import datetime, timezone, timedelta
 import time
 
-from utils.GROQ_AS_LAYER import detect_question
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+from utils.Detection import detect_question
 from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event, get_channel_config, get_web_search,get_total_questions,get_server_plan,get_questions_since,get_watched_threads,remove_watched_thread,add_watched_thread
 from python.query import query_graphlit, query_graphlit_web
 from python.ingest import read_ocr_async
@@ -247,12 +247,10 @@ async def on_message(message):
         latency_ms = round((time.time() - start_time) * 1000, 2)
         await send_answer_with_feedback(message.channel, message.author, str(message.guild.id), message.content, answer)
         if is_no_kb_response(answer):
-            conf = 0.0
-            await log_question_event(str(message.guild.id), str(message.author.name), False, latency_ms, message.jump_url, conf)
+            await log_question_event(str(message.guild.id), str(message.author.name), False, latency_ms, message.jump_url)
             await notify_mod_channel(message.guild, message.channel, message.author, message.content)
         else:
-            conf = get_confidence_score(True, answer)
-            await log_question_event(str(message.guild.id), str(message.author.name), True, latency_ms, message.jump_url, conf)
+            await log_question_event(str(message.guild.id), str(message.author.name), True, latency_ms, message.jump_url)
         return
     await bot.process_commands(message)
 
