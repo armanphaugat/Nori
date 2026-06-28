@@ -6,8 +6,7 @@ version: "3.9"
 #   backend  → FastAPI + Discord bot on port 12000
 #   bullmq   → rotates Groq/Tavily/Exa keys every 5 min
 #
-# Redis runs on the HOST — start it before bringing this stack up:
-#   podman run -d --name redis -p 6379:6379 redis redis-server --requirepass noripassword
+# Redis runs natively on the VPS at 127.0.0.1:6379 with ACL auth
 
 services:
 
@@ -24,7 +23,8 @@ services:
       - PYTHONUNBUFFERED=1
       - REDIS_HOST=host.docker.internal
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=noripassword
+      - REDIS_USER=your_redis_username
+      - REDIS_PASSWORD=your_redis_password
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
@@ -42,7 +42,8 @@ services:
       - PYTHONUNBUFFERED=1
       - REDIS_HOST=host.docker.internal
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=noripassword
+      - REDIS_USER=your_redis_username
+      - REDIS_PASSWORD=your_redis_password
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
