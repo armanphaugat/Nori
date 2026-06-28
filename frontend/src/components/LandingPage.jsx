@@ -588,7 +588,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
         <div style={{ display:"flex",alignItems:"center",gap:12 }}>
           {/* Menu links - hidden below 900px */}
           <div className="hide900" style={{ display:"flex",alignItems:"center",gap:2 }}>
-            {[["Features","#features"],["How it Works","#howitworks"],["Compare","#compare"],["FAQ","#faq"]].map(([l,h],i) => (
+            {[["Features","#features"],["How it Works","#howitworks"]].map(([l,h],i) => (
               <a key={i} href={h} className="nav-link" style={{ padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,letterSpacing:"0.02em",color:"var(--muted)",textDecoration:"none",transition:"all var(--tr)" }}>{l}</a>
             ))}
             <button
