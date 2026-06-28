@@ -268,21 +268,15 @@ const TIERS = [
     badge: null,
     base: {
       messages: 50,
-      docs: 5,
-      storage: "25 MB",
+      urls: 5,
+      files: 3,
     },
     overage: null,
     features: [
       { text: "50 bot messages / month", on: true },
-      { text: "Up to 5 uploaded documents", on: true },
-      { text: "PDF & plain text support", on: true },
-      { text: "Source citations on answers", on: true },
-      { text: "25 MB document storage", on: true },
-      { text: "URL / website ingestion", on: false },
-      { text: "Image & OCR support", on: false },
-      { text: "Analytics dashboard", on: false },
-      { text: "Custom bot persona", on: false },
-      { text: "Priority support", on: false },
+      { text: "Up to 5 ingested URLs", on: true },
+      { text: "Up to 3 uploaded files", on: true },
+      { text: "Support via Discord server", on: true },
     ],
     cta: "Get Started Free",
     ctaStyle: "ghost",
@@ -298,24 +292,15 @@ const TIERS = [
     badge: null,
     base: {
       messages: 200,
-      docs: 10,
-      storage: "500 MB",
+      urls: 10,
+      files: 10,
     },
-    overage: {
-      messages: "$0.04 / extra message",
-      storage: "$0.10 / extra 100 MB",
-    },
+    overage: null,
     features: [
       { text: "200 bot messages / month", on: true },
-      { text: "Up to 10 uploaded documents", on: true },
-      { text: "PDF, DOCX, XLSX & images", on: true },
-      { text: "Source citations on answers", on: true },
-      { text: "500 MB document storage", on: true },
-      { text: "URL / website ingestion (5 URLs)", on: true },
-      { text: "Image & OCR support", on: true },
-      { text: "Analytics dashboard", on: false },
-      { text: "Custom bot persona", on: false },
-      { text: "Priority support", on: false },
+      { text: "Up to 10 ingested URLs", on: true },
+      { text: "Up to 10 uploaded files", on: true },
+      { text: "Support via Discord server", on: true },
     ],
     cta: "Start Free Trial",
     ctaStyle: "ghost",
@@ -332,24 +317,15 @@ const TIERS = [
     featured: true,
     base: {
       messages: 800,
-      docs: 50,
-      storage: "25 GB",
+      urls: 50,
+      files: 50,
     },
-    overage: {
-      messages: "$0.02 / extra message",
-      storage: "$0.05 / extra GB",
-    },
+    overage: null,
     features: [
       { text: "800 bot messages / month", on: true },
-      { text: "Up to 50 documents", on: true },
-      { text: "All file types supported", on: true },
-      { text: "Source citations on answers", on: true },
-      { text: "25 GB document storage", on: true },
-      { text: "Unlimited URL ingestion + auto-sync", on: true },
-      { text: "Image & OCR support", on: true },
-      { text: "Advanced analytics + export", on: true },
-      { text: "Multiple custom bot personas", on: true },
-      { text: "Priority email support (24h)", on: true },
+      { text: "Up to 50 ingested URLs", on: true },
+      { text: "Up to 50 uploaded files", on: true },
+      { text: "Priority email + Discord support", on: true },
     ],
     cta: "Get Pro",
     ctaStyle: "dark",
@@ -367,21 +343,15 @@ const TIERS = [
     enterprise: true,
     base: {
       messages: "Unlimited",
-      docs: "Unlimited",
-      storage: "Custom",
+      urls: "Unlimited",
+      files: "Unlimited",
     },
     overage: null,
     features: [
       { text: "Unlimited bot messages", on: true },
-      { text: "Unlimited documents", on: true },
-      { text: "All file types supported", on: true },
-      { text: "Source citations on answers", on: true },
-      { text: "Custom storage allocation", on: true },
-      { text: "Dedicated URL sync pipelines", on: true },
-      { text: "Image & OCR support", on: true },
-      { text: "White-label bot branding", on: true },
+      { text: "Unlimited ingested URLs", on: true },
+      { text: "Unlimited uploaded files", on: true },
       { text: "SLA + dedicated success manager", on: true },
-      { text: "SSO / SAML & audit logs", on: true },
     ],
     cta: "Talk to Sales",
     ctaStyle: "dark",
@@ -390,8 +360,8 @@ const TIERS = [
 
 const COMPARE_FEATURES = [
   { label: "Messages / month",       free: "50",          starter: "200",       pro: "800",             enterprise: "Unlimited" },
-  { label: "Document uploads",       free: "5",           starter: "10",        pro: "50",              enterprise: "Unlimited" },
-  { label: "Storage",                free: "25 MB",       starter: "500 MB",    pro: "25 GB",           enterprise: "Custom" },
+  { label: "URL uploads",            free: "5",           starter: "10",        pro: "50",              enterprise: "Unlimited" },
+  { label: "File uploads",           free: "3",           starter: "10",        pro: "50",              enterprise: "Unlimited" },
   { label: "PDF & DOCX support",     free: true,          starter: true,        pro: true,              enterprise: true },
   { label: "Image / OCR support",    free: false,         starter: true,        pro: true,              enterprise: true },
   { label: "URL ingestion",          free: false,         starter: "5 URLs",    pro: "Unlimited",       enterprise: "Unlimited" },
@@ -401,7 +371,6 @@ const COMPARE_FEATURES = [
   { label: "Web search fallback",    free: false,         starter: false,       pro: true,              enterprise: true },
   { label: "Priority support",       free: false,         starter: false,       pro: "24h email",       enterprise: "Dedicated SLA" },
   { label: "SSO / audit logs",       free: false,         starter: false,       pro: false,             enterprise: true },
-  { label: "Overage billing",        free: "None",        starter: "Yes",       pro: "Yes",             enterprise: "Custom" },
 ];
 
 const FAQS = [
@@ -542,7 +511,7 @@ export default function PricingPage({
           </h1>
 
           <p className="a2" style={{ fontSize:18,lineHeight:1.8,color:"var(--muted)",maxWidth:560,margin:"0 auto 40px",fontWeight:300 }}>
-            Every plan includes the full feature set for that tier. Exceed your base allowance? We bill only the overage, no plan-jumping required.
+            Every plan includes the full feature set for that tier. Simple, transparent pricing with no hidden fees or overage charges.
           </p>
 
           {/* Billing toggle */}
@@ -653,8 +622,8 @@ export default function PricingPage({
                       <div style={{ fontSize:10,fontWeight:700,color:"var(--muted2)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:8 }}>Base Includes</div>
                       {[
                         ["chat_bubble", `${tier.base.messages} messages`],
-                        ["description", `${tier.base.docs} documents`],
-                        ["storage", `${tier.base.storage} storage`],
+                        ["link", `${tier.base.urls} URLs`],
+                        ["description", `${tier.base.files} files`],
                       ].map(([icon, val], j) => (
                         <div key={j} style={{ display:"flex",alignItems:"center",gap:7,fontSize:12,color:"var(--muted)",marginBottom: j < 2 ? 5 : 0 }}>
                           <Icon name={icon} size={13} fill={1} style={{ color: isFeatured ? "var(--accent-deep)" : c.text, flexShrink:0 }} />
@@ -753,36 +722,6 @@ export default function PricingPage({
               <div key={i} style={{ display:"flex",alignItems:"center",gap:7,fontSize:13,color:"var(--muted2)" }}>
                 <Icon name={icon} size={15} fill={1} style={{ color:"var(--slate)" }} />
                 {text}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* OVERAGE EXPLAINER */}
-      <section style={{ padding:"72px 64px",background:"var(--surface2)",borderTop:"1px solid var(--border)" }}>
-        <div style={{ maxWidth:1000,margin:"0 auto" }}>
-          <div style={{ textAlign:"center",marginBottom:48 }}>
-            <SectionLabel text="How Overage Works" />
-            <h2 style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:"clamp(26px,3.5vw,44px)",lineHeight:1.1,color:"var(--navy)",marginBottom:12 }}>No Surprise Bills, Ever</h2>
-            <p style={{ fontSize:16,color:"var(--muted)",lineHeight:1.8,maxWidth:520,margin:"0 auto",fontWeight:300 }}>Your base plan covers most usage. If a busy month pushes you over, we charge only for what's extra, and alert you before it happens.</p>
-          </div>
-
-          <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:20 }}>
-            {[
-              { icon:"notifications_active", title:"Alerts at 80% & 100%", desc:"We email you when you're approaching your limit so you can decide whether to upgrade or let overage billing kick in." },
-              { icon:"receipt_long",         title:"Itemised monthly invoice", desc:"Every message and storage byte is logged. Your invoice shows exactly what you used and what you were charged for." },
-              { icon:"arrow_upward",         title:"Upgrade at any time", desc:"If you're consistently hitting your base limit, upgrade mid-month and we'll prorate the cost automatically." },
-              { icon:"pause_circle",         title:"Pause instead of cancel", desc:"Going quiet for a month? Pause your subscription and resume later without losing your knowledge base or settings." },
-            ].map((item, i) => (
-              <div key={i} style={{ background:"white",border:"1px solid var(--border2)",borderRadius:14,padding:"24px 22px",display:"flex",gap:16,alignItems:"flex-start" }}>
-                <div style={{ width:42,height:42,borderRadius:11,background:"rgba(239,35,60,0.08)",border:"1px solid rgba(239,35,60,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:"var(--accent-deep)" }}>
-                  <Icon name={item.icon} size={20} fill={1} />
-                </div>
-                <div>
-                  <div style={{ fontSize:14,fontWeight:600,color:"var(--navy)",marginBottom:6,fontFamily:"'Plus Jakarta Sans', sans-serif" }}>{item.title}</div>
-                  <div style={{ fontSize:13,color:"var(--muted)",lineHeight:1.6,fontWeight:300 }}>{item.desc}</div>
-                </div>
               </div>
             ))}
           </div>
