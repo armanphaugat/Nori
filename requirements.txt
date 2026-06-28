@@ -14,31 +14,26 @@ psycopg2-binary
 asyncpg
 
 # ─── Cache / Queue ────────────────────────────────────────────────────────────
-# ─── Cache / Queue ────────────────────────────────────────────────────────────
-redis>=4.6.0
-bullmq==2.25.2
+redis>=5.0.0                 # bullmq worker installs separately in its own container
 
-# ─── LangChain (used in utils/web_search.py only) ────────────────────────────
-langchain-core
-langchain-groq
 
-# ─── RAG / ML stack ───────────────────────────────────────────────────────────
-faiss-cpu
-sentence-transformers
-rank-bm25
-PyPDF2
-pdfplumber
+# ─── Document / media parsing ─────────────────────────────────────────────────
 docx2txt
+pandas
+openpyxl
 pandas
 openpyxl
 pytesseract
 Pillow
 beautifulsoup4
 requests
-playwright
 openai-whisper
+
+# ─── AI / Search services ─────────────────────────────────────────────────────
 tavily-python
 exa-py
 graphlit-client
+
+# ─── Discord ──────────────────────────────────────────────────────────────────
 discord.py
 groq

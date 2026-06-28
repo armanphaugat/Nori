@@ -13,7 +13,7 @@ const TIER_DETAILS = {
     color: "var(--slate)",
     bg: "rgba(141,153,174,0.14)",
     max: 50,
-    features: ["50 bot messages / month", "Up to 5 documents", "PDF & plain text support"]
+    features: ["50 bot messages / month", "Up to 5 ingested URLs", "Up to 3 uploaded files", "Support via Discord server"]
   },
   starter: {
     name: "Starter Tier",
@@ -22,7 +22,7 @@ const TIER_DETAILS = {
     color: "#1a5fab",
     bg: "rgba(56,133,220,0.09)",
     max: 200,
-    features: ["200 bot messages / month", "Up to 10 documents", "PDF, DOCX, XLSX & images", "URL / website ingestion (5 URLs)"]
+    features: ["200 bot messages / month", "Up to 10 ingested URLs", "Up to 10 uploaded files", "Support via Discord server"]
   },
   pro: {
     name: "Pro Tier",
@@ -31,7 +31,7 @@ const TIER_DETAILS = {
     color: "var(--navy)",
     bg: "rgba(43,45,66,0.07)",
     max: 800,
-    features: ["800 bot messages / month", "Up to 50 documents", "All file types supported", "Advanced analytics + export", "Multiple custom bot personas"]
+    features: ["800 bot messages / month", "Up to 50 ingested URLs", "Up to 50 uploaded files", "Priority email + Discord support"]
   },
   enterprise: {
     name: "Enterprise Tier",
@@ -40,7 +40,7 @@ const TIER_DETAILS = {
     color: "var(--navy)",
     bg: "rgba(43,45,66,0.07)",
     max: 1000000,
-    features: ["Unlimited bot messages", "Unlimited documents", "Custom storage allocation", "White-label bot branding", "SSO / SAML & audit logs"]
+    features: ["Unlimited bot messages", "Unlimited ingested URLs", "Unlimited uploaded files", "SLA + dedicated success manager"]
   },
   paid: {
     name: "Paid Premium Tier",
@@ -49,7 +49,7 @@ const TIER_DETAILS = {
     color: "var(--accent)",
     bg: "rgba(239,35,60,0.08)",
     max: 1000000,
-    features: ["1,000,000 bot messages / month", "Unlimited documents", "All file types supported", "Priority bot response time"]
+    features: ["1,000,000 bot messages / month", "Unlimited ingested URLs", "Unlimited uploaded files", "Priority bot response time"]
   }
 };
 

@@ -10,48 +10,6 @@ version: "3.9"
 
 services:
 
-  redis:
-    image: redis:7-alpine
-    container_name: nexus-redis
-    command: redis-server --save 60 1 --loglevel warning
-    volumes:
-      - redis_data:/data
-    restart: unless-stopped
-    networks:
-      - nexus-net
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
-    container_name: nexus-backend
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
-    environment:
-      - PYTHONUNBUFFERED=1
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - UVICORN_WORKERS=1
-    depends_on:
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-    networks:
-      - nexus-net
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 120s
-
   bullmq:
     build:
       context: .
@@ -61,11 +19,12 @@ services:
       - .env
     environment:
       - PYTHONUNBUFFERED=1
-      - REDIS_HOST=redis
+      - REDIS_HOST=host.docker.internal
       - REDIS_PORT=6379
-    depends_on:
-      redis:
-        condition: service_healthy
+      - REDIS_USER=vaultbot
+      - REDIS_PASSWORD=noripassword
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     networks:
       - nexus-net
@@ -79,16 +38,11 @@ services:
     container_name: nexus-frontend
     ports:
       - "80:80"
-    depends_on:
-      backend:
-        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     networks:
       - nexus-net
-
-volumes:
-  redis_data:
-    driver: local
 
 networks:
   nexus-net:
