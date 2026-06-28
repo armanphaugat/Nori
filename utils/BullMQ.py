@@ -18,6 +18,9 @@ connection = {
     "host": os.getenv("REDIS_HOST", "localhost"),
     "port": int(os.getenv("REDIS_PORT", 6379)),
 }
+_redis_user = os.getenv("REDIS_USER", "")
+if _redis_user:
+    connection["username"] = _redis_user
 _redis_password = os.getenv("REDIS_PASSWORD", "")
 if _redis_password:
     connection["password"] = _redis_password
