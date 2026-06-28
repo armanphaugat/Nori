@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { API_BASE } from "../utils/api.js";
 
 function Icon({ name, size = 20, fill = 0, style = {} }) {
   return (
@@ -19,8 +20,10 @@ function Icon({ name, size = 20, fill = 0, style = {} }) {
 
 function DiscordIcon({ size = 16 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.101 18.079.11 18.1.128 18.115a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
+    <svg width={size} height={size} viewBox="0 0 256 256" fill="currentColor" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <g transform="translate(0, 28.5)">
+        <path d="M216.856 16.597A208.502 208.502 0 0 0 164.042 0c-2.275 4.113-4.933 9.645-6.766 14.046-19.692-2.961-39.203-2.961-58.533 0-1.832-4.4-4.55-9.933-6.846-14.046a207.809 207.809 0 0 0-52.855 16.638C5.618 67.147-3.443 116.4 1.087 164.956c22.169 16.555 43.653 26.612 64.775 33.193A161.094 161.094 0 0 0 79.735 175.3a136.413 136.413 0 0 1-21.846-10.632 108.636 108.636 0 0 0 5.356-4.237c42.122 19.702 87.89 19.702 129.51 0a131.66 131.66 0 0 0 5.355 4.237 136.07 136.07 0 0 1-21.886 10.653c4.006 8.02 8.638 15.67 13.873 22.848 21.142-6.58 42.646-16.637 64.815-33.213 5.316-56.288-9.08-105.09-38.056-148.36ZM85.474 135.095c-12.645 0-23.015-11.805-23.015-26.18s10.149-26.2 23.015-26.2c12.867 0 23.236 11.804 23.015 26.2.02 14.375-10.148 26.18-23.015 26.18Zm85.051 0c-12.645 0-23.014-11.805-23.014-26.18s10.148-26.2 23.014-26.2c12.867 0 23.236 11.804 23.015 26.2 0 14.375-10.148 26.18-23.015 26.18Z" />
+      </g>
     </svg>
   );
 }
@@ -227,14 +230,29 @@ const CSS = `
     box-shadow: 0 4px 16px rgba(239,35,60,0.08);
   }
 
+  .show600 { display: none; }
+
+  @media(max-width:1150px) {
+    nav {
+      padding: 0 24px !important;
+    }
+    .pricing-hero {
+      padding: 96px 24px 48px !important;
+    }
+  }
   @media(max-width:900px) {
     .tiers-grid { grid-template-columns: repeat(2, 1fr) !important; }
     .hide900 { display: none !important; }
+    nav {
+      padding: 0 16px !important;
+    }
   }
   @media(max-width:600px) {
     .tiers-grid { grid-template-columns: 1fr !important; }
-    .pricing-hero { padding: 100px 24px 48px !important; }
+    .pricing-hero { padding: 96px 24px 48px !important; }
     section { padding-left: 24px !important; padding-right: 24px !important; }
+    .hide600 { display: none !important; }
+    .show600 { display: inline !important; }
   }
 `;
 
@@ -249,24 +267,16 @@ const TIERS = [
     icon: "explore",
     badge: null,
     base: {
-      messages: 200,
-      docs: 5,
-      servers: 1,
-      storage: "25 MB",
+      messages: 50,
+      urls: 5,
+      files: 3,
     },
     overage: null,
     features: [
-      { text: "200 bot messages / month", on: true },
-      { text: "Up to 5 uploaded documents", on: true },
-      { text: "PDF & plain text support", on: true },
-      { text: "1 Discord server", on: true },
-      { text: "Source citations on answers", on: true },
-      { text: "25 MB document storage", on: true },
-      { text: "URL / website ingestion", on: false },
-      { text: "Image & OCR support", on: false },
-      { text: "Analytics dashboard", on: false },
-      { text: "Custom bot persona", on: false },
-      { text: "Priority support", on: false },
+      { text: "50 bot messages / month", on: true },
+      { text: "Up to 5 ingested URLs", on: true },
+      { text: "Up to 3 uploaded files", on: true },
+      { text: "Support via Discord server", on: true },
     ],
     cta: "Get Started Free",
     ctaStyle: "ghost",
@@ -275,72 +285,25 @@ const TIERS = [
     id: "starter",
     name: "Starter",
     tagline: "For small communities getting serious",
-    monthlyPrice: 12,
-    yearlyPrice: 9,
+    monthlyPrice: 25,
+    yearlyPrice: 19,
     color: "blue",
     icon: "bolt",
     badge: null,
     base: {
-      messages: 2000,
-      docs: 30,
-      servers: 3,
-      storage: "500 MB",
+      messages: 200,
+      urls: 10,
+      files: 10,
     },
-    overage: {
-      messages: "$0.004 / extra message",
-      storage: "$0.05 / extra 100 MB",
-    },
+    overage: null,
     features: [
-      { text: "2,000 bot messages / month", on: true },
-      { text: "Up to 30 uploaded documents", on: true },
-      { text: "PDF, DOCX, XLSX & images", on: true },
-      { text: "Up to 3 Discord servers", on: true },
-      { text: "Source citations on answers", on: true },
-      { text: "500 MB document storage", on: true },
-      { text: "URL / website ingestion (5 URLs)", on: true },
-      { text: "Image & OCR support", on: true },
-      { text: "Analytics dashboard", on: false },
-      { text: "Custom bot persona", on: false },
-      { text: "Priority support", on: false },
+      { text: "200 bot messages / month", on: true },
+      { text: "Up to 10 ingested URLs", on: true },
+      { text: "Up to 10 uploaded files", on: true },
+      { text: "Support via Discord server", on: true },
     ],
     cta: "Start Free Trial",
     ctaStyle: "ghost",
-  },
-  {
-    id: "growth",
-    name: "Growth",
-    tagline: "For active, growing communities",
-    monthlyPrice: 39,
-    yearlyPrice: 29,
-    color: "red",
-    icon: "trending_up",
-    badge: "Most Popular",
-    featured: true,
-    base: {
-      messages: 10000,
-      docs: 150,
-      servers: 10,
-      storage: "5 GB",
-    },
-    overage: {
-      messages: "$0.003 / extra message",
-      storage: "$0.04 / extra GB",
-    },
-    features: [
-      { text: "10,000 bot messages / month", on: true },
-      { text: "Up to 150 uploaded documents", on: true },
-      { text: "All file types supported", on: true },
-      { text: "Up to 10 Discord servers", on: true },
-      { text: "Source citations on answers", on: true },
-      { text: "5 GB document storage", on: true },
-      { text: "Unlimited URL ingestion + auto-sync", on: true },
-      { text: "Image & OCR support", on: true },
-      { text: "Full analytics dashboard", on: true },
-      { text: "Custom bot persona & name", on: true },
-      { text: "Email support (48h response)", on: false },
-    ],
-    cta: "Start Free Trial",
-    ctaStyle: "primary",
   },
   {
     id: "pro",
@@ -350,29 +313,19 @@ const TIERS = [
     yearlyPrice: 79,
     color: "navy",
     icon: "workspace_premium",
-    badge: null,
+    badge: "Most Popular",
+    featured: true,
     base: {
-      messages: 40000,
-      docs: 500,
-      servers: 25,
-      storage: "25 GB",
+      messages: 800,
+      urls: 50,
+      files: 50,
     },
-    overage: {
-      messages: "$0.002 / extra message",
-      storage: "$0.03 / extra GB",
-    },
+    overage: null,
     features: [
-      { text: "40,000 bot messages / month", on: true },
-      { text: "Up to 500 documents", on: true },
-      { text: "All file types supported", on: true },
-      { text: "Up to 25 Discord servers", on: true },
-      { text: "Source citations on answers", on: true },
-      { text: "25 GB document storage", on: true },
-      { text: "Unlimited URL ingestion + auto-sync", on: true },
-      { text: "Image & OCR support", on: true },
-      { text: "Advanced analytics + export", on: true },
-      { text: "Multiple custom bot personas", on: true },
-      { text: "Priority email support (24h)", on: true },
+      { text: "800 bot messages / month", on: true },
+      { text: "Up to 50 ingested URLs", on: true },
+      { text: "Up to 50 uploaded files", on: true },
+      { text: "Priority email + Discord support", on: true },
     ],
     cta: "Get Pro",
     ctaStyle: "dark",
@@ -390,23 +343,15 @@ const TIERS = [
     enterprise: true,
     base: {
       messages: "Unlimited",
-      docs: "Unlimited",
-      servers: "Unlimited",
-      storage: "Custom",
+      urls: "Unlimited",
+      files: "Unlimited",
     },
     overage: null,
     features: [
       { text: "Unlimited bot messages", on: true },
-      { text: "Unlimited documents", on: true },
-      { text: "All file types supported", on: true },
-      { text: "Unlimited Discord servers", on: true },
-      { text: "Source citations on answers", on: true },
-      { text: "Custom storage allocation", on: true },
-      { text: "Dedicated URL sync pipelines", on: true },
-      { text: "Image & OCR support", on: true },
-      { text: "White-label bot branding", on: true },
+      { text: "Unlimited ingested URLs", on: true },
+      { text: "Unlimited uploaded files", on: true },
       { text: "SLA + dedicated success manager", on: true },
-      { text: "SSO / SAML & audit logs", on: true },
     ],
     cta: "Talk to Sales",
     ctaStyle: "dark",
@@ -414,29 +359,27 @@ const TIERS = [
 ];
 
 const COMPARE_FEATURES = [
-  { label: "Messages / month",       free: "200",         starter: "2,000",     growth: "10,000",        pro: "40,000",          enterprise: "Unlimited" },
-  { label: "Document uploads",       free: "5",           starter: "30",        growth: "150",           pro: "500",             enterprise: "Unlimited" },
-  { label: "Discord servers",        free: "1",           starter: "3",         growth: "10",            pro: "25",              enterprise: "Unlimited" },
-  { label: "Storage",                free: "25 MB",       starter: "500 MB",    growth: "5 GB",          pro: "25 GB",           enterprise: "Custom" },
-  { label: "PDF & DOCX support",     free: true,          starter: true,        growth: true,            pro: true,              enterprise: true },
-  { label: "Image / OCR support",    free: false,         starter: true,        growth: true,            pro: true,              enterprise: true },
-  { label: "URL ingestion",          free: false,         starter: "5 URLs",    growth: "Unlimited",     pro: "Unlimited",       enterprise: "Unlimited" },
-  { label: "Auto-sync URLs",         free: false,         starter: false,       growth: true,            pro: true,              enterprise: true },
-  { label: "Analytics dashboard",    free: false,         starter: false,       growth: true,            pro: "Advanced",        enterprise: "Custom" },
-  { label: "Custom bot persona",     free: false,         starter: false,       growth: true,            pro: "Multiple",        enterprise: "White-label" },
-  { label: "Web search fallback",    free: false,         starter: false,       growth: true,            pro: true,              enterprise: true },
-  { label: "Priority support",       free: false,         starter: false,       growth: false,           pro: "24h email",       enterprise: "Dedicated SLA" },
-  { label: "SSO / audit logs",       free: false,         starter: false,       growth: false,           pro: false,             enterprise: true },
-  { label: "Overage billing",        free: "None",        starter: "Yes",       growth: "Yes",           pro: "Yes",             enterprise: "Custom" },
+  { label: "Messages / month",       free: "50",          starter: "200",       pro: "800",             enterprise: "Unlimited" },
+  { label: "URL uploads",            free: "5",           starter: "10",        pro: "50",              enterprise: "Unlimited" },
+  { label: "File uploads",           free: "3",           starter: "10",        pro: "50",              enterprise: "Unlimited" },
+  { label: "PDF & DOCX support",     free: true,          starter: true,        pro: true,              enterprise: true },
+  { label: "Image / OCR support",    free: false,         starter: true,        pro: true,              enterprise: true },
+  { label: "URL ingestion",          free: false,         starter: "5 URLs",    pro: "Unlimited",       enterprise: "Unlimited" },
+  { label: "Auto-sync URLs",         free: false,         starter: false,       pro: true,              enterprise: true },
+  { label: "Analytics dashboard",    free: false,         starter: false,       pro: "Advanced",        enterprise: "Custom" },
+  { label: "Custom bot persona",     free: false,         starter: false,       pro: "Multiple",        enterprise: "White-label" },
+  { label: "Web search fallback",    free: false,         starter: false,       pro: true,              enterprise: true },
+  { label: "Priority support",       free: false,         starter: false,       pro: "24h email",       enterprise: "Dedicated SLA" },
+  { label: "SSO / audit logs",       free: false,         starter: false,       pro: false,             enterprise: true },
 ];
 
 const FAQS = [
-  { q: "What counts as a 'message'?", a: "Every time a server member sends a question and VaultBot responds, that's one message. Commands, setup interactions, and analytics views don't count. You can monitor usage in real time on the dashboard." },
-  { q: "What happens if I exceed my monthly message limit?", a: "On Starter, Growth, and Pro plans you can continue using the bot, we simply bill the overage at the per-message rate shown on your plan. We'll send you an email alert at 80% and 100% of your base allocation so there are no surprises." },
+  { q: "What counts as a 'message'?", a: "Every time a server member sends a question and Nori responds, that's one message. Commands, setup interactions, and analytics views don't count. You can monitor usage in real time on the dashboard." },
+  { q: "What happens if I exceed my monthly message limit?", a: "On Starter and Pro plans you can continue using the bot, we simply bill the overage at the per-message rate shown on your plan. We'll send you an email alert at 80% and 100% of your base allocation so there are no surprises." },
   { q: "Can I switch plans mid-month?", a: "Yes. Upgrades take effect instantly; you'll be charged a prorated amount for the remainder of the billing period. Downgrades take effect at the start of your next billing cycle." },
   { q: "What is the free trial for paid plans?", a: "Every paid plan comes with a 14-day free trial with full access to all plan features. No credit card is required to start the trial, you only enter payment details if you decide to continue." },
   { q: "Do documents count against my limit permanently?", a: "Deleted documents are removed from your storage and no longer count. You can replace or rotate your content library as often as you like within your plan's document slot limit." },
-  { q: "What does 'white-label' mean in the Enterprise plan?", a: "Your bot gets a fully custom name, avatar, and brand identity with zero mention of VaultBot anywhere in the interface. Members interact with your bot, not ours." },
+  { q: "What does 'white-label' mean in the Enterprise plan?", a: "Your bot gets a fully custom name, avatar, and brand identity with zero mention of Nori anywhere in the interface. Members interact with your bot, not ours." },
   { q: "Is there a discount for annual billing?", a: "Yes, switching to annual billing saves you roughly 25% compared to monthly pricing across all paid plans. You can toggle between billing periods on this page to see the exact rates." },
 ];
 
@@ -471,8 +414,17 @@ function CellVal({ v }) {
   return <span style={{ fontSize:13,color:"var(--navy)",fontWeight:500 }}>{v}</span>;
 }
 
-export default function PricingPage({ user, onLogin, onShowDashboard ,onBack}) {
-  const [annual, setAnnual] = useState(true);
+export default function PricingPage({ 
+  user, 
+  activeGuildId, 
+  onLogin, 
+  onShowDashboard, 
+  onBack,
+  onInvite,
+  onShowPrivacy,
+  onShowTerms
+}) {
+  const [annual, setAnnual] = useState(false);
   const [faq, setFaq] = useState(null);
   const [scrolled, setScrolled] = useState(false);
 
@@ -510,37 +462,42 @@ export default function PricingPage({ user, onLogin, onShowDashboard ,onBack}) {
         borderBottom:`1px solid ${scrolled ? "rgba(43,45,66,0.15)" : "var(--border)"}`,
         transition:"all 0.3s ease",
       }}>
-        <div onClick={onBack} style={{ textDecoration:"none",display:"flex",alignItems:"center",gap:10,cursor:"pointer" }}>
+        <div onClick={onBack} style={{ textDecoration:"none",display:"flex",alignItems:"center",gap:12,cursor:"pointer" }}>
   <img
     src="/LOGO.png"
-    alt="VaultBot"
-    style={{ width:30,height:30,borderRadius:8,objectFit:"contain",mixBlendMode:"multiply" }}
+    alt="Nori"
+    style={{ width:44,height:44,objectFit:"contain" }}
   />
-  <span style={{ fontFamily:"'Playfair Display',serif",fontWeight:600,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>VaultBot</span>
+  <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>Nori</span>
 </div>
-        <div className="hide900" style={{ display:"flex",alignItems:"center",gap:2 }}>
-  <button
-    onClick={onBack}
-    className="nav-link"
-    style={{ display:"flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,color:"var(--muted)",background:"none",border:"none",cursor:"pointer",transition:"all var(--tr)" }}
-  >
-    <Icon name="arrow_back" size={15} /> Back
-  </button>
+        <div style={{ display:"flex",alignItems:"center",gap:12 }}>
+          {/* Menu links - hidden below 900px */}
+          <div className="hide900" style={{ display:"flex",alignItems:"center",gap:2 }}>
+            <button
+              onClick={onBack}
+              className="nav-link"
+              style={{ display:"flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,color:"var(--muted)",background:"none",border:"none",cursor:"pointer",transition:"all var(--tr)" }}
+            >
+              <Icon name="arrow_back" size={15} /> Back
+            </button>
+            {[["Plans","#pricing"],["Compare","#pricing"],["FAQ","#faq"]].map(([l,h],i) => (
+              <a key={i} href={h} className="nav-link" style={{ padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,letterSpacing:"0.02em",color:"var(--muted)",textDecoration:"none",transition:"all var(--tr)" }}>{l}</a>
+            ))}
+          </div>
 
-  {[["Plans","#pricing"],["Compare","#pricing"],["FAQ","#faq"]].map(([l,h],i) => (
-    <a key={i} href={h} className="nav-link" style={{ padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,letterSpacing:"0.02em",color:"var(--muted)",textDecoration:"none",transition:"all var(--tr)" }}>{l}</a>
-  ))}
-
-  {user ? (
-    <button onClick={onShowDashboard} className="btn-sm" style={{ marginLeft:12,display:"flex",alignItems:"center",gap:8,padding:"8px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:"var(--surface1)",color:"var(--navy)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
-      <Icon name="grid_view" size={15} /> Dashboard
-    </button>
-  ) : (
-    <button onClick={onLogin} className="btn-sm" style={{ marginLeft:12,display:"flex",alignItems:"center",gap:8,padding:"8px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:"var(--surface1)",color:"var(--navy)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
-      <DiscordIcon /> Login with Discord
-    </button>
-  )}
-</div>
+          {/* Primary CTA - always visible */}
+          {user ? (
+            <button onClick={onShowDashboard} className="btn-sm" style={{ display:"flex",alignItems:"center",gap:8,padding:"8px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:"var(--surface1)",color:"var(--navy)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
+              <Icon name="grid_view" size={15} /> Dashboard
+            </button>
+          ) : (
+            <button onClick={onLogin} className="btn-sm" style={{ display:"flex",alignItems:"center",gap:8,padding:"8px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:"var(--surface1)",color:"var(--navy)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
+              <DiscordIcon />
+              <span className="hide600">Login with Discord</span>
+              <span className="show600">Login</span>
+            </button>
+          )}
+        </div>
       </nav>
 
       {/* HERO */}
@@ -554,7 +511,7 @@ export default function PricingPage({ user, onLogin, onShowDashboard ,onBack}) {
           </h1>
 
           <p className="a2" style={{ fontSize:18,lineHeight:1.8,color:"var(--muted)",maxWidth:560,margin:"0 auto 40px",fontWeight:300 }}>
-            Every plan includes the full feature set for that tier. Exceed your base allowance? We bill only the overage, no plan-jumping required.
+            Every plan includes the full feature set for that tier. Simple, transparent pricing with no hidden fees or overage charges.
           </p>
 
           {/* Billing toggle */}
@@ -569,14 +526,14 @@ export default function PricingPage({ user, onLogin, onShowDashboard ,onBack}) {
               </span>
             )}
           </div>
-          <p className="a4" style={{ fontSize:12,color:"var(--muted2)" }}>14-day free trial on all paid plans. No credit card required.</p>
+          <p className="a4" style={{ fontSize:12,color:"var(--muted2)" }}>7-day free trial on all paid plans. No credit card required.</p>
         </div>
       </section>
 
       {/* TIER CARDS */}
       <section id="pricing" style={{ padding:"0 64px 96px",position:"relative",zIndex:1 }}>
         <div style={{ maxWidth:1300,margin:"0 auto" }}>
-          <div className="tiers-grid" style={{ display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:16,alignItems:"stretch" }}>
+          <div className="tiers-grid" style={{ display:"grid",gridTemplateColumns:`repeat(${TIERS.length},1fr)`,gap:16,alignItems:"stretch" }}>
             {TIERS.map((tier, i) => {
               const price = getPrice(tier);
               const savings = getSavings(tier);
@@ -665,11 +622,10 @@ export default function PricingPage({ user, onLogin, onShowDashboard ,onBack}) {
                       <div style={{ fontSize:10,fontWeight:700,color:"var(--muted2)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:8 }}>Base Includes</div>
                       {[
                         ["chat_bubble", `${tier.base.messages} messages`],
-                        ["description", `${tier.base.docs} documents`],
-                        ["dns", `${tier.base.servers} server${typeof tier.base.servers === "number" && tier.base.servers > 1 ? "s" : ""}`],
-                        ["storage", `${tier.base.storage} storage`],
+                        ["link", `${tier.base.urls} URLs`],
+                        ["description", `${tier.base.files} files`],
                       ].map(([icon, val], j) => (
-                        <div key={j} style={{ display:"flex",alignItems:"center",gap:7,fontSize:12,color:"var(--muted)",marginBottom: j < 3 ? 5 : 0 }}>
+                        <div key={j} style={{ display:"flex",alignItems:"center",gap:7,fontSize:12,color:"var(--muted)",marginBottom: j < 2 ? 5 : 0 }}>
                           <Icon name={icon} size={13} fill={1} style={{ color: isFeatured ? "var(--accent-deep)" : c.text, flexShrink:0 }} />
                           {val}
                         </div>
@@ -696,7 +652,24 @@ export default function PricingPage({ user, onLogin, onShowDashboard ,onBack}) {
 
                     {/* CTA */}
                     <button
-                      onClick={isEnterprise ? undefined : onLogin}
+                      onClick={
+                        isEnterprise
+                          ? () => window.open("https://discord.gg/WrpaytBfN", "_blank")
+                          : () => {
+                              if (!user) {
+                                localStorage.setItem("pending_checkout_plan", tier.id);
+                                if (activeGuildId) {
+                                  localStorage.setItem("pending_checkout_guild_id", activeGuildId);
+                                }
+                                onLogin();
+                                return;
+                              }
+                              const qs = new URLSearchParams();
+                              if (activeGuildId) qs.append("guild_id", activeGuildId);
+                              qs.append("plan", tier.id);
+                              window.location.href = `${API_BASE}/patreon/checkout?${qs.toString()}`;
+                            }
+                      }
                       style={{
                         width:"100%",
                         display:"flex",alignItems:"center",justifyContent:"center",gap:9,
@@ -755,36 +728,6 @@ export default function PricingPage({ user, onLogin, onShowDashboard ,onBack}) {
         </div>
       </section>
 
-      {/* OVERAGE EXPLAINER */}
-      <section style={{ padding:"72px 64px",background:"var(--surface2)",borderTop:"1px solid var(--border)" }}>
-        <div style={{ maxWidth:1000,margin:"0 auto" }}>
-          <div style={{ textAlign:"center",marginBottom:48 }}>
-            <SectionLabel text="How Overage Works" />
-            <h2 style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:"clamp(26px,3.5vw,44px)",lineHeight:1.1,color:"var(--navy)",marginBottom:12 }}>No Surprise Bills, Ever</h2>
-            <p style={{ fontSize:16,color:"var(--muted)",lineHeight:1.8,maxWidth:520,margin:"0 auto",fontWeight:300 }}>Your base plan covers most usage. If a busy month pushes you over, we charge only for what's extra, and alert you before it happens.</p>
-          </div>
-
-          <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:20 }}>
-            {[
-              { icon:"notifications_active", title:"Alerts at 80% & 100%", desc:"We email you when you're approaching your limit so you can decide whether to upgrade or let overage billing kick in." },
-              { icon:"receipt_long",         title:"Itemised monthly invoice", desc:"Every message and storage byte is logged. Your invoice shows exactly what you used and what you were charged for." },
-              { icon:"arrow_upward",         title:"Upgrade at any time", desc:"If you're consistently hitting your base limit, upgrade mid-month and we'll prorate the cost automatically." },
-              { icon:"pause_circle",         title:"Pause instead of cancel", desc:"Going quiet for a month? Pause your subscription and resume later without losing your knowledge base or settings." },
-            ].map((item, i) => (
-              <div key={i} style={{ background:"white",border:"1px solid var(--border2)",borderRadius:14,padding:"24px 22px",display:"flex",gap:16,alignItems:"flex-start" }}>
-                <div style={{ width:42,height:42,borderRadius:11,background:"rgba(239,35,60,0.08)",border:"1px solid rgba(239,35,60,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:"var(--accent-deep)" }}>
-                  <Icon name={item.icon} size={20} fill={1} />
-                </div>
-                <div>
-                  <div style={{ fontSize:14,fontWeight:600,color:"var(--navy)",marginBottom:6,fontFamily:"'Plus Jakarta Sans', sans-serif" }}>{item.title}</div>
-                  <div style={{ fontSize:13,color:"var(--muted)",lineHeight:1.6,fontWeight:300 }}>{item.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* COMPARISON TABLE */}
       <section style={{ padding:"88px 64px" }}>
         <div style={{ maxWidth:1200,margin:"0 auto" }}>
@@ -799,8 +742,8 @@ export default function PricingPage({ user, onLogin, onShowDashboard ,onBack}) {
               <thead>
                 <tr style={{ background:"var(--navy)" }}>
                   <th style={{ padding:"16px 20px",textAlign:"left",fontWeight:600,fontSize:11,letterSpacing:"0.06em",textTransform:"uppercase",color:"rgba(255,255,255,0.45)",borderBottom:"1px solid rgba(255,255,255,0.1)",width:"28%" }}>Feature</th>
-                  {["Free","Starter","Growth","Pro","Enterprise"].map((h, i) => (
-                    <th key={i} style={{ padding:"16px 10px",fontWeight:700,fontSize:11,letterSpacing:"0.05em",textTransform:"uppercase",textAlign:"center",color: h === "Growth" ? "var(--accent)" : "rgba(255,255,255,0.6)",borderBottom: h === "Growth" ? "2px solid var(--accent)" : "1px solid rgba(255,255,255,0.1)",background: h === "Growth" ? "rgba(239,35,60,0.1)" : "transparent" }}>{h}</th>
+                  {["Free","Starter","Pro","Enterprise"].map((h, i) => (
+                    <th key={i} style={{ padding:"16px 10px",fontWeight:700,fontSize:11,letterSpacing:"0.05em",textTransform:"uppercase",textAlign:"center",color: h === "Pro" ? "var(--accent)" : "rgba(255,255,255,0.6)",borderBottom: h === "Pro" ? "2px solid var(--accent)" : "1px solid rgba(255,255,255,0.1)",background: h === "Pro" ? "rgba(239,35,60,0.1)" : "transparent" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -808,8 +751,8 @@ export default function PricingPage({ user, onLogin, onShowDashboard ,onBack}) {
                 {COMPARE_FEATURES.map((row, i) => (
                   <tr key={i} className="compare-row" style={{ borderBottom:"1px solid var(--border)" }}>
                     <td style={{ padding:"13px 20px",color:"var(--navy)",fontWeight:500,background: i%2===0 ? "white" : "var(--surface2)" }}>{row.label}</td>
-                    {["free","starter","growth","pro","enterprise"].map((plan, j) => (
-                      <td key={j} style={{ padding:"13px 10px",textAlign:"center",background: plan==="growth" ? "rgba(239,35,60,0.02)" : i%2===0 ? "white" : "var(--surface2)" }}>
+                    {["free","starter","pro","enterprise"].map((plan, j) => (
+                      <td key={j} style={{ padding:"13px 10px",textAlign:"center",background: plan==="pro" ? "rgba(239,35,60,0.02)" : i%2===0 ? "white" : "var(--surface2)" }}>
                         <CellVal v={row[plan]} />
                       </td>
                     ))}
@@ -854,13 +797,13 @@ export default function PricingPage({ user, onLogin, onShowDashboard ,onBack}) {
         <div style={{ position:"relative",zIndex:1,maxWidth:760,margin:"0 auto" }}>
           <SectionLabel text="Get Started Free" />
           <h2 style={{ fontFamily:"'Outfit', sans-serif",fontWeight:700,fontSize:"clamp(28px,4.5vw,56px)",color:"white",letterSpacing:"-0.01em",lineHeight:1.08,marginBottom:14 }}>Start free. Scale only when you're ready.</h2>
-          <p style={{ fontSize:17,color:"rgba(255,255,255,0.55)",marginBottom:40,maxWidth:460,margin:"0 auto 36px",fontWeight:300,lineHeight:1.75 }}>No credit card. No commitment. Just upload your first document and watch VaultBot go to work.</p>
+          <p style={{ fontSize:17,color:"rgba(255,255,255,0.55)",marginBottom:40,maxWidth:460,margin:"0 auto 36px",fontWeight:300,lineHeight:1.75 }}>No credit card. No commitment. Just upload your first document and watch Nori go to work.</p>
           <div style={{ display:"flex",justifyContent:"center",gap:14,flexWrap:"wrap" }}>
             <button onClick={onInvite} className="btn-primary glow-red" style={{ display:"flex",alignItems:"center",gap:10,padding:"15px 30px",borderRadius:12,fontSize:15,fontWeight:600,background:"var(--accent)",color:"white",border:"none",cursor:"pointer",boxShadow:"0 0 28px var(--red-glow)",transition:"all var(--tr)" }}>
-              <DiscordIcon size={16} /> Add VaultBot Free
+              <DiscordIcon size={16} /> Add Nori Free
               <Icon name="arrow_forward" size={16} />
             </button>
-            <a href="mailto:support@vaultbot.dev" style={{ display:"flex",alignItems:"center",gap:8,padding:"15px 24px",borderRadius:12,fontSize:15,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",textDecoration:"none",transition:"all var(--tr)" }}>
+            <a href="https://discord.gg/WrpaytBfN" target="_blank" rel="noopener noreferrer" style={{ display:"flex",alignItems:"center",gap:8,padding:"15px 24px",borderRadius:12,fontSize:15,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",textDecoration:"none",transition:"all var(--tr)" }}>
               <Icon name="mail" size={16} fill={1} /> Talk to Sales
             </a>
           </div>
@@ -873,26 +816,26 @@ export default function PricingPage({ user, onLogin, onShowDashboard ,onBack}) {
         <div style={{ maxWidth:1200,margin:"0 auto",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:20 }}>
           <div style={{ display:"flex",alignItems:"center",gap:10 }}>
             <div style={{
-              width: 28, height: 28,
+              width: 30, height: 30,
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>
               <img
                 src="/LOGO.png"
-                alt="VaultBot"
+                alt="Nori"
                 style={{
                   width: "100%", height: "100%",
                   objectFit: "contain",
                 }}
               />
             </div>
-            <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:20,color:"var(--navy)" }}>VaultBot</span>
+            <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:20,color:"var(--navy)" }}>Nori</span>
           </div>
           <div style={{ display:"flex",gap:24,flexWrap:"wrap" }}>
             {[
               { label: "Features", href: "#features", onClick: (e) => { e.preventDefault(); onBack?.("#features"); } },
               { label: "How it Works", href: "#howitworks", onClick: (e) => { e.preventDefault(); onBack?.("#howitworks"); } },
               { label: "Pricing", onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
-              { label: "Support", href: "mailto:support@vaultbot.dev" },
+              { label: "Support", href: "https://discord.gg/WrpaytBfN" },
               { label: "Privacy Policy", onClick: onShowPrivacy },
               { label: "Terms & Conditions", onClick: onShowTerms },
             ].map((item, i) => (
@@ -922,8 +865,8 @@ export default function PricingPage({ user, onLogin, onShowDashboard ,onBack}) {
           </div>
         </div>
         <div style={{ maxWidth:1200,margin:"24px auto 0",paddingTop:20,borderTop:"1px solid var(--border2)",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap" }}>
-          <span style={{ fontSize:12,color:"var(--muted2)" }}>© 2026 VaultBot · Not affiliated with Discord Inc.</span>
-          <a href="mailto:support@vaultbot.dev" style={{ fontSize:12,color:"var(--accent-deep)",textDecoration:"none",fontWeight:600,transition:"color var(--tr)" }} onMouseEnter={e => e.currentTarget.style.color = "var(--navy)"} onMouseLeave={e => e.currentTarget.style.color = "var(--accent-deep)"}>support@vaultbot.dev</a>
+          <span style={{ fontSize:12,color:"var(--muted2)" }}>© 2026 Nori · Not affiliated with Discord Inc.</span>
+          <a href="mailto:support@noribot.dev" style={{ fontSize:12,color:"var(--accent-deep)",textDecoration:"none",fontWeight:600,transition:"color var(--tr)" }} onMouseEnter={e => e.currentTarget.style.color = "var(--navy)"} onMouseLeave={e => e.currentTarget.style.color = "var(--accent-deep)"}>support@noribot.dev</a>
           <span style={{ fontSize:12,color:"var(--muted2)" }}>Your docs. Your bot. Your community.</span>
         </div>
       </footer>

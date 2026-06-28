@@ -1,17 +1,17 @@
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
-
-
-def get_sub_urls(url: str) -> dict:
+import asyncio
+import functools
+async def get_sub_urls(url: str) -> dict:
     result = {"base_url": url, "sub_urls": [], "count": 0, "error": None}
     try:
         headers = {
             "User-Agent": (
-                "Mozilla/5.0 (compatible; Q-Arag-Bot/1.0; +https://github.com/armanphaugat)"
+                "Mozilla/5.0 (compatible; Nori-Bot/1.0; +https://github.com/armanphaugat)"
             )
         }
-        response = requests.get(url, headers=headers, timeout=15)
+        response = await asyncio.get_event_loop().run_in_executor(None,functools.partial(requests.get, url, headers=headers, timeout=15))
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, "html.parser")

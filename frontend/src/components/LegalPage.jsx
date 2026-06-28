@@ -16,8 +16,16 @@ export default function LegalPage({ type, onBack }) {
       padding: "80px 24px 64px",
       fontFamily: "'Plus Jakarta Sans', sans-serif"
     }}>
+      <style>{`
+        @media(max-width:1150px) {
+          .legal-nav { padding: 0 24px !important; }
+        }
+        @media(max-width:900px) {
+          .legal-nav { padding: 0 16px !important; }
+        }
+      `}</style>
       {/* ── Navbar header ── */}
-      <nav style={{
+      <nav className="legal-nav" style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 200, height: 64,
         display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "0 64px",
@@ -25,11 +33,11 @@ export default function LegalPage({ type, onBack }) {
         backdropFilter: "blur(20px)",
         borderBottom: "1px solid var(--border)",
       }}>
-        <a href="#" onClick={(e) => { e.preventDefault(); onBack(); }} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <img src="/LOGO.png" alt="VaultBot" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+        <a href="#" onClick={(e) => { e.preventDefault(); onBack(); }} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <img src="/LOGO.png" alt="Nori" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
           </div>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 22, color: "var(--navy)", letterSpacing: "0.01em" }}>VaultBot</span>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 22, color: "var(--navy)", letterSpacing: "0.01em" }}>Nori</span>
         </a>
         <Btn onClick={onBack} variant="ghost" style={{ fontSize: 13, height: 36 }}>
           <Icon name="arrow_back" size={14} /> Back to Home
@@ -45,7 +53,7 @@ export default function LegalPage({ type, onBack }) {
               <p style={{ fontSize: 12.5, color: "var(--muted2)", marginBottom: 24 }}>Last updated: June 10, 2026</p>
 
               <p style={{ fontSize: 14.5, color: "var(--muted)", lineHeight: 1.75, marginBottom: 20 }}>
-                At VaultBot, we are committed to protecting the privacy and security of your personal data. This Privacy Policy describes how we collect, use, and safeguard information when you use our website, Discord application, and administrative dashboard.
+                At Nori, we are committed to protecting the privacy and security of your personal data. This Privacy Policy describes how we collect, use, and safeguard information when you use our website, Discord application, and administrative dashboard.
               </p>
 
               <h3 style={{ fontSize: 16, color: "var(--navy)", marginTop: 24, marginBottom: 10 }}>1. Information We Collect</h3>
@@ -61,7 +69,7 @@ export default function LegalPage({ type, onBack }) {
 
               <h3 style={{ fontSize: 16, color: "var(--navy)", marginTop: 24, marginBottom: 10 }}>2. How We Use Information</h3>
               <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.7, marginBottom: 12 }}>
-                We utilize your data strictly to operate and improve VaultBot:
+                We utilize your data strictly to operate and improve Nori:
               </p>
               <ul style={{ fontSize: 13.5, color: "var(--muted)", paddingLeft: 20, lineHeight: 1.7, marginBottom: 16 }}>
                 <li>To build localized search indexes via Graphlit's Retrieval-Augmented Generation (RAG) platform.</li>
@@ -82,7 +90,7 @@ export default function LegalPage({ type, onBack }) {
 
               <h3 style={{ fontSize: 16, color: "var(--navy)", marginTop: 24, marginBottom: 10 }}>4. User Rights & Data Deletion</h3>
               <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.7, marginBottom: 12 }}>
-                You maintain absolute ownership of your knowledge base files and configurations. You can delete uploaded files, crawler URL feeds, channel settings, or individual FAQ logs at any time from the dashboard. Deletion requests instantly invoke deletion calls to the underlying Supabase and Graphlit servers.
+                You maintain absolute ownership of your knowledge base files and configurations. You can delete uploaded files, crawler URL feeds, general settings, or individual FAQ logs at any time from the dashboard. Deletion requests instantly invoke deletion calls to the underlying Supabase and Graphlit servers.
               </p>
 
               <h3 style={{ fontSize: 16, color: "var(--navy)", marginTop: 24, marginBottom: 10 }}>5. Third-Party Services</h3>
@@ -101,7 +109,7 @@ export default function LegalPage({ type, onBack }) {
               <p style={{ fontSize: 12.5, color: "var(--muted2)", marginBottom: 24 }}>Last updated: June 10, 2026</p>
 
               <p style={{ fontSize: 14.5, color: "var(--muted)", lineHeight: 1.75, marginBottom: 20 }}>
-                Welcome to VaultBot. These Terms and Conditions govern your access to and use of VaultBot's website, dashboard, and Discord bot service. By logging in via Discord or adding the bot to your server, you agree to be bound by these terms.
+                Welcome to Nori. These Terms and Conditions govern your access to and use of Nori's website, dashboard, and Discord bot service. By logging in via Discord or adding the bot to your server, you agree to be bound by these terms.
               </p>
 
               <h3 style={{ fontSize: 16, color: "var(--navy)", marginTop: 24, marginBottom: 10 }}>1. User Accounts & Dashboard Security</h3>
@@ -116,12 +124,12 @@ export default function LegalPage({ type, onBack }) {
               <ul style={{ fontSize: 13.5, color: "var(--muted)", paddingLeft: 20, lineHeight: 1.7, marginBottom: 16 }}>
                 <li>You agree not to upload any illegal, harassing, copyrighted (without permission), or harmful material.</li>
                 <li>You represent that you own or have the appropriate rights to ingest the knowledge sources you provide.</li>
-                <li>VaultBot reserves the right to suspend accounts or servers that engage in excessive API spam or service abuse.</li>
+                <li>Nori reserves the right to suspend accounts or servers that engage in excessive API spam or service abuse.</li>
               </ul>
 
               <h3 style={{ fontSize: 16, color: "var(--navy)", marginTop: 24, marginBottom: 10 }}>3. Limitations of Service Availability</h3>
               <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.7, marginBottom: 12 }}>
-                VaultBot relies on upstream APIs including Discord's Gateway connections and Graphlit's hosting infrastructure. While we strive to maintain high availability:
+                Nori relies on upstream APIs including Discord's Gateway connections and Graphlit's hosting infrastructure. While we strive to maintain high availability:
               </p>
               <ul style={{ fontSize: 13.5, color: "var(--muted)", paddingLeft: 20, lineHeight: 1.7, marginBottom: 16 }}>
                 <li>The services are provided on an "as-is" and "as-available" basis.</li>
@@ -130,7 +138,7 @@ export default function LegalPage({ type, onBack }) {
 
               <h3 style={{ fontSize: 16, color: "var(--navy)", marginTop: 24, marginBottom: 10 }}>4. Termination</h3>
               <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.7, marginBottom: 12 }}>
-                You may terminate your relationship with VaultBot at any time by removing the bot from your Discord servers. We reserve the right to suspend or block access to the dashboard for users violating these terms.
+                You may terminate your relationship with Nori at any time by removing the bot from your Discord servers. We reserve the right to suspend or block access to the dashboard for users violating these terms.
               </p>
 
               <h3 style={{ fontSize: 16, color: "var(--navy)", marginTop: 24, marginBottom: 10 }}>5. Modifications</h3>

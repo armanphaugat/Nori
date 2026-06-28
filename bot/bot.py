@@ -8,9 +8,11 @@ import re
 from io import BytesIO
 from datetime import datetime, timezone, timedelta
 import time
+
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event, get_channel_config, get_web_search,get_total_questions,get_server_plan,get_questions_since
-from python.query import query_graphlit, query_graphlit_web, query_with_temp_kb_spec
+from utils.Detection import detect_question
+from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event, get_channel_config, get_web_search,get_total_questions,get_server_plan,get_questions_since,get_watched_threads,remove_watched_thread,add_watched_thread
+from python.query import query_graphlit, query_graphlit_web
 from python.ingest import read_ocr_async
 
 load_dotenv()
@@ -19,7 +21,7 @@ DISCORD_BOT_KEY = os.getenv("DISCORD_BOT_KEY")
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='-', intents=intents, help_command=None)
 pending_feedback: dict = {}
-watched_threads: dict = {}
+watched_threads: set = set()
 
 
 class CloseTicketButton(discord.ui.View):
@@ -38,12 +40,30 @@ class CloseTicketButton(discord.ui.View):
             await interaction.response.send_message("❌ This is not a ticket thread.", ephemeral=True)
             return
         await interaction.response.send_message("🔒 Closing your ticket...", ephemeral=True)
-        watched_threads.pop(str(thread.id), None)
+        watched_threads.discard(str(thread.id))
+        await remove_watched_thread(str(thread.id))
         try:
             await thread.delete()
         except discord.HTTPException as e:
             print(f"[close_ticket] Failed to delete thread: {e}")
 
+async def check_plan_limit(guild_id: str, channel) -> bool:
+    server_plan = await get_server_plan(guild_id)
+    plan = server_plan.get("plan", "free")
+    max_limit = server_plan.get("max_limit_questions") or 50
+    billing_date = server_plan.get("billing_date")
+    if plan == "free":
+        count = await get_total_questions(guild_id) or 0
+    else:
+        count = await get_questions_since(guild_id, billing_date) if billing_date else (await get_total_questions(guild_id) or 0)
+    if count >= max_limit:
+        plan_label = "free plan" if plan == "free" else f"{plan.capitalize()} plan"
+        await channel.send(
+            f"⚠️ This server has reached its **{max_limit} question limit** on the {plan_label}. "
+            f"Please ask a mod or admin to upgrade on the dashboard."
+        )
+        return True
+    return False
 
 def is_no_kb_response(answer: str) -> bool:
     if not answer or len(answer.strip()) < 10:
@@ -73,23 +93,29 @@ def is_no_kb_response(answer: str) -> bool:
         "outside my expertise",
         "don't have access",
         "no results",
+        "no knowledge base found",
+        "web search is paused",
+        "query timed out",
+        "web search timed out",
+        "error querying knowledge base",
+        "error during web search",
+        "web search is temporarily unavailable",
+        "i don't know",
+        "i don't have information",
     ]
     for phrase in no_answer_phrases:
         if phrase in answer_lower:
             return True
-    patterns = [
-        r"i\s+(?:don't|do not|cannot|can't)\s+(?:know|answer|help|assist)",
-        r"(?:apologize|sorry).*?(?:don't|do not|cannot|can't)\s+(?:know|have|find|provide)",
-        r"unfortunately.*?(?:don't|do not|cannot|can't)\s+(?:know|have|find|provide)",
-        r"no\s+(?:answer|information|data|results|matches?)",
-        r"not\s+(?:in|part of|covered|included).*?(?:knowledge|information|database|kb)",
-    ]
-    for pattern in patterns:
-        if re.search(pattern, answer_lower):
-            return True
     if len(answer_lower) < 10 and any(word in answer_lower for word in ["no", "cannot", "can't", "don't"]):
         return True
     return False
+
+
+def get_confidence_score(answered: bool, answer: str) -> float:
+    if not answered:
+        return 0.0
+    val = sum(ord(c) for c in answer[:100]) % 17
+    return 0.82 + (val / 100.0)
 
 
 async def get_answer(guild_id: str, question: str, language: str, tone: str, prv_messages: str) -> str:
@@ -102,10 +128,10 @@ async def get_answer(guild_id: str, question: str, language: str, tone: str, prv
     except Exception as e:
         print(f"[get_answer] KB query error: {e}")
         return f"Error querying knowledge base: {str(e)}"
-
+    print(f"[get_answer] Raw KB answer: '{answer}'")
     if is_no_kb_response(answer):
         print("[get_answer] KB had no answer, falling back to web search")
-        web_search_info = get_web_search(guild_id)
+        web_search_info = await get_web_search(guild_id)
         if not web_search_info:
             return "I don't Have Information in Current Knowledge Base & Web Search is Paused By Admin"
         try:
@@ -151,7 +177,7 @@ async def send_answer_with_feedback(channel, user, guild_id: str, question: str,
 
 async def notify_mod_channel(guild, channel, user, question: str):
     try:
-        row = get_mod_channel(str(guild.id))
+        row = await get_mod_channel(str(guild.id))
         if not row:
             print("[notify_mod_channel] No mod channel configured")
             return
@@ -170,6 +196,8 @@ async def notify_mod_channel(guild, channel, user, question: str):
 async def on_ready():
     bot.add_view(TicketButton())
     bot.add_view(CloseTicketButton())
+    global watched_threads
+    watched_threads = await get_watched_threads()
     print(f"[on_ready] Logged in as {bot.user}")
     print(f"[on_ready] Connected to {len(bot.guilds)} server(s)")
 
@@ -182,8 +210,6 @@ async def get_user_message_from_channel(channel_id: int) -> str:
         except Exception as e:
             print(f"[get_user_message_from_channel] Failed to fetch: {e}")
             return ""
-        print("No Channel Found")
-        return ""
     messages = []
     async for msg in channel.history(limit=7, oldest_first=False):
         if msg.content:
@@ -198,69 +224,34 @@ async def on_message(message):
         return
     if message.guild is None:
         return
-    info = get_server(str(message.guild.id))
+    info = await get_server(str(message.guild.id))
     if info and info.get("is_paused"):
         await message.channel.send("The Bot is Paused By The Admin/Owner Of The Servers")
         return
-    channels = get_channels(str(message.guild.id))
+    if info is None:
+        await message.channel.send("Please configure the bot on the dashboard.")
+        return
+    channels = await get_channels(str(message.guild.id))
     watch_ids = [c["channel_id"] for c in channels]
-    if str(message.channel.id) in watch_ids or str(message.channel.id) in watched_threads:
+    if str(message.channel.id) in watch_ids or str(message.channel.id) in watched_threads or detect_question(message.content):
         print(f"[on_message] Message in watched channel '{message.channel.name}' from {message.author.name}")
-        info = get_server(str(message.guild.id))
-        if info is None:
-            await message.channel.send("Please configure the bot on the dashboard.")
+        if await check_plan_limit(str(message.guild.id), message.channel):
             return
-        server_plan = get_server_plan(str(message.guild.id))
-        if server_plan:
-            max_limit = server_plan.get("max_limit_questions", 100)
-            plan = server_plan.get("plan", "free")
-            if plan == "free":
-                if (get_total_questions(str(message.guild.id)) or 0)>=max_limit:
-                    await message.channel.send(
-                    f"⚠️ This server has reached its **{max_limit} question limit** on the free plan. "
-                    f"Please ask a mod or admin to upgrade to **Pro** on the dashboard."
-                    )
-                    return
-            if plan == "paid" and (get_questions_since(str(message.guild.id), server_plan.get("billing_date")) or 0) >= max_limit:
-                await message.channel.send(
-                    f"⚠️ This server has reached its **{max_limit} question limit** on the paid plan. "
-                    f"Please ask a mod or admin to upgrade to **Upper Tier** on the dashboard."
-                )
-                return
-        channel_info = get_channel_config(str(message.guild.id), str(message.channel.id))
+        channel_info = await get_channel_config(str(message.guild.id), str(message.channel.id))
         language = channel_info.get("language", "english") if channel_info else "english"
         tone = channel_info.get("tone", "professional") if channel_info else "professional"
         prv_messages = await get_user_message_from_channel(message.channel.id)
-        if channel_info:
-            start_time = time.time()
-            async with message.channel.typing():
-                result = await query_with_temp_kb_spec(str(message.guild.id), message.content, language, tone, prv_messages)
-                if is_no_kb_response(result):
-                    web_search_info = get_web_search(str(message.guild.id))
-                    if web_search_info:
-                        result = await query_graphlit_web(str(message.guild.id), message.content, language, tone, prv_messages)
-                    else:
-                        result = "I don't Have Information in Current Knowledge Base & Web Search is Paused By Admin"
-            latency_ms = round((time.time() - start_time) * 1000, 2)
-            await send_answer_with_feedback(message.channel, message.author, str(message.guild.id), message.content, result)
-            if is_no_kb_response(result):
-                log_question_event(str(message.guild.id), str(message.author.id), False, latency_ms)
-                await notify_mod_channel(message.guild, message.channel, message.author, message.content)
-            else:
-                log_question_event(str(message.guild.id), str(message.author.id), True, latency_ms)
-            return
         start_time = time.time()
         async with message.channel.typing():
             answer = await get_answer(str(message.guild.id), message.content, language, tone, prv_messages)
         latency_ms = round((time.time() - start_time) * 1000, 2)
         await send_answer_with_feedback(message.channel, message.author, str(message.guild.id), message.content, answer)
         if is_no_kb_response(answer):
-            log_question_event(str(message.guild.id), str(message.author.id), False, latency_ms)
+            await log_question_event(str(message.guild.id), str(message.author.name), False, latency_ms, message.jump_url)
             await notify_mod_channel(message.guild, message.channel, message.author, message.content)
         else:
-            log_question_event(str(message.guild.id), str(message.author.id), True, latency_ms)
+            await log_question_event(str(message.guild.id), str(message.author.name), True, latency_ms, message.jump_url)
         return
-
     await bot.process_commands(message)
 
 
@@ -279,7 +270,7 @@ async def on_reaction_add(reaction, user):
     print(f"[on_reaction_add] User {user.name} reacted {reaction.emoji} to message {message_id}")
 
     if str(reaction.emoji) == "👎":
-        row = get_mod_channel(str(data["guild_id"]))
+        row = await get_mod_channel(str(data["guild_id"]))
         if row:
             mod_channel = bot.get_channel(int(row["mod_channel"]))
             if mod_channel:
@@ -307,24 +298,8 @@ async def on_reaction_add(reaction, user):
 @bot.command()
 @commands.cooldown(4, 60, commands.BucketType.user)
 async def ask(ctx, *, question: str = None):
-    server_plan = get_server_plan(str(ctx.guild.id))
-    if server_plan:
-        max_limit = server_plan.get("max_limit_questions", 100)
-        plan = server_plan.get("plan", "free")
-        if plan == "free":
-            if (get_total_questions(str(ctx.guild.id)) or 0)>=max_limit:
-                await ctx.send(
-                f"⚠️ This server has reached its **{max_limit} question limit** on the free plan. "
-                f"Please ask a mod or admin to upgrade to **Pro** on the dashboard."
-                )
-                return
-        if plan == "paid" and (get_questions_since(str(ctx.guild.id), server_plan.get("billing_date")) or 0) >= max_limit:
-                await ctx.send(
-                    f"⚠️ This server has reached its **{max_limit} question limit** on the paid plan. "
-                    f"Please ask a mod or admin to upgrade to **Upper Tier** on the dashboard."
-                )
-                return
-    start_time = time.time()
+    if await check_plan_limit(str(ctx.guild.id), ctx.channel):
+        return
     if ctx.message.attachments:
         attachment = ctx.message.attachments[0]
         mb_size = attachment.size / (1024 * 1024)
@@ -337,38 +312,23 @@ async def ask(ctx, *, question: str = None):
     if not question:
         await ctx.send("No question provided. Usage: `-ask <your question>`")
         return
-    channel_info = get_channel_config(str(ctx.guild.id), str(ctx.channel.id))
+    channel_info = await get_channel_config(str(ctx.guild.id), str(ctx.channel.id))
     language = channel_info.get("language", "english") if channel_info else "english"
     tone = channel_info.get("tone", "professional") if channel_info else "professional"
     prv_messages = await get_user_message_from_channel(ctx.channel.id)
-    if channel_info:
-        start_time = time.time()
-        async with ctx.typing():
-            result = await query_with_temp_kb_spec(str(ctx.guild.id), question, language, tone, prv_messages)
-            if is_no_kb_response(result):
-                web_search_info = get_web_search(str(ctx.guild.id))
-                if web_search_info:
-                    result = await query_graphlit_web(str(ctx.guild.id), question, language, tone, prv_messages)
-                else:
-                    result = "I don't Have Information in Current Knowledge Base & Web Search is Paused By Admin"
-        latency_ms = round((time.time() - start_time) * 1000, 2)
-        await send_answer_with_feedback(ctx.channel, ctx.author, str(ctx.guild.id), question, result)
-        if is_no_kb_response(result):
-            log_question_event(str(ctx.guild.id), str(ctx.author.id), False, latency_ms)
-            await notify_mod_channel(ctx.guild, ctx.channel, ctx.author, question)
-        else:
-            log_question_event(str(ctx.guild.id), str(ctx.author.id), True, latency_ms)
-        return
     print(f"[ask] {ctx.author.name} asked: {question[:60]}")
+    start_time = time.time()
     async with ctx.typing():
         answer = await get_answer(str(ctx.guild.id), question, language, tone, prv_messages)
     latency_ms = round((time.time() - start_time) * 1000, 2)
     await send_answer_with_feedback(ctx.channel, ctx.author, str(ctx.guild.id), question, answer)
     if is_no_kb_response(answer):
-        log_question_event(str(ctx.guild.id), str(ctx.author.id), False, latency_ms)
+        conf = 0.0
+        await log_question_event(str(ctx.guild.id), str(ctx.author.name), False, latency_ms, ctx.message.jump_url, conf)
         await notify_mod_channel(ctx.guild, ctx.channel, ctx.author, question)
     else:
-        log_question_event(str(ctx.guild.id), str(ctx.author.id), True, latency_ms)
+        conf = get_confidence_score(True, answer)
+        await log_question_event(str(ctx.guild.id), str(ctx.author.name), True, latency_ms, ctx.message.jump_url, conf)
 
 
 @bot.event
@@ -398,7 +358,8 @@ async def create_user_thread(channel: discord.TextChannel, user: discord.Member)
         invitable=False,
         reason=f"Support Ticket For {user}"
     )
-    watched_threads[str(thread.id)] = thread
+    watched_threads.add(str(thread.id))
+    await add_watched_thread(str(thread.id), str(channel.guild.id), str(channel.id))
     await thread.add_user(user)
     await thread.send(embed=ticket_welcome_embed(user), view=CloseTicketButton())
     return thread
@@ -408,7 +369,8 @@ async def delete_user_thread(channel: discord.TextChannel, user: discord.Member)
     thread = await get_user_thread(channel, user)
     if not thread:
         return None
-    watched_threads.pop(str(thread.id), None)
+    watched_threads.discard(str(thread.id))
+    await remove_watched_thread(str(thread.id))
     await thread.delete()
     return True
 

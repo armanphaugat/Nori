@@ -8,8 +8,9 @@ from backend.routers.query_router   import *
 from backend.routers.channel_router import *
 from backend.routers.analytics_router import *
 from backend.routers.guild_router import *
+from backend.routers.patreon_router import *
 
-app = FastAPI(title="Q-ARAG API", version="1.0.0")
+app = FastAPI(title="Nori API", version="1.0.0")
 
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3001")
 origins = list({
@@ -35,6 +36,7 @@ app.include_router(query_router,prefix="/query",tags=["Query"])
 app.include_router(channel_router,prefix="/channel",tags=["Channel"])
 app.include_router(analytics_router,prefix="/analytics",tags=["Analytics"])
 app.include_router(guild_router,prefix="/guilds",tags=["Guilds"])
+app.include_router(patreon_router,prefix="/patreon",tags=["Patreon"])
 
 @app.get("/", tags=["Health"])
 def health_check():

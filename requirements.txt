@@ -3,14 +3,15 @@ fastapi
 uvicorn[standard]
 python-multipart
 python-dotenv
-httpx                        # used in auth_controller for Discord OAuth calls
+httpx
 
 # ─── Auth ─────────────────────────────────────────────────────────────────────
-PyJWT                        # FIX: was missing — used as `import jwt` in middleware/auth.py
+PyJWT
 
 # ─── Database ─────────────────────────────────────────────────────────────────
 sqlalchemy
-psycopg2-binary              # FIX: was missing — postgres driver for SQLAlchemy
+psycopg2-binary
+asyncpg
 
 # ─── Cache / Queue ────────────────────────────────────────────────────────────
 redis>=5.0.0                 # bullmq worker installs separately in its own container
@@ -21,6 +22,8 @@ langchain-groq
 
 # ─── Document / media parsing ─────────────────────────────────────────────────
 docx2txt
+pandas
+openpyxl
 pandas
 openpyxl
 pytesseract
@@ -36,3 +39,4 @@ graphlit-client
 
 # ─── Discord ──────────────────────────────────────────────────────────────────
 discord.py
+groq

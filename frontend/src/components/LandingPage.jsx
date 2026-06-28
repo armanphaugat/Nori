@@ -19,8 +19,10 @@ function Icon({ name, size = 20, fill = 0, style = {} }) {
 
 function DiscordIcon({ size = 16 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.101 18.079.11 18.1.128 18.115a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
+    <svg width={size} height={size} viewBox="0 0 256 256" fill="currentColor" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <g transform="translate(0, 28.5)">
+        <path d="M216.856 16.597A208.502 208.502 0 0 0 164.042 0c-2.275 4.113-4.933 9.645-6.766 14.046-19.692-2.961-39.203-2.961-58.533 0-1.832-4.4-4.55-9.933-6.846-14.046a207.809 207.809 0 0 0-52.855 16.638C5.618 67.147-3.443 116.4 1.087 164.956c22.169 16.555 43.653 26.612 64.775 33.193A161.094 161.094 0 0 0 79.735 175.3a136.413 136.413 0 0 1-21.846-10.632 108.636 108.636 0 0 0 5.356-4.237c42.122 19.702 87.89 19.702 129.51 0a131.66 131.66 0 0 0 5.355 4.237 136.07 136.07 0 0 1-21.886 10.653c4.006 8.02 8.638 15.67 13.873 22.848 21.142-6.58 42.646-16.637 64.815-33.213 5.316-56.288-9.08-105.09-38.056-148.36ZM85.474 135.095c-12.645 0-23.015-11.805-23.015-26.18s10.149-26.2 23.015-26.2c12.867 0 23.236 11.804 23.015 26.2.02 14.375-10.148 26.18-23.015 26.18Zm85.051 0c-12.645 0-23.014-11.805-23.014-26.18s10.148-26.2 23.014-26.2c12.867 0 23.236 11.804 23.015 26.2 0 14.375-10.148 26.18-23.015 26.18Z" />
+      </g>
     </svg>
   );
 }
@@ -201,15 +203,63 @@ const CSS = `
     background: rgba(239,35,60,0.5) !important;
   }
 
+  .show600 { display: none; }
+
+  @media(max-width:1150px){
+    .hero-inner {
+      flex-direction: column !important;
+      text-align: center;
+      gap: 32px !important;
+      padding-top: 96px !important;
+    }
+    .hero-inner > div {
+      width: 100% !important;
+    }
+    .a5 {
+      justify-content: center !important;
+      margin-right: 0 !important;
+      flex: 1 1 auto !important;
+    }
+    .a5 > div {
+      width: 100% !important;
+      max-width: 600px !important;
+      transform: none !important;
+    }
+    p.a2 {
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .a3 {
+      justify-content: center;
+    }
+    .a4 {
+      justify-content: center;
+    }
+    .hero-section {
+      padding: 48px 24px !important;
+    }
+    nav {
+      padding: 0 24px !important;
+    }
+  }
+
   @media(max-width:900px){
     .hide900{display:none!important;}
     .feats-grid{grid-template-columns:repeat(2,1fr)!important;}
     .steps-grid{grid-template-columns:repeat(2,1fr)!important;}
     .use-grid{grid-template-columns:1fr!important;}
+    section {
+      padding: 64px 24px !important;
+    }
+    nav {
+      padding: 0 16px !important;
+    }
   }
   @media(max-width:600px){
     .stats-grid{grid-template-columns:repeat(2,1fr)!important;}
     .hero-inner{padding-top:80px!important;}
+    .hide600{display:none!important;}
+    .show600{display:inline!important;}
   }
 `;
 
@@ -221,7 +271,7 @@ const FEATS = [
   { icon:"tune",           fill:1, color:"red",   title:"Make It Sound Like You",       desc:"Give your bot a name, a personality, and a tone that matches your community. It's your brand, not ours." },
   { icon:"forum",          fill:1, color:"slate",  title:"Pick Which Channels It Uses",  desc:"The bot only shows up where you want it. Keep it focused, on-topic, and out of your off-topic channels." },
   { icon:"bar_chart",      fill:1, color:"red",   title:"See What's Being Asked",       desc:"A clean dashboard shows you the most common questions so you can fill gaps and improve over time." },
-  { icon:"sync",           fill:1, color:"slate",  title:"Always Up to Date",            desc:"Set it and forget it. VaultBot checks your URLs regularly and pulls in any new content automatically." },
+  { icon:"sync",           fill:1, color:"slate",  title:"Always Up to Date",            desc:"Set it and forget it. Nori checks your URLs regularly and pulls in any new content automatically." },
   { icon:"image_search",   fill:1, color:"red",   title:"Works on Screenshots Too",     desc:"Upload an image or screenshot and the bot reads the text inside it, no retyping anything by hand." },
   { icon:"translate",      fill:1, color:"slate",  title:"Speaks Your Members' Language","desc":"No matter what language someone asks in, the bot detects it and responds in kind. Every time." },
   { icon:"link",           fill:1, color:"red",   title:"Always Shows Its Sources",     desc:"Every answer links back to the exact document or page it came from. Full transparency, no mystery." },
@@ -240,19 +290,13 @@ const STEPS = [
   { n:"04", color:"slate", icon:"smart_toy",    fill:1, title:"Watch It Go to Work",     desc:"Your members ask questions. The bot answers instantly from your own content, every single time." },
 ];
 
-const USE_CASES = [
-  { tag:"Education", icon:"school",         fill:1, title:"Universities & Colleges", desc:"Students stop emailing staff about timetables and deadlines. The bot has the answers at 2am when you don't." },
-  { tag:"Support",   icon:"support_agent",  fill:1, title:"Product & Customer Support", desc:"Train it on your help docs and let it handle the repetitive questions your team gets tired of answering." },
-  { tag:"Gaming",    icon:"sports_esports", fill:1, title:"Gaming Communities",      desc:"Game wikis, patch notes, item stats, players get instant answers without digging through dozens of pages." },
-  { tag:"Business",  icon:"business_center",fill:1, title:"Internal Team Servers",   desc:"Onboarding docs, HR policies, SOPs, new hires can ask anything and get an answer in seconds." },
-];
 
 const COMP = [
-  ["Answers From Your Own Documents",    "yes","yes",     "Generic bots guess or pull from the internet. VaultBot only uses what you give it."],
+  ["Answers From Your Own Documents",    "yes","yes",     "Generic bots guess or pull from the internet. Nori only uses what you give it."],
   ["PDF & File Uploads",                 "yes","yes",     "Most bots can't read your files at all, let alone answer questions from them."],
   ["Crawl and Import Websites",          "yes","no",      "Other bots don't scan URLs or sync entire documentation sites automatically."],
   ["Keeps Content Automatically Fresh",  "yes","no",      "No other bot monitors your URLs and pulls updates without you lifting a finger."],
-  ["Custom Bot Personality",             "yes","no",      "Others offer basic command prefixes. VaultBot lets you write full custom AI personas."],
+  ["Custom Bot Personality",             "yes","no",      "Others offer basic command prefixes. Nori lets you write full custom AI personas."],
   ["Usage Analytics Dashboard",          "yes","no",      "No visual view of what questions are being asked or where answers are coming from."],
 ];
 
@@ -345,7 +389,7 @@ function CarouselSlider() {
           letterSpacing:"0.02em"
         }}>
           <Icon name="lock" size={10} style={{ color:"rgba(255,255,255,0.3)" }} />
-          <span>discord.com/channels/vaultbot/demo</span>
+          <span>discord.com/channels/nori/demo</span>
         </div>
       </div>
 
@@ -501,7 +545,7 @@ function H2({ children }) {
 
 function Tick({ v }) {
   if (v === "yes") return <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:26,height:26,borderRadius:"50%",background:"rgba(34,197,94,0.1)",color:"#16a34a",fontSize:14,fontWeight:700 }}>✓</span>;
-  if (v === "no")  return <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:26,height:26,borderRadius:"50%",background:"rgba(43,45,66,0.05)",color:"#c0c4d0",fontSize:14 }}>✗</span>;
+  if (v === "no")  return <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:26,height:26,borderRadius:"50%",background:"rgba(239,35,60,0.1)",color:"var(--accent)",fontSize:14,fontWeight:700 }}>✗</span>;
   return                  <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:26,height:26,borderRadius:"50%",background:"rgba(141,153,174,0.15)",color:"var(--slate)",fontSize:14 }}>~</span>;
 }
 
@@ -531,41 +575,48 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
         borderBottom:`1px solid ${scrolled ? "rgba(43,45,66,0.15)" : "var(--border)"}`,
         transition:"all 0.3s ease",
       }}>
-        <a href="#" style={{ textDecoration:"none",display:"flex",alignItems:"center",gap:10 }}>
-          <div style={{ width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center" }}>
+        <a href="#" style={{ textDecoration:"none",display:"flex",alignItems:"center",gap:12 }}>
+          <div style={{ width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center" }}>
             <img
               src="/LOGO.png"
-              alt="VaultBot"
+              alt="Nori"
               style={{ width:"100%",height:"100%",objectFit:"contain" }}
             />
           </div>
-          <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>VaultBot</span>
+          <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>Nori</span>
         </a>
-        <div className="hide900" style={{ display:"flex",alignItems:"center",gap:2 }}>
-          {[["Features","#features"],["How it Works","#howitworks"],["Compare","#compare"],["FAQ","#faq"]].map(([l,h],i) => (
-            <a key={i} href={h} className="nav-link" style={{ padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,letterSpacing:"0.02em",color:"var(--muted)",textDecoration:"none",transition:"all var(--tr)" }}>{l}</a>
-          ))}
-          <button
-            onClick={onShowPricing}
-            className="nav-link"
-            style={{ padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,letterSpacing:"0.02em",color:"var(--muted)",background:"none",border:"none",cursor:"pointer",transition:"all var(--tr)" }}
-          >
-            Pricing
-          </button>
+        <div style={{ display:"flex",alignItems:"center",gap:12 }}>
+          {/* Menu links - hidden below 900px */}
+          <div className="hide900" style={{ display:"flex",alignItems:"center",gap:2 }}>
+            {[["Features","#features"],["How it Works","#howitworks"],["Compare","#compare"],["FAQ","#faq"]].map(([l,h],i) => (
+              <a key={i} href={h} className="nav-link" style={{ padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,letterSpacing:"0.02em",color:"var(--muted)",textDecoration:"none",transition:"all var(--tr)" }}>{l}</a>
+            ))}
+            <button
+              onClick={onShowPricing}
+              className="nav-link"
+              style={{ padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,letterSpacing:"0.02em",color:"var(--muted)",background:"none",border:"none",cursor:"pointer",transition:"all var(--tr)" }}
+            >
+              Pricing
+            </button>
+          </div>
+
+          {/* Primary CTA - always visible */}
           {user ? (
-            <button onClick={onShowDashboard} className="btn-sm" style={{ marginLeft:12,display:"flex",alignItems:"center",gap:8,padding:"8px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:"var(--surface1)",color:"var(--navy)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
+            <button onClick={onShowDashboard} className="btn-sm" style={{ display:"flex",alignItems:"center",gap:8,padding:"8px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:"var(--surface1)",color:"var(--navy)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
               <Icon name="grid_view" size={15} /> Dashboard
             </button>
           ) : (
-            <button onClick={onLogin} className="btn-sm" style={{ marginLeft:12,display:"flex",alignItems:"center",gap:8,padding:"8px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:"var(--surface1)",color:"var(--navy)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
-              <DiscordIcon /> Login with Discord
+            <button onClick={onLogin} className="btn-sm" style={{ display:"flex",alignItems:"center",gap:8,padding:"8px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:"var(--surface1)",color:"var(--navy)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
+              <DiscordIcon />
+              <span className="hide600">Login with Discord</span>
+              <span className="show600">Login</span>
             </button>
           )}
         </div>
       </nav>
 
       {/* HERO */}
-      <section style={{ minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 64px",position:"relative",overflow:"hidden" }}>
+      <section className="hero-section" style={{ minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 64px",position:"relative",overflow:"hidden" }}>
         <div className="bloom" style={{ top:-80,left:"25%",width:800,height:700 }} />
         <div className="bloom-slate" style={{ bottom:"10%",right:"-5%",width:500,height:500 }} />
         <div className="hero-line" />
@@ -581,7 +632,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
             </h1>
 
             <p className="a2" style={{ fontSize:18,lineHeight:1.8,color:"var(--muted)",maxWidth:500,marginBottom:38,fontWeight:300 }}>
-              Stop answering the same questions every day. VaultBot learns from your documents, PDFs, and websites, then handles member questions inside Discord, around the clock.
+              Stop answering the same questions every day. Nori learns from your documents, PDFs, and websites, then handles member questions inside Discord, around the clock.
             </p>
 
             <div className="a3" style={{ display:"flex",gap:12,flexWrap:"wrap",marginBottom:24 }}>
@@ -667,7 +718,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
                   letterSpacing:"0.02em"
                 }}>
                   <Icon name="lock" size={10} style={{ color:"rgba(255,255,255,0.3)" }} />
-                  <span>discord.com/channels/vaultbot</span>
+                  <span>discord.com/channels/nori</span>
                 </div>
               </div>
               
@@ -675,7 +726,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
               <div style={{ background:"#2f3136", position:"relative" }}>
                 <img
                   src="/CHAT.png"
-                  alt="VaultBot in action"
+                  alt="Nori in action"
                   style={{ width:"100%",display:"block",objectFit:"contain" }}
                 />
                 {/* Glass reflection overlay */}
@@ -705,14 +756,14 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
             <div className="rv"><SectionLabel text="Feature Tour" /></div>
             <div className="rv"><H2>Take a Tour of the Interface</H2></div>
             <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.8,maxWidth:560,margin:"0 auto",fontWeight:300 }}>
-              Explore how VaultBot integrates into your channels. Flip through the features below to preview how answers, source citations, and documents appear inside Discord.
+              Explore how Nori integrates into your channels. Flip through the features below to preview how answers, source citations, and documents appear inside Discord.
             </p>
           </div>
 
           <div style={{ display:"flex",gap:32,flexWrap:"wrap",alignItems:"flex-start" }}>
             {/* LEFT — question selector */}
             <div style={{ flex:"1 1 340px",display:"flex",flexDirection:"column",gap:12 }}>
-              <div style={{ fontSize:12,fontWeight:700,color:"var(--muted2)",letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:4 }}>What VaultBot Can Do</div>
+              <div style={{ fontSize:12,fontWeight:700,color:"var(--muted2)",letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:4 }}>What Nori Can Do</div>
 
                {[
                  { icon:"picture_as_pdf", label:"Reads your PDFs & documents",    sub:"Answers directly from uploaded files" },
@@ -872,79 +923,73 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
         </div>
       </section>
 
-      {/* USE CASES */}
-      <section style={{ padding:"96px 64px" }}>
-        <div style={{ maxWidth:1200,margin:"0 auto" }}>
-          <div className="rv"><SectionLabel text="Who It's For" /></div>
-          <div className="rv"><H2>Works for Any Kind of Community</H2></div>
-          <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.8,maxWidth:580,marginBottom:52,fontWeight:300 }}>Whether you run a study server, a help desk, a fan community, or a work team, VaultBot fits straight in.</p>
-          <div className="use-grid" style={{ display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:20 }}>
-            {USE_CASES.map((u,i) => (
-              <div key={i} className="rv use-card" style={{ padding:32,borderRadius:16,transition:"all 0.25s ease",transitionDelay:`${i*0.05}s`,background:"white",border:"1px solid var(--border2)",boxShadow:"0 2px 12px rgba(43,45,66,0.06)" }}>
-                <div style={{ width:50,height:50,borderRadius:14,background:"rgba(239,35,60,0.08)",border:"1px solid rgba(239,35,60,0.2)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:18,color:"var(--accent-deep)" }}>
-                  <Icon name={u.icon} size={24} fill={u.fill} />
+
+      {/* MERGED BENEFITS & COMPARISON SECTION */}
+      <section id="compare" style={{ padding:"96px 64px", background:"var(--surface2)" }}>
+        <div style={{ maxWidth:1200, margin:"0 auto" }}>
+          
+          {/* Header */}
+          <div style={{ textAlign:"center", marginBottom:52 }}>
+            <div className="rv"><SectionLabel text="How We Compare" /></div>
+            <div className="rv"><H2>What you actually get when you add Nori</H2></div>
+            <p className="rv" style={{ fontSize:17, color:"var(--muted)", lineHeight:1.8, maxWidth:600, margin:"0 auto", fontWeight:300 }}>
+              Other Discord bots give scripted replies. Nori actually reads your content and answers from it.
+            </p>
+          </div>
+
+          {/* Benefits Cards Grid */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gap: 20,
+            marginBottom: 56
+          }}>
+            {[
+              ["Stop repeating yourself", "The bot handles repeated questions so your team doesn't have to."],
+              ["Reclaim your evenings", "It answers questions at midnight so you don't need to."],
+              ["Give instant answers", "No more 'I'll check and get back to you' delays."],
+              ["Reach everyone", "It auto-detects language and responds in kind, no extra setup."]
+            ].map(([title, desc], idx) => (
+              <div key={idx} className="rv" style={{
+                background: "white",
+                padding: 24,
+                borderRadius: 16,
+                border: "1px solid var(--border2)",
+                boxShadow: "var(--shadow-sm)",
+                transitionDelay: `${idx * 0.05}s`
+              }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: "50%",
+                  background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.22)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: "#16a34a", marginBottom: 14
+                }}>
+                  <Icon name="check" size={16} />
                 </div>
-                <span style={{ display:"inline-block",fontSize:18,fontWeight:800,letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--accent-deep)",marginBottom:12 }}>{u.tag}</span>
-                <div style={{ fontFamily:"'Outfit', sans-serif",fontSize:22,fontWeight:600,color:"var(--navy)",marginBottom:10 }}>{u.title}</div>
-                <div style={{ fontSize:14,color:"var(--muted)",lineHeight:1.65,fontWeight:300 }}>{u.desc}</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "var(--navy)", marginBottom: 6 }}>{title}</div>
+                <div style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.6, fontWeight: 300 }}>{desc}</div>
               </div>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* BULLETS */}
-      <section style={{ padding:"80px 64px",background:"var(--surface2)" }}>
-        <div style={{ maxWidth:1200,margin:"0 auto",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(420px,1fr))",gap:56 }}>
-          {[
-            { label:"The Real Benefits", title:"What you actually get when you add VaultBot", items:[["Stop repeating yourself",", the bot handles the same questions so your team doesn't have to"],["Reclaim your evenings",", it answers questions at midnight so you don't need to"],["Give instant answers",", no more 'I'll check and get back to you' delays"],["Reach everyone",", it auto-detects language and responds in kind, no extra setup"]] },
-            { label:"What Members Say",  title:"The difference people notice straight away",       items:[["90% fewer repeated questions","from server members within the first week"],["Round-the-clock coverage","without paying for extra staff or stretching your team thin"],["10× faster replies","to common questions compared to waiting for a human response"],["Members feel heard","because they get a real answer, not a 'check the pinned posts' reply"]] },
-          ].map((col,ci) => (
-            <div key={ci} className="rv" style={{ transitionDelay:`${ci*0.12}s` }}>
-              <SectionLabel text={col.label} />
-              <H2>{col.title}</H2>
-              <div style={{ display:"flex",flexDirection:"column",gap:14,marginTop:8 }}>
-                {col.items.map(([b,r],j) => (
-                  <div key={j} style={{ display:"flex",alignItems:"flex-start",gap:12 }}>
-                    <div style={{ width:22,height:22,borderRadius:"50%",background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.22)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:2,color:"#16a34a" }}>
-                      <Icon name="check" size={12} />
-                    </div>
-                    <span style={{ fontSize:15,color:"var(--muted)",lineHeight:1.6,fontWeight:300 }}>
-                      <strong style={{ color:ci===0?"var(--navy)":"var(--accent-deep)",fontWeight:600 }}>{b}</strong>{r}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* COMPARISON */}
-      <section id="compare" style={{ padding:"96px 64px" }}>
-        <div style={{ maxWidth:1200,margin:"0 auto" }}>
-          <div style={{ textAlign:"center",marginBottom:52 }}>
-            <div className="rv"><SectionLabel text="How We Compare" /></div>
-            <div className="rv"><H2>Most Bots Can't Do This</H2></div>
-            <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.8,maxWidth:540,margin:"0 auto",fontWeight:300 }}>Other Discord bots give scripted replies. VaultBot actually reads your content and answers from it.</p>
-          </div>
-          <div className="rv" style={{ borderRadius:16,overflow:"hidden",border:"1px solid var(--border2)",boxShadow:"0 4px 24px rgba(43,45,66,0.08)" }}>
-            <table style={{ width:"100%",borderCollapse:"collapse",fontSize:14 }}>
+          {/* Comparison Table */}
+          <div className="rv" style={{ borderRadius:16, overflow:"hidden", border:"1px solid var(--border2)", boxShadow:"0 4px 24px rgba(43,45,66,0.08)" }}>
+            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:14 }}>
               <thead>
                 <tr style={{ background:"var(--navy)" }}>
-                  <th style={{ padding:"16px 24px",fontWeight:600,fontSize:11,letterSpacing:"0.06em",textTransform:"uppercase",color:"rgba(255,255,255,0.45)",borderBottom:"1px solid rgba(255,255,255,0.1)",textAlign:"left" }}>Capability</th>
-                  {["VaultBot","Other Bots","What's Missing"].map((h,i) => (
-                    <th key={i} style={{ padding:"16px 24px",fontWeight:700,fontSize:11,letterSpacing:"0.06em",textTransform:"uppercase",borderBottom:i===0?"2px solid var(--accent)":"1px solid rgba(255,255,255,0.1)",textAlign:i===2?"left":"center",color:i===0?"var(--accent)":"rgba(255,255,255,0.45)",background:i===0?"rgba(239,35,60,0.1)":"transparent" }}>{h}</th>
+                  <th style={{ padding:"16px 24px", fontWeight:600, fontSize:11, letterSpacing:"0.06em", textTransform:"uppercase", color:"rgba(255,255,255,0.45)", borderBottom:"1px solid rgba(255,255,255,0.1)", textAlign:"left" }}>Capability</th>
+                  {["Nori","Other Bots","What's Missing"].map((h,i) => (
+                    <th key={i} style={{ padding:"16px 24px", fontWeight:700, fontSize:11, letterSpacing:"0.06em", textTransform:"uppercase", borderBottom:i===0?"2px solid var(--accent)":"1px solid rgba(255,255,255,0.1)", textAlign:i===2?"left":"center", color:i===0?"var(--accent)":"rgba(255,255,255,0.45)", background:i===0?"rgba(239,35,60,0.1)":"transparent" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {COMP.map((row,i) => (
-                  <tr key={i} style={{ borderBottom:"1px solid var(--border)",background:i%2===0?"white":"var(--surface2)" }}>
-                    <td style={{ padding:"14px 24px",color:"var(--navy)",fontWeight:500,fontSize:14 }}>{row[0]}</td>
-                    <td style={{ padding:"14px 24px",textAlign:"center",background:"rgba(239,35,60,0.03)" }}><Tick v={row[1]} /></td>
-                    <td style={{ padding:"14px 24px",textAlign:"center" }}><Tick v={row[2]} /></td>
-                    <td style={{ padding:"14px 24px",color:"var(--muted)",fontSize:13,lineHeight:1.5,fontWeight:300 }}>{row[3]}</td>
+                  <tr key={i} style={{ borderBottom:"1px solid var(--border)", background:i%2===0?"white":"var(--surface2)" }}>
+                    <td style={{ padding:"14px 24px", color:"var(--navy)", fontWeight:500, fontSize:14 }}>{row[0]}</td>
+                    <td style={{ padding:"14px 24px", textAlign:"center", background:"rgba(239,35,60,0.03)" }}><Tick v={row[1]} /></td>
+                    <td style={{ padding:"14px 24px", textAlign:"center" }}><Tick v={row[2]} /></td>
+                    <td style={{ padding:"14px 24px", color:"var(--muted)", fontSize:13, lineHeight:1.5, fontWeight:300 }}>{row[3]}</td>
                   </tr>
                 ))}
               </tbody>
@@ -984,10 +1029,10 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
           <div style={{ maxWidth:860,margin:"0 auto",borderRadius:28,padding:"80px 60px",display:"inline-block",width:"100%",border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.04)" }}>
             <div className="rv"><SectionLabel text="Get Started Free" /></div>
             <h2 className="rv" style={{ fontFamily:"'Outfit', sans-serif",fontWeight:700,fontSize:"clamp(30px,5vw,60px)",color:"white",letterSpacing:"-0.01em",lineHeight:1.08,marginBottom:16 }}>Ready to stop answering the same question twice?</h2>
-            <p className="rv" style={{ fontSize:18,color:"rgba(255,255,255,0.55)",marginBottom:44,maxWidth:480,margin:"0 auto 40px",fontWeight:300 }}>Add VaultBot to your server in minutes. It's free to start and your members will notice the difference immediately.</p>
+            <p className="rv" style={{ fontSize:18,color:"rgba(255,255,255,0.55)",marginBottom:44,maxWidth:480,margin:"0 auto 40px",fontWeight:300 }}>Add Nori to your server in minutes. It's free to start and your members will notice the difference immediately.</p>
             <div className="rv" style={{ display:"flex",justifyContent:"center",gap:14,flexWrap:"wrap" }}>
               <button onClick={onInvite} className="btn-primary glow-red" style={{ display:"flex",alignItems:"center",gap:10,padding:"16px 32px",borderRadius:14,fontSize:16,fontWeight:600,background:"var(--accent)",color:"white",border:"none",cursor:"pointer",boxShadow:"0 0 28px var(--red-glow)",transition:"all var(--tr)" }}>
-                <DiscordIcon size={18} /> Add VaultBot to Discord
+                <DiscordIcon size={18} /> Add Nori to Discord
               </button>
               <button onClick={onShowPricing} className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"16px 26px",borderRadius:14,fontSize:16,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",cursor:"pointer",transition:"all var(--tr)" }}>
                 <Icon name="payments" size={18} /> View Pricing Plans
@@ -1002,78 +1047,60 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
       </section>
 
       {/* FOOTER */}
-      <footer style={{ background:"var(--surface3)",borderTop:"1px solid var(--border2)",padding:"56px 64px 40px" }}>
-        <div style={{ maxWidth:1200,margin:"0 auto",display:"grid",gridTemplateColumns:"1fr 1fr",gap:32 }}>
-          <div>
-            <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:16 }}>
-              <div style={{ width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center" }}>
+      <footer style={{ background:"var(--surface3)", borderTop:"1px solid var(--border2)", padding:"24px 64px" }}>
+        <div style={{ maxWidth:1200, margin:"0 auto", display:"flex", justifyContent:"space-between", alignItems:"center", gap:20, flexWrap:"wrap" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <div style={{ width:30, height:30, display:"flex", alignItems:"center", justifyItems:"center", justifyContent:"center" }}>
                 <img
                   src="/LOGO.png"
-                  alt="VaultBot"
-                  style={{ width:"100%",height:"100%",objectFit:"contain" }}
+                  alt="Nori"
+                  style={{ width:"100%", height:"100%", objectFit:"contain" }}
                 />
               </div>
-              <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:22,color:"var(--navy)" }}>VaultBot</span>
+              <span style={{ fontFamily:"'Outfit', sans-serif", fontWeight:600, fontSize:17, color:"var(--navy)" }}>Nori</span>
             </div>
-            <p style={{ fontSize:14,color:"var(--muted)",lineHeight:1.75,maxWidth:340,marginBottom:24,fontWeight:300 }}>VaultBot is an AI assistant for Discord communities. Upload your documents, point it at your website, and let it answer your members' questions around the clock, accurately, instantly, and always with a source.</p>
+            <span style={{ height:12, width:1, background:"var(--border2)" }} />
+            <span style={{ fontSize:12, color:"var(--muted2)" }}>© 2026 Nori · Not affiliated with Discord Inc.</span>
           </div>
-          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:24 }}>
-            <div>
-              <h4 style={{ fontFamily:"'Plus Jakarta Sans', sans-serif",fontSize:12,fontWeight:700,color:"var(--navy)",marginBottom:16,letterSpacing:"0.06em",textTransform:"uppercase" }}>Accepts These Formats</h4>
-              <ul style={{ display:"flex",flexDirection:"column",gap:10,listStyle:"none",padding:0 }}>
-                {["PDF Documents","Websites & URLs","Excel Spreadsheets","Images & Screenshots"].map((l,i) => (
-                  <li key={i} style={{ fontSize:13.5,color:"var(--muted)",display:"flex",alignItems:"center",gap:8,fontWeight:300 }}>
-                    <span style={{ width:4,height:4,borderRadius:"50%",background:"var(--accent)" }} />
-                    {l}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h4 style={{ fontFamily:"'Plus Jakarta Sans', sans-serif",fontSize:12,fontWeight:700,color:"var(--navy)",marginBottom:16,letterSpacing:"0.06em",textTransform:"uppercase" }}>Links</h4>
-              <ul style={{ display:"flex",flexDirection:"column",gap:10,listStyle:"none",padding:0 }}>
-                {[
-                  { label: "Add to Discord", onClick: onInvite },
-                  { label: "Features", href: "#features" },
-                  { label: "Pricing", onClick: onShowPricing },
-                  { label: "Support", href: "mailto:support@vaultbot.dev" },
-                  { label: "Privacy Policy", onClick: onShowPrivacy },
-                  { label: "Terms & Conditions", onClick: onShowTerms },
-                ].map((item, i) => (
-                  <li
-                    key={i}
-                    style={{ fontSize:13.5,color:"var(--muted)",display:"flex",alignItems:"center",gap:8,fontWeight:300 }}
-                  >
-                    <span style={{ width:4,height:4,borderRadius:"50%",background:"var(--slate)" }} />
-                    {item.href ? (
-                      <a
-                        href={item.href}
-                        style={{ color: "var(--muted)", textDecoration: "none", transition: "all var(--tr)", cursor: "pointer" }}
-                        onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"}
-                        onMouseLeave={e => e.currentTarget.style.color = "var(--muted)"}
-                      >
-                        {item.label}
-                      </a>
-                    ) : (
-                      <span
-                        onClick={item.onClick}
-                        style={{ color: "var(--muted)", cursor: "pointer", transition: "all var(--tr)" }}
-                        onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"}
-                        onMouseLeave={e => e.currentTarget.style.color = "var(--muted)"}
-                      >
-                        {item.label}
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <div style={{ display:"flex", alignItems:"center", gap:24, flexWrap:"wrap" }}>
+            <ul style={{ display:"flex", gap:16, listStyle:"none", padding:0, margin:0, flexWrap:"wrap", alignItems:"center" }}>
+              {[
+                { label: "Add to Discord", onClick: onInvite },
+                { label: "Features", href: "#features" },
+                { label: "Pricing", onClick: onShowPricing },
+                { label: "Privacy Policy", onClick: onShowPrivacy },
+                { label: "Terms", onClick: onShowTerms },
+              ].map((item, i) => (
+                <li
+                  key={i}
+                  style={{ fontSize:12.5, color:"var(--muted)", fontWeight:300 }}
+                >
+                  {item.href ? (
+                    <a
+                      href={item.href}
+                      style={{ color: "var(--muted)", textDecoration: "none", transition: "all var(--tr)", cursor: "pointer" }}
+                      onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"}
+                      onMouseLeave={e => e.currentTarget.style.color = "var(--muted)"}
+                    >
+                      {item.label}
+                    </a>
+                  ) : (
+                    <span
+                      onClick={item.onClick}
+                      style={{ color: "var(--muted)", cursor: "pointer", transition: "all var(--tr)" }}
+                      onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"}
+                      onMouseLeave={e => e.currentTarget.style.color = "var(--muted)"}
+                    >
+                      {item.label}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <span style={{ height:12, width:1, background:"var(--border2)" }} />
+            <a href="mailto:support@noribot.dev" style={{ fontSize:12.5, color:"var(--accent-deep)", textDecoration:"none", fontWeight:600, transition:"color var(--tr)" }} onMouseEnter={e => e.currentTarget.style.color = "var(--navy)"} onMouseLeave={e => e.currentTarget.style.color = "var(--accent-deep)"}>support@noribot.dev</a>
           </div>
-        </div>
-        <div style={{ maxWidth:1200,margin:"32px auto 0",paddingTop:24,borderTop:"1px solid var(--border2)",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap" }}>
-          <span style={{ fontSize:12,color:"var(--muted2)" }}>© 2026 VaultBot · Not affiliated with Discord Inc.</span>
-          <a href="mailto:support@vaultbot.dev" style={{ fontSize:12,color:"var(--accent-deep)",textDecoration:"none",fontWeight:600,transition:"color var(--tr)" }} onMouseEnter={e => e.currentTarget.style.color = "var(--navy)"} onMouseLeave={e => e.currentTarget.style.color = "var(--accent-deep)"}>support@vaultbot.dev</a>
-          <span style={{ fontSize:12,color:"var(--muted2)" }}>Your docs. Your bot. Your community.</span>
         </div>
       </footer>
     </div>

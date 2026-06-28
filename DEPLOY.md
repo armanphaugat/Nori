@@ -1,4 +1,4 @@
-# Q-ARAG — Oracle Cloud Production Deployment
+# Nori — Oracle Cloud Production Deployment
 
 ## Architecture
 
@@ -63,8 +63,8 @@ newgrp docker
 ## 3. Configure environment
 
 ```bash
-git clone <your-repo-url> q-arag
-cd q-arag
+git clone <your-repo-url> nori
+cd nori
 cp .env.example .env
 nano .env
 ```
@@ -73,8 +73,8 @@ nano .env
 
 ```env
 ENV=production
-FRONTEND_URL=https://vaultbot.dev
-DISCORD_REDIRECT_URI=https://vaultbot.dev/api/auth/discord/callback
+FRONTEND_URL=https://nori.dev
+DISCORD_REDIRECT_URI=https://nori.dev/api/auth/discord/callback
 REDIS_HOST=redis
 REDIS_PORT=6379
 ```
@@ -135,7 +135,7 @@ docker compose down
 | Symptom | Fix |
 |---------|-----|
 | Site unreachable | Check OCI security list **and** VM iptables |
-| OAuth redirect mismatch | `DISCORD_REDIRECT_URI` must be `https://vaultbot.dev/api/auth/discord/callback` |
+| OAuth redirect mismatch | `DISCORD_REDIRECT_URI` must be `https://nori.dev/api/auth/discord/callback` |
 | Graphlit errors | Set both `GRAPHLIT_ORGANIZATION_ID` and `GRAPHLIT_ORGANIZATION_KEY` |
 | Redis connection failed | Ensure `REDIS_HOST=redis` in `.env` |
 | Backend OOM on 24 GB VM | Already set `UVICORN_WORKERS=1`; reduce concurrent uploads |

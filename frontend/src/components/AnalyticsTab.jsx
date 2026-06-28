@@ -34,18 +34,25 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
   const [history, setHistory] = useState([]);
   const [recentEvents, setRecentEvents] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isReloading, setIsReloading] = useState(false);
   const [status, setStatus] = useState(null);
   const [hasNoData, setHasNoData] = useState(false);
   const [hoveredCell, setHoveredCell] = useState(null);
+  const [channelsAnalytics, setChannelsAnalytics] = useState([]);
+  const [channelNames, setChannelNames] = useState({});
 
-  const loadAnalytics = useCallback(async (id) => {
+  const loadAnalytics = useCallback(async (id, silent = false) => {
     if (!id) {
       setSummary(null);
       setHistory([]);
       setRecentEvents([]);
       return;
     }
-    setLoading(true);
+    if (silent) {
+      setIsReloading(true);
+    } else {
+      setLoading(true);
+    }
     setStatus(null);
     setHasNoData(false);
 
@@ -58,7 +65,11 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
       } catch (err) {
         if (err.message.includes("404") || err.message.toLowerCase().includes("no analytics")) {
           setHasNoData(true);
-          setLoading(false);
+          if (silent) {
+            setIsReloading(false);
+          } else {
+            setLoading(false);
+          }
           return;
         }
         throw err;
@@ -93,10 +104,41 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
         setRecentEvents([]);
       }
 
+      // 4. Fetch Channels Analytics
+      try {
+        const resChannels = await API.getAnalyticsByAllChannels(id, 50);
+        setChannelsAnalytics(resChannels.data || resChannels || []);
+      } catch (_) {
+        setChannelsAnalytics([]);
+      }
+
+      // 5. Fetch Guild Channels for mapping IDs to names
+      try {
+        const dc = await API.getGuildChannels(id);
+        const mapping = {};
+        (dc.categories || []).forEach(cat => {
+          (cat.channels || []).forEach(ch => {
+            mapping[ch.id] = ch.name;
+          });
+        });
+        if (dc.uncategorized && dc.uncategorized.channels) {
+          dc.uncategorized.channels.forEach(ch => {
+            mapping[ch.id] = ch.name;
+          });
+        }
+        setChannelNames(mapping);
+      } catch (err) {
+        console.error("Failed to fetch guild channels names:", err);
+      }
+
     } catch (err) {
       setStatus({ ok: false, msg: `Failed to load analytics: ${err.message}` });
     } finally {
-      setLoading(false);
+      if (silent) {
+        setIsReloading(false);
+      } else {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -196,11 +238,48 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
   if (hasNoData) {
     return (
       <div className="au">
-        <SectionHeader
-          label="Server Dashboard"
-          title="Server Analytics"
-          subtitle="Track member queries, response latency, and Bot query volume statistics."
-        />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 20, marginBottom: 20 }}>
+          <SectionHeader
+            label="Server Dashboard"
+            title="Server Analytics"
+            subtitle="Track member queries, response latency, and Bot query volume statistics."
+          />
+          {guildId && (
+            <div style={{ display: "flex", gap: 12, flexShrink: 0, marginTop: 4 }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+                <button
+                  onClick={() => loadAnalytics(guildId, true)}
+                  disabled={isReloading}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 8,
+                    padding: "7px 16px", borderRadius: "var(--r-full)",
+                    background: isReloading ? "var(--surface-3)" : "var(--surface)",
+                    border: `1px solid ${isReloading ? "var(--border-dark)" : "var(--border2)"}`,
+                    cursor: isReloading ? "not-allowed" : "pointer",
+                    transition: "all var(--tr)",
+                    fontSize: 12.5, fontWeight: 600,
+                    color: "var(--muted)",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    opacity: isReloading ? 0.7 : 1,
+                    boxSizing: "border-box",
+                    height: 34,
+                  }}
+                  onMouseEnter={e => { if (!isReloading) { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(43,45,66,0.08)"; e.currentTarget.style.color = "var(--navy)"; e.currentTarget.style.borderColor = "var(--navy-light)"; } }}
+                  onMouseLeave={e => { if (!isReloading) { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.color = "var(--muted)"; e.currentTarget.style.borderColor = "var(--border2)"; } }}
+                >
+                  {isReloading ? (
+                    <><Spinner size={12} /><span>Refreshing…</span></>
+                  ) : (
+                    <><Icon name="refresh" size={15} style={{ color: "var(--muted)" }} /><span>Refresh</span></>
+                  )}
+                </button>
+                <span style={{ fontSize: 11, color: "var(--muted)", textAlign: "center" }}>
+                  {isReloading ? "Refreshing..." : "Refresh analytics metrics"}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
         <Card style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "64px 32px", textAlign: "center", gap: 18, border: "1.5px dashed var(--border)" }}>
           <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--accent-l)", border: "1px solid rgba(196,30,30,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Icon name="bar_chart" size={28} style={{ color: "var(--accent)" }} />
@@ -208,7 +287,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
           <div>
             <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--text)", marginBottom: 6, fontFamily: "'Outfit', sans-serif" }}>No Analytics Recorded Yet</h2>
             <p style={{ fontSize: 14, color: "var(--text-s)", maxWidth: 520, lineHeight: 1.6, margin: "0 auto", fontWeight: 300 }}>
-              VaultBot has not processed any search queries on this server. Once members start asking questions in the configured Discord channels, details of response metrics and bot usage will populate here instantly.
+              Nori has not processed any search queries on this server. Once members start asking questions in the configured Discord channels, details of response metrics and bot usage will populate here instantly.
             </p>
           </div>
           <div style={{ width: "100%", maxWidth: 440, background: "var(--bg-s)", padding: 16, borderRadius: "var(--r-md)", border: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 10, textAlign: "left" }}>
@@ -235,39 +314,146 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
   const answerRate = Number(summary?.answer_rate_pct || 0);
   const uniqueUsers = Number(summary?.unique_users || 0);
   const avgLatency = Number(summary?.avg_latency_ms || 0);
+  const totalMessagesProcessed = Number(summary?.total_messages_processed || 0);
+  const queriesIdentified = Number(summary?.queries_identified || 0);
+
+  const getAggregatedChannelAnalytics = () => {
+    const agg = {};
+    (channelsAnalytics || []).forEach(stat => {
+      const cid = stat.channel_id;
+      if (!cid) return;
+      if (!agg[cid]) {
+        agg[cid] = {
+          channel_id: cid,
+          total_questions: 0,
+          answered_questions: 0,
+          avg_latency_sum: 0,
+          users: new Set(),
+          latency_count: 0
+        };
+      }
+      agg[cid].total_questions += Number(stat.total_questions || 0);
+      agg[cid].answered_questions += Number(stat.answered_questions || 0);
+      if (stat.avg_latency_ms) {
+        agg[cid].avg_latency_sum += Number(stat.avg_latency_ms) * Number(stat.total_questions);
+        agg[cid].latency_count += Number(stat.total_questions);
+      }
+      if (stat.user_id) {
+        agg[cid].users.add(stat.user_id);
+      }
+    });
+    return Object.values(agg).map(ch => ({
+      channel_id: ch.channel_id,
+      total_questions: ch.total_questions,
+      answered_questions: ch.answered_questions,
+      unique_users: ch.users.size,
+      avg_latency_ms: ch.latency_count > 0 ? ch.avg_latency_sum / ch.latency_count : 0
+    })).sort((a, b) => b.total_questions - a.total_questions);
+  };
+
+  const aggregatedChannelStats = getAggregatedChannelAnalytics();
+  const activeChannelsCount = aggregatedChannelStats.length;
 
   return (
     <div className="au" style={{ width: "100%", display: "flex", flexDirection: "column", gap: 24 }}>
-      <SectionHeader
-        label="Server Dashboard"
-        title="Server Analytics"
-        subtitle="Track member queries, response latency, and Bot query volume statistics."
-      />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 20, marginBottom: 20 }}>
+        <SectionHeader
+          label="Server Dashboard"
+          title="Server Analytics"
+          subtitle="Track member queries, response latency, and Bot query volume statistics."
+        />
+        {guildId && (
+          <div style={{ display: "flex", gap: 12, flexShrink: 0, marginTop: 4 }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+              <button
+                onClick={() => loadAnalytics(guildId, true)}
+                disabled={isReloading}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  padding: "7px 16px", borderRadius: "var(--r-full)",
+                  background: isReloading ? "var(--surface-3)" : "var(--surface)",
+                  border: `1px solid ${isReloading ? "var(--border-dark)" : "var(--border2)"}`,
+                  cursor: isReloading ? "not-allowed" : "pointer",
+                  transition: "all var(--tr)",
+                  fontSize: 12.5, fontWeight: 600,
+                  color: "var(--muted)",
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  opacity: isReloading ? 0.7 : 1,
+                  boxSizing: "border-box",
+                  height: 34,
+                }}
+                onMouseEnter={e => { if (!isReloading) { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(43,45,66,0.08)"; e.currentTarget.style.color = "var(--navy)"; e.currentTarget.style.borderColor = "var(--navy-light)"; } }}
+                onMouseLeave={e => { if (!isReloading) { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.color = "var(--muted)"; e.currentTarget.style.borderColor = "var(--border2)"; } }}
+              >
+                {isReloading ? (
+                  <><Spinner size={12} /><span>Refreshing…</span></>
+                ) : (
+                  <><Icon name="refresh" size={15} style={{ color: "var(--muted)" }} /><span>Refresh</span></>
+                )}
+              </button>
+              <span style={{ fontSize: 11, color: "var(--muted)", textAlign: "center" }}>
+                {isReloading ? "Refreshing..." : "Refresh analytics metrics"}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
 
       {status && <StatusBadge {...status} />}
 
       {/* KPI Cards Row */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
-        {/* Card 1: Total Queries */}
+        {/* Card 1: Total Messages Processed */}
         <Card className="card-hover" style={{ display: "flex", flexDirection: "column", gap: 8, padding: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-s)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Total Queries</span>
-            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--accent-l)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Icon name="forum" size={14} style={{ color: "var(--accent)" }} />
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-s)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Total Messages</span>
+            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(26,122,74,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name="forum" size={14} style={{ color: "var(--success)" }} />
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>{totalQuestions}</span>
-            <span style={{ fontSize: 11, color: "var(--text-s)" }}>recorded</span>
+            <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>{totalMessagesProcessed}</span>
+            <span style={{ fontSize: 11, color: "var(--text-s)" }}>processed</span>
           </div>
         </Card>
 
-        {/* Card 2: Answer Rate */}
+        {/* Card 2: Queries Identified */}
+        <Card className="card-hover" style={{ display: "flex", flexDirection: "column", gap: 8, padding: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-s)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Queries Identified</span>
+            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--accent-l)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name="search" size={14} style={{ color: "var(--accent)" }} />
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+            <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>{queriesIdentified}</span>
+            <span style={{ fontSize: 11, color: "var(--text-s)" }}>detected</span>
+          </div>
+        </Card>
+
+
+
+
+        {/* Card 5: Total Users Served */}
+        <Card className="card-hover" style={{ display: "flex", flexDirection: "column", gap: 8, padding: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-s)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Total Users Served</span>
+            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--accent-l)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name="group" size={14} style={{ color: "var(--accent)" }} />
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+            <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>{uniqueUsers}</span>
+            <span style={{ fontSize: 11, color: "var(--text-s)" }}>members reached</span>
+          </div>
+        </Card>
+
+        {/* Card 6: Answer Rate */}
         <Card className="card-hover" style={{ display: "flex", flexDirection: "column", gap: 8, padding: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-s)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Answer Rate</span>
             <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(26,122,74,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Icon name="verified" size={14} style={{ color: "var(--success)" }} />
+              <Icon name="verified_user" size={14} style={{ color: "var(--success)" }} />
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
@@ -276,21 +462,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
           </div>
         </Card>
 
-        {/* Card 3: Active Users */}
-        <Card className="card-hover" style={{ display: "flex", flexDirection: "column", gap: 8, padding: 20 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-s)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Active Users</span>
-            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--accent-l)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Icon name="group" size={14} style={{ color: "var(--accent)" }} />
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>{uniqueUsers}</span>
-            <span style={{ fontSize: 11, color: "var(--text-s)" }}>unique members</span>
-          </div>
-        </Card>
-
-        {/* Card 4: Avg Response Time */}
+        {/* Card 7: Average Response Latency */}
         <Card className="card-hover" style={{ display: "flex", flexDirection: "column", gap: 8, padding: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-s)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Avg Latency</span>
@@ -299,8 +471,22 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>{avgLatency}ms</span>
+            <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>{(avgLatency / 1000).toFixed(2)}s</span>
             <span style={{ fontSize: 11, color: "var(--text-s)" }}>bot response</span>
+          </div>
+        </Card>
+
+        {/* Card 8: Active Channels */}
+        <Card className="card-hover" style={{ display: "flex", flexDirection: "column", gap: 8, padding: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-s)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Active Channels</span>
+            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--accent-l)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name="layers" size={14} style={{ color: "var(--accent)" }} />
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+            <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>{activeChannelsCount}</span>
+            <span style={{ fontSize: 11, color: "var(--text-s)" }}>answering queries</span>
           </div>
         </Card>
       </div>
@@ -487,6 +673,76 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
         </Card>
       </div>
 
+      {/* Channel Analytics Table */}
+      {aggregatedChannelStats.length > 0 && (
+        <Card pad="0" style={{ overflow: "hidden" }}>
+          <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>Channel Activity & Query Distribution</h3>
+              <p style={{ fontSize: 12, color: "var(--text-s)" }}>Overview of channels where messages and queries are being processed</p>
+            </div>
+            <Tag variant="neutral">{activeChannelsCount} active channels</Tag>
+          </div>
+
+          <div style={{ overflowX: "auto" }}>
+            <table className="data-table no-lines">
+              <thead>
+                <tr>
+                  <th style={{ width: 220 }}>Channel ID / Name</th>
+                  <th style={{ textAlign: "right" }}>Total Queries</th>
+                  <th style={{ textAlign: "right" }}>Answered Questions</th>
+                  <th style={{ textAlign: "right" }}>Unique Users Served</th>
+                  <th style={{ textAlign: "right", paddingRight: 24 }}>Avg Latency</th>
+                </tr>
+              </thead>
+              <tbody>
+                {aggregatedChannelStats.map((stat, i) => {
+                  const latency = Number(stat.avg_latency_ms || 0);
+                  const isLatencyFast = latency < 800;
+                  return (
+                    <tr key={i}>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <Icon name="tag" size={14} style={{ color: "var(--accent)" }} />
+                          <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
+                            {channelNames[stat.channel_id] ? `#${channelNames[stat.channel_id]}` : stat.channel_id}
+                          </span>
+                        </div>
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>{stat.total_questions}</span>
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--success)" }}>{stat.answered_questions}</span>
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        <span style={{ fontSize: 13, color: "var(--text-s)" }}>{stat.unique_users}</span>
+                      </td>
+                      <td style={{ textAlign: "right", paddingRight: 24 }}>
+                        <span
+                          style={{
+                            fontFamily: "'DM Mono', monospace",
+                            fontSize: 12.5,
+                            fontWeight: 600,
+                            color: isLatencyFast ? "var(--success)" : "var(--warning)",
+                            background: isLatencyFast ? "rgba(26,122,74,0.06)" : "rgba(179,92,0,0.06)",
+                            padding: "3px 8px",
+                            borderRadius: 4,
+                            border: `1px solid ${isLatencyFast ? "rgba(26,122,74,0.15)" : "rgba(179,92,0,0.15)"}`,
+                          }}
+                        >
+                          {latency ? `${(latency / 1000).toFixed(2)} s` : "—"}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
       {/* Recent Activity Table */}
       <Card pad="0" style={{ overflow: "hidden" }}>
         <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -494,23 +750,25 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
             <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>Recent Bot Queries</h3>
             <p style={{ fontSize: 12, color: "var(--text-s)" }}>Chronological list of recent queries asked by server members</p>
           </div>
-          <Tag variant="neutral">{recentEvents.length} events logged</Tag>
+          <Tag variant="neutral">{totalQuestions} events logged</Tag>
         </div>
 
         <div style={{ overflowX: "auto" }}>
-          <table className="data-table">
+          <table className="data-table no-lines">
             <thead>
               <tr>
                 <th style={{ width: 150 }}>User ID</th>
+                <th>Channel</th>
                 <th>Asked At</th>
                 <th>Bot Answered</th>
-                <th style={{ textAlign: "right", paddingRight: 24, width: 140 }}>Latency</th>
+                <th>Message Link</th>
+                <th style={{ textAlign: "right", paddingRight: 24, width: 120 }}>Latency</th>
               </tr>
             </thead>
             <tbody>
               {recentEvents.length === 0 ? (
                 <tr>
-                  <td colSpan={4} style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-s)" }}>
+                  <td colSpan={6} style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-s)" }}>
                     No recent events logged.
                   </td>
                 </tr>
@@ -528,6 +786,9 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
                       })
                     : "—";
 
+                  const parts = event.message_link ? event.message_link.split("/") : [];
+                  const channelId = parts.length > 5 ? parts[5] : "—";
+
                   return (
                     <tr key={event.id}>
                       <td>
@@ -539,6 +800,14 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
                         </div>
                       </td>
                       <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <Icon name="tag" size={14} style={{ color: "var(--text-m)" }} />
+                          <span style={{ fontSize: 13, color: "var(--text)" }}>
+                            {channelNames[channelId] ? `#${channelNames[channelId]}` : channelId}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
                         <span style={{ fontSize: 13, color: "var(--text-s)" }}>{askedAtStr}</span>
                       </td>
                       <td>
@@ -546,6 +815,22 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
                           <Tag variant="success">Answered</Tag>
                         ) : (
                           <Tag variant="error">Unanswered</Tag>
+                        )}
+                      </td>
+                      <td>
+                        {event.message_link && !event.message_link.includes("111111111111111111") ? (
+                          <a 
+                            href={event.message_link} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "var(--accent)", textDecoration: "none", fontWeight: 600, fontSize: 12.5 }}
+                            onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
+                            onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}
+                          >
+                            <Icon name="open_in_new" size={14} /> Jump to Msg
+                          </a>
+                        ) : (
+                          <span style={{ color: "var(--text-m)", fontSize: 13 }}>—</span>
                         )}
                       </td>
                       <td style={{ textAlign: "right", paddingRight: 24 }}>
@@ -561,7 +846,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
                             border: `1px solid ${isLatencyFast ? "rgba(26,122,74,0.15)" : "rgba(179,92,0,0.15)"}`,
                           }}
                         >
-                          {latency ? `${latency.toFixed(0)} ms` : "—"}
+                          {latency ? `${(latency / 1000).toFixed(2)} s` : "—"}
                         </span>
                       </td>
                     </tr>

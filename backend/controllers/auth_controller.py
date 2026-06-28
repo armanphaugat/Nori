@@ -123,16 +123,16 @@ async def _sync_guild_admins(discord_id: str, discord_access_token: str) -> None
             if not is_admin:
                 continue
             role = "owner" if is_owner else "admin"
-            add_guild_admin(
+            await add_guild_admin(
                 guild_id=g["id"],
                 discord_id=discord_id,
                 role=role,
                 granted_by=discord_id,
             )
             synced.add(g["id"])
-        current_db_guilds = get_user_guild_ids(discord_id)
+        current_db_guilds = await get_user_guild_ids(discord_id)
         for stale_guild_id in current_db_guilds - synced:
-            remove_guild_admin(stale_guild_id, discord_id)
+            await remove_guild_admin(stale_guild_id, discord_id)
 
     except Exception as e:
         print(f"[sync_guild_admins] Non-fatal error for {discord_id}: {e}")
@@ -151,17 +151,19 @@ async def handle_discord_login() -> RedirectResponse:
     return RedirectResponse(url=f"{DISCORD_OAUTH_URL}?{params}")
 
 
-async def handle_discord_invite() -> RedirectResponse:
+async def handle_discord_invite(guild_id: str | None = None) -> RedirectResponse:
     state  = _generate_state()
-    params = urlencode({
+    params = {
         "client_id":     DISCORD_CLIENT_ID,
         "redirect_uri":  DISCORD_REDIRECT_URI,
         "response_type": "code",
         "scope":         "identify guilds guilds.members.read email bot applications.commands",
         "permissions":   "8",
         "state":         state,
-    })
-    return RedirectResponse(url=f"{DISCORD_OAUTH_URL}?{params}")
+    }
+    if guild_id:
+        params["guild_id"] = guild_id
+    return RedirectResponse(url=f"{DISCORD_OAUTH_URL}?{urlencode(params)}")
 
 
 async def handle_discord_callback(code: str, state: str, request: Request) -> RedirectResponse:
@@ -192,11 +194,9 @@ async def handle_discord_callback(code: str, state: str, request: Request) -> Re
     me        = await _call_discord_api("/users/@me", d_access)
     guilds    = await _call_discord_api("/users/@me/guilds", d_access)
     guild_ids = [g["id"] for g in guilds]
-
-    # Build username once for reuse
     username = f"{me['username']}#{me.get('discriminator', '0')}"
 
-    upsert_admin_user(
+    await upsert_admin_user(
         discord_id=me["id"],
         username=username,
         avatar=me.get("avatar"),
@@ -208,7 +208,7 @@ async def handle_discord_callback(code: str, state: str, request: Request) -> Re
     await _sync_guild_admins(me["id"], d_access)
 
     raw_refresh = secrets.token_urlsafe(32)
-    create_session(
+    await create_session(
         discord_id=me["id"],
         refresh_token_hash=_hash_token(raw_refresh),
         expires_at=datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
@@ -235,7 +235,7 @@ async def handle_refresh_tokens(
         raise HTTPException(status_code=401, detail="No refresh token")
 
     token_hash = _hash_token(rt)
-    session    = get_session_by_hash(token_hash)
+    session    = await get_session_by_hash(token_hash)
 
     if not session:
         raise HTTPException(status_code=401, detail="Refresh token not found")
@@ -244,21 +244,21 @@ async def handle_refresh_tokens(
     if session["expires_at"] < datetime.now(timezone.utc):
         raise HTTPException(status_code=401, detail="Refresh token expired")
 
-    revoke_session(session["id"])
+    await revoke_session(session["id"])
     new_raw_refresh = secrets.token_urlsafe(32)
-    create_session(
+    await create_session(
         discord_id=session["discord_id"],
         refresh_token_hash=_hash_token(new_raw_refresh),
         expires_at=datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
     )
 
-    user = get_admin_user(session["discord_id"])
+    user = await get_admin_user(session["discord_id"])
 
     # Re-sync guild admins on every token refresh using stored Discord token
     if user:
         await _sync_guild_admins(user["discord_id"], user["discord_access_token"])
 
-    guild_ids    = get_user_guild_ids(session["discord_id"])
+    guild_ids    = await get_user_guild_ids(session["discord_id"])
     # Pass username from DB row, consistent with login flow
     access_token = _make_access_token(
         session["discord_id"],
@@ -275,15 +275,15 @@ async def handle_logout(
     rt: str | None = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
 ) -> dict:
     if rt:
-        session = get_session_by_hash(_hash_token(rt))
+        session = await get_session_by_hash(_hash_token(rt))
         if session:
-            revoke_session(session["id"])
+            await revoke_session(session["id"])
     _clear_refresh_cookie(response)
     return {"detail": "Logged out"}
 
 
 async def handle_get_me(user: dict = Depends(verify_access_token)) -> dict:
-    row = get_admin_user(user["discord_id"])
+    row = await get_admin_user(user["discord_id"])
     if not row:
         raise HTTPException(status_code=404, detail="User not found")
     return {
@@ -297,7 +297,7 @@ async def handle_get_me(user: dict = Depends(verify_access_token)) -> dict:
 
 
 async def handle_list_sessions(user: dict = Depends(verify_access_token)) -> dict:
-    sessions = get_user_sessions(user["discord_id"])
+    sessions = await get_user_sessions(user["discord_id"])
     safe = [
         {
             "id":         str(s["id"]),
@@ -316,7 +316,7 @@ async def handle_revoke_session(
     session_id: str,
     user: dict = Depends(verify_access_token),
 ) -> dict:
-    success = revoke_session_by_id(session_id, owner_discord_id=user["discord_id"])
+    success = await revoke_session_by_id(session_id, owner_discord_id=user["discord_id"])
     if not success:
         raise HTTPException(status_code=404, detail="Session not found or not yours")
     return {"detail": "Session revoked"}

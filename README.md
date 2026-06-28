@@ -1,4 +1,4 @@
-# Q-ARAG Discord Bot
+# Nori Discord Bot
 
 RAG-powered Discord support bot with an admin dashboard. Uses Graphlit for knowledge-base ingest/query, Supabase Postgres for metadata, and Redis for API key rotation.
 

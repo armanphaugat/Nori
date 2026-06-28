@@ -19,12 +19,48 @@ import Sidebar from "./components/Sidebar.jsx";
 import ChannelsTab from "./components/ChannelsTab.jsx";
 import UploadTab from "./components/UploadTab.jsx";
 import SourcesTab from "./components/SourcesTab.jsx";
-import CrawlerTab from "./components/CrawlerTab.jsx";
 import ChatWidget from "./components/ChatWidget.jsx";
 import PricingPage from "./components/PricingPage.jsx";
 import AnalyticsTab from "./components/AnalyticsTab.jsx";
 import DocsTab from "./components/DocsTab.jsx";
 import LegalPage from "./components/LegalPage.jsx";
+import BillingTab from "./components/BillingTab.jsx";
+import ProfileTab from "./components/ProfileTab.jsx";
+
+const BADGE_STYLES = {
+  free: {
+    bg: "linear-gradient(135deg, #8D99AE 0%, #5a6480 100%)",
+    shadow: "rgba(141, 153, 174, 0.25)",
+    label: "Free Plan",
+    icon: "info"
+  },
+  starter: {
+    bg: "linear-gradient(135deg, #3885dc 0%, #1a5fab 100%)",
+    shadow: "rgba(26, 95, 171, 0.25)",
+    label: "Starter Plan",
+    icon: "verified"
+  },
+
+  pro: {
+    bg: "linear-gradient(135deg, #3d3f58 0%, var(--navy) 100%)",
+    shadow: "rgba(43, 45, 66, 0.25)",
+    label: "Pro Plan",
+    icon: "verified"
+  },
+  enterprise: {
+    bg: "linear-gradient(135deg, #3d3f58 0%, var(--navy) 100%)",
+    shadow: "rgba(43, 45, 66, 0.25)",
+    label: "Enterprise Plan",
+    icon: "verified"
+  },
+  paid: {
+    bg: "linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%)",
+    shadow: "rgba(239, 35, 60, 0.25)",
+    label: "Premium Plan",
+    icon: "verified"
+  }
+};
+
 function Dashboard({ 
   user, 
   guilds, 
@@ -36,8 +72,68 @@ function Dashboard({
   onGuildsChange,
   onShowPricing
 }) {
-  const [tab, setTab] = useState("channels");
+  const getTabFromUrl = () => {
+    const params = new URLSearchParams(window.location.search);
+    const urlTab = params.get("tab");
+    const validTabs = ["channels", "upload", "sources", "analytics", "billing", "docs", "profile"];
+    if (urlTab && validTabs.includes(urlTab)) {
+      return urlTab;
+    }
+    const hash = window.location.hash.replace("#", "");
+    if (hash && validTabs.includes(hash)) {
+      return hash;
+    }
+    return null;
+  };
+
+  const [tab, setTab] = useState(() => {
+    const urlTab = getTabFromUrl();
+    if (urlTab) return urlTab;
+    return LS.str("wb_active_tab") || "channels";
+  });
+
+  const changeTab = (t) => {
+    setTab(t);
+    LS.strSet("wb_active_tab", t);
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", t);
+    url.searchParams.set("page", "dashboard");
+    if (activeGuildId) {
+      url.searchParams.set("guild_id", activeGuildId);
+    }
+    window.history.pushState({}, "", url.pathname + url.search + url.hash);
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const urlTab = getTabFromUrl();
+      if (urlTab) {
+        setTab(urlTab);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+  const [activePlan, setActivePlan] = useState("free");
+
+  useEffect(() => {
+    if (!activeGuildId) return;
+    API.getServerPlan(activeGuildId)
+      .then(res => {
+        if (res && res.plan) {
+          setActivePlan(res.plan);
+        } else {
+          setActivePlan("free");
+        }
+      })
+      .catch(() => {
+        setActivePlan("free");
+      });
+  }, [activeGuildId]);
+
+  const badge = BADGE_STYLES[activePlan] || BADGE_STYLES.free;
   const [showServerDropdown, setShowServerDropdown] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [togglingPause, setTogglingPause] = useState(false);
 
   const handleTogglePause = async () => {
@@ -63,6 +159,9 @@ function Dashboard({
       if (!e.target.closest('[data-dropdown="server-select"]')) {
         setShowServerDropdown(false);
       }
+      if (!e.target.closest('[data-dropdown="profile-select"]')) {
+        setShowProfileDropdown(false);
+      }
     };
     document.addEventListener("mousedown", handleOutside);
     return () => document.removeEventListener("mousedown", handleOutside);
@@ -72,12 +171,13 @@ function Dashboard({
   const activeGuild = guilds.find(g => g.id === activeGuildId) || null;
 
   const tabLabels = {
-    channels: "Channel Management",
+    channels: "General Settings",
     upload: "Knowledge Base",
     sources: "Ingested Sources",
     analytics: "Analytics",
-    utils: "URL Crawler",
+    billing: "Billing & Plans",
     docs: "Setup Documentation",
+    profile: "My Profile",
   };
 
   const getAvatarUrl = (u) => {
@@ -96,7 +196,7 @@ function Dashboard({
     <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "var(--bg)" }}>
       <Sidebar
         tab={tab}
-        onTab={setTab}
+        onTab={changeTab}
         activeGuild={activeGuild}
         onSwitchServer={onSwitchServer}
         user={user}
@@ -107,7 +207,6 @@ function Dashboard({
         {/* ── Top Header Bar ── */}
         <header style={{ 
           height: 64,
-          borderBottom: "1px solid var(--border)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -116,7 +215,7 @@ function Dashboard({
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
           flexShrink: 0,
-          zIndex: 10,
+          zIndex: 150,
           boxShadow: "0 1px 0 var(--border)",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
@@ -126,8 +225,8 @@ function Dashboard({
             <span style={{ height: 16, width: 1, background: "var(--border2)" }} />
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               {[
-                { label: "Docs", href: "#", onClick: (e) => { e.preventDefault(); setTab("docs"); } },
-                { label: "Invite", href: "https://discord.gg/H92wkB4X" },
+                { label: "Docs", href: "#", onClick: (e) => { e.preventDefault(); changeTab("docs"); } },
+                { label: "Invite", href: "https://discord.gg/WrpaytBfN" },
                 { label: "Discord", href: activeGuild?.id ? `https://discord.com/channels/${activeGuild.id}` : "https://discord.com" },
               ].map(({ label, href, onClick }) => (
                 <a
@@ -136,7 +235,7 @@ function Dashboard({
                   onClick={onClick}
                   target={href !== "#" ? "_blank" : undefined}
                   rel={href !== "#" ? "noopener noreferrer" : undefined}
-                  style={{ fontSize: 13, fontWeight: 550, color: "var(--muted)", textDecoration: "none", padding: "4px 10px", borderRadius: "var(--r-sm)", transition: "all var(--tr)" }}
+                  style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 550, color: "var(--muted)", textDecoration: "none", padding: "4px 10px", borderRadius: "var(--r-sm)", transition: "all var(--tr)" }}
                   onMouseEnter={e => { e.currentTarget.style.color = "var(--navy)"; e.currentTarget.style.background = "var(--navy-light)"; }}
                   onMouseLeave={e => { e.currentTarget.style.color = "var(--muted)"; e.currentTarget.style.background = "transparent"; }}
                 >
@@ -145,27 +244,27 @@ function Dashboard({
               ))}
               <a
                 href="#"
-                onClick={(e) => { e.preventDefault(); }}
+                onClick={(e) => { e.preventDefault(); changeTab("billing"); }}
                 style={{ 
-                  fontSize: 12, fontWeight: 700, color: "#fff", textDecoration: "none", 
+                  fontSize: 11, fontWeight: 700, color: "#fff", textDecoration: "none", 
                   display: "flex", alignItems: "center", gap: 4, padding: "5px 12px", 
-                  borderRadius: "var(--r-full)", background: "linear-gradient(135deg, var(--accent-deep) 0%, var(--accent) 100%)", 
-                  boxShadow: "0 2px 10px rgba(239, 35, 60, 0.25)", transition: "all var(--tr)",
+                  borderRadius: "var(--r-full)", background: badge.bg, 
+                  boxShadow: `0 2px 10px ${badge.shadow}`, transition: "all var(--tr)",
                   textTransform: "uppercase", letterSpacing: "0.5px"
                 }}
-                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(239, 35, 60, 0.45)"; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(239, 35, 60, 0.25)"; }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = `0 4px 14px ${badge.shadow}`; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = `0 2px 10px ${badge.shadow}`; }}
               >
-                <Icon name="verified" size={13} style={{ color: "#fff" }} /> Premium
+                <Icon name={badge.icon} size={13} style={{ color: "#fff" }} /> {badge.label}
               </a>
             </div>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {/* Server Switcher Dropdown */}
-            <div style={{ display: "flex", alignItems: "center", gap: 16, position: "relative" }} data-dropdown="server-select">
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }} data-dropdown="server-select">
               {activeGuild ? (
-                <>
+                <div style={{ position: "relative" }}>
                   <div
                     onClick={() => setShowServerDropdown(!showServerDropdown)}
                     style={{
@@ -233,7 +332,7 @@ function Dashboard({
                       </div>
                     </div>
                   )}
-                </>
+                </div>
               ) : (
                 <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: "var(--r-full)", background: "var(--surface-2)", border: "1px solid var(--border2)" }}>
                   <Icon name="warning" size={14} style={{ color: "var(--muted)" }} />
@@ -241,19 +340,65 @@ function Dashboard({
                 </div>
               )}
 
-              {/* User Avatar */}
+              {/* User Avatar & Dropdown */}
               {user && (
-                <div style={{ display: "flex", alignItems: "center", gap: 8, borderLeft: "1px solid var(--border)", paddingLeft: 16 }}>
-                  {getAvatarUrl(user) ? (
-                    <img src={getAvatarUrl(user)} alt={user.username} style={{ width: 28, height: 28, borderRadius: "50%", border: "2px solid var(--border2)", objectFit: "cover" }} />
-                  ) : (
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--navy)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff" }}>
-                      {(user.username || "U").slice(0, 2).toUpperCase()}
+                <div style={{ position: "relative" }} data-dropdown="profile-select">
+                  <div
+                    onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 8, borderLeft: "1px solid var(--border)", paddingLeft: 16,
+                      cursor: "pointer", userSelect: "none", paddingTop: 4, paddingBottom: 4
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.opacity = 0.85; }}
+                    onMouseLeave={e => { e.currentTarget.style.opacity = 1; }}
+                  >
+                    {getAvatarUrl(user) ? (
+                      <img src={getAvatarUrl(user)} alt={user.username} style={{ width: 28, height: 28, borderRadius: "50%", border: "2px solid var(--border2)", objectFit: "cover" }} />
+                    ) : (
+                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--navy)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff" }}>
+                        {(user.username || "U").slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "var(--navy)" }}>
+                      {user.username}
+                    </span>
+                    <Icon name="expand_more" size={14} style={{ color: "var(--navy)", marginLeft: 2, transform: showProfileDropdown ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+                  </div>
+
+                  {showProfileDropdown && (
+                    <div style={{
+                      position: "absolute", top: "100%", right: 0, marginTop: 8,
+                      width: 200, background: "var(--surface)",
+                      border: "1px solid var(--border2)",
+                      borderRadius: "var(--r-md)",
+                      boxShadow: "var(--shadow-lg)", zIndex: 200,
+                      overflow: "hidden", display: "flex", flexDirection: "column",
+                    }}>
+                      <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)", fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>
+                        Logged in as <strong style={{ color: "var(--navy)" }}>{user.username}</strong>
+                      </div>
+                      
+                      <div
+                        onClick={() => { changeTab("profile"); setShowProfileDropdown(false); }}
+                        style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", cursor: "pointer", fontSize: 12.5, fontWeight: 600, color: "var(--navy)", transition: "background 0.2s" }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = "var(--surface-2)"}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
+                      >
+                        <Icon name="person" size={16} style={{ color: "var(--slate)" }} />
+                        <span>My Profile</span>
+                      </div>
+
+                      <div
+                        onClick={() => { onLogout(); setShowProfileDropdown(false); }}
+                        style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderTop: "1px solid var(--border)", cursor: "pointer", fontSize: 12.5, fontWeight: 600, color: "var(--accent-deep)", transition: "background 0.2s" }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = "var(--red-dim)"}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
+                      >
+                        <Icon name="logout" size={16} style={{ color: "var(--accent)" }} />
+                        <span>Sign Out</span>
+                      </div>
                     </div>
                   )}
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--navy)" }}>
-                    {user.username}
-                  </span>
                 </div>
               )}
             </div>
@@ -277,16 +422,27 @@ function Dashboard({
               <UploadTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
             )}
             {tab === "sources" && (
-              <SourcesTab guildId={activeGuildId} onGoToOverview={onSwitchServer} user={user} />
+              <SourcesTab guildId={activeGuildId} onGoToOverview={onSwitchServer} user={user} onTab={changeTab} />
             )}
             {tab === "analytics" && (
               <AnalyticsTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
             )}
-            {tab === "utils" && (
-              <CrawlerTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
+            {tab === "billing" && (
+              <BillingTab guildId={activeGuildId} onGoToOverview={onSwitchServer} user={user} />
             )}
             {tab === "docs" && (
               <DocsTab guildId={activeGuildId} onGoToOverview={onSwitchServer} />
+            )}
+            {tab === "profile" && (
+              <ProfileTab
+                user={user}
+                guilds={guilds}
+                onLogout={onLogout}
+                onGoToOverview={onSwitchServer}
+                onActivate={onActivate}
+                onGuildsChange={onGuildsChange}
+                onTab={changeTab}
+              />
             )}
           </div>
         </div>
@@ -316,7 +472,7 @@ function BootScreen() {
         }}>
           <img
             src="/LOGO.png"
-            alt="VaultBot"
+            alt="Nori"
             style={{
               width: "100%", height: "100%",
               objectFit: "contain",
@@ -332,7 +488,7 @@ function BootScreen() {
 
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--navy)" }}>
-            Vault<span style={{ color: "var(--accent)" }}>Bot</span>
+            No<span style={{ color: "var(--accent)" }}>ri</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--muted)" }}>
             <span>Loading your workspace</span>
@@ -348,12 +504,77 @@ function BootScreen() {
 
 // ── Root App ──────────────────────────────────────────────────────────────────
 export default function App() {
-  const [view, setView] = useState("landing");
+  const getViewFromUrl = () => {
+    const params = new URLSearchParams(window.location.search);
+    const page = params.get("page");
+    const validViews = ["landing", "pricing", "servers", "dashboard", "privacy", "terms"];
+    if (page && validViews.includes(page)) {
+      return page;
+    }
+    return null;
+  };
+
+  const getTabFromUrl = () => {
+    const params = new URLSearchParams(window.location.search);
+    const urlTab = params.get("tab");
+    const validTabs = ["channels", "upload", "sources", "analytics", "billing", "docs", "profile"];
+    if (urlTab && validTabs.includes(urlTab)) {
+      return urlTab;
+    }
+    const hash = window.location.hash.replace("#", "");
+    if (hash && validTabs.includes(hash)) {
+      return hash;
+    }
+    return null;
+  };
+
+  const [view, setView] = useState(() => {
+    const urlView = getViewFromUrl();
+    if (urlView) return urlView;
+    return "landing";
+  });
+
+  const navigateTo = (newView) => {
+    setView(newView);
+    const url = new URL(window.location.href);
+    url.searchParams.set("page", newView);
+    if (newView !== "dashboard") {
+      url.searchParams.delete("tab");
+      url.searchParams.delete("guild_id");
+    } else {
+      if (activeGuildId) {
+        url.searchParams.set("guild_id", activeGuildId);
+      }
+    }
+    window.history.pushState({}, "", url.pathname + url.search + url.hash);
+  };
+
   const [user, setUser] = useState(LS.get("wb_user", null));
   const [guilds, setGuilds] = useState(LS.get("wb_guilds", []));
   const [discordGuilds, setDiscordGuilds] = useState([]);
   const [booting, setBooting] = useState(true);
-  const [activeGuildId, setActiveGuildId] = useState(LS.str("wb_active_guild") || null);
+  const [activeGuildId, setActiveGuildId] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlGuildId = params.get("guild_id");
+    if (urlGuildId) return urlGuildId;
+    return LS.str("wb_active_guild") || null;
+  });
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const urlView = getViewFromUrl();
+      if (urlView) {
+        setView(urlView);
+      }
+      const params = new URLSearchParams(window.location.search);
+      const urlGuildId = params.get("guild_id");
+      if (urlGuildId) {
+        setActiveGuildId(urlGuildId);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   useEffect(() => {
     const hash = window.location.hash;
@@ -361,11 +582,11 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     const token = hashParams.get("token") || hashParams.get("access_token") || params.get("token") || params.get("access_token");
 
-    let redirectedGuildId = hashParams.get("guild_id") || params.get("guild_id");
+    let redirectedGuildId = hashParams.get("guild_id");
     if (redirectedGuildId) {
-      sessionStorage.setItem("pending_guild_redirect", redirectedGuildId);
+      localStorage.setItem("pending_guild_redirect", redirectedGuildId);
     } else {
-      redirectedGuildId = sessionStorage.getItem("pending_guild_redirect");
+      redirectedGuildId = localStorage.getItem("pending_guild_redirect");
     }
 
     (async () => {
@@ -412,7 +633,7 @@ export default function App() {
                   };
                   finalConfigured = [...mappedConfigured.filter(g => g.id !== redirectedGuildId), newServer];
                   activated = true;
-                  sessionStorage.removeItem("pending_guild_redirect");
+                  localStorage.removeItem("pending_guild_redirect");
                 } catch (e) {
                   console.error("Auto add server failed:", e);
                 }
@@ -423,14 +644,33 @@ export default function App() {
             LS.set("wb_guilds", finalConfigured);
           } catch (_) {}
 
+          const pendingPlan = localStorage.getItem("pending_checkout_plan");
+          if (pendingPlan) {
+            const pendingGuild = localStorage.getItem("pending_checkout_guild_id") || activeGuildId || redirectedGuildId;
+            localStorage.removeItem("pending_checkout_plan");
+            localStorage.removeItem("pending_checkout_guild_id");
+            
+            const qs = new URLSearchParams();
+            if (pendingGuild) qs.append("guild_id", pendingGuild);
+            qs.append("plan", pendingPlan);
+            window.location.href = `${API_BASE}/patreon/checkout?${qs.toString()}`;
+            return;
+          }
+
           if (activated && redirectedGuildId) {
-            sessionStorage.removeItem("pending_guild_redirect");
+            localStorage.removeItem("pending_guild_redirect");
             handleActivateServer(redirectedGuildId);
+          } else if (activeGuildId) {
+            setView("dashboard");
           } else {
             setView("servers");
           }
         } catch (_) {
-          setView("servers");
+          if (activeGuildId) {
+            setView("dashboard");
+          } else {
+            setView("servers");
+          }
         }
         setBooting(false);
         return;
@@ -443,14 +683,48 @@ export default function App() {
           setUser(u);
           LS.set("wb_user", u);
           try { const { guilds: dg } = await API.getGuilds(); setDiscordGuilds(dg || []); } catch (_) {}
-          setView("servers");
+          const pendingPlan = localStorage.getItem("pending_checkout_plan");
+          if (pendingPlan) {
+            const pendingGuild = localStorage.getItem("pending_checkout_guild_id") || activeGuildId;
+            localStorage.removeItem("pending_checkout_plan");
+            localStorage.removeItem("pending_checkout_guild_id");
+            
+            const qs = new URLSearchParams();
+            if (pendingGuild) qs.append("guild_id", pendingGuild);
+            qs.append("plan", pendingPlan);
+            window.location.href = `${API_BASE}/patreon/checkout?${qs.toString()}`;
+            return;
+          }
+
+          if (activeGuildId) {
+            setView("dashboard");
+          } else {
+            setView("servers");
+          }
         } catch (_) {
           setToken(null);
           LS.rm("wb_user");
         }
       } else if (storedToken && user) {
         try { const { guilds: dg } = await API.getGuilds(); setDiscordGuilds(dg || []); } catch (_) {}
-        setView("servers");
+        const pendingPlan = localStorage.getItem("pending_checkout_plan");
+        if (pendingPlan) {
+          const pendingGuild = localStorage.getItem("pending_checkout_guild_id") || activeGuildId;
+          localStorage.removeItem("pending_checkout_plan");
+          localStorage.removeItem("pending_checkout_guild_id");
+          
+          const qs = new URLSearchParams();
+          if (pendingGuild) qs.append("guild_id", pendingGuild);
+          qs.append("plan", pendingPlan);
+          window.location.href = `${API_BASE}/patreon/checkout?${qs.toString()}`;
+          return;
+        }
+
+        if (activeGuildId) {
+          setView("dashboard");
+        } else {
+          setView("servers");
+        }
       }
       setBooting(false);
     })();
@@ -458,7 +732,21 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (view === "dashboard" && !activeGuildId) setView("servers");
+    if (view === "dashboard" && !activeGuildId) {
+      setView("servers");
+      return;
+    }
+    const url = new URL(window.location.href);
+    url.searchParams.set("page", view);
+    if (view === "dashboard") {
+      if (activeGuildId) {
+        url.searchParams.set("guild_id", activeGuildId);
+      }
+    } else {
+      url.searchParams.delete("tab");
+      url.searchParams.delete("guild_id");
+    }
+    window.history.replaceState({}, "", url.pathname + url.search + url.hash);
   }, [view, activeGuildId]);
 
   const handleGuildsChange = (updated) => {
@@ -519,6 +807,7 @@ export default function App() {
     LS.rm("wb_user");
     LS.rm("wb_guilds");
     LS.rm("wb_active_guild");
+    LS.rm("wb_active_tab");
     setUser(null);
     setGuilds([]);
     setActiveGuildId(null);
@@ -545,22 +834,23 @@ export default function App() {
           user={user}
           onLogin={discordLogin}
           onInvite={discordInvite}
-          onShowDashboard={() => setView("servers")}
-          onShowPricing={() => setView("pricing")}
-          onShowPrivacy={() => setView("privacy")}
-          onShowTerms={() => setView("terms")}
+          onShowDashboard={() => navigateTo("servers")}
+          onShowPricing={() => navigateTo("pricing")}
+          onShowPrivacy={() => navigateTo("privacy")}
+          onShowTerms={() => navigateTo("terms")}
         />
       )}
       {view === "pricing" && (
         <PricingPage
           user={user}
+          activeGuildId={activeGuildId}
           onLogin={discordLogin}
           onInvite={discordInvite}
-          onShowDashboard={() => setView("servers")}
-          onShowPrivacy={() => setView("privacy")}
-          onShowTerms={() => setView("terms")}
+          onShowDashboard={() => navigateTo("servers")}
+          onShowPrivacy={() => navigateTo("privacy")}
+          onShowTerms={() => navigateTo("terms")}
           onBack={(hash) => {
-            setView("landing");
+            navigateTo("landing");
             if (hash) {
               setTimeout(() => {
                 const el = document.getElementById(hash.replace("#", ""));
@@ -586,17 +876,22 @@ export default function App() {
           guilds={guilds}
           discordGuilds={discordGuilds}
           activeGuildId={activeGuildId}
-          onSwitchServer={() => setView("servers")}
+          onSwitchServer={() => {
+            setActiveGuildId(null);
+            LS.rm("wb_active_guild");
+            LS.rm("wb_active_tab");
+            navigateTo("servers");
+          }}
           onActivate={handleActivateServer}
           onLogout={handleLogout}
           onGuildsChange={handleGuildsChange}
-          onShowPricing={() => setView("pricing")}
+          onShowPricing={() => navigateTo("pricing")}
         />
       )}
       {(view === "privacy" || view === "terms") && (
         <LegalPage
           type={view}
-          onBack={() => setView("landing")}
+          onBack={() => navigateTo("landing")}
         />
       )}
     </>

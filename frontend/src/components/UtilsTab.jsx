@@ -91,7 +91,7 @@ export default function UtilsTab({ guildId, onGoToOverview, user }) {
             />
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-            {[["this-server-mine", "person", "My Uploads"], ["this-server-all", "group", "All Uploads"]].map(([val, icon, label]) => (
+            {[["this-server-all", "group", "All Uploads"], ["this-server-mine", "person", "My Uploads"]].map(([val, icon, label]) => (
               <button key={val} onClick={() => setScope(val)} style={{
                 padding: "5px 13px", borderRadius: 99,
                 border: `1.5px solid ${scope === val ? "var(--accent)" : "var(--border2)"}`,
@@ -281,7 +281,7 @@ export default function UtilsTab({ guildId, onGoToOverview, user }) {
               <div style={{ background: "var(--red-dim)", padding: 14, borderRadius: "var(--r-md)", border: "1px solid var(--red-border)", marginBottom: 20 }}>
                 <div style={{ fontSize: 11, color: "var(--accent-deep)", fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>Permanent consequences</div>
                 <div style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.6, fontWeight: 300 }}>
-                  VaultBot will immediately forget all information from this source. This action cannot be undone.
+                  Nori will immediately forget all information from this source. This action cannot be undone.
                 </div>
               </div>
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>

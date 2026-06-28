@@ -2,12 +2,25 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { API } from "../utils/api.js";
 import {
   Spinner, StatusBadge, Btn, Icon, Card,
-  SectionHeader, NoServerSelected,
+  SectionHeader, NoServerSelected, Tag,
 } from "./Common.jsx";
 
 export default function UploadTab({ guildId, onGoToOverview }) {
   const [docUrls, setDocUrls]   = useState("");
   const [websiteUrls, setWebsiteUrls] = useState("");
+  const [repoUrl, setRepoUrl]   = useState("");
+  const [pat, setPat]           = useState("");
+  const [repoUploading, setRepoUploading] = useState(false);
+
+  // URL Crawler / Scanner states
+  const [urlMode, setUrlMode] = useState("quick"); // "quick" or "scan"
+  const [baseUrl, setBaseUrl] = useState("");
+  const [allUrls, setAllUrls] = useState([]);
+  const [selectedUrls, setSelectedUrls] = useState(new Set());
+  const [urlFilter, setUrlFilter] = useState("");
+  const [crawling, setCrawling] = useState(false);
+  const [ingestingUrls, setIngestingUrls] = useState(false);
+  const [hasResult, setHasResult] = useState(false);
   const [docFiles, setDocFiles] = useState([]);
   const [imgFiles, setImgFiles] = useState([]);
   const [vidFiles, setVidFiles] = useState([]);
@@ -30,7 +43,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
   const vidRef = useRef(null); const audRef = useRef(null);
 
   const ALLOWED = {
-    doc: [".pdf", ".docx"],
+    doc: [".pdf", ".docx", ".txt"],
     img: [".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".webp"],
     vid: [".mp4"],
     aud: [".mp3", ".wav", ".m4a"],
@@ -88,6 +101,45 @@ export default function UploadTab({ guildId, onGoToOverview }) {
     setWebsiteUploading(false);
   };
 
+  const doCrawl = async () => {
+    if (!baseUrl.trim()) return;
+    setCrawling(true); setStatus(null); setSelectedUrls(new Set()); setHasResult(false);
+    try {
+      const d = await API.getSubUrls(baseUrl.trim());
+      if (d.error) throw new Error(d.error);
+      setAllUrls(d.sub_urls || []); setHasResult(true);
+    } catch (e) { setStatus({ ok: false, msg: e.message }); }
+    setCrawling(false);
+  };
+
+  const toggleUrl = (u) => setSelectedUrls(s => { const n = new Set(s); n.has(u) ? n.delete(u) : n.add(u); return n; });
+
+  const doCrawlIngest = async () => {
+    if (!guildId) { setStatus({ ok: false, msg: "No server selected" }); return; }
+    if (!selectedUrls.size) return;
+    setIngestingUrls(true); setStatus(null);
+    try {
+      let successCount = 0;
+      const errors = [];
+      for (const url of selectedUrls) {
+        try {
+          await API.uploadWebsite(guildId, url);
+          successCount++;
+        } catch (e) {
+          errors.push(`${url}: ${e.message}`);
+        }
+      }
+      if (errors.length) {
+        setStatus({ ok: false, msg: `${successCount} ingested, ${errors.length} failed:\n${errors.join("\n")}` });
+      } else {
+        setStatus({ ok: true, msg: `${successCount} URL(s) ingested successfully` });
+      }
+    } catch (e) { setStatus({ ok: false, msg: e.message }); }
+    setIngestingUrls(false);
+  };
+
+  const filteredUrls = urlFilter ? allUrls.filter(u => u.toLowerCase().includes(urlFilter.toLowerCase())) : allUrls;
+
   const doSectionUpload = async (type, files, setFiles, label) => {
     if (!guildId) { setStatus({ ok: false, msg: "No server selected" }); return; }
     if (!files.length) { setStatus({ ok: false, msg: `Add ${label} files first` }); return; }
@@ -104,6 +156,21 @@ export default function UploadTab({ guildId, onGoToOverview }) {
     try { const d = await API.addFaq(guildId, faqText.trim()); setStatus({ ok: true, msg: d.message || "FAQ added" }); setFaqText(""); }
     catch (e) { setStatus({ ok: false, msg: e.message }); }
     setFaqUploading(false);
+  };
+
+  const doRepoUpload = async () => {
+    if (!guildId) { setStatus({ ok: false, msg: "No server selected" }); return; }
+    if (!repoUrl.trim()) { setStatus({ ok: false, msg: "Repository URL is required" }); return; }
+    setRepoUploading(true); setStatus(null);
+    try {
+      const d = await API.addGithubRepo(guildId, repoUrl.trim(), pat.trim() || null);
+      setStatus({ ok: true, msg: d.message || "GitHub repository ingested" });
+      setRepoUrl("");
+      setPat("");
+    } catch (e) {
+      setStatus({ ok: false, msg: e.message });
+    }
+    setRepoUploading(false);
   };
 
   const doChannelMessagesUpload = async () => {
@@ -197,6 +264,142 @@ export default function UploadTab({ guildId, onGoToOverview }) {
 
       {status && <div style={{ marginBottom: 16 }}><StatusBadge {...status} /></div>}
 
+      {/* Web Search & Website Crawler - Bigger Section */}
+      <div style={{ marginBottom: 24 }}>
+        <Card>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 38, height: 38, borderRadius: "var(--r-md)", background: "var(--red-dim)", border: "1px solid var(--red-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name="language" size={19} style={{ color: "var(--accent-deep)" }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--navy)" }}>Web Search & Website Crawler</div>
+              <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 300 }}>Ingest site URLs, crawl to discover links, or query search engines in a wider view</div>
+            </div>
+          </div>
+
+          {/* Mode Switcher */}
+          <div style={{
+            display: "flex",
+            background: "var(--surface-2)",
+            borderRadius: "var(--r-sm)",
+            padding: 3,
+            marginBottom: 14,
+            border: "1px solid var(--border)",
+            maxWidth: 340
+          }}>
+            <button
+              onClick={() => setUrlMode("quick")}
+              style={{
+                flex: 1,
+                padding: "6px 12px",
+                fontSize: 12,
+                fontWeight: 600,
+                borderRadius: "6px",
+                border: "none",
+                cursor: "pointer",
+                background: urlMode === "quick" ? "var(--surface)" : "transparent",
+                color: urlMode === "quick" ? "var(--navy)" : "var(--muted)",
+                boxShadow: urlMode === "quick" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+                transition: "all var(--tr)",
+              }}
+            >
+              Quick Add
+            </button>
+            <button
+              onClick={() => setUrlMode("scan")}
+              style={{
+                flex: 1,
+                padding: "6px 12px",
+                fontSize: 12,
+                fontWeight: 600,
+                borderRadius: "6px",
+                border: "none",
+                cursor: "pointer",
+                background: urlMode === "scan" ? "var(--surface)" : "transparent",
+                color: urlMode === "scan" ? "var(--navy)" : "var(--muted)",
+                boxShadow: urlMode === "scan" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+                transition: "all var(--tr)",
+              }}
+            >
+              Scan & Discover
+            </button>
+          </div>
+
+          {urlMode === "quick" ? (
+            <>
+              <textarea className="kb-input kb-mono" value={websiteUrls} onChange={e => setWebsiteUrls(e.target.value)} rows={3}
+                placeholder={"https://docs.example.com\nhttps://yoursite.com"}
+                style={{ resize: "vertical", lineHeight: 1.6 }} />
+              {websiteUrls.trim() && (
+                <div style={{ display: "flex", gap: 8, marginTop: 10, maxWidth: 340 }}>
+                  <Btn onClick={doWebsiteUpload} disabled={websiteUploading} variant="primary" style={{ flex: 1, justifyContent: "center" }}>
+                    {websiteUploading ? <><Spinner size={14} color="#fff" /> Saving URL…</> : <><Icon name="link" size={16} /> Save URL</>}
+                  </Btn>
+                  <Btn onClick={() => setWebsiteUrls("")} disabled={websiteUploading} variant="ghost">Clear</Btn>
+                </div>
+              )}
+            </>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", gap: 10 }}>
+                <input className="kb-input" value={baseUrl} onChange={e => setBaseUrl(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && doCrawl()}
+                  placeholder="https://docs.example.com" style={{ flex: 1, fontFamily: "monospace", fontSize: 13 }} />
+                <Btn onClick={doCrawl} disabled={crawling || !baseUrl.trim()} style={{ flexShrink: 0, padding: "8px 14px", minHeight: 38 }}>
+                  {crawling ? <><Spinner size={14}/> Scanning…</> : <><Icon name="travel_explore" size={16}/> Discover</>}
+                </Btn>
+              </div>
+
+              {hasResult && (
+                <div style={{ border: "1px solid var(--border2)", borderRadius: "var(--r-md)", overflow: "hidden", marginTop: 8, background: "var(--surface-2)" }}>
+                  <div style={{ padding: "8px 12px", borderBottom: "1px solid var(--border2)", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <Tag variant="neutral" style={{ fontSize: 10, padding: "2px 8px" }}>{allUrls.length} found</Tag>
+                    {selectedUrls.size > 0 && <Tag variant="success" style={{ fontSize: 10, padding: "2px 8px" }}>{selectedUrls.size} selected</Tag>}
+                    <input className="kb-input" value={urlFilter} onChange={e => setUrlFilter(e.target.value)}
+                      placeholder="Filter…" style={{ flex: 1, minWidth: 80, height: 28, padding: "3px 8px", fontSize: 12, borderRadius: "6px" }} />
+                    <Btn onClick={() => setSelectedUrls(new Set(filteredUrls))} variant="ghost" style={{ padding: "2px 8px", fontSize: 11, minHeight: 28, borderRadius: "6px" }}>All</Btn>
+                    <Btn onClick={() => setSelectedUrls(new Set())} variant="ghost" style={{ padding: "2px 8px", fontSize: 11, minHeight: 28, borderRadius: "6px" }}>Clear</Btn>
+                  </div>
+                  <div style={{ maxHeight: 250, overflowY: "auto", background: "var(--surface)" }}>
+                    {filteredUrls.map((u, i) => {
+                      const sel = selectedUrls.has(u);
+                      return (
+                        <div key={i} onClick={() => toggleUrl(u)} style={{
+                          display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
+                          borderBottom: "1px solid var(--border)", cursor: "pointer",
+                          background: sel ? "var(--red-dim)" : "transparent",
+                          transition: "background var(--tr)"
+                        }}>
+                          <div style={{
+                            width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                            border: `1.5px solid ${sel ? "var(--accent)" : "var(--border2)"}`,
+                            background: sel ? "var(--accent)" : "transparent",
+                            display: "flex", alignItems: "center", justifyItems: "center", justifyContent: "center",
+                            color: "#fff", fontSize: 9, fontWeight: 700, transition: "all var(--tr)"
+                          }}>{sel ? "✓" : ""}</div>
+                          <span style={{ fontSize: 12, color: "var(--navy)", fontFamily: "monospace", wordBreak: "break-all", flex: 1, lineHeight: 1.4 }}>{u}</span>
+                          <a href={u} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ color: "var(--accent)", fontSize: 11, flexShrink: 0, textDecoration: "none", display: "flex", alignItems: "center" }}>
+                            <Icon name="open_in_new" size={13} />
+                          </a>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{ padding: "10px 12px", borderTop: "1px solid var(--border2)", display: "flex", alignItems: "center", justifyItems: "center", justifyContent: "space-between", gap: 12, background: "var(--surface-2)" }}>
+                    <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>
+                      {selectedUrls.size > 0 ? `${selectedUrls.size} selected` : "Select links to ingest"}
+                    </span>
+                    <Btn onClick={doCrawlIngest} disabled={ingestingUrls || !selectedUrls.size} variant="primary" style={{ minHeight: 30, height: 30, padding: "4px 12px", fontSize: 12, borderRadius: "6px" }}>
+                      {ingestingUrls ? <><Spinner size={12} color="#fff" /> Ingesting…</> : `Ingest (${selectedUrls.size})`}
+                    </Btn>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </Card>
+      </div>
+
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16, marginBottom: 24 }}>
 
         {/* Document URLs */}
@@ -223,31 +426,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
           )}
         </Card>
 
-        {/* Website Crawler */}
-        <Card>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <div style={{ width: 38, height: 38, borderRadius: "var(--r-md)", background: "var(--red-dim)", border: "1px solid var(--red-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Icon name="language" size={19} style={{ color: "var(--accent-deep)" }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--navy)" }}>Website Crawler</div>
-              <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 300 }}>One website root URL per line</div>
-            </div>
-          </div>
-          <textarea className="kb-input kb-mono" value={websiteUrls} onChange={e => setWebsiteUrls(e.target.value)} rows={4}
-            placeholder={"https://docs.example.com\nhttps://yoursite.com"}
-            style={{ resize: "vertical", lineHeight: 1.6 }} />
-          {websiteUrls.trim() && (
-            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-              <Btn onClick={doWebsiteUpload} disabled={websiteUploading} variant="primary" style={{ flex: 1, justifyContent: "center" }}>
-                {websiteUploading ? <><Spinner size={14} color="#fff" /> Starting Crawler…</> : <><Icon name="settings_input_antenna" size={16} /> Crawl Website</>}
-              </Btn>
-              <Btn onClick={() => setWebsiteUrls("")} disabled={websiteUploading} variant="ghost">Clear</Btn>
-            </div>
-          )}
-        </Card>
-
-        <FileSection label="Documents" hint=".pdf, .docx"                            iconName="description" accentColor="var(--accent)"       files={docFiles} setFiles={setDocFiles} inputRef={docRef} accept=".pdf,.docx"                    type="doc" />
+        <FileSection label="Documents" hint=".pdf, .docx, .txt"                      iconName="description" accentColor="var(--accent)"       files={docFiles} setFiles={setDocFiles} inputRef={docRef} accept=".pdf,.docx,.txt"                type="doc" />
         <FileSection label="Images"    hint=".png, .jpg, .jpeg, .tiff, .bmp, .webp"  iconName="image"       accentColor="var(--accent-deep)"   files={imgFiles} setFiles={setImgFiles} inputRef={imgRef} accept=".png,.jpg,.jpeg,.tiff,.bmp,.webp" type="img" />
         <FileSection label="Video"     hint=".mp4"                                   iconName="videocam"    accentColor="var(--slate)"         files={vidFiles} setFiles={setVidFiles} inputRef={vidRef} accept=".mp4"                            type="vid" />
         <FileSection label="Audio"     hint=".mp3, .wav, .m4a"                       iconName="headphones"  accentColor="var(--navy-mid)"      files={audFiles} setFiles={setAudFiles} inputRef={audRef} accept=".mp3,.wav,.m4a"                  type="aud" />
@@ -270,6 +449,35 @@ export default function UploadTab({ guildId, onGoToOverview }) {
             style={{ marginTop: 10, width: "100%", justifyContent: "center" }}>
             {faqUploading ? <><Spinner size={14} color="#fff" /> Adding FAQ…</> : <><Icon name="add_circle" size={16} /> Add to Vector Store</>}
           </Btn>
+        </Card>
+
+        {/* GitHub Repository */}
+        <Card>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 38, height: 38, borderRadius: "var(--r-md)", background: "var(--red-dim)", border: "1px solid var(--red-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name="code" size={19} style={{ color: "var(--accent)" }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--navy)" }}>GitHub Repository</div>
+              <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 300 }}>Ingest public/private repository code</div>
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 6 }}>Repository URL</label>
+              <input type="text" className="kb-input" value={repoUrl} onChange={e => setRepoUrl(e.target.value)}
+                placeholder="https://github.com/owner/repo" style={{ height: 40 }} />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 6 }}>Personal Access Token <span style={{ fontWeight: 400, color: "var(--muted2)" }}>(optional)</span></label>
+              <input type="password" className="kb-input" value={pat} onChange={e => setPat(e.target.value)}
+                placeholder="ghp_xxxxxxxxxxxxxxxx" style={{ height: 40 }} />
+            </div>
+            <Btn onClick={doRepoUpload} disabled={repoUploading || !repoUrl.trim()} variant="primary"
+              style={{ marginTop: 8, width: "100%", justifyContent: "center" }}>
+              {repoUploading ? <><Spinner size={14} color="#fff" /> Ingesting Repo…</> : <><Icon name="cloud_upload" size={16} /> Ingest Repository</>}
+            </Btn>
+          </div>
         </Card>
 
         {/* Discord Channel History */}
