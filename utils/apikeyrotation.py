@@ -28,7 +28,7 @@ def get_key():
         key = keys[idx % len(keys)]
         return key
 def set_key():
-    redis_client.set("groq_active_key",get_key())
+    redis_client.set("nori:groq_active_key",get_key())
 
 def random_key():
     return random.choice(keys)

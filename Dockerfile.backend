@@ -12,7 +12,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 
-# ─── Stage 2: Runtime (API + Discord bot in one container) ────────────────────
+# ─── Stage 2: Runtime ─────────────────────────────────────────────────────────
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -20,12 +20,6 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 libsm6 libxext6 libxrender1 \
     curl \
-<<<<<<< HEAD
-    libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
-    libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 \
-    libxfixes3 libxrandr2 libgbm1 libasound2 \
-=======
->>>>>>> 02db5a30dc29d798fcd57184a16ffec53d0d1c2f
     && rm -rf /var/lib/apt/lists/*
 
 ENV UVICORN_WORKERS=1
@@ -42,9 +36,9 @@ COPY scripts/start-app.sh ./scripts/start-app.sh
 
 RUN sed -i 's/\r//' ./scripts/start-app.sh && chmod +x ./scripts/start-app.sh
 
-EXPOSE 8000
+EXPOSE 12000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8000/ || exit 1
+    CMD curl -f http://localhost:12000/ || exit 1
 
 CMD ["./scripts/start-app.sh"]

@@ -14,13 +14,10 @@ psycopg2-binary
 asyncpg
 
 # ─── Cache / Queue ────────────────────────────────────────────────────────────
-redis>=5.0.0                 # bullmq worker installs separately in its own container
-
+redis>=5.0.0
 
 # ─── Document / media parsing ─────────────────────────────────────────────────
 docx2txt
-pandas
-openpyxl
 pandas
 openpyxl
 pytesseract

@@ -1,49 +1,54 @@
 version: "3.9"
 
-# Nori — production stack (Oracle Cloud / any Docker host)
+# Nori — backend-only stack (Podman on VPS)
 #
 # Services:
-#   redis    → API key rotation + BullMQ
-#   backend  → FastAPI + Discord bot (shared process container)
+#   backend  → FastAPI + Discord bot on port 12000
 #   bullmq   → rotates Groq/Tavily/Exa keys every 5 min
-#   frontend → React dashboard behind nginx (/api → backend)
+#
+# Redis runs on the HOST — start it before bringing this stack up:
+#   podman run -d --name redis -p 6379:6379 redis redis-server --requirepass noripassword
 
 services:
 
-  bullmq:
+  backend:
     build:
       context: .
-      dockerfile: Dockerfile.bullmq
-    container_name: nexus-bullmq
+      dockerfile: Dockerfile.backend
+    container_name: nori-backend
+    ports:
+      - "12000:12000"
     env_file:
       - .env
     environment:
       - PYTHONUNBUFFERED=1
       - REDIS_HOST=host.docker.internal
       - REDIS_PORT=6379
-      - REDIS_USER=vaultbot
       - REDIS_PASSWORD=noripassword
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
     networks:
-      - nexus-net
+      - nori-net
 
-  frontend:
+  bullmq:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile.frontend
-      args:
-        VITE_API_URL: /api
-    container_name: nexus-frontend
-    ports:
-      - "80:80"
+      context: .
+      dockerfile: Dockerfile.bullmq
+    container_name: nori-bullmq
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - REDIS_HOST=host.docker.internal
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=noripassword
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
     networks:
-      - nexus-net
+      - nori-net
 
 networks:
-  nexus-net:
+  nori-net:
     driver: bridge
