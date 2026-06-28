@@ -2,7 +2,7 @@ import os
 import time
 import asyncio
 import httpx
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Form, HTTPException, status
 
 from backend.middleware.auth import require_guild_admin_query, verify_access_token
 from dbhelper.db_helper import (
@@ -10,7 +10,8 @@ from dbhelper.db_helper import (
     get_server,
     get_user_guild_ids,
     add_guild_admin,
-    remove_guild_admin,add_server
+    remove_guild_admin,add_server,
+    upsert_server_plan
 )
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 BOT_USER_ID=os.getenv("DISCORD_CLIENT_ID")
@@ -153,24 +154,13 @@ async def handle_get_eligible_guilds(
         presence_results = await asyncio.gather(
             *[is_bot_in_guild(g["id"]) for g in admin_guilds]
         )
-    try:
-        synced_ids = set()
-        for g in admin_guilds:
-            is_owner = g.get("owner", False)
-            role = "owner" if is_owner else "admin"
-            await add_server(g["id"], g["name"])
-            await add_guild_admin(
-                guild_id=g["id"],
-                discord_id=uid,
-                role=role,
-                granted_by=uid,
-            )
-            synced_ids.add(g["id"])
-        current_db_guilds = await get_user_guild_ids(uid)
-        for stale_guild_id in current_db_guilds - synced_ids:
-            await remove_guild_admin(stale_guild_id, uid)
-    except Exception as e:
-        print(f"[handle_get_eligible_guilds] Admin sync failed: {e}")
+        try:
+            current_db_guilds = await get_user_guild_ids(uid)
+            current_admin_ids = {g["id"] for g in admin_guilds}
+            for stale_guild_id in current_db_guilds - current_admin_ids:
+                await remove_guild_admin(stale_guild_id, uid)
+        except Exception as e:
+            print(f"[handle_get_eligible_guilds] Removal sync failed: {e}")
     def format_guild(g: dict) -> dict:
         return {
             "id":    g["id"],
@@ -192,3 +182,4 @@ async def handle_get_eligible_guilds(
         "bot_present":     bot_present,      # user is admin + bot is in guild
         "bot_not_present": bot_not_present,  # user is admin + bot is NOT in guild
     }
+
