@@ -247,14 +247,7 @@ export default function ChannelsTab({
     } catch (e) { setStatus({ ok: false, msg: e.message }); }
   };
 
-  const removeMod = async () => {
-    if (!guildId) return;
-    try {
-      await API.addModChannel(guildId, "");
-      setModChannel(null);
-      setStatus({ ok: true, msg: "Mod channel removed" });
-    } catch (e) { setStatus({ ok: false, msg: e.message }); }
-  };
+
 
   // ── Channel Config Handlers ──
   const handleAddConfig = async () => {
@@ -565,9 +558,6 @@ export default function ChannelsTab({
                   <Icon name="tag" size={15} style={{ color: "var(--accent)" }} />
                   <span style={{ fontSize: 13, color: "var(--accent-deep)", fontWeight: 600, flex: 1 }}>{chanName(modChannel)}</span>
                   <Tag variant="warn">Active</Tag>
-                  <Btn onClick={removeMod} variant="danger" style={{ padding: "2px 6px", fontSize: 11, minHeight: 22, flexShrink: 0 }}>
-                    <Icon name="delete" size={12} />
-                  </Btn>
                 </div>
               )}
 
