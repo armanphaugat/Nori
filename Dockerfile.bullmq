@@ -2,8 +2,8 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir bullmq redis python-dotenv
+COPY requirements-bullmq.txt .
+RUN pip install --no-cache-dir -r requirements-bullmq.txt
 
 COPY utils/ ./utils/
 

@@ -13,31 +13,26 @@ sqlalchemy
 psycopg2-binary              # FIX: was missing — postgres driver for SQLAlchemy
 
 # ─── Cache / Queue ────────────────────────────────────────────────────────────
-redis
-redis[asyncio]               # needed by BullMQ async worker
-bullmq                       # FIX: was missing — used in utils/BullMQ.py
+redis>=5.0.0                 # bullmq worker installs separately in its own container
 
 # ─── LangChain / RAG stack ────────────────────────────────────────────────────
 langchain-core
-langchain-community
-langchain-huggingface
 langchain-groq
-langchain-text-splitters
-faiss-cpu
-sentence-transformers
-rank-bm25                  
-PyPDF2
-pdfplumber                 
+
+# ─── Document / media parsing ─────────────────────────────────────────────────
 docx2txt
-pandas                      
-openpyxl                     
+pandas
+openpyxl
 pytesseract
 Pillow
 beautifulsoup4
 requests
-playwright
 openai-whisper
+
+# ─── AI / Search services ─────────────────────────────────────────────────────
 tavily-python
 exa-py
 graphlit-client
+
+# ─── Discord ──────────────────────────────────────────────────────────────────
 discord.py
