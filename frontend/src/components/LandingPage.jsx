@@ -640,6 +640,9 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
                 <DiscordIcon size={18} /> Add to Your Server
                 <Icon name="arrow_forward" size={18} />
               </button>
+              <a href="https://discord.gg/YMsuKFQjUu" target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"14px 22px",borderRadius:10,fontSize:15,fontWeight:500,background:"white",color:"var(--muted)",border:"1px solid var(--border2)",textDecoration:"none",transition:"all var(--tr)" }}>
+                <DiscordIcon size={18} /> Come to Discord
+              </a>
               <button onClick={() => document.getElementById("playground")?.scrollIntoView({ behavior:"smooth" })} className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"14px 22px",borderRadius:10,fontSize:15,fontWeight:500,background:"white",color:"var(--muted)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
                 See It in Action
               </button>
@@ -815,9 +818,6 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
             {/* RIGHT — carousel */}
             <div style={{ flex:"2 2 500px" }}>
               <CarouselSlider />
-              <p style={{ textAlign:"center",fontSize:12,color:"var(--muted2)",marginTop:12,fontWeight:300 }}>
-                Auto-advances every 3.5s · Click arrows or dots to navigate
-              </p>
             </div>
           </div>
         </div>
@@ -1034,6 +1034,9 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
               <button onClick={onInvite} className="btn-primary glow-red" style={{ display:"flex",alignItems:"center",gap:10,padding:"16px 32px",borderRadius:14,fontSize:16,fontWeight:600,background:"var(--accent)",color:"white",border:"none",cursor:"pointer",boxShadow:"0 0 28px var(--red-glow)",transition:"all var(--tr)" }}>
                 <DiscordIcon size={18} /> Add Nori to Discord
               </button>
+              <a href="https://discord.gg/YMsuKFQjUu" target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"16px 26px",borderRadius:14,fontSize:16,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",textDecoration:"none",transition:"all var(--tr)" }}>
+                <DiscordIcon size={18} /> Come to Discord
+              </a>
               <button onClick={onShowPricing} className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"16px 26px",borderRadius:14,fontSize:16,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",cursor:"pointer",transition:"all var(--tr)" }}>
                 <Icon name="payments" size={18} /> View Pricing Plans
               </button>
@@ -1071,6 +1074,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
                 { label: "Pricing", onClick: onShowPricing },
                 { label: "Privacy Policy", onClick: onShowPrivacy },
                 { label: "Terms", onClick: onShowTerms },
+                { label: "Support", href: "https://discord.gg/YMsuKFQjUu", external: true },
               ].map((item, i) => (
                 <li
                   key={i}
@@ -1079,6 +1083,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
                   {item.href ? (
                     <a
                       href={item.href}
+                      {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                       style={{ color: "var(--muted)", textDecoration: "none", transition: "all var(--tr)", cursor: "pointer" }}
                       onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"}
                       onMouseLeave={e => e.currentTarget.style.color = "var(--muted)"}
@@ -1099,7 +1104,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
               ))}
             </ul>
             <span style={{ height:12, width:1, background:"var(--border2)" }} />
-            <a href="mailto:support@noribot.dev" style={{ fontSize:12.5, color:"var(--accent-deep)", textDecoration:"none", fontWeight:600, transition:"color var(--tr)" }} onMouseEnter={e => e.currentTarget.style.color = "var(--navy)"} onMouseLeave={e => e.currentTarget.style.color = "var(--accent-deep)"}>support@noribot.dev</a>
+            <a href="https://discord.gg/YMsuKFQjUu" target="_blank" rel="noopener noreferrer" style={{ fontSize:12.5, color:"var(--accent-deep)", textDecoration:"none", fontWeight:600, transition:"color var(--tr)" }} onMouseEnter={e => e.currentTarget.style.color = "var(--navy)"} onMouseLeave={e => e.currentTarget.style.color = "var(--accent-deep)"}>Support Server</a>
           </div>
         </div>
       </footer>
