@@ -247,6 +247,8 @@ export default function ChannelsTab({
     } catch (e) { setStatus({ ok: false, msg: e.message }); }
   };
 
+
+
   // ── Channel Config Handlers ──
   const handleAddConfig = async () => {
     if (!guildId || !newConfigChanId) {

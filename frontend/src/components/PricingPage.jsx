@@ -480,7 +480,7 @@ export default function PricingPage({
             >
               <Icon name="arrow_back" size={15} /> Back
             </button>
-            {[["Plans","#pricing"],["Compare","#pricing"],["FAQ","#faq"]].map(([l,h],i) => (
+            {[["Plans","#pricing"]].map(([l,h],i) => (
               <a key={i} href={h} className="nav-link" style={{ padding:"7px 15px",borderRadius:8,fontSize:13,fontWeight:500,letterSpacing:"0.02em",color:"var(--muted)",textDecoration:"none",transition:"all var(--tr)" }}>{l}</a>
             ))}
           </div>
@@ -729,7 +729,7 @@ export default function PricingPage({
       </section>
 
       {/* COMPARISON TABLE */}
-      <section style={{ padding:"88px 64px" }}>
+      <section id="compare" style={{ padding:"88px 64px" }}>
         <div style={{ maxWidth:1200,margin:"0 auto" }}>
           <div style={{ textAlign:"center",marginBottom:48 }}>
             <SectionLabel text="Full Comparison" />
