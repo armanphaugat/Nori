@@ -249,16 +249,10 @@ export default function ChatWidget({ guildId, guildName }) {
     setOpen(o => !o);
   };
 
-  const suggestions = [
-    { label: "Channel Management", q: "How do I configure channels?" },
-    { label: "Knowledge Base", q: "How do I upload new documents?" },
-    { label: "URL Crawler", q: "How do I crawl and ingest website content?" }
-  ];
-
   useEffect(() => {
     setMessages([{
       role: "bot",
-      text: `Hi! Ask me anything about ${guildName || "the knowledge base"}.`,
+      text: "Hi! Ask anything about ingested sources.",
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }]);
   }, [guildId, guildName]);
@@ -299,9 +293,7 @@ export default function ChatWidget({ guildId, guildName }) {
     sendQuery(q);
   };
 
-  const handleSuggestionClick = (q) => {
-    sendQuery(q);
-  };
+
 
   const handleReact = (idx, type) => {
     setReactions(prev => ({
@@ -540,45 +532,7 @@ export default function ChatWidget({ guildId, guildName }) {
               </div>
             ))}
 
-            {/* Suggested Prompts Block */}
-            {messages.length <= 1 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 6 }}>
-                <div style={{ fontSize: 10.5, fontWeight: 800, color: "var(--muted2)", textTransform: "uppercase", letterSpacing: "1.2px", paddingLeft: 4 }}>
-                  Suggested Topics
-                </div>
-                {suggestions.map((s, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => handleSuggestionClick(s.q)}
-                    style={{
-                      padding: "12px 16px", background: "#ffffff",
-                      border: "1px solid rgba(43,45,66,0.08)", borderRadius: 14,
-                      fontSize: 13, color: "var(--navy)", fontWeight: 600,
-                      cursor: "pointer", transition: "all .25s ease",
-                      display: "flex", alignItems: "center", gap: 12,
-                      boxShadow: "0 2px 8px rgba(43,45,66,0.02)",
-                      fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.transform = "translateY(-1.5px)";
-                      e.currentTarget.style.borderColor = "var(--accent)";
-                      e.currentTarget.style.boxShadow = "0 6px 16px rgba(30,58,138,0.08)";
-                      e.currentTarget.style.color = "var(--accent-deep)";
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.transform = "none";
-                      e.currentTarget.style.borderColor = "rgba(43,45,66,0.08)";
-                      e.currentTarget.style.boxShadow = "0 2px 8px rgba(43,45,66,0.02)";
-                      e.currentTarget.style.color = "var(--navy)";
-                    }}
-                  >
-                    <Icon name="chat_bubble_outline" size={14} style={{ color: "var(--accent)" }} />
-                    <span style={{ flex: 1 }}>{s.q}</span>
-                    <Icon name="arrow_forward" size={13} style={{ opacity: 0.6 }} />
-                  </div>
-                ))}
-              </div>
-            )}
+
 
             {loading && (
               <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
