@@ -130,7 +130,7 @@ async def get_or_create_web_spec(server_id: str, language: str, tone: str) -> st
             service_type=ModelServiceTypes.GOOGLE,
             system_prompt=build_web_system_prompt(language, tone),
             google=GoogleModelPropertiesInput(
-                model=GoogleModels.GEMINI_1_5_FLASH,
+                model=GoogleModels.GEMINI_2_5_FLASH,
                 temperature=0.3,
                 completion_token_limit=500,
             ),

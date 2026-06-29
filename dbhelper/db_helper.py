@@ -924,7 +924,7 @@ async def get_server_plan(server_id: str) -> Optional[dict]:
                 {"server_id": server_id},
             )
         ).mappings().first()
-        return dict(row) if row else None
+        return dict(row) if row else {"plan": "free"}
 
 
 async def upsert_server_plan(server_id: str, plan: str, max_limit_questions: int) -> int:
