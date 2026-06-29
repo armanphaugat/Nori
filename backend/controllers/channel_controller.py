@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from fastapi import Form, HTTPException
 from backend.middleware.auth import *
-from dbhelper.db_helper import clear_channel_specs, delete_channel_config, save_channel_spec,update_channel_config,insert_mod_channel,get_channel_config, remove_channel, set_channel,insert_channel_config,get_all_channel_configs
+from dbhelper.db_helper import clear_channel_specs, delete_mod_channel,delete_channel_config, save_channel_spec,update_channel_config,insert_mod_channel,get_channel_config, remove_channel, set_channel,insert_channel_config,get_all_channel_configs
 
 
 async def handle_add_channel(
@@ -167,8 +167,8 @@ async def handle_update_channel_config(guild_id: str = Form(...),channel_id: str
         raise HTTPException(status_code=500, detail=f"Failed to update channel config: {e}")
 async def handle_delete_channel_config(guild_id: str = Form(...),channel_id: str = Form(...),user: dict = Depends(require_guild_admin),) -> dict:
     try:
-        result = await delete_channel_config(guild_id, channel_id)
         await clear_channel_specs(guild_id, channel_id)
+        result = await delete_channel_config(guild_id, channel_id)
         if result:
             return {
                 "status": "success",
@@ -203,3 +203,14 @@ async def handle_get_all_channel_configs(
             }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get channel list: {e}")
+    
+async def handle_delete_mod_channel(
+    guild_id: str = Form(...),
+    channel_id: str = Form(...),
+    user: dict = Depends(require_guild_admin),
+) -> dict:
+    try:
+        await delete_mod_channel(guild_id,channel_id)
+        return {"status": "success", "message": "Mod channel deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete mod channel: {e}")

@@ -87,7 +87,6 @@ FORMAT:
 
 async def get_or_create_kb_spec(server_id: str, channel_id: str, language: str, tone: str) -> str:
     row = await get_channel_spec(server_id, channel_id)
-    
     if row and row.get("kb_spec_id"):
         if row.get("language") == language and row.get("tone") == tone:
             try:

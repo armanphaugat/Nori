@@ -1192,3 +1192,12 @@ async def clear_channel_specs(guild_id: str, channel_id: str):
             {"guild_id": guild_id, "channel_id": channel_id}
         )
         await s.commit()
+
+async def delete_mod_channel(guild_id: str,channel_id: str) -> int:
+    async with AsyncDB() as s:
+        await s.execute(
+            text("UPDATE servers SET mod_channel=NULL WHERE server_id=:guild_id AND mod_channel=:channel_id"),
+            {"guild_id": guild_id, "channel_id": channel_id}
+        )
+        await s.commit()
+        return 1
