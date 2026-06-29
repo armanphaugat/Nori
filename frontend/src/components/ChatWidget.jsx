@@ -408,7 +408,7 @@ export default function ChatWidget({ guildId, guildName }) {
               padding: "18px 22px",
               borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
               display: "flex", alignItems: "center", gap: 14,
-              background: "linear-gradient(135deg, #1e2030 0%, #11121a 100%)",
+              background: "linear-gradient(135deg, var(--accent-deep) 0%, #0f172a 100%)",
               flexShrink: 0,
               cursor: isDragging ? "grabbing" : "grab",
               userSelect: "none",
@@ -424,8 +424,8 @@ export default function ChatWidget({ guildId, guildName }) {
                 Nori
                 <span style={{
                   fontSize: 9, textTransform: "uppercase", letterSpacing: "1px",
-                  background: "rgba(30,58,138,0.1)", border: "1px solid rgba(30,58,138,0.3)",
-                  color: "var(--accent)", padding: "2px 6px", borderRadius: 4, fontWeight: 700
+                  background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)",
+                  color: "#fff", padding: "2px 6px", borderRadius: 4, fontWeight: 700
                 }}>Bot</span>
               </div>
               <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", fontWeight: 400, marginTop: 3, display: "flex", alignItems: "center", gap: 5 }}>
@@ -710,7 +710,7 @@ export default function ChatWidget({ guildId, guildName }) {
             transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
             border: "none",
             // Dynamic background overrides when open
-            background: open ? "linear-gradient(135deg, var(--navy) 0%, #1a1c27 100%)" : undefined,
+            background: open ? "linear-gradient(135deg, var(--accent-deep) 0%, #0f172a 100%)" : undefined,
             boxShadow: open ? "0 8px 24px rgba(43,45,66,0.18)" : undefined,
           }}
         >
