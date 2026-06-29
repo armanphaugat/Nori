@@ -122,7 +122,7 @@ export const API = {
   getMyUploads:          ()            => apiFetch("/upload/my-uploads"),
   deleteUpload:          (gid, uid)    => apiFetch(`/upload/delete-content/${encodeURIComponent(uid)}?guild_id=${encodeURIComponent(gid)}`, { method: "DELETE" }),
   getSubUrls:            (url)         => apiFetch(`/upload/sub-urls?url=${encodeURIComponent(url)}`),
-  query:                 (question, server) => apiFetch("/query", { method: "POST", body: { question, server } }),
+  query:                 (question, server) => apiFetch("/query/", { method: "POST", body: { question, server } }),
   getAnalytics:          (gid)         => apiFetch(`/analytics/summary?guild_id=${encodeURIComponent(gid)}`),
   getRecentAnalytics:    (gid, limit = 50) => apiFetch(`/analytics/recent-analytics?guild_id=${encodeURIComponent(gid)}&limit=${limit}`),
   getAllAnalytics:        (gid, limit = 30) => apiFetch(`/analytics/all-analytics?guild_id=${encodeURIComponent(gid)}&limit=${limit}`),

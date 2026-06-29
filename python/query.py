@@ -156,14 +156,22 @@ def build_or_filter(content_ids: list, feed_ids: list) -> list | None:
     return or_clauses if or_clauses else None
 
 
-async def query_graphlit(server_id: str, channel_id: str, question: str, language: str = "english", tone: str = "professional", prv_messages: str = "") -> str:
+async def query_graphlit(
+    server_id: str,
+    question: str,
+    channel_id: str | None = None,
+    language: str = "english",
+    tone: str = "professional",
+    prv_messages: str = "",
+) -> str:
     print("Query Graphlit Called")
+
     if is_small_talk(question):
         return "Hello! How can I help you today?"
 
     try:
         content_ids = await get_content_ids(server_id)
-        feed_ids = await get_feed_ids(server_id)
+        feed_ids    = await get_feed_ids(server_id)
     except Exception as e:
         print(f"[WARN] DB fetch content/feed ids failed: {e}")
         content_ids, feed_ids = [], []
@@ -171,24 +179,32 @@ async def query_graphlit(server_id: str, channel_id: str, question: str, languag
     if not content_ids and not feed_ids:
         return "No knowledge base found for this server."
 
-    spec_id = await get_or_create_kb_spec(server_id, channel_id, language, tone)
+    # Use per-channel spec (bot) or server-level spec (dashboard)
+    if channel_id:
+        spec_id = await get_or_create_kb_spec(server_id, channel_id, language, tone)
+    else:
+        spec_id = await get_kb_spec_id_for_dashboard(server_id)
+
+    print(f"[query_graphlit_kb] content_ids={content_ids}")
+    print(f"[query_graphlit_kb] feed_ids={feed_ids}")
+    print(f"[query_graphlit_kb] spec_id={spec_id}")
+
     conversation_id = None
-    print(f"[query_graphlit] content_ids={content_ids}")
-    print(f"[query_graphlit] feed_ids={feed_ids}")
-    print(f"[query_graphlit] spec_id={spec_id}")
     try:
         or_filter = build_or_filter(content_ids, feed_ids)
         conv_response = await graphlit.client.create_conversation(
             conversation=ConversationInput(
                 name=f"{server_id}_kb_query",
                 specification=EntityReferenceInput(id=spec_id),
-                filter=ContentCriteriaInput(or_=or_filter)
+                filter=ContentCriteriaInput(or_=or_filter),
             )
         )
         conversation_id = conv_response.create_conversation.id
+
         prompt = question
         if prv_messages:
             prompt = f"Conversation context:\n{prv_messages}\n\nQuestion: {question}"
+
         response = await graphlit.client.prompt_conversation(
             prompt=prompt,
             mime_type=None,
@@ -199,7 +215,7 @@ async def query_graphlit(server_id: str, channel_id: str, question: str, languag
             tools=None,
             require_tool=None,
             include_details=True,
-            correlation_id=None
+            correlation_id=None,
         )
         result = response.prompt_conversation
         if result is None or result.message is None or result.message.message is None:
@@ -214,36 +230,33 @@ async def query_graphlit(server_id: str, channel_id: str, question: str, languag
             print(f"[WARN] Failed to delete KB conversation: {e}")
 
 
-async def query_graphlit_web(server_id: str, channel_id: str, question: str, language: str = "english", tone: str = "professional", prv_messages: str = "") -> str:
-    print("Query Web-Graphlit Called")
+async def query_graphlit_web(
+    server_id: str,
+    question: str,
+    channel_id: str | None = None,
+    language: str = "english",
+    tone: str = "professional",
+    prv_messages: str = "",
+) -> str:
+    print("Query Graphlit Web Called")
+
     if is_small_talk(question):
         return "Hello! How can I help you today?"
 
     conversation_id = None
     try:
-        response = await graphlit.client.search_web(
-            text=question,
-            service=SearchServiceTypes.TAVILY,
-            limit=3
-        )
+        response = await graphlit.client.search_web(text=question, service=SearchServiceTypes.TAVILY, limit=3)
         result = response.search_web
         if result is None:
-            response = await graphlit.client.search_web(
-                text=question,
-                service=SearchServiceTypes.EXA,
-                limit=5
-            )
+            response = await graphlit.client.search_web(text=question, service=SearchServiceTypes.EXA, limit=5)
             result = response.search_web
 
-        if result is None or result.results is None or len(result.results) == 0:
+        if not result or not result.results:
             return "I don't have this information"
 
         context = ""
         for i, r in enumerate(result.results, 1):
-            title = getattr(r, 'title', '')
-            uri = getattr(r, 'uri', '')
-            text = getattr(r, 'text', '')
-            context += f"[{i}] {title}\nURL: {uri}\n{text}\n\n"
+            context += f"[{i}] {getattr(r, 'title', '')}\nURL: {getattr(r, 'uri', '')}\n{getattr(r, 'text', '')}\n\n"
 
         prompt = f"Question: {question}\n\n"
         if prv_messages:
@@ -253,11 +266,14 @@ async def query_graphlit_web(server_id: str, channel_id: str, question: str, lan
             f"Search Results:\n{context}\n\n"
             f"Give a clear, concise answer under 1800 characters. Cite sources by number e.g. [1], [2]."
         )
+        if channel_id:
+            spec_id = await get_or_create_web_spec(server_id, channel_id, language, tone)
+        else:
+            spec_id = await get_web_spec_id_for_dashboard(server_id)
 
-        spec_id = await get_or_create_web_spec(server_id, channel_id, language, tone)
         conv_response = await graphlit.client.create_conversation(
             conversation=ConversationInput(
-                name=f"{server_id}_{channel_id}_web_query",
+                name=f"{server_id}_web_query",
                 specification=EntityReferenceInput(id=spec_id),
             )
         )
@@ -273,7 +289,7 @@ async def query_graphlit_web(server_id: str, channel_id: str, question: str, lan
             tools=None,
             require_tool=None,
             include_details=True,
-            correlation_id=None
+            correlation_id=None,
         )
         result_msg = answer_response.prompt_conversation
         if result_msg is None or result_msg.message is None or result_msg.message.message is None:
@@ -290,6 +306,60 @@ async def query_graphlit_web(server_id: str, channel_id: str, question: str, lan
                 await graphlit.client.delete_conversation(id=conversation_id)
         except Exception as e:
             print(f"[WARN] Failed to delete web conversation: {e}")
+
+async def get_kb_spec_id_for_dashboard(server_id: str) -> str:
+    try:
+        spec_id = await get_kb_spec_id(server_id)
+        if not spec_id:
+            spec_response = await graphlit.client.create_specification(
+                specification=SpecificationInput(
+                    name=f"{server_id}_kb_spec",
+                    type=SpecificationTypes.COMPLETION,
+                    service_type=ModelServiceTypes.OPEN_AI,
+                    system_prompt=build_kb_system_prompt(language="english", tone="professional"),
+                    retrieval_strategy=RetrievalStrategyInput(
+                        type=RetrievalStrategyTypes.CHUNK,
+                        content_limit=10,
+                    ),
+                    open_ai=OpenAIModelPropertiesInput(
+                        model=OpenAIModels.GPT4O_MINI_128K,
+                        temperature=0.2,
+                        completion_token_limit=1000,
+                    ),
+                )
+            )
+            spec_id = spec_response.create_specification.id
+            await save_spec_id(server_id, "kb", spec_id)  # ← was missing "kb"
+        return spec_id
+    except Exception as e:
+        print(f"[get_kb_spec_id_for_dashboard] Error: {e}")
+        raise
+
+
+async def get_web_spec_id_for_dashboard(server_id: str) -> str:
+    try:
+        spec_id = await get_web_spec_id(server_id)
+        if not spec_id:
+            spec_response = await graphlit.client.create_specification(
+                specification=SpecificationInput(
+                    name=f"{server_id}_web_spec",
+                    type=SpecificationTypes.COMPLETION,
+                    service_type=ModelServiceTypes.GOOGLE,
+                    system_prompt=build_web_system_prompt(language="english", tone="professional"),
+                    google=GoogleModelPropertiesInput(
+                        model=GoogleModels.GEMINI_2_5_FLASH,
+                        temperature=0.3,
+                        completion_token_limit=500,
+                    ),
+                )
+            )
+            spec_id = spec_response.create_specification.id
+            await save_spec_id(server_id, "web", spec_id)
+        return spec_id
+    except Exception as e:
+        print(f"[get_web_spec_id_for_dashboard] Error: {e}")
+        raise
+
 
 
 
