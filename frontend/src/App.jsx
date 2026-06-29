@@ -587,13 +587,21 @@ export default function App() {
           if (activated && redirectedGuildId) {
             localStorage.removeItem("pending_guild_redirect");
             handleActivateServer(redirectedGuildId);
-          } else if (activeGuildId) {
-            setView("dashboard");
           } else {
-            setView("servers");
+            const urlView = getViewFromUrl();
+            if (urlView) {
+              setView(urlView);
+            } else if (activeGuildId) {
+              setView("dashboard");
+            } else {
+              setView("servers");
+            }
           }
         } catch (_) {
-          if (activeGuildId) {
+          const urlView = getViewFromUrl();
+          if (urlView) {
+            setView(urlView);
+          } else if (activeGuildId) {
             setView("dashboard");
           } else {
             setView("servers");
