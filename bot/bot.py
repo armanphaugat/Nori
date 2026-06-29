@@ -231,9 +231,14 @@ async def on_message(message):
     if info is None:
         await message.channel.send("Please configure the bot on the dashboard.")
         return
+    if not message.content or not message.content.strip():
+        return
     channels = await get_channels(str(message.guild.id))
     watch_ids = [c["channel_id"] for c in channels]
-    if str(message.channel.id) in watch_ids or (str(message.channel.id) and detect_question(message.content)):
+    if str(message.channel.id) in watch_ids or str(message.channel.id) in watched_threads:
+        if not detect_question(message.content):
+            print(f"[on_message] Message in watched channel '{message.channel.name}' from {message.author.name} is not a question")
+            return
         print(f"[on_message] Message in watched channel '{message.channel.name}' from {message.author.name}")
         if await check_plan_limit(str(message.guild.id), message.channel):
             return
