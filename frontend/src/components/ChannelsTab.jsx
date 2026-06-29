@@ -262,7 +262,12 @@ export default function ChannelsTab({
         setShowAddConfig(false); setNewConfigChanId(""); setNewConfigLang("english"); setNewConfigTone("professional");
         await loadChannelConfigs(guildId);
       } else { setConfigStatus({ ok: false, msg: res.message || "Failed to add config" }); }
-    } catch (e) { setConfigStatus({ ok: false, msg: e.message }); }
+    } catch (e) {
+      const msg = e.message.includes("already exists") || e.message.includes("duplicate key") 
+        ? "Configuration for this channel already exists. Please edit the existing one below."
+        : "An error occurred while adding the configuration.";
+      setConfigStatus({ ok: false, msg });
+    }
     setAddingConfig(false);
   };
 
