@@ -118,10 +118,10 @@ def get_confidence_score(answered: bool, answer: str) -> float:
     return 0.82 + (val / 100.0)
 
 
-async def get_answer(guild_id: str, question: str, language: str, tone: str, prv_messages: str) -> str:
+async def get_answer(guild_id: str, channel_id: str, question: str, language: str, tone: str, prv_messages: str) -> str:
     print(f"[get_answer] Querying KB for: {question[:60]}")
     try:
-        answer = await asyncio.wait_for(query_graphlit(guild_id, question, language, tone, prv_messages), timeout=30.0)
+        answer = await asyncio.wait_for(query_graphlit(guild_id, channel_id, question, language, tone, prv_messages), timeout=30.0)
     except asyncio.TimeoutError:
         print("[get_answer] KB query timed out")
         return "Query timed out. Please try again."
@@ -135,7 +135,7 @@ async def get_answer(guild_id: str, question: str, language: str, tone: str, prv
         if not web_search_info:
             return "I don't Have Information in Current Knowledge Base & Web Search is Paused By Admin"
         try:
-            answer = await asyncio.wait_for(query_graphlit_web(guild_id, question, language, tone, prv_messages), timeout=30.0)
+            answer = await asyncio.wait_for(query_graphlit_web(guild_id, channel_id, question, language, tone, prv_messages), timeout=30.0)
         except asyncio.TimeoutError:
             return "Web search timed out. Please try again."
         except Exception as e:
@@ -248,7 +248,7 @@ async def on_message(message):
         prv_messages = await get_user_message_from_channel(message.channel.id)
         start_time = time.time()
         async with message.channel.typing():
-            answer = await get_answer(str(message.guild.id), message.content, language, tone, prv_messages)
+            answer = await get_answer(str(message.guild.id), str(message.channel.id), message.content, language, tone, prv_messages)
         latency_ms = round((time.time() - start_time) * 1000, 2)
         await send_answer_with_feedback(message.channel, message.author, str(message.guild.id), message.content, answer)
         if is_no_kb_response(answer):
@@ -324,16 +324,16 @@ async def ask(ctx, *, question: str = None):
     print(f"[ask] {ctx.author.name} asked: {question[:60]}")
     start_time = time.time()
     async with ctx.typing():
-        answer = await get_answer(str(ctx.guild.id), question, language, tone, prv_messages)
+        answer = await get_answer(str(ctx.guild.id), str(ctx.channel.id), question, language, tone, prv_messages)
     latency_ms = round((time.time() - start_time) * 1000, 2)
     await send_answer_with_feedback(ctx.channel, ctx.author, str(ctx.guild.id), question, answer)
     if is_no_kb_response(answer):
         conf = 0.0
-        await log_question_event(str(ctx.guild.id), str(ctx.author.name), False, latency_ms, ctx.message.jump_url, conf)
+        await log_question_event(str(ctx.guild.id), str(ctx.author.name), False, latency_ms, ctx.message.jump_url)
         await notify_mod_channel(ctx.guild, ctx.channel, ctx.author, question)
     else:
         conf = get_confidence_score(True, answer)
-        await log_question_event(str(ctx.guild.id), str(ctx.author.name), True, latency_ms, ctx.message.jump_url, conf)
+        await log_question_event(str(ctx.guild.id), str(ctx.author.name), True, latency_ms, ctx.message.jump_url)
 
 
 @bot.event

@@ -846,6 +846,7 @@ async def insert_channel_config(
             {"guild_id": guild_id, "channel_id": channel_id, "language": language, "tone": tone},
         )
         await s.commit()
+        return True
 
 
 async def update_channel_config(
@@ -1166,3 +1167,28 @@ async def get_github_ingested_count(guild_id: str) -> int:
             {"sid": str(guild_id)},
         )
         return result.scalar() or 0
+    
+async def get_channel_spec(guild_id: str, channel_id: str) -> dict | None:
+    async with AsyncDB() as s:
+        row = (await s.execute(
+            text("SELECT * FROM channel_config WHERE guild_id=:guild_id AND channel_id=:channel_id"),
+            {"guild_id": guild_id, "channel_id": channel_id}
+        )).mappings().first()
+        return dict(row) if row else None
+
+async def save_channel_spec(guild_id: str, channel_id: str, spec_type: str, spec_id: str):
+    col = "kb_spec_id" if spec_type == "kb" else "web_spec_id"
+    async with AsyncDB() as s:
+        await s.execute(
+            text(f"UPDATE channel_config SET {col}=:spec_id WHERE guild_id=:guild_id AND channel_id=:channel_id"),
+            {"spec_id": spec_id, "guild_id": guild_id, "channel_id": channel_id}
+        )
+        await s.commit()
+
+async def clear_channel_specs(guild_id: str, channel_id: str):
+    async with AsyncDB() as s:
+        await s.execute(
+            text("UPDATE channel_config SET kb_spec_id=NULL, web_spec_id=NULL WHERE guild_id=:guild_id AND channel_id=:channel_id"),
+            {"guild_id": guild_id, "channel_id": channel_id}
+        )
+        await s.commit()

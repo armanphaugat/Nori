@@ -6,7 +6,7 @@ load_dotenv(override=True)
 from graphlit import Graphlit
 import asyncio
 from dbhelper.db_helper import (
-    get_kb_spec_id, get_web_spec_id, save_spec_id,
+    get_channel_spec, get_kb_spec_id, get_web_spec_id, save_channel_spec, save_spec_id,
     get_content_ids, get_feed_ids, get_web_search, delete_spec_id
 )
 from graphlit_api import (
@@ -85,19 +85,20 @@ FORMAT:
 """
 
 
-async def get_or_create_kb_spec(server_id: str, language: str, tone: str) -> str:
-    existing_spec_id = await get_kb_spec_id(server_id)
-    if existing_spec_id:
-        try:
-            await graphlit.client.get_specification(id=existing_spec_id)
-            return existing_spec_id
-        except Exception:
-            print(f"[WARN] Cached spec {existing_spec_id} not found in Graphlit, recreating...")
-            await delete_spec_id(server_id, "kb")
+async def get_or_create_kb_spec(server_id: str, channel_id: str, language: str, tone: str) -> str:
+    row = await get_channel_spec(server_id, channel_id)
+    
+    if row and row.get("kb_spec_id"):
+        if row.get("language") == language and row.get("tone") == tone:
+            try:
+                await graphlit.client.get_specification(id=row["kb_spec_id"])
+                return row["kb_spec_id"]
+            except Exception:
+                print(f"[WARN] KB spec {row['kb_spec_id']} not found in Graphlit, recreating...")
 
     spec_response = await graphlit.client.create_specification(
         specification=SpecificationInput(
-            name=f"{server_id}_kb_spec",
+            name=f"{server_id}_{channel_id}_kb_spec",
             type=SpecificationTypes.COMPLETION,
             service_type=ModelServiceTypes.OPEN_AI,
             system_prompt=build_kb_system_prompt(language, tone),
@@ -113,19 +114,19 @@ async def get_or_create_kb_spec(server_id: str, language: str, tone: str) -> str
         )
     )
     spec_id = spec_response.create_specification.id
-    print(f"[SPEC] Created new KB spec: {spec_id}")
-    await save_spec_id(server_id, "kb", spec_id)
+    print(f"[SPEC] Created new KB spec: {spec_id} for channel {channel_id}")
+    await save_channel_spec(server_id, channel_id, "kb", spec_id)
     return spec_id
 
 
-async def get_or_create_web_spec(server_id: str, language: str, tone: str) -> str:
-    existing_spec_id = await get_web_spec_id(server_id)
-    if existing_spec_id:
-        return existing_spec_id
-
+async def get_or_create_web_spec(server_id: str, channel_id: str, language: str, tone: str) -> str:
+    row = await get_channel_spec(server_id, channel_id)
+    if row and row.get("web_spec_id"):
+        if row.get("language") == language and row.get("tone") == tone:
+            return row["web_spec_id"]
     spec_response = await graphlit.client.create_specification(
         specification=SpecificationInput(
-            name=f"{server_id}_web_spec",
+            name=f"{server_id}_{channel_id}_web_spec",
             type=SpecificationTypes.COMPLETION,
             service_type=ModelServiceTypes.GOOGLE,
             system_prompt=build_web_system_prompt(language, tone),
@@ -137,13 +138,12 @@ async def get_or_create_web_spec(server_id: str, language: str, tone: str) -> st
         )
     )
     spec_id = spec_response.create_specification.id
-    await save_spec_id(server_id, "web", spec_id)
+    await save_channel_spec(server_id, channel_id, "web", spec_id)
     return spec_id
 
 
 def build_or_filter(content_ids: list, feed_ids: list) -> list | None:
     or_clauses = []
-
     for cid in content_ids:
         or_clauses.append(ContentCriteriaLevelInput(
             contents=[EntityReferenceInput(id=cid)]
@@ -157,7 +157,7 @@ def build_or_filter(content_ids: list, feed_ids: list) -> list | None:
     return or_clauses if or_clauses else None
 
 
-async def query_graphlit(server_id: str, question: str, language: str = "english", tone: str = "professional", prv_messages: str = "") -> str:
+async def query_graphlit(server_id: str, channel_id: str, question: str, language: str = "english", tone: str = "professional", prv_messages: str = "") -> str:
     print("Query Graphlit Called")
     if is_small_talk(question):
         return "Hello! How can I help you today?"
@@ -172,16 +172,13 @@ async def query_graphlit(server_id: str, question: str, language: str = "english
     if not content_ids and not feed_ids:
         return "No knowledge base found for this server."
 
-    spec_id = await get_or_create_kb_spec(server_id, language, tone)
+    spec_id = await get_or_create_kb_spec(server_id, channel_id, language, tone)
     conversation_id = None
-
     print(f"[query_graphlit] content_ids={content_ids}")
     print(f"[query_graphlit] feed_ids={feed_ids}")
     print(f"[query_graphlit] spec_id={spec_id}")
-
     try:
         or_filter = build_or_filter(content_ids, feed_ids)
-
         conv_response = await graphlit.client.create_conversation(
             conversation=ConversationInput(
                 name=f"{server_id}_kb_query",
@@ -190,11 +187,9 @@ async def query_graphlit(server_id: str, question: str, language: str = "english
             )
         )
         conversation_id = conv_response.create_conversation.id
-
         prompt = question
         if prv_messages:
             prompt = f"Conversation context:\n{prv_messages}\n\nQuestion: {question}"
-
         response = await graphlit.client.prompt_conversation(
             prompt=prompt,
             mime_type=None,
@@ -220,7 +215,7 @@ async def query_graphlit(server_id: str, question: str, language: str = "english
             print(f"[WARN] Failed to delete KB conversation: {e}")
 
 
-async def query_graphlit_web(server_id: str, question: str, language: str = "english", tone: str = "professional", prv_messages: str = "") -> str:
+async def query_graphlit_web(server_id: str, channel_id: str, question: str, language: str = "english", tone: str = "professional", prv_messages: str = "") -> str:
     print("Query Web-Graphlit Called")
     if is_small_talk(question):
         return "Hello! How can I help you today?"
@@ -260,10 +255,10 @@ async def query_graphlit_web(server_id: str, question: str, language: str = "eng
             f"Give a clear, concise answer under 1800 characters. Cite sources by number e.g. [1], [2]."
         )
 
-        spec_id = await get_or_create_web_spec(server_id, language, tone)
+        spec_id = await get_or_create_web_spec(server_id, channel_id, language, tone)
         conv_response = await graphlit.client.create_conversation(
             conversation=ConversationInput(
-                name=f"{server_id}_web_query",
+                name=f"{server_id}_{channel_id}_web_query",
                 specification=EntityReferenceInput(id=spec_id),
             )
         )
@@ -298,78 +293,5 @@ async def query_graphlit_web(server_id: str, question: str, language: str = "eng
             print(f"[WARN] Failed to delete web conversation: {e}")
 
 
-async def query_with_temp_kb_spec(
-    server_id: str, question: str, language: str, tone: str,
-    prv_messages: str
-) -> str:
-    spec_id = None
-    conversation_id = None
-
-    try:
-        content_ids = await get_content_ids(server_id)
-        feed_ids = await get_feed_ids(server_id)
-    except Exception as e:
-        print(f"[WARN] DB fetch content/feed ids failed: {e}")
-        content_ids, feed_ids = [], []
-
-    try:
-        spec_response = await graphlit.client.create_specification(
-            specification=SpecificationInput(
-                name=f"{server_id}_kb_temp_{language}_{tone}",
-                type=SpecificationTypes.COMPLETION,
-                service_type=ModelServiceTypes.OPEN_AI,
-                system_prompt=build_kb_system_prompt(language, tone),
-                retrieval_strategy=RetrievalStrategyInput(
-                    type=RetrievalStrategyTypes.CONTENT,
-                    content_limit=5,
-                ),
-                open_ai=OpenAIModelPropertiesInput(
-                    model=OpenAIModels.GPT4O_MINI_128K,
-                    temperature=0.2,
-                    completion_token_limit=1000,
-                ),
-            )
-        )
-        spec_id = spec_response.create_specification.id
-        print(f"[temp_kb_spec] Created temp spec {spec_id} for {language}/{tone}")
-
-        or_filter = build_or_filter(content_ids, feed_ids)
-
-        conv_response = await graphlit.client.create_conversation(
-            conversation=ConversationInput(
-                name=f"{server_id}_kb_temp_query",
-                specification=EntityReferenceInput(id=spec_id),
-                filter=ContentCriteriaInput(or_=or_filter)
-            )
-        )
-        conversation_id = conv_response.create_conversation.id
-
-        prompt = question
-        if prv_messages:
-            prompt = f"Conversation context:\n{prv_messages}\n\nQuestion: {question}"
-
-        response = await graphlit.client.prompt_conversation(
-            prompt=prompt,
-            mime_type=None, data=None, id=conversation_id,
-            persona=None, system_prompt=None, tools=None,
-            require_tool=None, include_details=True, correlation_id=None
-        )
-        result = response.prompt_conversation
-        if result is None or result.message is None or result.message.message is None:
-            return "I don't know"
-        return result.message.message[:1800]
-
-    finally:
-        if conversation_id:
-            try:
-                await graphlit.client.delete_conversation(id=conversation_id)
-            except Exception as e:
-                print(f"[WARN] Failed to delete temp KB conversation: {e}")
-        if spec_id:
-            try:
-                await graphlit.client.delete_specification(id=spec_id)
-                print(f"[temp_kb_spec] Deleted temp spec {spec_id}")
-            except Exception as e:
-                print(f"[WARN] Failed to delete temp KB spec: {e}")
 
 
