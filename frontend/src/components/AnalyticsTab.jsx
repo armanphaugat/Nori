@@ -281,7 +281,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
           )}
         </div>
         <Card style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "64px 32px", textAlign: "center", gap: 18, border: "1.5px dashed var(--border)" }}>
-          <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--accent-l)", border: "1px solid rgba(196,30,30,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--accent-l)", border: "1px solid rgba(30,58,138,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Icon name="bar_chart" size={28} style={{ color: "var(--accent)" }} />
           </div>
           <div>
@@ -576,12 +576,12 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
                           style={{
                             flex: 1,
                             borderRadius: 3,
-                            background: hasCount ? `rgba(196, 30, 30, ${opacity})` : "rgba(15,15,15,0.03)",
-                            border: `1px solid ${hasCount ? "rgba(196,30,30,0.15)" : "transparent"}`,
+                            background: hasCount ? `rgba(30,58,138, ${opacity})` : "rgba(15,15,15,0.03)",
+                            border: `1px solid ${hasCount ? "rgba(30,58,138,0.15)" : "transparent"}`,
                             cursor: "pointer",
                             transition: "all 0.1s ease",
                             transform: hoveredCell?.day === d && hoveredCell?.hour === h ? "scale(1.25)" : "none",
-                            boxShadow: hoveredCell?.day === d && hoveredCell?.hour === h ? "0 0 6px rgba(196,30,30,0.3)" : "none",
+                            boxShadow: hoveredCell?.day === d && hoveredCell?.hour === h ? "0 0 6px rgba(30,58,138,0.3)" : "none",
                             zIndex: hoveredCell?.day === d && hoveredCell?.hour === h ? 5 : 1,
                           }}
                         />

@@ -23,11 +23,11 @@ export const GLOBAL_CSS = `
     --slate:         #8D99AE;
     --slate-dim:     rgba(141,153,174,0.18);
     --light:         #EDF2F4;
-    --red:           #EF233C;
-    --red-deep:      #D90429;
-    --red-dim:       rgba(239,35,60,0.10);
-    --red-glow:      rgba(239,35,60,0.20);
-    --red-border:    rgba(239,35,60,0.25);
+    --danger:           #EF233C;
+    --danger-deep:      #D90429;
+    --danger-dim:       rgba(30,58,138,0.10);
+    --danger-glow:      rgba(30,58,138,0.20);
+    --danger-border:    rgba(30,58,138,0.25);
 
     /* ── Surface layers ── */
     --bg:            #EDF2F4;
@@ -45,12 +45,15 @@ export const GLOBAL_CSS = `
     --border:        rgba(43,45,66,0.10);
     --border2:       rgba(43,45,66,0.22);
 
-    /* ── Accent ── */
-    --accent:        #EF233C;
-    --accent-deep:   #D90429;
+    /* ── Accent (Blue) ── */
+    --accent:        #1D4ED8;
+    --accent-deep:   #1E3A8A;
+    --accent-dim:    rgba(30,58,138,0.10);
+    --accent-glow:   rgba(30,58,138,0.20);
+    --accent-border: rgba(30,58,138,0.25);
 
     /* ── Alias tokens ── */
-    --primary:       #EF233C;
+    --primary:       #1D4ED8;
     --blue:          #8D99AE;
     --on-surface-variant: #5a5d78;
     --outline-variant:    rgba(43,45,66,0.18);
@@ -115,7 +118,7 @@ export const GLOBAL_CSS = `
   .kb-input::placeholder { color: var(--muted2); }
   .kb-input:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--red-glow);
+    box-shadow: 0 0 0 3px var(--accent-glow);
   }
   .kb-input option { background: #ffffff; color: var(--text); }
 
@@ -129,7 +132,7 @@ export const GLOBAL_CSS = `
   input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none; width: 18px; height: 18px;
     background: var(--accent); border-radius: 50%; cursor: pointer;
-    border: 2px solid #fff; box-shadow: 0 2px 8px var(--red-glow); transition: transform .1s;
+    border: 2px solid #fff; box-shadow: 0 2px 8px var(--accent-glow); transition: transform .1s;
   }
   input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
 
@@ -142,7 +145,7 @@ export const GLOBAL_CSS = `
     white-space: nowrap; width: 100%; text-align: left;
   }
   .nav-item:hover  { background: var(--navy-light); color: var(--accent-deep); }
-  .nav-item.active { background: var(--red-dim); color: var(--accent-deep); font-weight: 600; }
+  .nav-item.active { background: var(--accent-dim); color: var(--accent-deep); font-weight: 600; }
 
   /* ── Drop zone ── */
   .drop-zone {
@@ -151,7 +154,7 @@ export const GLOBAL_CSS = `
     gap: 10px; cursor: pointer; transition: all var(--tr); text-align: center;
     background: var(--surface-2);
   }
-  .drop-zone:hover { border-color: var(--accent); background: var(--red-dim); }
+  .drop-zone:hover { border-color: var(--accent); background: var(--accent-dim); }
 
   /* ── Table ── */
   .data-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
@@ -185,7 +188,7 @@ export const GLOBAL_CSS = `
   /* ── Section label pill ── */
   .section-pill {
     display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px;
-    border-radius: 99px; background: var(--red-dim); border: 1px solid var(--red-border);
+    border-radius: 99px; background: var(--accent-dim); border: 1px solid var(--accent-border);
     margin-bottom: 10px;
   }
   .section-pill span.bar {
@@ -224,7 +227,7 @@ export function Spinner({ size = 16, color = "var(--accent)" }) {
   return (
     <span style={{
       width: size, height: size,
-      border: `2px solid var(--red-dim)`,
+      border: `2px solid var(--accent-dim)`,
       borderTopColor: color,
       borderRadius: "50%",
       animation: "spin .6s linear infinite",
@@ -243,9 +246,9 @@ export function StatusBadge({ msg, ok }) {
   return (
     <div style={{
       padding: "10px 16px", borderRadius: "var(--r-md)", fontSize: 13.5, fontWeight: 500,
-      background: ok ? "rgba(34,197,94,0.06)" : "rgba(239,35,60,0.06)",
-      border: `1px solid ${ok ? "rgba(34,197,94,0.2)" : "var(--red-border)"}`,
-      color: ok ? "#16a34a" : "var(--accent-deep)",
+      background: ok ? "rgba(34,197,94,0.06)" : "var(--danger-dim)",
+      border: `1px solid ${ok ? "rgba(34,197,94,0.2)" : "var(--danger-border)"}`,
+      color: ok ? "#16a34a" : "var(--danger-deep)",
       fontFamily: "'Plus Jakarta Sans', sans-serif",
     }}>{msg}</div>
   );
@@ -253,10 +256,10 @@ export function StatusBadge({ msg, ok }) {
 
 export function Tag({ children, variant = "primary", style = {} }) {
   const variants = {
-    primary: { bg: "var(--red-dim)",                     color: "var(--accent-deep)",   border: "var(--red-border)" },
-    success: { bg: "rgba(34,197,94,0.08)",               color: "#15803d",              border: "rgba(34,197,94,0.2)" },
-    warn:    { bg: "rgba(234,179,8,0.08)",               color: "#a16207",              border: "rgba(234,179,8,0.25)" },
-    error:   { bg: "rgba(239,35,60,0.08)",               color: "var(--accent-deep)",   border: "var(--red-border)" },
+    primary: { bg: "var(--accent-dim)",                     color: "var(--accent-deep)",   border: "var(--accent-border)" },
+    ghost:   { bg: "transparent",                           color: "var(--muted)",         border: "transparent" },
+    danger:  { bg: "var(--danger-dim)",                     color: "var(--danger-deep)",   border: "var(--danger-border)" },
+    error:   { bg: "rgba(239,35,60,0.08)",                  color: "var(--danger-deep)",   border: "var(--danger-border)" },
     neutral: { bg: "var(--surface-2)",                   color: "var(--muted)",         border: "var(--border2)" },
     slate:   { bg: "var(--slate-dim)",                   color: "var(--navy-mid)",      border: "rgba(141,153,174,0.3)" },
   };
@@ -287,29 +290,29 @@ export function Btn({ children, onClick, disabled, variant = "primary", style = 
       background: "linear-gradient(135deg, var(--accent-deep) 0%, var(--accent) 100%)",
       color: "#fff",
       padding: "8px 20px",
-      boxShadow: "0 4px 14px rgba(239, 35, 60, 0.35)",
+      boxShadow: "0 4px 14px rgba(30,58,138, 0.35)",
     },
     ghost: {
       background: "var(--surface)", color: "var(--muted)",
       padding: "8px 16px", border: "1.5px solid var(--border2)",
     },
     danger: {
-      background: "rgba(239,35,60,0.07)", color: "var(--accent-deep)",
-      padding: "6px 12px", border: "1.5px solid var(--red-border)",
+      background: "rgba(239, 35, 60, 0.08)", color: "var(--danger-deep)",
+      padding: "6px 12px", border: "1.5px solid var(--danger-border)",
     },
     success: {
       background: "rgba(34,197,94,0.07)", color: "#15803d",
       padding: "8px 18px", border: "1.5px solid rgba(34,197,94,0.2)",
     },
     accent: {
-      background: "linear-gradient(135deg, var(--accent) 0%, #ff6b6b 100%)",
+      background: "linear-gradient(135deg, var(--accent) 0%, #60A5FA 100%)",
       color: "#fff",
       padding: "8px 20px",
-      boxShadow: "0 4px 14px rgba(239, 35, 60, 0.35)",
+      boxShadow: "0 4px 14px rgba(30,58,138, 0.35)",
     },
     outline: {
       background: "transparent", color: "var(--accent-deep)",
-      padding: "8px 18px", border: "1.5px solid var(--red-border)",
+      padding: "8px 18px", border: "1.5px solid var(--accent-border)",
     },
     discord: {
       background: "linear-gradient(135deg, #5865F2 0%, #404eed 100%)",
@@ -327,7 +330,7 @@ export function Btn({ children, onClick, disabled, variant = "primary", style = 
         if (!disabled) {
           e.currentTarget.style.transform = "translateY(-1.5px)";
           if (variant === "primary" || variant === "accent") {
-            e.currentTarget.style.boxShadow = "0 6px 20px rgba(239, 35, 60, 0.45)";
+            e.currentTarget.style.boxShadow = "0 6px 20px rgba(30,58,138, 0.45)";
           }
         }
       }}
@@ -405,7 +408,7 @@ export function NoServerSelected({ onGoToOverview }) {
     }}>
       <div style={{
         width: 64, height: 64, borderRadius: "var(--r-xl)",
-        background: "var(--red-dim)", border: "1px solid var(--red-border)",
+        background: "var(--accent-dim)", border: "1px solid var(--accent-border)",
         display: "flex", alignItems: "center", justifyContent: "center",
       }}>
         <Icon name="dns" size={30} style={{ color: "var(--accent-deep)", opacity: 0.6 }} />

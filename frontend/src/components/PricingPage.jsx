@@ -43,21 +43,16 @@ const CSS = `
     --slate-glow:  rgba(141,153,174,0.32);
     --light:       #EDF2F4;
     --light-dim:   rgba(237,242,244,0.7);
-    --red:         #EF233C;
-    --red-deep:    #D90429;
-    --red-dim:     rgba(239,35,60,0.12);
-    --red-glow:    rgba(239,35,60,0.22);
+    --accent:         #1D4ED8;
+    --accent-deep:    #1E3A8A;
+    --accent-dim:     rgba(30,58,138,0.12);
+    --accent-glow:    rgba(30,58,138,0.22);
 
     --bg:          var(--light);
     --surface1:    #ffffff;
     --surface2:    #f4f7f9;
     --surface3:    #e8edf1;
     --surface4:    #dde3ea;
-
-    --accent:      var(--red);
-    --accent-deep: var(--red-deep);
-    --accent-glow: var(--red-glow);
-    --accent-dim:  var(--red-dim);
     --border:      rgba(43,45,66,0.1);
     --border2:     rgba(43,45,66,0.22);
     --text:        var(--navy);
@@ -90,7 +85,7 @@ const CSS = `
 
   .bloom {
     position: absolute; pointer-events: none; z-index: 0;
-    background: radial-gradient(circle, rgba(239,35,60,0.07) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(30,58,138,0.07) 0%, transparent 70%);
   }
   .bloom-slate {
     position: absolute; pointer-events: none; z-index: 0;
@@ -99,7 +94,7 @@ const CSS = `
 
   @keyframes fadeUp { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:none; } }
   @keyframes shimmer { 0%{background-position:-200% center;} 100%{background-position:200% center;} }
-  @keyframes glow-pulse { 0%,100%{box-shadow:0 0 22px rgba(239,35,60,0.18);} 50%{box-shadow:0 0 40px rgba(239,35,60,0.35);} }
+  @keyframes glow-pulse { 0%,100%{box-shadow:0 0 22px rgba(30,58,138,0.18);} 50%{box-shadow:0 0 40px rgba(30,58,138,0.35);} }
   @keyframes ripple { 0%{transform:scale(1);opacity:0.5;} 100%{transform:scale(2.2);opacity:0;} }
   @keyframes float { 0%,100%{transform:translateY(0px);} 50%{transform:translateY(-6px);} }
 
@@ -110,15 +105,11 @@ const CSS = `
   .a4{animation:fadeUp 0.55s 0.35s ease both;}
 
   .shimmer-text {
-    background: linear-gradient(90deg, var(--red-deep) 0%, var(--red) 30%, #ff6b7a 50%, var(--red) 70%, var(--red-deep) 100%);
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: shimmer 3.5s linear infinite;
+    color: #EF233C !important;
+    font-weight: 800;
   }
 
-  .glow-red { animation: glow-pulse 3s ease infinite; }
+  .glow-accent { animation: glow-pulse 3s ease infinite; }
   .float { animation: float 4s ease-in-out infinite; }
 
   .ripple-dot::after {
@@ -126,14 +117,14 @@ const CSS = `
     position: absolute;
     inset: 0;
     border-radius: 50%;
-    background: rgba(239,35,60,0.35);
+    background: rgba(30,58,138,0.35);
     animation: ripple 2s ease-out infinite;
   }
   .ripple-dot { position: relative; }
 
   .nav-link:hover { color: var(--navy); background: rgba(43,45,66,0.06); }
   .btn-sm:hover { background: var(--navy) !important; color: white !important; box-shadow: 0 0 22px var(--slate-glow) !important; }
-  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 0 36px var(--red-glow) !important; }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 0 36px var(--accent-glow) !important; }
   .btn-ghost:hover { background: rgba(43,45,66,0.06) !important; color: var(--navy) !important; }
 
   .tier-card {
@@ -152,10 +143,10 @@ const CSS = `
   }
   .tier-card.featured {
     border: 2px solid var(--accent);
-    box-shadow: 0 8px 32px rgba(239,35,60,0.15);
+    box-shadow: 0 8px 32px rgba(30,58,138,0.15);
   }
   .tier-card.featured:hover {
-    box-shadow: 0 24px 56px rgba(239,35,60,0.22);
+    box-shadow: 0 24px 56px rgba(30,58,138,0.22);
   }
 
   .toggle-pill {
@@ -226,8 +217,8 @@ const CSS = `
     transition: border-color var(--tr), box-shadow var(--tr);
   }
   .faq-item.open {
-    border-color: rgba(239,35,60,0.3);
-    box-shadow: 0 4px 16px rgba(239,35,60,0.08);
+    border-color: rgba(30,58,138,0.3);
+    box-shadow: 0 4px 16px rgba(30,58,138,0.08);
   }
 
   .show600 { display: none; }
@@ -384,7 +375,7 @@ const FAQS = [
 ];
 
 const colorMap = {
-  red:   { bg: "rgba(239,35,60,0.08)",   border: "rgba(239,35,60,0.25)",   text: "#D90429",   icon: "#D90429"  },
+  red:   { bg: "rgba(30,58,138,0.08)",   border: "rgba(30,58,138,0.25)",   text: "#1E3A8A",   icon: "#1E3A8A"  },
   slate: { bg: "rgba(141,153,174,0.14)", border: "rgba(141,153,174,0.32)", text: "#5a6480",   icon: "#5a6480"  },
   blue:  { bg: "rgba(56,133,220,0.09)",  border: "rgba(56,133,220,0.28)",  text: "#1a5fab",   icon: "#1a5fab"  },
   navy:  { bg: "rgba(43,45,66,0.07)",    border: "rgba(43,45,66,0.22)",    text: "#2B2D42",   icon: "#2B2D42"  },
@@ -410,7 +401,7 @@ function CheckIcon({ on }) {
 
 function CellVal({ v }) {
   if (v === true) return <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:24,height:24,borderRadius:"50%",background:"rgba(34,197,94,0.08)",color:"#16a34a",fontSize:13,fontWeight:700 }}>✓</span>;
-  if (v === false) return <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:24,height:24,borderRadius:"50%",background:"rgba(43,45,66,0.04)",color:"#c0c4d0",fontSize:13 }}>✗</span>;
+  if (v === false) return <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:24,height:24,borderRadius:"50%",background:"rgba(239,35,60,0.08)",color:"#EF233C",fontSize:13,fontWeight:700 }}>✗</span>;
   return <span style={{ fontSize:13,color:"var(--navy)",fontWeight:500 }}>{v}</span>;
 }
 
@@ -521,7 +512,7 @@ export default function PricingPage({
               <button className={annual ? "active" : ""} onClick={() => setAnnual(true)}>Annual</button>
             </div>
             {annual && (
-              <span style={{ display:"inline-flex",alignItems:"center",gap:6,background:"rgba(239,35,60,0.08)",border:"1px solid rgba(239,35,60,0.22)",padding:"5px 12px",borderRadius:99,fontSize:12,fontWeight:700,color:"var(--accent-deep)" }}>
+              <span style={{ display:"inline-flex",alignItems:"center",gap:6,background:"rgba(30,58,138,0.08)",border:"1px solid rgba(30,58,138,0.22)",padding:"5px 12px",borderRadius:99,fontSize:12,fontWeight:700,color:"var(--accent-deep)" }}>
                 <Icon name="local_offer" size={13} fill={1} /> Save up to 25%
               </span>
             )}
@@ -578,7 +569,7 @@ export default function PricingPage({
                   <div style={{ padding:"28px 24px 0" }}>
                     {/* Icon + Name */}
                     <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:12,marginTop: isFeatured ? 8 : 0 }}>
-                      <div style={{ width:40,height:40,borderRadius:11,background:isFeatured ? "rgba(239,35,60,0.1)" : c.bg,border:`1px solid ${isFeatured ? "rgba(239,35,60,0.3)" : c.border}`,display:"flex",alignItems:"center",justifyContent:"center",color:isFeatured ? "var(--accent-deep)" : c.text }}>
+                      <div style={{ width:40,height:40,borderRadius:11,background:isFeatured ? "rgba(30,58,138,0.1)" : c.bg,border:`1px solid ${isFeatured ? "rgba(30,58,138,0.3)" : c.border}`,display:"flex",alignItems:"center",justifyContent:"center",color:isFeatured ? "var(--accent-deep)" : c.text }}>
                         <Icon name={tier.icon} size={20} fill={1} />
                       </div>
                       <div>
@@ -634,7 +625,7 @@ export default function PricingPage({
 
                     {/* Overage */}
                     {tier.overage ? (
-                      <div style={{ marginBottom:20,padding:"10px 14px",borderRadius:10,background:"rgba(239,35,60,0.04)",border:"1px solid rgba(239,35,60,0.15)" }}>
+                      <div style={{ marginBottom:20,padding:"10px 14px",borderRadius:10,background:"rgba(30,58,138,0.04)",border:"1px solid rgba(30,58,138,0.15)" }}>
                         <div style={{ fontSize:10,fontWeight:700,color:"var(--accent-deep)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6 }}>If You Exceed</div>
                         {Object.values(tier.overage).map((o, j) => (
                           <div key={j} style={{ fontSize:11.5,color:"var(--muted)",marginBottom: j < Object.values(tier.overage).length - 1 ? 3 : 0 }}>+ {o}</div>
@@ -682,7 +673,7 @@ export default function PricingPage({
                         marginBottom:20,
                         fontFamily:"'Plus Jakarta Sans', sans-serif",
                         ...(tier.ctaStyle === "primary"
-                          ? { background:"var(--accent)",color:"white",border:"none",boxShadow:"0 4px 18px rgba(239,35,60,0.3)" }
+                          ? { background:"var(--accent)",color:"white",border:"none",boxShadow:"0 4px 18px rgba(30,58,138,0.3)" }
                           : tier.ctaStyle === "dark"
                           ? { background:"var(--navy)",color:"white",border:"none",boxShadow:"0 4px 14px rgba(43,45,66,0.2)" }
                           : { background:"white",color:"var(--navy)",border:"1px solid var(--border2)" }
@@ -743,7 +734,7 @@ export default function PricingPage({
                 <tr style={{ background:"var(--navy)" }}>
                   <th style={{ padding:"16px 20px",textAlign:"left",fontWeight:600,fontSize:11,letterSpacing:"0.06em",textTransform:"uppercase",color:"rgba(255,255,255,0.45)",borderBottom:"1px solid rgba(255,255,255,0.1)",width:"28%" }}>Feature</th>
                   {["Free","Starter","Pro","Enterprise"].map((h, i) => (
-                    <th key={i} style={{ padding:"16px 10px",fontWeight:700,fontSize:11,letterSpacing:"0.05em",textTransform:"uppercase",textAlign:"center",color: h === "Pro" ? "var(--accent)" : "rgba(255,255,255,0.6)",borderBottom: h === "Pro" ? "2px solid var(--accent)" : "1px solid rgba(255,255,255,0.1)",background: h === "Pro" ? "rgba(239,35,60,0.1)" : "transparent" }}>{h}</th>
+                    <th key={i} style={{ padding:"16px 10px",fontWeight:700,fontSize:11,letterSpacing:"0.05em",textTransform:"uppercase",textAlign:"center",color: h === "Pro" ? "var(--accent)" : "rgba(255,255,255,0.6)",borderBottom: h === "Pro" ? "2px solid var(--accent)" : "1px solid rgba(255,255,255,0.1)",background: h === "Pro" ? "rgba(30,58,138,0.1)" : "transparent" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -752,7 +743,7 @@ export default function PricingPage({
                   <tr key={i} className="compare-row" style={{ borderBottom:"1px solid var(--border)" }}>
                     <td style={{ padding:"13px 20px",color:"var(--navy)",fontWeight:500,background: i%2===0 ? "white" : "var(--surface2)" }}>{row.label}</td>
                     {["free","starter","pro","enterprise"].map((plan, j) => (
-                      <td key={j} style={{ padding:"13px 10px",textAlign:"center",background: plan==="pro" ? "rgba(239,35,60,0.02)" : i%2===0 ? "white" : "var(--surface2)" }}>
+                      <td key={j} style={{ padding:"13px 10px",textAlign:"center",background: plan==="pro" ? "rgba(30,58,138,0.02)" : i%2===0 ? "white" : "var(--surface2)" }}>
                         <CellVal v={row[plan]} />
                       </td>
                     ))}
@@ -778,7 +769,7 @@ export default function PricingPage({
               >
                 <div style={{ padding:"17px 22px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,fontSize:14.5,fontWeight:600,color: faq===i ? "var(--accent-deep)" : "var(--navy)",fontFamily:"'Plus Jakarta Sans', sans-serif" }}>
                   {f.q}
-                  <span style={{ width:28,height:28,borderRadius:8,background: faq===i ? "rgba(239,35,60,0.08)" : "rgba(43,45,66,0.05)",display:"flex",alignItems:"center",justifyContent:"center",color: faq===i ? "var(--accent)" : "var(--muted2)",flexShrink:0,transition:"transform var(--tr),background var(--tr)",transform: faq===i ? "rotate(180deg)" : "none" }}>
+                  <span style={{ width:28,height:28,borderRadius:8,background: faq===i ? "rgba(30,58,138,0.08)" : "rgba(43,45,66,0.05)",display:"flex",alignItems:"center",justifyContent:"center",color: faq===i ? "var(--accent)" : "var(--muted2)",flexShrink:0,transition:"transform var(--tr),background var(--tr)",transform: faq===i ? "rotate(180deg)" : "none" }}>
                     <Icon name="expand_more" size={18} />
                   </span>
                 </div>
@@ -793,13 +784,13 @@ export default function PricingPage({
 
       {/* CTA */}
       <section style={{ padding:"100px 64px",textAlign:"center",position:"relative",overflow:"hidden",background:"var(--navy)" }}>
-        <div style={{ position:"absolute",top:-80,left:"25%",width:900,height:700,background:"radial-gradient(circle, rgba(239,35,60,0.12) 0%, transparent 70%)",pointerEvents:"none",zIndex:0 }} />
+        <div style={{ position:"absolute",top:-80,left:"25%",width:900,height:700,background:"radial-gradient(circle, rgba(30,58,138,0.12) 0%, transparent 70%)",pointerEvents:"none",zIndex:0 }} />
         <div style={{ position:"relative",zIndex:1,maxWidth:760,margin:"0 auto" }}>
           <SectionLabel text="Get Started Free" />
           <h2 style={{ fontFamily:"'Outfit', sans-serif",fontWeight:700,fontSize:"clamp(28px,4.5vw,56px)",color:"white",letterSpacing:"-0.01em",lineHeight:1.08,marginBottom:14 }}>Start free. Scale only when you're ready.</h2>
           <p style={{ fontSize:17,color:"rgba(255,255,255,0.55)",marginBottom:40,maxWidth:460,margin:"0 auto 36px",fontWeight:300,lineHeight:1.75 }}>No credit card. No commitment. Just upload your first document and watch Nori go to work.</p>
           <div style={{ display:"flex",justifyContent:"center",gap:14,flexWrap:"wrap" }}>
-            <button onClick={onInvite} className="btn-primary glow-red" style={{ display:"flex",alignItems:"center",gap:10,padding:"15px 30px",borderRadius:12,fontSize:15,fontWeight:600,background:"var(--accent)",color:"white",border:"none",cursor:"pointer",boxShadow:"0 0 28px var(--red-glow)",transition:"all var(--tr)" }}>
+            <button onClick={onInvite} className="btn-primary glow-accent" style={{ display:"flex",alignItems:"center",gap:10,padding:"15px 30px",borderRadius:12,fontSize:15,fontWeight:600,background:"#EF233C",color:"white",border:"none",cursor:"pointer",boxShadow:"0 0 28px rgba(239, 35, 60, 0.25)",transition:"all var(--tr)" }}>
               <DiscordIcon size={16} /> Add Nori Free
               <Icon name="arrow_forward" size={16} />
             </button>

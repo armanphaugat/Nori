@@ -185,19 +185,19 @@ export default function UploadTab({ guildId, onGoToOverview }) {
   };
 
   // ── Reusable file section card ──
-  const FileSection = ({ label, hint, iconName, accentColor, files, setFiles, inputRef, accept, type }) => (
+  const FileSection = ({ label, description, hint, iconName, accentColor, files, setFiles, inputRef, accept, type }) => (
     <Card>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
         <div style={{
           width: 38, height: 38, borderRadius: "var(--r-md)",
-          background: "var(--red-dim)", border: "1px solid var(--red-border)",
+          background: "var(--accent-dim)", border: "1px solid var(--accent-border)",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <Icon name={iconName} size={19} style={{ color: accentColor }} />
         </div>
         <div>
           <div style={{ fontSize: 14, fontWeight: 600, color: "var(--navy)" }}>{label}</div>
-          <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 300 }}>{hint}</div>
+          <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 300 }}>{description}</div>
         </div>
       </div>
 
@@ -209,14 +209,15 @@ export default function UploadTab({ guildId, onGoToOverview }) {
         onDrop={(e) => { handleDrag(type, false)(e); dropFiles(setFiles, type, label)(e); }}
         style={{
           borderColor: dragActive[type] ? "var(--accent)" : undefined,
-          background: dragActive[type] ? "var(--red-dim)" : undefined,
+          background: dragActive[type] ? "var(--accent-dim)" : undefined,
           transition: "all .22s ease",
         }}
       >
         <Icon name="upload_file" size={34} style={{ color: accentColor, opacity: .55 }} />
-        <p style={{ fontSize: 13.5, color: "var(--muted)", fontWeight: 300 }}>
+        <p style={{ fontSize: 13.5, color: "var(--muted)", fontWeight: 300, marginBottom: 4 }}>
           Drop files here or <span style={{ color: "var(--accent)", fontWeight: 600 }}>browse</span>
         </p>
+        <p style={{ fontSize: 11, color: "var(--muted2)" }}>{hint}</p>
       </div>
 
       <input ref={inputRef} type="file" accept={accept} multiple style={{ display: "none" }} onChange={addFiles(setFiles, type, label)} />
@@ -234,7 +235,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
               }}>
                 <Icon name="insert_drive_file" size={13} style={{ color: "var(--accent)" }} />
                 {f.name.length > 22 ? f.name.slice(0, 19) + "…" : f.name}
-                <span onClick={() => removeFile(setFiles, i)} style={{ cursor: "pointer", color: "var(--muted2)", fontWeight: 700, marginLeft: 2 }}>✕</span>
+                <span onClick={() => removeFile(setFiles, i)} style={{ cursor: "pointer", color: "var(--danger)", fontWeight: 700, marginLeft: 2 }}>✕</span>
               </div>
             ))}
           </div>
@@ -268,7 +269,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
       <div style={{ marginBottom: 24 }}>
         <Card>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <div style={{ width: 38, height: 38, borderRadius: "var(--r-md)", background: "var(--red-dim)", border: "1px solid var(--red-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: 38, height: 38, borderRadius: "var(--r-md)", background: "var(--accent-dim)", border: "1px solid var(--accent-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Icon name="language" size={19} style={{ color: "var(--accent-deep)" }} />
             </div>
             <div>
@@ -367,7 +368,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
                         <div key={i} onClick={() => toggleUrl(u)} style={{
                           display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
                           borderBottom: "1px solid var(--border)", cursor: "pointer",
-                          background: sel ? "var(--red-dim)" : "transparent",
+                          background: sel ? "var(--accent-dim)" : "transparent",
                           transition: "background var(--tr)"
                         }}>
                           <div style={{
@@ -405,7 +406,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
         {/* Document URLs */}
         <Card>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <div style={{ width: 38, height: 38, borderRadius: "var(--r-md)", background: "var(--red-dim)", border: "1px solid var(--red-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: 38, height: 38, borderRadius: "var(--r-md)", background: "var(--accent-dim)", border: "1px solid var(--accent-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Icon name="link" size={19} style={{ color: "var(--accent)" }} />
             </div>
             <div>
@@ -426,15 +427,15 @@ export default function UploadTab({ guildId, onGoToOverview }) {
           )}
         </Card>
 
-        <FileSection label="Documents" hint=".pdf, .docx, .txt"                      iconName="description" accentColor="var(--accent)"       files={docFiles} setFiles={setDocFiles} inputRef={docRef} accept=".pdf,.docx,.txt"                type="doc" />
-        <FileSection label="Images"    hint=".png, .jpg, .jpeg, .tiff, .bmp, .webp"  iconName="image"       accentColor="var(--accent-deep)"   files={imgFiles} setFiles={setImgFiles} inputRef={imgRef} accept=".png,.jpg,.jpeg,.tiff,.bmp,.webp" type="img" />
-        <FileSection label="Video"     hint=".mp4"                                   iconName="videocam"    accentColor="var(--slate)"         files={vidFiles} setFiles={setVidFiles} inputRef={vidRef} accept=".mp4"                            type="vid" />
-        <FileSection label="Audio"     hint=".mp3, .wav, .m4a"                       iconName="headphones"  accentColor="var(--navy-mid)"      files={audFiles} setFiles={setAudFiles} inputRef={audRef} accept=".mp3,.wav,.m4a"                  type="aud" />
+        <FileSection label="Documents" description="Upload raw text and PDFs" hint="Supported: .pdf, .docx, .txt"                      iconName="description" accentColor="var(--accent)"       files={docFiles} setFiles={setDocFiles} inputRef={docRef} accept=".pdf,.docx,.txt"                type="doc" />
+        <FileSection label="Images"    description="Extract text and layout from images" hint="Supported: .png, .jpg, .jpeg, .tiff, .bmp, .webp"  iconName="image"       accentColor="var(--accent-deep)"   files={imgFiles} setFiles={setImgFiles} inputRef={imgRef} accept=".png,.jpg,.jpeg,.tiff,.bmp,.webp" type="img" />
+        <FileSection label="Video"     description="Transcribe speech from video files" hint="Supported: .mp4"                                   iconName="videocam"    accentColor="var(--slate)"         files={vidFiles} setFiles={setVidFiles} inputRef={vidRef} accept=".mp4"                            type="vid" />
+        <FileSection label="Audio"     description="Transcribe speech from audio files" hint="Supported: .mp3, .wav, .m4a"                       iconName="headphones"  accentColor="var(--navy-mid)"      files={audFiles} setFiles={setAudFiles} inputRef={audRef} accept=".mp3,.wav,.m4a"                  type="aud" />
 
         {/* FAQ */}
         <Card>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <div style={{ width: 38, height: 38, borderRadius: "var(--r-md)", background: "var(--red-dim)", border: "1px solid var(--red-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: 38, height: 38, borderRadius: "var(--r-md)", background: "var(--accent-dim)", border: "1px solid var(--accent-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Icon name="quiz" size={19} style={{ color: "var(--accent)" }} />
             </div>
             <div>
@@ -454,7 +455,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
         {/* GitHub Repository */}
         <Card>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <div style={{ width: 38, height: 38, borderRadius: "var(--r-md)", background: "var(--red-dim)", border: "1px solid var(--red-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: 38, height: 38, borderRadius: "var(--r-md)", background: "var(--accent-dim)", border: "1px solid var(--accent-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Icon name="code" size={19} style={{ color: "var(--accent)" }} />
             </div>
             <div>
@@ -483,7 +484,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
         {/* Discord Channel History */}
         <Card>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <div style={{ width: 38, height: 38, borderRadius: "var(--r-md)", background: "var(--red-dim)", border: "1px solid var(--red-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: 38, height: 38, borderRadius: "var(--r-md)", background: "var(--accent-dim)", border: "1px solid var(--accent-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Icon name="forum" size={19} style={{ color: "var(--accent-deep)" }} />
             </div>
             <div>

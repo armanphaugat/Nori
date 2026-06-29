@@ -65,7 +65,7 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
     }
     .vb-server-avatar.configured {
       border: 3px solid var(--accent);
-      box-shadow: 0 0 0 4px var(--red-dim), 0 4px 16px rgba(43,45,66,0.1);
+      box-shadow: 0 0 0 4px var(--accent-dim), 0 4px 16px rgba(43,45,66,0.1);
       background: var(--navy);
     }
     .vb-server-avatar.addable {
@@ -75,7 +75,7 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
     }
     .vb-server-card:hover .vb-server-avatar.configured {
       transform: translateY(-3px) scale(1.04);
-      box-shadow: 0 0 0 4px var(--red-dim), 0 12px 28px rgba(239,35,60,0.22);
+      box-shadow: 0 0 0 4px var(--accent-dim), 0 12px 28px rgba(30,58,138,0.22);
     }
     .vb-server-card:hover .vb-server-avatar.addable {
       transform: translateY(-3px) scale(1.04);
@@ -101,7 +101,7 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
     }
     .vb-search-pill:focus-within {
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--red-dim);
+      box-shadow: 0 0 0 3px var(--accent-dim);
     }
 
     .water-bg {
@@ -115,7 +115,7 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
     .bloom-red {
       position: fixed; top: -80px; left: 25%;
       width: 700px; height: 600px; pointer-events: none; z-index: 0;
-      background: radial-gradient(circle, rgba(239,35,60,0.06) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(30,58,138,0.06) 0%, transparent 70%);
     }
   `;
 
@@ -192,7 +192,7 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
               cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
               transition: "all var(--tr)", fontFamily: "'Plus Jakarta Sans', sans-serif",
             }}
-              onMouseEnter={e => { e.currentTarget.style.color = "var(--accent-deep)"; e.currentTarget.style.background = "var(--red-dim)"; }}
+              onMouseEnter={e => { e.currentTarget.style.color = "var(--accent-deep)"; e.currentTarget.style.background = "var(--accent-dim)"; }}
               onMouseLeave={e => { e.currentTarget.style.color = "var(--muted)"; e.currentTarget.style.background = "transparent"; }}
             >
               <Icon name="logout" size={14} /> Sign Out

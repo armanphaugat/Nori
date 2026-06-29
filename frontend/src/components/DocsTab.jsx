@@ -119,7 +119,7 @@ export default function DocsTab({ guildId, onGoToOverview }) {
                   fontSize: 13,
                   fontWeight: isSel ? 700 : 500,
                   color: isSel ? "var(--accent-deep)" : "var(--muted)",
-                  background: isSel ? "var(--red-dim)" : "transparent",
+                  background: isSel ? "var(--accent-dim)" : "transparent",
                   border: "none",
                   cursor: "pointer",
                   width: "100%",

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { API } from "../utils/api.js";
 import {
   Spinner, StatusBadge, Tag, Btn, Icon,
@@ -67,6 +67,116 @@ const ToggleSwitch = ({ checked, onChange, disabled }) => {
         }} />
       </div>
     </label>
+  );
+};
+
+const DropdownMenu = ({ list, selected, onSelect, multi }) => {
+  const grouped = {};
+  list.forEach(c => { const cat = c.categoryName || "Uncategorized"; if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(c); });
+  return (
+    <div style={{
+      position: "absolute", top: "100%", left: 0, right: 0,
+      background: "var(--surface)", border: "1.5px solid var(--border2)",
+      borderTop: "none", borderRadius: "0 0 var(--r-md) var(--r-md)",
+      maxHeight: 240, zIndex: 20,
+      boxShadow: "0 8px 24px rgba(43,45,66,0.12)",
+      display: "flex", flexDirection: "column",
+    }}>
+      <div style={{ overflowY: "auto", flex: 1 }}>
+        {list.length === 0 ? (
+          <div style={{ padding: "14px 16px", fontSize: 13, color: "var(--muted)", textAlign: "center" }}>No channels found</div>
+        ) : Object.entries(grouped).map(([cat, chans]) => (
+          <div key={cat}>
+            <div style={{ padding: "8px 16px 4px", fontSize: 10, fontWeight: 700, color: "var(--muted2)", textTransform: "uppercase", letterSpacing: ".05em" }}>{cat}</div>
+            {chans.map(c => {
+              const isSel = multi ? selected.includes(c.id) : selected === c.id;
+              return (
+                <div key={c.id} onClick={() => onSelect(c.id)}
+                  style={{
+                    padding: "8px 16px 8px 28px", fontSize: 13.5, cursor: "pointer",
+                    display: "flex", alignItems: "center", gap: 10,
+                    background: isSel ? "var(--accent-dim)" : "transparent",
+                    transition: "background var(--tr)",
+                  }}
+                  onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = "var(--surface-2)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = isSel ? "var(--accent-dim)" : "transparent"; }}
+                >
+                  <div style={{
+                    width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                    border: `1.5px solid ${isSel ? "var(--accent)" : "var(--border2)"}`,
+                    background: isSel ? "var(--accent)" : "transparent",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    {isSel && <Icon name="check" size={11} style={{ color: "#fff" }} />}
+                  </div>
+                  <span style={{ color: "var(--text)", fontSize: 13 }}>#{c.name}</span>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const SearchableChannelSelect = ({ value, onChange, placeholder, list, style }) => {
+  const [search, setSearch] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const h = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  const selectedChan = list.find(c => c.id === value);
+  const displayText = isOpen ? search : (selectedChan ? `#${selectedChan.name}` : "");
+
+  const filtered = list.filter(c => 
+    c.name.toLowerCase().includes(search.toLowerCase()) || 
+    (c.categoryName && c.categoryName.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  return (
+    <div style={{ position: "relative", width: "100%", ...style }} ref={containerRef}>
+      <div style={{ position: "relative", height: "100%" }}>
+        <input 
+          className="kb-input" 
+          type="text" 
+          value={displayText}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            if (!isOpen) setIsOpen(true);
+          }}
+          onFocus={() => {
+            setIsOpen(true);
+            setSearch("");
+          }}
+          placeholder={selectedChan ? `#${selectedChan.name}` : placeholder}
+          style={{ height: "100%", minHeight: 36, cursor: "text", width: "100%", padding: "0 30px 0 12px", boxSizing: "border-box" }}
+        />
+        <Icon name="expand_more" size={18} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted)", pointerEvents: "none" }} />
+      </div>
+      
+      {isOpen && (
+        <DropdownMenu 
+          list={filtered} 
+          selected={value} 
+          onSelect={(id) => { 
+            onChange(id); 
+            setIsOpen(false); 
+            setSearch(""); 
+          }} 
+          multi={false} 
+        />
+      )}
+    </div>
   );
 };
 
@@ -247,6 +357,14 @@ export default function ChannelsTab({
     } catch (e) { setStatus({ ok: false, msg: e.message }); }
   };
 
+  const removeMod = async () => {
+    if (!guildId || !modChannel) return;
+    try {
+      await API.deleteModChannel(guildId, modChannel);
+      setModChannel(null);
+      setStatus({ ok: true, msg: "Mod channel removed" });
+    } catch (e) { setStatus({ ok: false, msg: e.message }); }
+  };
 
 
   // ── Channel Config Handlers ──
@@ -309,55 +427,7 @@ export default function ChannelsTab({
     fontFamily: "'Plus Jakarta Sans', sans-serif",
   };
 
-  const DropdownMenu = ({ list, selected, onSelect, multi }) => {
-    const grouped = {};
-    list.forEach(c => { const cat = c.categoryName || "Uncategorized"; if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(c); });
-    return (
-      <div style={{
-        position: "absolute", top: "100%", left: 0, right: 0,
-        background: "var(--surface)", border: "1.5px solid var(--border2)",
-        borderTop: "none", borderRadius: "0 0 var(--r-md) var(--r-md)",
-        maxHeight: 240, zIndex: 20,
-        boxShadow: "0 8px 24px rgba(43,45,66,0.12)",
-        display: "flex", flexDirection: "column",
-      }}>
-        <div style={{ overflowY: "auto", flex: 1 }}>
-          {list.length === 0 ? (
-            <div style={{ padding: "14px 16px", fontSize: 13, color: "var(--muted)", textAlign: "center" }}>No channels found</div>
-          ) : Object.entries(grouped).map(([cat, chans]) => (
-            <div key={cat}>
-              <div style={{ padding: "8px 16px 4px", fontSize: 10, fontWeight: 700, color: "var(--muted2)", textTransform: "uppercase", letterSpacing: ".05em" }}>{cat}</div>
-              {chans.map(c => {
-                const isSel = multi ? selected.includes(c.id) : selected === c.id;
-                return (
-                  <div key={c.id} onClick={() => onSelect(c.id)}
-                    style={{
-                      padding: "8px 16px 8px 28px", fontSize: 13.5, cursor: "pointer",
-                      display: "flex", alignItems: "center", gap: 10,
-                      background: isSel ? "var(--red-dim)" : "transparent",
-                      transition: "background var(--tr)",
-                    }}
-                    onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = "var(--surface-2)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = isSel ? "var(--red-dim)" : "transparent"; }}
-                  >
-                    <div style={{
-                      width: 16, height: 16, borderRadius: 4, flexShrink: 0,
-                      border: `1.5px solid ${isSel ? "var(--accent)" : "var(--border2)"}`,
-                      background: isSel ? "var(--accent)" : "transparent",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>
-                      {isSel && <Icon name="check" size={11} style={{ color: "#fff" }} />}
-                    </div>
-                    <span style={{ color: "var(--text)", fontSize: 13 }}>#{c.name}</span>
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
+
 
   if (!guildId) return (
     <div>
@@ -414,22 +484,22 @@ export default function ChannelsTab({
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 10,
                   padding: "9px 20px", borderRadius: "var(--r-full)",
-                  background: webSearchEnabled ? "rgba(59,130,246,0.08)" : "var(--surface)",
-                  border: `1.5px solid ${webSearchEnabled ? "rgba(59,130,246,0.35)" : "var(--border2)"}`,
+                  background: webSearchEnabled ? "rgba(30,58,138,0.08)" : "var(--surface)",
+                  border: `1.5px solid ${webSearchEnabled ? "rgba(30,58,138,0.35)" : "var(--border2)"}`,
                   boxSizing: "border-box",
                   height: 40,
                   transition: "all var(--tr)",
                   fontSize: 13.5, fontWeight: 600,
-                  color: webSearchEnabled ? "rgb(37,99,235)" : "var(--muted)",
+                  color: webSearchEnabled ? "rgb(30,58,138)" : "var(--muted)",
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
                 }}
-                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = `0 4px 12px ${webSearchEnabled ? "rgba(59,130,246,0.12)" : "rgba(43,45,66,0.08)"}`; }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = `0 4px 12px ${webSearchEnabled ? "rgba(30,58,138,0.12)" : "rgba(43,45,66,0.08)"}`; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}
               >
                 <Icon
                   name={webSearchEnabled ? "travel_explore" : "search_off"}
                   size={17}
-                  style={{ color: webSearchEnabled ? "rgb(37,99,235)" : "var(--muted)" }}
+                  style={{ color: webSearchEnabled ? "rgb(30,58,138)" : "var(--muted)" }}
                 />
                 <span>Web Search</span>
                 <ToggleSwitch
@@ -526,10 +596,12 @@ export default function ChannelsTab({
 
               <div style={{ display: "flex", gap: 8, position: "relative" }} data-dropdown="channels">
                 <div style={{ flex: 1, position: "relative" }}>
-                  <input className="kb-input" type="text" readOnly
-                    placeholder={selectedChansToAdd.length > 0 ? `${selectedChansToAdd.length} selected` : "Search channels…"}
+                  <input className="kb-input" type="text"
+                    value={searchChanInput}
+                    onChange={(e) => setSearchChanInput(e.target.value)}
+                    placeholder={selectedChansToAdd.length > 0 && !showChanDropdown ? `${selectedChansToAdd.length} selected` : "Search channels…"}
                     onFocus={() => setShowChanDropdown(true)}
-                    style={{ height: 40, cursor: "pointer" }}
+                    style={{ height: 40, cursor: "text", width: "100%" }}
                   />
                   {showChanDropdown && (
                     <DropdownMenu
@@ -558,20 +630,25 @@ export default function ChannelsTab({
               {modChannel && (
                 <div style={{
                   display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", marginBottom: 14,
-                  background: "var(--red-dim)", border: "1px solid var(--red-border)", borderRadius: "var(--r-md)",
+                  background: "var(--accent-dim)", border: "1px solid var(--accent-border)", borderRadius: "var(--r-md)",
                 }}>
                   <Icon name="tag" size={15} style={{ color: "var(--accent)" }} />
                   <span style={{ fontSize: 13, color: "var(--accent-deep)", fontWeight: 600, flex: 1 }}>{chanName(modChannel)}</span>
                   <Tag variant="warn">Active</Tag>
+                  <Btn onClick={removeMod} variant="danger" style={{ padding: "2px 6px", fontSize: 11, minHeight: 22, flexShrink: 0, marginLeft: 8 }}>
+                    <Icon name="delete" size={12} />
+                  </Btn>
                 </div>
               )}
 
               <div style={{ display: "flex", gap: 8, position: "relative" }} data-dropdown="modchannel">
                 <div style={{ flex: 1, position: "relative" }}>
-                  <input className="kb-input" type="text" readOnly
+                  <input className="kb-input" type="text"
+                    value={searchModInput}
+                    onChange={(e) => setSearchModInput(e.target.value)}
                     placeholder="Search mod channels…"
                     onFocus={() => setShowModDropdown(true)}
-                    style={{ height: 40, cursor: "pointer" }}
+                    style={{ height: 40, cursor: "text", width: "100%" }}
                   />
                   {showModDropdown && (
                     <DropdownMenu
@@ -589,8 +666,8 @@ export default function ChannelsTab({
 
           {/* ── Ticket support card ── */}
           <Card style={{
-            background: "var(--red-dim)",
-            border: "1px solid var(--red-border)",
+            background: "var(--accent-dim)",
+            border: "1px solid var(--accent-border)",
             marginBottom: 16,
           }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -635,14 +712,13 @@ export default function ChannelsTab({
                 {supportSetupMode === "existing" && (
                   <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 8 }}>Select Target Channel</div>
-                    <select className="kb-input" value={selectedSupportChan}
-                      onChange={e => setSelectedSupportChan(e.target.value)}
-                      style={{ maxWidth: 340, height: 40, padding: "0 12px", cursor: "pointer" }}>
-                      <option value="">-- Select Channel --</option>
-                      {discordChannels.map(c => (
-                        <option key={c.id} value={c.id}>#{c.name} {c.categoryName ? `(${c.categoryName})` : ""}</option>
-                      ))}
-                    </select>
+                    <SearchableChannelSelect 
+                      value={selectedSupportChan}
+                      onChange={setSelectedSupportChan}
+                      placeholder="-- Select Channel --"
+                      list={discordChannels}
+                      style={{ maxWidth: 340, height: 40 }}
+                    />
                   </div>
                 )}
 
@@ -671,7 +747,7 @@ export default function ChannelsTab({
           {/* ── Channel Language & Tone Config ── */}
           <Card style={{ marginTop: 16 }}>
             {/* Card Header */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <Icon name="translate" size={17} style={{ color: "var(--accent)" }} />
                 <span style={{ fontSize: 13, fontWeight: 600, color: "var(--navy)" }}>Channel Language & Tone</span>
@@ -688,6 +764,9 @@ export default function ChannelsTab({
                 {showAddConfig ? "Cancel" : "Add Config"}
               </Btn>
             </div>
+            <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 16, lineHeight: 1.5, fontWeight: 300 }}>
+              Override the default bot language and persona tone for specific channels. Useful for multilingual servers.
+            </p>
 
             {/* Add Config Form */}
             {showAddConfig && (
@@ -702,16 +781,13 @@ export default function ChannelsTab({
                   {/* Channel select */}
                   <div>
                     <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 5 }}>Channel</div>
-                    <select
-                      style={{ ...SelectStyle, width: "100%" }}
+                    <SearchableChannelSelect 
                       value={newConfigChanId}
-                      onChange={e => setNewConfigChanId(e.target.value)}
-                    >
-                      <option value="">-- Select Channel --</option>
-                      {discordChannels.map(c => (
-                        <option key={c.id} value={c.id}>#{c.name}{c.categoryName ? ` (${c.categoryName})` : ""}</option>
-                      ))}
-                    </select>
+                      onChange={setNewConfigChanId}
+                      placeholder="-- Select Channel --"
+                      list={discordChannels}
+                      style={{ width: "100%", height: 36 }}
+                    />
                   </div>
                   {/* Language select */}
                   <div>
@@ -786,8 +862,8 @@ export default function ChannelsTab({
                     display: "grid", gridTemplateColumns: "1fr 140px 140px 80px",
                     alignItems: "center", gap: 10,
                     padding: "10px 12px",
-                    background: editingConfigId === cfg.channel_id ? "var(--red-dim)" : "var(--surface-2)",
-                    border: `1px solid ${editingConfigId === cfg.channel_id ? "var(--red-border)" : "var(--border)"}`,
+                    background: editingConfigId === cfg.channel_id ? "var(--accent-dim)" : "var(--surface-2)",
+                    border: `1px solid ${editingConfigId === cfg.channel_id ? "var(--accent-border)" : "var(--border)"}`,
                     borderRadius: "var(--r-md)",
                     transition: "all var(--tr)",
                   }}>

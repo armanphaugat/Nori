@@ -55,7 +55,7 @@ const BADGE_STYLES = {
   },
   paid: {
     bg: "linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%)",
-    shadow: "rgba(239, 35, 60, 0.25)",
+    shadow: "rgba(30,58,138, 0.25)",
     label: "Premium Plan",
     icon: "verified"
   }
@@ -70,7 +70,8 @@ function Dashboard({
   onActivate,
   onLogout,
   onGuildsChange,
-  onShowPricing
+  onShowPricing,
+  onShowHome
 }) {
   const getTabFromUrl = () => {
     const params = new URLSearchParams(window.location.search);
@@ -198,9 +199,12 @@ function Dashboard({
         tab={tab}
         onTab={changeTab}
         activeGuild={activeGuild}
+        guilds={guilds}
+        onActivate={onActivate}
         onSwitchServer={onSwitchServer}
         user={user}
         onLogout={onLogout}
+        onShowHome={onShowHome}
       />
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
@@ -225,6 +229,7 @@ function Dashboard({
             <span style={{ height: 16, width: 1, background: "var(--border2)" }} />
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               {[
+                { label: "Home", href: "#", onClick: (e) => { e.preventDefault(); onShowHome(); } },
                 { label: "Docs", href: "#", onClick: (e) => { e.preventDefault(); changeTab("docs"); } },
                 { label: "Invite", href: "https://discord.gg/WrpaytBfN" },
                 { label: "Discord", href: activeGuild?.id ? `https://discord.com/channels/${activeGuild.id}` : "https://discord.com" },
@@ -261,85 +266,7 @@ function Dashboard({
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            {/* Server Switcher Dropdown */}
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }} data-dropdown="server-select">
-              {activeGuild ? (
-                <div style={{ position: "relative" }}>
-                  <div
-                    onClick={() => setShowServerDropdown(!showServerDropdown)}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 8, padding: "5px 12px",
-                      borderRadius: "var(--r-full)", background: "var(--navy-light)",
-                      border: "1px solid var(--border)", cursor: "pointer",
-                      transition: "all var(--tr)", userSelect: "none",
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(43,45,66,0.12)"; e.currentTarget.style.borderColor = "rgba(43,45,66,0.25)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "var(--navy-light)"; e.currentTarget.style.borderColor = "var(--border)"; }}
-                  >
-                    {getServerIconUrl(activeGuild) ? (
-                      <img src={getServerIconUrl(activeGuild)} alt={activeGuild.name} style={{ width: 18, height: 18, borderRadius: "50%", objectFit: "cover" }} />
-                    ) : (
-                      <Icon name="dns" size={14} style={{ color: "var(--navy)" }} />
-                    )}
-                    <span style={{ fontSize: 12, fontWeight: 600, color: "var(--navy)" }}>{activeGuild.name}</span>
-                    <Icon name="expand_more" size={14} style={{ color: "var(--navy)", marginLeft: 2, transform: showServerDropdown ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
-                  </div>
-
-                  {showServerDropdown && (
-                    <div style={{
-                      position: "absolute", top: "100%", right: 0, marginTop: 8,
-                      width: 240, background: "var(--surface)",
-                      border: "1px solid var(--border2)",
-                      borderRadius: "var(--r-md)",
-                      boxShadow: "var(--shadow-lg)", zIndex: 100,
-                      overflow: "hidden", display: "flex", flexDirection: "column",
-                    }}>
-                      <div style={{ padding: "10px 14px", fontSize: 10.5, fontWeight: 700, color: "var(--muted2)", borderBottom: "1px solid var(--border)", textTransform: "uppercase", letterSpacing: "0.8px" }}>
-                        Switch Server
-                      </div>
-                      <div style={{ maxHeight: 240, overflowY: "auto" }}>
-                        {guilds.map(g => {
-                          const isSelected = g.id === activeGuildId;
-                          return (
-                            <div
-                              key={g.id}
-                              onClick={() => { onActivate(g.id, g); setShowServerDropdown(false); }}
-                              style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", cursor: "pointer", background: isSelected ? "var(--red-dim)" : "transparent", transition: "background 0.2s" }}
-                              onMouseEnter={e => e.currentTarget.style.backgroundColor = isSelected ? "var(--red-dim)" : "var(--surface-2)"}
-                              onMouseLeave={e => e.currentTarget.style.backgroundColor = isSelected ? "var(--red-dim)" : "transparent"}
-                            >
-                              {getServerIconUrl(g) ? (
-                                <img src={getServerIconUrl(g)} alt={g.name} style={{ width: 18, height: 18, borderRadius: "50%", objectFit: "cover" }} />
-                              ) : (
-                                <Icon name="dns" size={14} style={{ color: isSelected ? "var(--accent-deep)" : "var(--slate)" }} />
-                              )}
-                              <span style={{ fontSize: 13, fontWeight: isSelected ? 600 : 500, color: isSelected ? "var(--accent-deep)" : "var(--navy)", flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                {g.name}
-                              </span>
-                              {isSelected && <Icon name="check" size={12} style={{ color: "var(--accent)" }} />}
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <div
-                        onClick={() => { onSwitchServer(); setShowServerDropdown(false); }}
-                        style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderTop: "1px solid var(--border)", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "var(--accent-deep)", transition: "background 0.2s" }}
-                        onMouseEnter={e => e.currentTarget.style.backgroundColor = "var(--red-dim)"}
-                        onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
-                      >
-                        <Icon name="dns" size={14} style={{ color: "var(--accent)" }} />
-                        <span>Manage Servers...</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: "var(--r-full)", background: "var(--surface-2)", border: "1px solid var(--border2)" }}>
-                  <Icon name="warning" size={14} style={{ color: "var(--muted)" }} />
-                  <span style={{ fontSize: 12, color: "var(--muted)" }}>No server selected</span>
-                </div>
-              )}
-
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
               {/* User Avatar & Dropdown */}
               {user && (
                 <div style={{ position: "relative" }} data-dropdown="profile-select">
@@ -391,7 +318,7 @@ function Dashboard({
                       <div
                         onClick={() => { onLogout(); setShowProfileDropdown(false); }}
                         style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderTop: "1px solid var(--border)", cursor: "pointer", fontSize: 12.5, fontWeight: 600, color: "var(--accent-deep)", transition: "background 0.2s" }}
-                        onMouseEnter={e => e.currentTarget.style.backgroundColor = "var(--red-dim)"}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = "var(--accent-dim)"}
                         onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
                       >
                         <Icon name="logout" size={16} style={{ color: "var(--accent)" }} />
@@ -886,6 +813,7 @@ export default function App() {
           onLogout={handleLogout}
           onGuildsChange={handleGuildsChange}
           onShowPricing={() => navigateTo("pricing")}
+          onShowHome={() => navigateTo("landing")}
         />
       )}
       {(view === "privacy" || view === "terms") && (

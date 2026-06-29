@@ -1,7 +1,18 @@
 import { useState, useEffect } from "react";
 import { Icon } from "./Common.jsx";
 
-export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user, onLogout }) {
+export default function Sidebar({ tab, onTab, activeGuild, guilds, onActivate, onSwitchServer, user, onLogout, onShowHome }) {
+  const [showServerDropdown, setShowServerDropdown] = useState(false);
+
+  useEffect(() => {
+    const handleOutside = (e) => {
+      if (!e.target.closest('[data-dropdown="sidebar-server-select"]')) {
+        setShowServerDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
   const NAV_GROUPS = [
     {
       title: "Configuration",
@@ -135,14 +146,19 @@ export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user,
       />
 
       {/* ── Logo ── */}
-      <div style={{
-        display: "flex", alignItems: "center", gap: 12,
-        padding: isCollapsed ? "4px 0 22px" : "4px 4px 22px",
-        justifyContent: isCollapsed ? "center" : "flex-start",
-        borderBottom: "1px solid var(--border)",
-        marginBottom: 10,
-        overflow: "hidden",
-      }}>
+      <div 
+        onClick={onShowHome}
+        title="Go to Home"
+        style={{
+          display: "flex", alignItems: "center", gap: 12,
+          padding: isCollapsed ? "4px 0 22px" : "4px 4px 22px",
+          justifyContent: isCollapsed ? "center" : "flex-start",
+          borderBottom: "1px solid var(--border)",
+          marginBottom: 10,
+          overflow: "hidden",
+          cursor: "pointer",
+        }}
+      >
         <div style={{
           width: 42,
           height: 42,
@@ -170,40 +186,94 @@ export default function Sidebar({ tab, onTab, activeGuild, onSwitchServer, user,
         )}
       </div>
 
-      {/* ── Switch server button ── */}
-      <button
-        onClick={onSwitchServer}
-        title="Switch Server"
-        style={{
-          display: "inline-flex", alignItems: "center",
-          justifyContent: isCollapsed ? "center" : "flex-start",
-          gap: isCollapsed ? 0 : 8,
-          padding: isCollapsed ? "9px 0" : "9px 14px", borderRadius: "var(--r-md)",
-          border: "1px solid var(--border)",
-          background: "var(--surface)",
-          color: "var(--muted)",
-          fontSize: 13, fontWeight: 600,
-          cursor: "pointer", width: "100%", textAlign: "left",
-          transition: "all var(--tr)", marginBottom: 14,
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
-          boxShadow: "0 1px 2px rgba(15, 23, 42, 0.02)",
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.color = "var(--navy)";
-          e.currentTarget.style.background = "var(--surface-3)";
-          e.currentTarget.style.borderColor = "var(--border2)";
-          if (!isCollapsed) e.currentTarget.style.transform = "translateY(-0.5px)";
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.color = "var(--muted)";
-          e.currentTarget.style.background = "var(--surface)";
-          e.currentTarget.style.borderColor = "var(--border)";
-          e.currentTarget.style.transform = "none";
-        }}
-      >
-        <Icon name="arrow_back" size={15} style={{ color: "var(--accent)", flexShrink: 0 }} />
-        {!isCollapsed && <span>Switch Server</span>}
-      </button>
+      {/* ── Server Switcher ── */}
+      <div style={{ position: "relative", marginBottom: 14 }} data-dropdown="sidebar-server-select">
+        {activeGuild ? (
+          <div
+            onClick={() => setShowServerDropdown(!showServerDropdown)}
+            title={isCollapsed ? "Switch Server" : undefined}
+            style={{
+              display: "flex", alignItems: "center",
+              justifyContent: isCollapsed ? "center" : "flex-start",
+              gap: isCollapsed ? 0 : 8,
+              padding: isCollapsed ? "9px 0" : "9px 12px",
+              borderRadius: "var(--r-md)", background: "var(--surface)",
+              border: "1px solid var(--border)", cursor: "pointer",
+              transition: "all var(--tr)", userSelect: "none",
+              boxShadow: "0 1px 2px rgba(15, 23, 42, 0.02)",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "var(--surface-3)"; e.currentTarget.style.borderColor = "var(--border2)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "var(--surface)"; e.currentTarget.style.borderColor = "var(--border)"; }}
+          >
+            {serverIconUrl ? (
+              <img src={serverIconUrl} alt={activeGuild.name} style={{ width: 18, height: 18, borderRadius: "50%", objectFit: "cover" }} />
+            ) : (
+              <Icon name="dns" size={14} style={{ color: "var(--navy)" }} />
+            )}
+            {!isCollapsed && (
+              <>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--navy)", flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginLeft: 4 }}>
+                  {activeGuild.name}
+                </span>
+                <Icon name="unfold_more" size={14} style={{ color: "var(--muted)" }} />
+              </>
+            )}
+          </div>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 12px", borderRadius: "var(--r-md)", background: "var(--surface-2)", border: "1px solid var(--border2)", cursor: "pointer" }} onClick={onSwitchServer}>
+            <Icon name="warning" size={14} style={{ color: "var(--muted)" }} />
+            {!isCollapsed && <span style={{ fontSize: 13, color: "var(--muted)" }}>No server</span>}
+          </div>
+        )}
+
+        {showServerDropdown && (
+          <div style={{
+            position: "absolute", top: "100%", left: 0, marginTop: 4,
+            width: isCollapsed ? 240 : "100%", background: "var(--surface)",
+            border: "1px solid var(--border2)",
+            borderRadius: "var(--r-md)",
+            boxShadow: "var(--shadow-lg)", zIndex: 100,
+            overflow: "hidden", display: "flex", flexDirection: "column",
+          }}>
+            <div style={{ padding: "10px 14px", fontSize: 10.5, fontWeight: 700, color: "var(--muted2)", borderBottom: "1px solid var(--border)", textTransform: "uppercase", letterSpacing: "0.8px" }}>
+              Switch Server
+            </div>
+            <div style={{ maxHeight: 240, overflowY: "auto" }}>
+              {(guilds || []).map(g => {
+                const isSelected = g.id === activeGuild?.id;
+                return (
+                  <div
+                    key={g.id}
+                    onClick={() => { onActivate(g.id, g); setShowServerDropdown(false); }}
+                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", cursor: "pointer", background: isSelected ? "var(--accent-dim)" : "transparent", transition: "background 0.2s" }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = isSelected ? "var(--accent-dim)" : "var(--surface-2)"}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = isSelected ? "var(--accent-dim)" : "transparent"}
+                  >
+                    {getServerIconUrl(g) ? (
+                      <img src={getServerIconUrl(g)} alt={g.name} style={{ width: 18, height: 18, borderRadius: "50%", objectFit: "cover" }} />
+                    ) : (
+                      <Icon name="dns" size={14} style={{ color: isSelected ? "var(--accent-deep)" : "var(--slate)" }} />
+                    )}
+                    <span style={{ fontSize: 13, fontWeight: isSelected ? 600 : 500, color: isSelected ? "var(--accent-deep)" : "var(--navy)", flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {g.name}
+                    </span>
+                    {isSelected && <Icon name="check" size={12} style={{ color: "var(--accent)" }} />}
+                  </div>
+                );
+              })}
+            </div>
+            <div
+              onClick={() => { onSwitchServer(); setShowServerDropdown(false); }}
+              style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderTop: "1px solid var(--border)", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "var(--accent-deep)", transition: "background 0.2s" }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = "var(--accent-dim)"}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
+            >
+              <Icon name="dns" size={14} style={{ color: "var(--accent)" }} />
+              <span>Manage Servers...</span>
+            </div>
+          </div>
+        )}
+      </div>
 
 
 

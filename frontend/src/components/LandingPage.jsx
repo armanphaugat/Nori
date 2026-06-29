@@ -42,21 +42,16 @@ const CSS = `
     --slate-glow:  rgba(141,153,174,0.32);
     --light:       #EDF2F4;
     --light-dim:   rgba(237,242,244,0.7);
-    --red:         #EF233C;
-    --red-deep:    #D90429;
-    --red-dim:     rgba(239,35,60,0.12);
-    --red-glow:    rgba(239,35,60,0.22);
+    --accent:         #1D4ED8;
+    --accent-deep:    #1E3A8A;
+    --accent-dim:     rgba(30,58,138,0.12);
+    --accent-glow:    rgba(30,58,138,0.22);
 
     --bg:          var(--light);
     --surface1:    #ffffff;
     --surface2:    #f4f7f9;
     --surface3:    #e8edf1;
     --surface4:    #dde3ea;
-
-    --accent:      var(--red);
-    --accent-deep: var(--red-deep);
-    --accent-glow: var(--red-glow);
-    --accent-dim:  var(--red-dim);
     --border:      rgba(43,45,66,0.1);
     --border2:     rgba(43,45,66,0.22);
     --text:        var(--navy);
@@ -97,7 +92,7 @@ const CSS = `
 
   .bloom {
     position: absolute; pointer-events: none; z-index: 0;
-    background: radial-gradient(circle, rgba(239,35,60,0.07) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(30,58,138,0.07) 0%, transparent 70%);
   }
   .bloom-slate {
     position: absolute; pointer-events: none; z-index: 0;
@@ -107,8 +102,8 @@ const CSS = `
   @keyframes fadeUp { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:none; } }
   @keyframes marquee { from { transform:translateX(0); } to { transform:translateX(-50%); } }
   @keyframes tdot { 0%,100%{opacity:0.3;transform:translateY(0);} 50%{opacity:1;transform:translateY(-3px);} }
-  @keyframes blink { 0%,100%{box-shadow:0 0 0 0 rgba(239,35,60,0.4);} 70%{box-shadow:0 0 0 8px transparent;} }
-  @keyframes glow-pulse { 0%,100%{box-shadow:0 0 22px rgba(239,35,60,0.18);} 50%{box-shadow:0 0 40px rgba(239,35,60,0.35);} }
+  @keyframes blink { 0%,100%{box-shadow:0 0 0 0 rgba(30,58,138,0.4);} 70%{box-shadow:0 0 0 8px transparent;} }
+  @keyframes glow-pulse { 0%,100%{box-shadow:0 0 22px rgba(30,58,138,0.18);} 50%{box-shadow:0 0 40px rgba(30,58,138,0.35);} }
   @keyframes bounce-slow { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
   @keyframes antenna-wiggle { 0%,100%{transform:rotate(0deg);} 50%{transform:rotate(15deg);} }
   @keyframes pulse-eye { 0%,100%{transform:scaleY(1);} 48%{transform:scaleY(1);} 50%{transform:scaleY(0.1);} 52%{transform:scaleY(1);} }
@@ -137,15 +132,15 @@ const CSS = `
 
   .feat-card{transition:all 0.25s ease;}
   .feat-card:hover{background:rgba(255,255,255,0.98)!important;transform:translateY(-3px);box-shadow:0 20px 40px rgba(43,45,66,0.12);border-color:var(--border2)!important;}
-  .feat-card:hover .feat-icon{box-shadow:0 0 18px var(--red-glow);}
-  .step-wrap:hover .step-icon{border-color:var(--border2)!important;box-shadow:0 0 22px var(--red-glow)!important;}
+  .feat-card:hover .feat-icon{box-shadow:0 0 18px var(--accent-glow);}
+  .step-wrap:hover .step-icon{border-color:var(--border2)!important;box-shadow:0 0 22px var(--accent-glow)!important;}
   .use-card:hover{border-color:var(--border2)!important;transform:translateY(-3px);box-shadow:0 16px 32px rgba(43,45,66,0.1);}
   .nav-link:hover{color:var(--navy);background:rgba(43,45,66,0.06);}
-  .btn-primary:hover{opacity:0.9;transform:translateY(-1px);box-shadow:0 0 36px var(--red-glow)!important;}
+  .btn-primary:hover{opacity:0.9;transform:translateY(-1px);box-shadow:0 0 36px var(--accent-glow)!important;}
   .btn-ghost:hover{background:rgba(43,45,66,0.06)!important;color:var(--navy)!important;}
   .btn-sm:hover{background:var(--navy)!important;color:white!important;box-shadow:0 0 22px var(--slate-glow)!important;}
 
-  .glow-red{animation:glow-pulse 3s ease infinite;}
+  .glow-accent{animation:glow-pulse 3s ease infinite;}
 
   .scroll-btn{
     position:absolute;bottom:30px;left:50%;transform:translateX(-50%);
@@ -163,12 +158,8 @@ const CSS = `
   }
 
   .shimmer-text {
-    background: linear-gradient(90deg, var(--red-deep) 0%, var(--red) 30%, #ff6b7a 50%, var(--red) 70%, var(--red-deep) 100%);
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: shimmer 3.5s linear infinite;
+    color: #EF233C !important;
+    font-weight: 800;
   }
 
   .hero-line {
@@ -184,7 +175,7 @@ const CSS = `
     position: absolute;
     inset: 0;
     border-radius: 50%;
-    background: rgba(239,35,60,0.35);
+    background: rgba(30,58,138,0.35);
     animation: ripple 2s ease-out infinite;
   }
   .ripple-dot { position: relative; }
@@ -200,7 +191,7 @@ const CSS = `
     transition: all 0.3s ease;
   }
   .carousel-dot:hover {
-    background: rgba(239,35,60,0.5) !important;
+    background: rgba(30,58,138,0.5) !important;
   }
 
   .show600 { display: none; }
@@ -279,7 +270,7 @@ const FEATS = [
 ];
 
 const colorMap = {
-  red:   { bg:"rgba(239,35,60,0.08)",   border:"rgba(239,35,60,0.25)",   text:"#D90429" },
+  red:   { bg:"rgba(30,58,138,0.08)",   border:"rgba(30,58,138,0.25)",   text:"#1E3A8A" },
   slate: { bg:"rgba(141,153,174,0.14)", border:"rgba(141,153,174,0.32)", text:"#5a6480" },
 };
 
@@ -352,7 +343,7 @@ function CarouselSlider() {
       borderRadius:16,
       border:"1px solid rgba(255, 255, 255, 0.12)",
       background:"#18191c",
-      boxShadow:"0 24px 60px rgba(0, 0, 0, 0.35), 0 0 40px rgba(239, 35, 60, 0.12)",
+      boxShadow:"0 24px 60px rgba(0, 0, 0, 0.35), 0 0 40px rgba(30,58,138, 0.12)",
       overflow:"hidden",
     }}>
       {/* Window Header */}
@@ -459,7 +450,7 @@ function CarouselSlider() {
             color:"white", cursor:"pointer", display:"flex", alignItems:"center",
             justifyContent:"center", zIndex:10, transition:"all 0.2s ease",
           }}
-          onMouseEnter={e => e.currentTarget.style.background="rgba(239,35,60,0.7)"}
+          onMouseEnter={e => e.currentTarget.style.background="rgba(30,58,138,0.7)"}
           onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.15)"}
         >
           <Icon name="chevron_left" size={20} style={{ color:"white" }} />
@@ -476,7 +467,7 @@ function CarouselSlider() {
             color:"white", cursor:"pointer", display:"flex", alignItems:"center",
             justifyContent:"center", zIndex:10, transition:"all 0.2s ease",
           }}
-          onMouseEnter={e => e.currentTarget.style.background="rgba(239,35,60,0.7)"}
+          onMouseEnter={e => e.currentTarget.style.background="rgba(30,58,138,0.7)"}
           onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.15)"}
         >
           <Icon name="chevron_right" size={20} style={{ color:"white" }} />
@@ -507,7 +498,7 @@ function CarouselSlider() {
         <div style={{
           position:"absolute", top:12, right:12,
           fontSize:11, fontWeight:700, color:"white",
-          background:"rgba(239,35,60,0.8)",
+          background:"rgba(30,58,138,0.8)",
           padding:"4px 10px", borderRadius:6,
           letterSpacing:"0.05em", zIndex:10,
           backdropFilter:"blur(4px)",
@@ -545,7 +536,7 @@ function H2({ children }) {
 
 function Tick({ v }) {
   if (v === "yes") return <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:26,height:26,borderRadius:"50%",background:"rgba(34,197,94,0.1)",color:"#16a34a",fontSize:14,fontWeight:700 }}>✓</span>;
-  if (v === "no")  return <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:26,height:26,borderRadius:"50%",background:"rgba(239,35,60,0.1)",color:"var(--accent)",fontSize:14,fontWeight:700 }}>✗</span>;
+  if (v === "no")  return <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:26,height:26,borderRadius:"50%",background:"rgba(239,35,60,0.1)",color:"#EF233C",fontSize:14,fontWeight:700 }}>✗</span>;
   return                  <span style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:26,height:26,borderRadius:"50%",background:"rgba(141,153,174,0.15)",color:"var(--slate)",fontSize:14 }}>~</span>;
 }
 
@@ -636,13 +627,20 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
             </p>
 
             <div className="a3" style={{ display:"flex",gap:12,flexWrap:"wrap",marginBottom:24 }}>
-              <button onClick={onInvite} className="btn-primary" style={{ display:"flex",alignItems:"center",gap:10,padding:"14px 28px",borderRadius:10,fontSize:15,fontWeight:600,background:"var(--navy)",color:"white",border:"none",cursor:"pointer",boxShadow:"0 4px 24px rgba(43,45,66,0.2)",transition:"all var(--tr)" }}>
+              {user ? (
+                <button onClick={onShowDashboard} className="btn-primary" style={{ display:"flex",alignItems:"center",gap:10,padding:"14px 28px",borderRadius:10,fontSize:15,fontWeight:600,background:"#EF233C",color:"white",border:"none",cursor:"pointer",boxShadow:"0 4px 24px rgba(239, 35, 60, 0.25)",transition:"all var(--tr)" }}>
+                  <Icon name="grid_view" size={18} /> Go to Dashboard
+                  <Icon name="arrow_forward" size={18} />
+                </button>
+              ) : (
+                <button onClick={onLogin} className="btn-primary" style={{ display:"flex",alignItems:"center",gap:10,padding:"14px 28px",borderRadius:10,fontSize:15,fontWeight:600,background:"#EF233C",color:"white",border:"none",cursor:"pointer",boxShadow:"0 4px 24px rgba(239, 35, 60, 0.25)",transition:"all var(--tr)" }}>
+                  <DiscordIcon size={18} /> Login to Dashboard
+                  <Icon name="arrow_forward" size={18} />
+                </button>
+              )}
+              <button onClick={onInvite} className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"14px 22px",borderRadius:10,fontSize:15,fontWeight:500,background:"white",color:"var(--muted)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
                 <DiscordIcon size={18} /> Add to Your Server
-                <Icon name="arrow_forward" size={18} />
               </button>
-              <a href="https://discord.gg/YMsuKFQjUu" target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"14px 22px",borderRadius:10,fontSize:15,fontWeight:500,background:"white",color:"var(--muted)",border:"1px solid var(--border2)",textDecoration:"none",transition:"all var(--tr)" }}>
-                <DiscordIcon size={18} /> Come to Discord
-              </a>
               <button onClick={() => document.getElementById("playground")?.scrollIntoView({ behavior:"smooth" })} className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"14px 22px",borderRadius:10,fontSize:15,fontWeight:500,background:"white",color:"var(--muted)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
                 See It in Action
               </button>
@@ -666,7 +664,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
               left:"20%",
               width:"70%",
               height:"70%",
-              background:"radial-gradient(circle, rgba(239,35,60,0.28) 0%, transparent 70%)",
+              background:"radial-gradient(circle, rgba(30,58,138,0.28) 0%, transparent 70%)",
               filter:"blur(50px)",
               pointerEvents:"none",
               zIndex:0
@@ -677,7 +675,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
               background:"#18191c",
               borderRadius:16,
               border:"1px solid rgba(255,255,255,0.12)",
-              boxShadow:"0 24px 60px rgba(0, 0, 0, 0.35), 0 0 40px rgba(239, 35, 60, 0.12)",
+              boxShadow:"0 24px 60px rgba(0, 0, 0, 0.35), 0 0 40px rgba(30,58,138, 0.12)",
               overflow:"hidden",
               position:"relative",
               zIndex:1,
@@ -795,8 +793,8 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
                        width:36,
                        height:36,
                        borderRadius:10,
-                       background:"rgba(239,35,60,0.08)",
-                       border:"1px solid rgba(239,35,60,0.2)",
+                       background:"rgba(30,58,138,0.08)",
+                       border:"1px solid rgba(30,58,138,0.2)",
                        display:"flex",
                        alignItems:"center",
                        justifyContent:"center",
@@ -828,7 +826,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
         <div className="mq" style={{ display:"flex",gap:44,alignItems:"center",whiteSpace:"nowrap" }}>
           {[...MQ_ITEMS,...MQ_ITEMS].map((m,i) => (
             <div key={i} style={{ display:"flex",alignItems:"center",gap:10,fontSize:13,fontWeight:500,color:"var(--muted)",flexShrink:0 }}>
-              <div style={{ width:28,height:28,borderRadius:7,background:"var(--red-dim)",border:"1px solid rgba(239,35,60,0.18)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent-deep)" }}>
+              <div style={{ width:28,height:28,borderRadius:7,background:"var(--accent-dim)",border:"1px solid rgba(30,58,138,0.18)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent-deep)" }}>
                 <Icon name={MQ_ICONS[i%MQ_ICONS.length]} size={14} fill={1} />
               </div>
               {m}
@@ -891,7 +889,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
           <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.8,maxWidth:580,marginBottom:52,fontWeight:300 }}>Every plan includes the full feature set. No add-ons, no paywalls on core functionality, no nasty surprises.</p>
 
           <div className="rv feat-card" style={{ borderRadius:16,padding:"32px",marginBottom:20,display:"flex",flexDirection:"column",gap:20,position:"relative",overflow:"hidden",border:"1px solid var(--border2)",background:"white",boxShadow:"0 4px 24px rgba(43,45,66,0.08)" }}>
-            <div className="feat-icon" style={{ width:52,height:52,borderRadius:14,background:"rgba(239,35,60,0.08)",border:"1px solid rgba(239,35,60,0.22)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent-deep)",transition:"all 0.3s ease" }}>
+            <div className="feat-icon" style={{ width:52,height:52,borderRadius:14,background:"rgba(30,58,138,0.08)",border:"1px solid rgba(30,58,138,0.22)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent-deep)",transition:"all 0.3s ease" }}>
               <Icon name="dashboard_customize" size={26} fill={1} />
             </div>
             <h3 style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:30,color:"var(--navy)",letterSpacing:"-0.01em" }}>One Dashboard. Total Control.</h3>
@@ -979,7 +977,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
                 <tr style={{ background:"var(--navy)" }}>
                   <th style={{ padding:"16px 24px", fontWeight:600, fontSize:11, letterSpacing:"0.06em", textTransform:"uppercase", color:"rgba(255,255,255,0.45)", borderBottom:"1px solid rgba(255,255,255,0.1)", textAlign:"left" }}>Capability</th>
                   {["Nori","Other Bots","What's Missing"].map((h,i) => (
-                    <th key={i} style={{ padding:"16px 24px", fontWeight:700, fontSize:11, letterSpacing:"0.06em", textTransform:"uppercase", borderBottom:i===0?"2px solid var(--accent)":"1px solid rgba(255,255,255,0.1)", textAlign:i===2?"left":"center", color:i===0?"var(--accent)":"rgba(255,255,255,0.45)", background:i===0?"rgba(239,35,60,0.1)":"transparent" }}>{h}</th>
+                    <th key={i} style={{ padding:"16px 24px", fontWeight:700, fontSize:11, letterSpacing:"0.06em", textTransform:"uppercase", borderBottom:i===0?"2px solid var(--accent)":"1px solid rgba(255,255,255,0.1)", textAlign:i===2?"left":"center", color:i===0?"var(--accent)":"rgba(255,255,255,0.45)", background:i===0?"rgba(30,58,138,0.1)":"transparent" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -987,7 +985,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
                 {COMP.map((row,i) => (
                   <tr key={i} style={{ borderBottom:"1px solid var(--border)", background:i%2===0?"white":"var(--surface2)" }}>
                     <td style={{ padding:"14px 24px", color:"var(--navy)", fontWeight:500, fontSize:14 }}>{row[0]}</td>
-                    <td style={{ padding:"14px 24px", textAlign:"center", background:"rgba(239,35,60,0.03)" }}><Tick v={row[1]} /></td>
+                    <td style={{ padding:"14px 24px", textAlign:"center", background:"rgba(30,58,138,0.03)" }}><Tick v={row[1]} /></td>
                     <td style={{ padding:"14px 24px", textAlign:"center" }}><Tick v={row[2]} /></td>
                     <td style={{ padding:"14px 24px", color:"var(--muted)", fontSize:13, lineHeight:1.5, fontWeight:300 }}>{row[3]}</td>
                   </tr>
@@ -1005,10 +1003,10 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
           <div className="rv"><H2>Things People Usually Ask First</H2></div>
           <div style={{ display:"flex",flexDirection:"column",gap:10,marginTop:44,textAlign:"left" }}>
             {FAQS.map((f,i) => (
-              <div key={i} className="rv" onClick={() => setFaq(faq===i?null:i)} style={{ background:"white",border:`1px solid ${faq===i?"rgba(239,35,60,0.3)":"var(--border2)"}`,borderRadius:13,overflow:"hidden",cursor:"pointer",transition:"border-color var(--tr)",transitionDelay:`${i*0.04}s`,boxShadow:faq===i?"0 4px 16px rgba(239,35,60,0.08)":"0 2px 8px rgba(43,45,66,0.05)" }}>
+              <div key={i} className="rv" onClick={() => setFaq(faq===i?null:i)} style={{ background:"white",border:`1px solid ${faq===i?"rgba(30,58,138,0.3)":"var(--border2)"}`,borderRadius:13,overflow:"hidden",cursor:"pointer",transition:"border-color var(--tr)",transitionDelay:`${i*0.04}s`,boxShadow:faq===i?"0 4px 16px rgba(30,58,138,0.08)":"0 2px 8px rgba(43,45,66,0.05)" }}>
                 <div style={{ padding:"18px 22px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,fontSize:15,fontWeight:600,color:faq===i?"var(--accent-deep)":"var(--navy)",fontFamily:"'Plus Jakarta Sans', sans-serif" }}>
                   {f.q}
-                  <span style={{ width:28,height:28,borderRadius:8,background:faq===i?"rgba(239,35,60,0.08)":"rgba(43,45,66,0.05)",display:"flex",alignItems:"center",justifyContent:"center",color:faq===i?"var(--accent)":"var(--muted2)",flexShrink:0,transition:"transform var(--tr),background var(--tr)",transform:faq===i?"rotate(180deg)":"none" }}>
+                  <span style={{ width:28,height:28,borderRadius:8,background:faq===i?"rgba(30,58,138,0.08)":"rgba(43,45,66,0.05)",display:"flex",alignItems:"center",justifyContent:"center",color:faq===i?"var(--accent)":"var(--muted2)",flexShrink:0,transition:"transform var(--tr),background var(--tr)",transform:faq===i?"rotate(180deg)":"none" }}>
                     <Icon name="expand_more" size={18} />
                   </span>
                 </div>
@@ -1023,7 +1021,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
 
       {/* CTA */}
       <section style={{ padding:"110px 64px",textAlign:"center",position:"relative",overflow:"hidden",background:"var(--navy)" }}>
-        <div style={{ position:"absolute",top:-80,left:"25%",width:800,height:700,background:"radial-gradient(circle, rgba(239,35,60,0.12) 0%, transparent 70%)",pointerEvents:"none",zIndex:0 }} />
+        <div style={{ position:"absolute",top:-80,left:"25%",width:800,height:700,background:"radial-gradient(circle, rgba(30,58,138,0.12) 0%, transparent 70%)",pointerEvents:"none",zIndex:0 }} />
         <div style={{ position:"absolute",bottom:"10%",right:"-5%",width:500,height:500,background:"radial-gradient(circle, rgba(141,153,174,0.08) 0%, transparent 70%)",pointerEvents:"none",zIndex:0 }} />
         <div style={{ position:"relative",zIndex:1 }}>
           <div style={{ maxWidth:860,margin:"0 auto",borderRadius:28,padding:"80px 60px",display:"inline-block",width:"100%",border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.04)" }}>
@@ -1031,7 +1029,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
             <h2 className="rv" style={{ fontFamily:"'Outfit', sans-serif",fontWeight:700,fontSize:"clamp(30px,5vw,60px)",color:"white",letterSpacing:"-0.01em",lineHeight:1.08,marginBottom:16 }}>Ready to stop answering the same question twice?</h2>
             <p className="rv" style={{ fontSize:18,color:"rgba(255,255,255,0.55)",marginBottom:44,maxWidth:480,margin:"0 auto 40px",fontWeight:300 }}>Add Nori to your server in minutes. It's free to start and your members will notice the difference immediately.</p>
             <div className="rv" style={{ display:"flex",justifyContent:"center",gap:14,flexWrap:"wrap" }}>
-              <button onClick={onInvite} className="btn-primary glow-red" style={{ display:"flex",alignItems:"center",gap:10,padding:"16px 32px",borderRadius:14,fontSize:16,fontWeight:600,background:"var(--accent)",color:"white",border:"none",cursor:"pointer",boxShadow:"0 0 28px var(--red-glow)",transition:"all var(--tr)" }}>
+              <button onClick={onInvite} className="btn-primary glow-accent" style={{ display:"flex",alignItems:"center",gap:10,padding:"16px 32px",borderRadius:14,fontSize:16,fontWeight:600,background:"#EF233C",color:"white",border:"none",cursor:"pointer",boxShadow:"0 0 28px rgba(239, 35, 60, 0.25)",transition:"all var(--tr)" }}>
                 <DiscordIcon size={18} /> Add Nori to Discord
               </button>
               <a href="https://discord.gg/YMsuKFQjUu" target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"16px 26px",borderRadius:14,fontSize:16,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",textDecoration:"none",transition:"all var(--tr)" }}>
@@ -1049,63 +1047,62 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer style={{ background:"var(--surface3)", borderTop:"1px solid var(--border2)", padding:"24px 64px" }}>
-        <div style={{ maxWidth:1200, margin:"0 auto", display:"flex", justifyContent:"space-between", alignItems:"center", gap:20, flexWrap:"wrap" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap" }}>
-            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-              <div style={{ width:30, height:30, display:"flex", alignItems:"center", justifyItems:"center", justifyContent:"center" }}>
-                <img
-                  src="/LOGO.png"
-                  alt="Nori"
-                  style={{ width:"100%", height:"100%", objectFit:"contain" }}
-                />
-              </div>
-              <span style={{ fontFamily:"'Outfit', sans-serif", fontWeight:600, fontSize:17, color:"var(--navy)" }}>Nori</span>
+      <footer style={{ background:"var(--surface3)",borderTop:"1px solid var(--border2)",padding:"48px 64px 36px" }}>
+        <div style={{ maxWidth:1200,margin:"0 auto",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:20 }}>
+          <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+            <div style={{
+              width: 30, height: 30,
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <img
+                src="/LOGO.png"
+                alt="Nori"
+                style={{
+                  width: "100%", height: "100%",
+                  objectFit: "contain",
+                }}
+              />
             </div>
-            <span style={{ height:12, width:1, background:"var(--border2)" }} />
-            <span style={{ fontSize:12, color:"var(--muted2)" }}>© 2026 Nori · Not affiliated with Discord Inc.</span>
+            <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:20,color:"var(--navy)" }}>Nori</span>
           </div>
-          <div style={{ display:"flex", alignItems:"center", gap:24, flexWrap:"wrap" }}>
-            <ul style={{ display:"flex", gap:16, listStyle:"none", padding:0, margin:0, flexWrap:"wrap", alignItems:"center" }}>
-              {[
-                { label: "Add to Discord", onClick: onInvite },
-                { label: "Features", href: "#features" },
-                { label: "Pricing", onClick: onShowPricing },
-                { label: "Privacy Policy", onClick: onShowPrivacy },
-                { label: "Terms", onClick: onShowTerms },
-                { label: "Support", href: "https://discord.gg/YMsuKFQjUu", external: true },
-              ].map((item, i) => (
-                <li
+          <div style={{ display:"flex",gap:24,flexWrap:"wrap" }}>
+            {[
+              { label: "Features", href: "#features" },
+              { label: "How it Works", href: "#howitworks" },
+              { label: "Pricing", onClick: onShowPricing },
+              { label: "Support", href: "https://discord.gg/WrpaytBfN" },
+              { label: "Privacy Policy", onClick: onShowPrivacy },
+              { label: "Terms & Conditions", onClick: onShowTerms },
+            ].map((item, i) => (
+              item.href ? (
+                <a
                   key={i}
-                  style={{ fontSize:12.5, color:"var(--muted)", fontWeight:300 }}
+                  href={item.href}
+                  onClick={item.onClick}
+                  style={{ fontSize:13,color:"var(--muted)",textDecoration:"none",transition:"all var(--tr)" }}
+                  onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"}
+                  onMouseLeave={e => e.currentTarget.style.color = "var(--muted)"}
                 >
-                  {item.href ? (
-                    <a
-                      href={item.href}
-                      {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                      style={{ color: "var(--muted)", textDecoration: "none", transition: "all var(--tr)", cursor: "pointer" }}
-                      onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"}
-                      onMouseLeave={e => e.currentTarget.style.color = "var(--muted)"}
-                    >
-                      {item.label}
-                    </a>
-                  ) : (
-                    <span
-                      onClick={item.onClick}
-                      style={{ color: "var(--muted)", cursor: "pointer", transition: "all var(--tr)" }}
-                      onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"}
-                      onMouseLeave={e => e.currentTarget.style.color = "var(--muted)"}
-                    >
-                      {item.label}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-            <span style={{ height:12, width:1, background:"var(--border2)" }} />
-            <a href="https://discord.gg/YMsuKFQjUu" target="_blank" rel="noopener noreferrer" style={{ fontSize:12.5, color:"var(--accent-deep)", textDecoration:"none", fontWeight:600, transition:"color var(--tr)" }} onMouseEnter={e => e.currentTarget.style.color = "var(--navy)"} onMouseLeave={e => e.currentTarget.style.color = "var(--accent-deep)"}>Support Server</a>
+                  {item.label}
+                </a>
+              ) : (
+                <span
+                  key={i}
+                  onClick={item.onClick}
+                  style={{ fontSize:13,color:"var(--muted)",textDecoration:"none",cursor:"pointer",transition:"all var(--tr)" }}
+                  onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"}
+                  onMouseLeave={e => e.currentTarget.style.color = "var(--muted)"}
+                >
+                  {item.label}
+                </span>
+              )
+            ))}
           </div>
+        </div>
+        <div style={{ maxWidth:1200,margin:"24px auto 0",paddingTop:20,borderTop:"1px solid var(--border2)",display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap" }}>
+          <span style={{ fontSize:12,color:"var(--muted2)" }}>© 2026 Nori · Not affiliated with Discord Inc.</span>
+          <a href="mailto:support@noribot.dev" style={{ fontSize:12,color:"var(--accent-deep)",textDecoration:"none",fontWeight:600,transition:"color var(--tr)" }} onMouseEnter={e => e.currentTarget.style.color = "var(--navy)"} onMouseLeave={e => e.currentTarget.style.color = "var(--accent-deep)"}>support@noribot.dev</a>
+          <span style={{ fontSize:12,color:"var(--muted2)" }}>Your docs. Your bot. Your community.</span>
         </div>
       </footer>
     </div>

@@ -95,7 +95,7 @@ export default function UtilsTab({ guildId, onGoToOverview, user }) {
               <button key={val} onClick={() => setScope(val)} style={{
                 padding: "5px 13px", borderRadius: 99,
                 border: `1.5px solid ${scope === val ? "var(--accent)" : "var(--border2)"}`,
-                background: scope === val ? "var(--red-dim)" : "var(--surface)",
+                background: scope === val ? "var(--accent-dim)" : "var(--surface)",
                 color: scope === val ? "var(--accent-deep)" : "var(--muted)",
                 fontSize: 12.5, fontWeight: 600, cursor: "pointer",
                 display: "inline-flex", alignItems: "center", gap: 5,
@@ -109,7 +109,7 @@ export default function UtilsTab({ guildId, onGoToOverview, user }) {
               <button key={t} onClick={() => setFilterType(t)} style={{
                 padding: "5px 12px", borderRadius: 99,
                 border: `1.5px solid ${filterType === t ? "var(--accent)" : "var(--border2)"}`,
-                background: filterType === t ? "var(--red-dim)" : "var(--surface)",
+                background: filterType === t ? "var(--accent-dim)" : "var(--surface)",
                 color: filterType === t ? "var(--accent-deep)" : "var(--muted)",
                 fontSize: 11, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: ".04em",
                 transition: "all var(--tr)", fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -174,19 +174,19 @@ export default function UtilsTab({ guildId, onGoToOverview, user }) {
                             cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center",
                             transition: "all var(--tr)",
                           }}
-                            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--accent-deep)"; e.currentTarget.style.background = "var(--red-dim)"; }}
+                            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--accent-deep)"; e.currentTarget.style.background = "var(--accent-dim)"; }}
                             onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border2)"; e.currentTarget.style.color = "var(--navy-mid)"; e.currentTarget.style.background = "var(--surface-2)"; }}
                           >
                             <Icon name="info" size={14} />
                           </button>
                           <button onClick={() => setDeleteTarget(u)} title="Delete" style={{
-                            background: "rgba(239,35,60,0.05)", border: "1.5px solid var(--red-border)",
+                            background: "rgba(30,58,138,0.05)", border: "1.5px solid var(--accent-border)",
                             borderRadius: "var(--r-sm)", width: 28, height: 28, color: "var(--accent-deep)",
                             cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center",
                             transition: "all var(--tr)",
                           }}
-                            onMouseEnter={e => { e.currentTarget.style.background = "var(--red-dim)"; e.currentTarget.style.borderColor = "var(--accent)"; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = "rgba(239,35,60,0.05)"; e.currentTarget.style.borderColor = "var(--red-border)"; }}
+                            onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-dim)"; e.currentTarget.style.borderColor = "var(--accent)"; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = "rgba(30,58,138,0.05)"; e.currentTarget.style.borderColor = "var(--accent-border)"; }}
                           >
                             <Icon name="delete" size={14} />
                           </button>
@@ -261,13 +261,13 @@ export default function UtilsTab({ guildId, onGoToOverview, user }) {
         }}>
           <div style={{
             width: "100%", maxWidth: 460, borderRadius: "var(--r-xl)",
-            border: "1px solid var(--red-border)", background: "var(--surface)",
+            border: "1px solid var(--accent-border)", background: "var(--surface)",
             boxShadow: "0 24px 60px rgba(43,45,66,0.2)", overflow: "hidden",
           }}>
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "16px 24px", borderBottom: "1px solid var(--red-border)",
-              background: "var(--red-dim)",
+              padding: "16px 24px", borderBottom: "1px solid var(--accent-border)",
+              background: "var(--accent-dim)",
             }}>
               <h3 style={{ margin: 0, fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 600, color: "var(--accent-deep)", display: "flex", alignItems: "center", gap: 8 }}>
                 <Icon name="warning" size={17} /> Confirm Deletion
@@ -278,7 +278,7 @@ export default function UtilsTab({ guildId, onGoToOverview, user }) {
               <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.7, fontWeight: 300, marginBottom: 16 }}>
                 You are about to delete <strong style={{ color: "var(--navy)", fontWeight: 600 }}>"{deleteTarget.name || deleteTarget.filename || "this source"}"</strong> from your knowledge store.
               </p>
-              <div style={{ background: "var(--red-dim)", padding: 14, borderRadius: "var(--r-md)", border: "1px solid var(--red-border)", marginBottom: 20 }}>
+              <div style={{ background: "var(--accent-dim)", padding: 14, borderRadius: "var(--r-md)", border: "1px solid var(--accent-border)", marginBottom: 20 }}>
                 <div style={{ fontSize: 11, color: "var(--accent-deep)", fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>Permanent consequences</div>
                 <div style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.6, fontWeight: 300 }}>
                   Nori will immediately forget all information from this source. This action cannot be undone.

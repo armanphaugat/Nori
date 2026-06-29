@@ -17,18 +17,18 @@
     --bg-o: #d9d0c5;
     --border: rgba(15,15,15,0.10);
     --border-a: rgba(15,15,15,0.22);
-    --border-focus: rgba(196,30,30,0.50);
+    --border-focus: rgba(30,58,138,0.50);
     --text: #0f0f0f;
     --text-s: rgba(15,15,15,0.62);
     --text-m: rgba(15,15,15,0.38);
-    --accent: #c41e1e;
-    --accent-l: rgba(196,30,30,0.08);
-    --accent-g: rgba(196,30,30,0.18);
-    --accent-h: #a01515;
+    --accent: #1D4ED8;
+    --accent-l: rgba(30,58,138,0.08);
+    --accent-g: rgba(30,58,138,0.18);
+    --accent-h: #1E3A8A;
     --success: #1a7a4a;
     --success-bg: rgba(26,122,74,0.08);
     --danger: #c41e1e;
-    --danger-bg: rgba(196,30,30,0.08);
+    --danger-bg: rgba(30,58,138,0.08);
     --warning: #b35c00;
     --warning-bg: rgba(179,92,0,0.08);
     --discord: #5865f2;
@@ -120,6 +120,6 @@
   @keyframes typing { 0%,100%{opacity:1} 50%{opacity:0.2} }
   .typing-dot {
     width:5px; height:5px; border-radius:50%;
-    background:rgba(196,30,30,0.4); display:inline-block;
+    background:rgba(30,58,138,0.4); display:inline-block;
     animation:typing 1.2s ease infinite;
   }

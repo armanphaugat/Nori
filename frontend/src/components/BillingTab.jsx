@@ -47,7 +47,7 @@ const TIER_DETAILS = {
     tagline: "Unrestricted high-limit access for active communities.",
     price: "Patreon Pledge",
     color: "var(--accent)",
-    bg: "rgba(239,35,60,0.08)",
+    bg: "rgba(30,58,138,0.08)",
     max: 1000000,
     features: ["1,000,000 bot messages / month", "Unlimited ingested URLs", "Unlimited uploaded files", "Priority bot response time"]
   }

@@ -45,7 +45,7 @@ const FaviconContainer = ({ item }) => {
   return (
     <div style={{
       width: 18, height: 18, borderRadius: "50%",
-      background: "var(--red-dim)", display: "flex",
+      background: "var(--accent-dim)", display: "flex",
       alignItems: "center", justifyContent: "center", flexShrink: 0
     }}>
       <Icon name={typeIcon(item.type)} size={11} style={{ color: "var(--accent)" }} />
@@ -127,7 +127,7 @@ export default function SourcesTab({ guildId, onGoToOverview, user, onTab }) {
   const pillStyle = (active) => ({
     padding: "6px 14px", borderRadius: "var(--r-full)",
     border: `1.5px solid ${active ? "var(--accent)" : "var(--border2)"}`,
-    background: active ? "var(--red-dim)" : "var(--surface)",
+    background: active ? "var(--accent-dim)" : "var(--surface)",
     color: active ? "var(--accent-deep)" : "var(--muted)",
     fontSize: 12, fontWeight: 600, cursor: "pointer",
     display: "inline-flex", alignItems: "center", gap: 6,
@@ -267,7 +267,7 @@ export default function SourcesTab({ guildId, onGoToOverview, user, onTab }) {
               padding: "6px 14px", 
               borderRadius: "var(--r-md)",
               border: `1.5px solid ${showFilters || filterType !== "all" || scope !== "this-server-all" ? "var(--accent)" : "var(--border2)"}`,
-              background: showFilters || filterType !== "all" || scope !== "this-server-all" ? "var(--red-dim)" : "var(--surface)",
+              background: showFilters || filterType !== "all" || scope !== "this-server-all" ? "var(--accent-dim)" : "var(--surface)",
               color: showFilters || filterType !== "all" || scope !== "this-server-all" ? "var(--accent-deep)" : "var(--navy)",
               fontSize: 13, 
               fontWeight: 600, 
@@ -430,17 +430,17 @@ export default function SourcesTab({ guildId, onGoToOverview, user, onTab }) {
                           onClick={() => setDeleteTarget(u)}
                           title="Delete Source"
                           style={{
-                            background: "var(--accent-l)", border: "1px solid var(--border)",
+                            background: "var(--danger-dim)", border: "1px solid var(--danger-border)",
                             borderRadius: "var(--r-sm)", width: 30, height: 30,
-                            color: "var(--accent)", cursor: "pointer",
+                            color: "var(--danger)", cursor: "pointer",
                             display: "inline-flex", alignItems: "center", justifyContent: "center",
                             transition: "all var(--tr)",
                           }}
                           onMouseEnter={e => {
-                            e.currentTarget.style.background = "rgba(239,35,60,0.15)";
+                            e.currentTarget.style.background = "var(--danger-glow)";
                           }}
                           onMouseLeave={e => {
-                            e.currentTarget.style.background = "var(--accent-l)";
+                            e.currentTarget.style.background = "var(--danger-dim)";
                           }}
                         >
                           <Icon name="delete" size={14} />
@@ -521,8 +521,8 @@ export default function SourcesTab({ guildId, onGoToOverview, user, onTab }) {
             </p>
 
             <div style={{
-              background: "rgba(239,35,60,0.04)", padding: 14,
-              borderRadius: "var(--r-md)", border: "1px solid var(--red-border)", marginBottom: 24,
+              background: "rgba(30,58,138,0.04)", padding: 14,
+              borderRadius: "var(--r-md)", border: "1px solid var(--accent-border)", marginBottom: 24,
             }}>
               <div style={{
                 fontSize: 11, color: "var(--accent-deep)", fontWeight: 700,
@@ -572,7 +572,7 @@ function Modal({ children, onClose, danger = false }) {
         width: "100%", maxWidth: danger ? 480 : 540,
         borderRadius: "var(--r-xl)",
         background: "var(--surface)",
-        border: `1px solid ${danger ? "var(--red-border)" : "var(--border2)"}`,
+        border: `1px solid ${danger ? "var(--accent-border)" : "var(--border2)"}`,
         boxShadow: "var(--shadow-lg)",
         overflow: "hidden",
         animation: "fadeUp .2s cubic-bezier(0.16,1,0.3,1) both",
@@ -588,14 +588,14 @@ function ModalHeader({ icon, title, onClose, danger = false }) {
     <div style={{
       display: "flex", alignItems: "center", justifyContent: "space-between",
       padding: "16px 20px",
-      borderBottom: `1px solid ${danger ? "var(--red-border)" : "var(--border)"}`,
-      background: danger ? "rgba(239,35,60,0.03)" : "var(--surface-2)",
+      borderBottom: `1px solid ${danger ? "var(--accent-border)" : "var(--border)"}`,
+      background: danger ? "rgba(30,58,138,0.03)" : "var(--surface-2)",
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
         <div style={{
           width: 30, height: 30, borderRadius: "var(--r-sm)",
-          background: danger ? "var(--red-dim)" : "var(--surface-3)",
-          border: `1px solid ${danger ? "var(--red-border)" : "var(--border2)"}`,
+          background: danger ? "var(--accent-dim)" : "var(--surface-3)",
+          border: `1px solid ${danger ? "var(--accent-border)" : "var(--border2)"}`,
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <Icon name={icon} size={15} fill style={{ color: danger ? "var(--accent-deep)" : "var(--muted)" }} />

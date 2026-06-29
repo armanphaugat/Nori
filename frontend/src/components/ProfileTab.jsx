@@ -124,7 +124,7 @@ export default function ProfileTab({
       height: 100px;
       border-radius: 50%;
       border: 3px solid var(--accent);
-      box-shadow: 0 4px 14px var(--red-glow);
+      box-shadow: 0 4px 14px var(--accent-glow);
       flex-shrink: 0;
       overflow: hidden;
       transition: transform var(--tr);
@@ -404,7 +404,7 @@ export default function ProfileTab({
                           variant="ghost"
                           style={{
                             padding: "4px 10px", minHeight: 28, fontSize: 11.5,
-                            borderColor: "var(--red-border)", color: "var(--accent-deep)"
+                            borderColor: "var(--accent-border)", color: "var(--accent-deep)"
                           }}
                         >
                           Invite

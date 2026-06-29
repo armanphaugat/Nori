@@ -16,7 +16,7 @@ function BotAvatar({ size = 32, showStatus = true }) {
       alignItems: "center",
       justifyContent: "center",
       position: "relative",
-      boxShadow: "0 2px 8px rgba(239, 35, 60, 0.15)",
+      boxShadow: "0 2px 8px rgba(30,58,138, 0.15)",
     }}>
       <img
         src="/LOGO.png"
@@ -341,13 +341,13 @@ export default function ChatWidget({ guildId, guildName }) {
     
     .fancy-fab {
       background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
-      box-shadow: 0 8px 28px rgba(239, 35, 60, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 28px rgba(30,58,138, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
       color: #fff;
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
     .fancy-fab:hover {
       transform: scale(1.05) translateY(-2.5px);
-      box-shadow: 0 12px 36px rgba(239, 35, 60, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 20px rgba(239, 35, 60, 0.15);
+      box-shadow: 0 12px 36px rgba(30,58,138, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 20px rgba(30,58,138, 0.15);
       border-color: rgba(255, 255, 255, 0.2);
     }
     .fancy-fab:active {
@@ -421,10 +421,10 @@ export default function ChatWidget({ guildId, guildName }) {
                 fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.01em",
                 display: "flex", alignItems: "center", gap: 6
               }}>
-                {guildName || "Nori"}
+                Nori
                 <span style={{
                   fontSize: 9, textTransform: "uppercase", letterSpacing: "1px",
-                  background: "rgba(239,35,60,0.1)", border: "1px solid rgba(239,35,60,0.3)",
+                  background: "rgba(30,58,138,0.1)", border: "1px solid rgba(30,58,138,0.3)",
                   color: "var(--accent)", padding: "2px 6px", borderRadius: 4, fontWeight: 700
                 }}>Bot</span>
               </div>
@@ -467,7 +467,7 @@ export default function ChatWidget({ guildId, guildName }) {
                       padding: "11px 18px",
                       fontSize: 13.5, color: "#fff",
                       maxWidth: 290, lineHeight: 1.55,
-                      boxShadow: "0 4px 15px rgba(239,35,60,0.15)",
+                      boxShadow: "0 4px 15px rgba(30,58,138,0.15)",
                       fontFamily: "'Plus Jakarta Sans', sans-serif",
                       fontWeight: 500,
                     }}>
@@ -487,7 +487,7 @@ export default function ChatWidget({ guildId, guildName }) {
                         borderRadius: "4px 18px 18px 18px",
                         padding: "12px 18px",
                         fontSize: 13.5,
-                        color: msg.error ? "var(--accent-deep)" : "var(--navy)",
+                        color: msg.error ? "var(--danger-deep)" : "var(--navy)",
                         maxWidth: 290, lineHeight: 1.6,
                         boxShadow: "0 3px 12px rgba(43,45,66,0.03)",
                         fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -562,7 +562,7 @@ export default function ChatWidget({ guildId, guildName }) {
                     onMouseEnter={e => {
                       e.currentTarget.style.transform = "translateY(-1.5px)";
                       e.currentTarget.style.borderColor = "var(--accent)";
-                      e.currentTarget.style.boxShadow = "0 6px 16px rgba(239,35,60,0.08)";
+                      e.currentTarget.style.boxShadow = "0 6px 16px rgba(30,58,138,0.08)";
                       e.currentTarget.style.color = "var(--accent-deep)";
                     }}
                     onMouseLeave={e => {
@@ -621,7 +621,7 @@ export default function ChatWidget({ guildId, guildName }) {
             }}
               onFocusCapture={e => {
                 e.currentTarget.style.borderColor = "var(--accent)";
-                e.currentTarget.style.boxShadow = "0 0 0 4px var(--red-dim)";
+                e.currentTarget.style.boxShadow = "0 0 0 4px var(--accent-dim)";
                 e.currentTarget.style.background = "#ffffff";
               }}
               onBlurCapture={e => {
@@ -663,7 +663,7 @@ export default function ChatWidget({ guildId, guildName }) {
                   color: input.trim() && !loading ? "#fff" : "rgba(141,153,174,0.6)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   flexShrink: 0, transition: "all var(--tr)",
-                  boxShadow: input.trim() && !loading ? "0 4px 12px rgba(239,35,60,0.2)" : "none",
+                  boxShadow: input.trim() && !loading ? "0 4px 12px rgba(30,58,138,0.2)" : "none",
                 }}
                 onMouseEnter={e => {
                   if (input.trim() && !loading) {
