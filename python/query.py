@@ -95,6 +95,7 @@ FORMAT:
 
 
 async def get_kb_spec() -> str:
+    #spec_id = KB_SPEC_ID
     spec_id = KB_SPEC_ID
     return spec_id
 
@@ -254,3 +255,11 @@ async def query_graphlit_web(
                 await graphlit.client.delete_conversation(id=conversation_id)
         except Exception as e:
             print(f"[WARN] Failed to delete web conversation: {e}")
+        
+async def main():
+    spec_id = await get_kb_spec()
+    print("Created spec_id:", spec_id)
+ 
+ 
+if __name__ == "__main__":
+    asyncio.run(main())
