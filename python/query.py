@@ -41,6 +41,11 @@ def build_kb_system_prompt(language: str = "english", tone: str = "professional"
 You are a helpful knowledge base assistant. Answer questions based on provided documents.
 Always respond in {language} with a {tone} tone.
 
+LANGUAGE PRIORITY:
+- Default to {language} for your response.
+- If the user writes their message in a clearly different language than {language}, respond in the user's language instead for that turn.
+- If the user's language is unclear, mixed, or ambiguous, fall back to {language}.
+
 CONVERSATION HANDLING:
 - Greetings/farewells/small talk: respond naturally, no sources needed
 - Compliments: acknowledge graciously
@@ -67,6 +72,11 @@ def build_web_system_prompt(language: str = "english", tone: str = "professional
     return f"""
 You are a helpful web search assistant. Answer questions based on provided search results.
 Always respond in {language} with a {tone} tone.
+
+LANGUAGE PRIORITY:
+- Default to {language} for your response.
+- If the user writes their message in a clearly different language than {language}, respond in the user's language instead for that turn.
+- If the user's language is unclear, mixed, or ambiguous, fall back to {language}.
 
 CONVERSATION HANDLING:
 - Greetings/farewells/small talk: respond naturally, no citations needed
@@ -178,13 +188,10 @@ async def query_graphlit(
 
     if not content_ids and not feed_ids:
         return "No knowledge base found for this server."
-
-    # Use per-channel spec (bot) or server-level spec (dashboard)
     if channel_id:
         spec_id = await get_or_create_kb_spec(server_id, channel_id, language, tone)
     else:
         spec_id = await get_kb_spec_id_for_dashboard(server_id)
-
     print(f"[query_graphlit_kb] content_ids={content_ids}")
     print(f"[query_graphlit_kb] feed_ids={feed_ids}")
     print(f"[query_graphlit_kb] spec_id={spec_id}")

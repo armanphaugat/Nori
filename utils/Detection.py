@@ -7,105 +7,66 @@ import time
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from utils.apikeyrotation import get_key
 
-SYSTEM_PROMPT = """TASK: Binary classifier. Output ONLY "1" or "0". Any other output is a failure.
+SYSTEM_PROMPT = """TASK: Binary classifier. Output ONLY "1" or "0". Any other output is a failure. No explanations, no punctuation.
 
-═══════════════════════════
-GATE 1 — REJECT IF ANY MATCH
-═══════════════════════════
-- 1-3 words total → 0
-- Only mention: <@id> → 0
-- Starts with / or # → 0
-- Contains: restarted|connected|disconnected|processing|detected|successful|received|initialized|complete|failed|error|status|ping|pong → 0
-- Entire message is: ok|okay|got it|thanks|sure|noted|understood|alright|fine|cool|nice|great|huh|lol|haha|wow|oh|ah|hmm|interesting → 0
-- Subject is only a pronoun: it|this|that|these|those → 0
-- No named subject after trigger → 0
+LANGUAGES: English, Hindi, German, Chinese, Spanish, French, Arabic, Portuguese, Japanese, Russian. Judge by MEANING and INTENT.
 
-═══════════════════════════
-GATE 2 — MUST HAVE BOTH
-═══════════════════════════
-A) TRIGGER: what is|what are|how does|how do|how can|why does|why is|explain [NOUN]|define [NOUN]|describe [NOUN]|tell me about [NOUN]|difference between
-B) SUBJECT: a real named topic (not a pronoun)
+CLASSIFICATION RULES:
+Output "1" ONLY if the text is a direct question or request asking to explain, define, describe, or understand a specific, named concept or topic.
+Output "0" for everything else.
 
-MENTION RULE: strip <@id> first, evaluate remainder.
+STEP-BY-STEP FILTERING CRITERIA:
 
-1→ "What is Python?" "How does JWT work?" "Explain recursion." "<@123> what is Docker?"
-0→ "explain" "how" "done" "ok thanks" "how does it work" "explain this" "<@123>" "/help" "#general" "processing..." "connected" "huh" "tell me"
+1. MENTION CLEANING:
+   - Mentions (like <@id>) must be ignored before judging.
 
-OUTPUT ONLY 0 OR 1."""
+2. IMMEDIATE REJECTION (Output "0" if ANY apply):
+   - Starts with a command prefix (e.g., /, #).
+   - The message is entirely a system log or status update (e.g., "restarted", "processing", "connected", "failed", "error").
+   - The message is entirely a short acknowledgment, filler, or reaction (e.g., "ok", "thanks", "sure", "wow", "lol", "hmm").
+   - There is NO named topic (e.g., "explain this", "what is it?", "how does it work?").
 
-# ═══════════════════════════════════════
-# REGEX PRE-FILTER
-# ═══════════════════════════════════════
+3. MANDATORY CRITERIA FOR "1" (Must meet BOTH):
+   - A) TRIGGER: Contains a question word or request for explanation (e.g., "what is", "how does","how can i", "explain", "define", "difference between").
+   - B) SUBJECT: Contains a real, named noun, concept, or tool that the trigger is actively asking about (e.g., "Python", "JWT", "Recursion").
 
-DISCORD_ARTIFACTS  = re.compile(r'^<@\d+>$|^/|^#', re.IGNORECASE)
-SYSTEM_WORDS       = re.compile(r'\b(restarted|connected|disconnected|processing|detected|successful|received|initialized|complete|completed|failed|error|warning|status|ping|pong)\b', re.IGNORECASE)
-ACKNOWLEDGEMENTS   = re.compile(r'^(ok|okay|got\s?it|thanks|thank\s?you|sure|noted|understood|alright|fine|cool|nice|great|good|huh|lol|lmao|haha|wow|oh|ah|hmm|interesting)$', re.IGNORECASE)
-QUESTION_TRIGGERS  = re.compile(r'\b(what\s+is|what\s+are|what\s+was|what\s+does|what\s+do|how\s+does|how\s+do|how\s+is|how\s+can|how\s+to|why\s+does|why\s+do|why\s+is|why\s+are|explain\s+\w+|describe\s+\w+|define\s+\w+|tell\s+me\s+about|what\'s\s+the\s+difference|can\s+you\s+explain|could\s+you\s+explain)\b', re.IGNORECASE)
-VAGUE_SUBJECT      = re.compile(r'^(what\s+is\s+(it|this|that|these|those)\??|how\s+does\s+(it|this|that)\s+work\??|explain\s+(this|that|it)\??)$', re.IGNORECASE)
+EXAMPLES FOR EVALUATION REFERENCE:
+- "What is Python?" / "पायथन क्या है?" / "Was ist Python?" / "什么是Python？" → 1
+- "Explain recursion." / "रिकर्शन समझाओ।" / "Erkläre Rekursion." / "解释一下递归。" → 1
+- "how does it work" / "यह कैसे काम करता है" / "wie funktioniert das" / "这是怎么工作的" → 0 (No named subject)
+- "how can I create a giveaway" / "मैं एक गिवीयू कैसे बना सकता हूँ" / "wie kann ich ein giveaway erstellen" / "我怎样创建一个赠品活动" → 1
+- "ok thanks" / "ठीक है धन्यवाद" / "ok danke" / "好的谢谢" → 0 (Filler/Acknowledgment)
+- "processing..." / "प्रोसेसिंग..." / "Verarbeitung..." / "处理中..." → 0 (Status update)
 
-def regex_filter(text: str) -> int | None:
-    """
-    0  → definitely noise, skip Groq
-    None → ambiguous, send to Groq
-    Never returns 1 — Groq makes the final yes decision
-    """
-    # strip mention
-    text = re.sub(r'^<@\d+>\s*', '', text).strip()
-
-    if not text:                              return 0  # empty after strip
-    if len(text.split()) <= 2:               return 0  # fragment
-    if DISCORD_ARTIFACTS.match(text):        return 0  # /cmd #channel
-    if SYSTEM_WORDS.search(text):            return 0  # bot language
-    if ACKNOWLEDGEMENTS.match(text):         return 0  # ok/thanks/huh
-    if VAGUE_SUBJECT.match(text):            return 0  # explain this / how does it work
-    if not QUESTION_TRIGGERS.search(text):   return 0  # no trigger at all
-
-    return None  # ambiguous → send to Groq
+OUTPUT FORMAT:
+Respond with exactly one character: "1" or "0"""
 
 
 def detect_question(user_input: str, retries: int = 3) -> int:
     print(f"[detect] input: '{user_input}'")
-
-    # GATE 1 — regex (free, instant)
-    regex_result = regex_filter(user_input)
-    if regex_result is not None:
-        print(f"[detect] regex → {regex_result}")
-        return regex_result
-
-    # GATE 2 — Groq (only truly ambiguous messages reach here)
     print(f"[detect] sending to Groq")
     groq_api_key = get_key()
     client = Groq(api_key=groq_api_key)
-
-    for attempt in range(retries):
-        try:
-            response = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": user_input},
-                ],
-                temperature=0,
-                max_tokens=1,
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_input},
+            ],
+            temperature=0,
+            max_tokens=1,
             )
-
-            result = response.choices[0].message.content.strip()
-            print(f"[detect] Groq → {result}")
-
-            if result not in ("0", "1"):
-                print(f"[detect] unexpected output: {repr(result)}")
-                return 0
-
-            return int(result)
-
-        except RateLimitError:
-            wait = 20 * (attempt + 1)
-            print(f"[detect] rate limit. waiting {wait}s (attempt {attempt + 1}/{retries})")
-            time.sleep(wait)
-
-        except Exception as e:
-            print(f"[detect] Groq error: {e}")
+        result = response.choices[0].message.content.strip()
+        print(f"[detect] Groq → {result}")
+        if result not in ("0", "1"):
+            print(f"[detect] unexpected output: {repr(result)}")
             return 0
 
-    print("[detect] all retries exhausted")
-    return 0
+        return int(result)
+    except Exception as e:
+        print(f"[detect] error: {e}")
+        return 0   
+
+print(detect_question("wie kann ich ein giveaway erstellen"))  # Expected output: 1
+print(detect_question("how to create a giveaway"))  # Expected output: 1
