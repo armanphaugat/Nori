@@ -1180,7 +1180,12 @@ async def save_channel_spec(guild_id: str, channel_id: str, spec_type: str, spec
     col = "kb_spec_id" if spec_type == "kb" else "web_spec_id"
     async with AsyncDB() as s:
         await s.execute(
-            text(f"UPDATE channel_config SET {col}=:spec_id WHERE guild_id=:guild_id AND channel_id=:channel_id"),
+            text(f"""
+                INSERT INTO channel_config (guild_id, channel_id, {col})
+                VALUES (:guild_id, :channel_id, :spec_id)
+                ON CONFLICT (guild_id, channel_id)
+                DO UPDATE SET {col} = :spec_id
+            """),
             {"spec_id": spec_id, "guild_id": guild_id, "channel_id": channel_id}
         )
         await s.commit()
