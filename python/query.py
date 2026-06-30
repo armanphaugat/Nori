@@ -41,9 +41,48 @@ def build_kb_system_prompt(language: str = "english", tone: str = "professional"
 You are a helpful knowledge base assistant. Answer questions based on provided documents.
 Respond with a {tone} tone.
 
-LANGUAGE RULE (this is a hard requirement, follow it exactly):
-- If the user's current message is written in a language different from {language}, reply in that language, not {language}.
-- Use {language} only if the message matches {language}, or is too short/ambiguous to detect (e.g. "ok", "thanks", emojis, single words).
+LANGUAGE RULE — ABSOLUTE REQUIREMENT:
+- You MUST respond in {language.upper()} only. This is non-negotiable.
+- The user may write in any language. You must STILL reply in {language.upper()}.
+- Do NOT mirror or match the user's input language.
+- Do NOT translate your response into any other language.
+- If {language} is unclear or invalid, default to English
+
+CONVERSATION HANDLING:
+- Greetings/farewells/small talk: respond naturally, no sources needed
+- Compliments: acknowledge graciously
+
+ANSWERING RULES:
+- Answer from documents. If partially covered, share what you know.
+- Make reasonable inferences from document content.
+- If the topic is completely absent from documents, output EXACTLY this phrase and nothing else:
+I don't have this information
+- Never fabricate facts or use outside knowledge.
+
+CRITICAL: When you have no information, you MUST output ONLY the exact phrase:
+I don't have this information
+Do NOT rephrase it. Do NOT add any other text. Do NOT say "I currently do not have" or any variation.
+
+FORMAT (only when answer exists):
+- Clear, helpful answers under 1800 characters
+- Use bullet points or numbered lists when appropriate
+- Do not mention source IDs or document references
+"""
+
+def build_kb_system_prompt_without_language() -> str:
+    return f"""
+You are a helpful knowledge base assistant. Answer questions based on provided documents.
+Respond with a Proffesional tone.
+
+LANGUAGE RULE (STRICT - MUST FOLLOW):
+- Detect the language of the user's CURRENT message only.
+- Always reply in the same language as the user's CURRENT message.
+- Never translate the response into any other language.
+- Ignore the configured default language when the user's language can be identified.
+- If the user's message is multilingual, reply in the language that makes up most of the message.
+- If the language cannot be determined confidently (e.g. emojis, very short text like "ok", "hi", "?", or ambiguous input), reply in English.
+- Do not mention the detected language or explain your choice.
+- This rule overrides all other language preferences.
 
 CONVERSATION HANDLING:
 - Greetings/farewells/small talk: respond naturally, no sources needed
@@ -72,10 +111,14 @@ def build_web_system_prompt(language: str = "english", tone: str = "professional
 You are a helpful web search assistant. Answer questions based on provided search results.
 Respond with a {tone} tone.
 
-LANGUAGE RULE (this is a hard requirement, follow it exactly):
-- Detect the language of the user's CURRENT message only. Ignore the language of earlier messages in this conversation.
-- If the user's current message is written in a language different from {language}, reply in that language, not {language}.
-- Use {language} only if the message matches {language}, or is too short/ambiguous to detect (e.g. "ok", "thanks", emojis, single words).
+LANGUAGE AND TONE RULE (STRICT - MUST FOLLOW):
+- Reply ONLY in the language explicitly specified by the "{language}" parameter.
+- If "{language}" is missing, empty, invalid, or cannot be determined, reply in English.
+- The "{language}" parameter determines ONLY the response language.
+- The "{tone}" parameter determines ONLY the writing style and tone of the response.
+- Do not infer or change the response language based on the user's message.
+- Do not let the selected language affect the tone, and do not let the tone affect the language.
+- These rules override any conflicting instructions.
 
 CONVERSATION HANDLING:
 - Greetings/farewells/small talk: respond naturally, no citations needed
@@ -126,7 +169,7 @@ async def query_graphlit(
     tone: str = "professional",
     prv_messages: str = "",
 ) -> str:
-    print("Query Graphlit Called")
+    print(f"Query Graphlit Called WITH Language: {language}, Tone: {tone}")
     if is_small_talk(question):
         return "Hello! How can I help you today?"
     try:
@@ -154,6 +197,66 @@ async def query_graphlit(
         )
         conversation_id = conv_response.create_conversation.id
         system_prompt = build_kb_system_prompt(language, tone)
+        prompt = question
+        if prv_messages:
+            prompt = f"Conversation context:\n{prv_messages}\n\nQuestion: {question}"
+
+        response = await graphlit.client.prompt_conversation(
+            prompt=prompt,
+            mime_type=None,
+            data=None,
+            id=conversation_id,
+            persona=None,
+            system_prompt=system_prompt,
+            tools=None,
+            require_tool=None,
+            include_details=True,
+            correlation_id=None,
+        )
+        result = response.prompt_conversation
+        if result is None or result.message is None or result.message.message is None:
+            return "I don't know"
+        return result.message.message[:1800]
+    finally:
+        try:
+            if conversation_id:
+                await graphlit.client.delete_conversation(id=conversation_id)
+        except Exception as e:
+            print(f"[WARN] Failed to delete KB conversation: {e}")
+
+async def query_graphlit_without_language(
+    server_id: str,
+    question: str,
+    prv_messages: str = "",
+) -> str:
+    print("Query_Graphlit_Called_Without_Language")
+    if is_small_talk(question):
+        return "Hello! How can I help you today?"
+    try:
+        content_ids = await get_content_ids(server_id)
+        feed_ids    = await get_feed_ids(server_id)
+    except Exception as e:
+        print(f"[WARN] DB fetch content/feed ids failed: {e}")
+        content_ids, feed_ids = [], []
+
+    if not content_ids and not feed_ids:
+        return "No knowledge base found for this server."
+    spec_id=await get_kb_spec()
+    print(f"[query_graphlit_kb] content_ids={content_ids}")
+    print(f"[query_graphlit_kb] feed_ids={feed_ids}")
+    print(f"[query_graphlit_kb] spec_id={spec_id}")
+    conversation_id = None
+    try:
+        or_filter = build_or_filter(content_ids, feed_ids)
+        conv_response = await graphlit.client.create_conversation(
+            conversation=ConversationInput(
+                name=f"{server_id}_kb_query",
+                specification=EntityReferenceInput(id=spec_id),
+                filter=ContentCriteriaInput(or_=or_filter),
+            )
+        )
+        conversation_id = conv_response.create_conversation.id
+        system_prompt = build_kb_system_prompt_without_language()
         prompt = question
         if prv_messages:
             prompt = f"Conversation context:\n{prv_messages}\n\nQuestion: {question}"

@@ -12,7 +12,7 @@ import time
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from utils.Detection import detect_question
 from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event, get_channel_config, get_web_search,get_total_questions,get_server_plan,get_questions_since,get_watched_threads,remove_watched_thread,add_watched_thread
-from python.query import query_graphlit, query_graphlit_web
+from python.query import query_graphlit, query_graphlit_web,query_graphlit_without_language
 from python.ingest import read_ocr_async
 
 load_dotenv()
@@ -118,10 +118,17 @@ def get_confidence_score(answered: bool, answer: str) -> float:
     return 0.82 + (val / 100.0)
 
 
-async def get_answer(guild_id: str, channel_id: str, question: str, language: str, tone: str, prv_messages: str) -> str:
+async def get_answer(guild_id: str, channel_id: str, question: str, prv_messages: str) -> str:
     print(f"[get_answer] Querying KB for: {question[:60]}")
     try:
-        answer = await asyncio.wait_for(query_graphlit(guild_id,question=question, language=language, tone=tone, prv_messages=prv_messages), timeout=30.0)
+        channel_info = await get_channel_config(guild_id,channel_id)
+        if channel_info:
+            print("Channel info found, using language and tone settings")
+            language = channel_info.get("language", "english") if channel_info else "english"
+            tone = channel_info.get("tone", "professional") if channel_info else "professional"
+            answer = await asyncio.wait_for(query_graphlit(guild_id,question=question, language=language, tone=tone, prv_messages=prv_messages), timeout=30.0)
+        else:
+            answer = await asyncio.wait_for(query_graphlit_without_language(guild_id,question=question,prv_messages=prv_messages), timeout=30.0)
     except asyncio.TimeoutError:
         print("[get_answer] KB query timed out")
         return "Query timed out. Please try again."
@@ -242,13 +249,10 @@ async def on_message(message):
         print(f"[on_message] Message in watched channel '{message.channel.name}' from {message.author.name}")
         if await check_plan_limit(str(message.guild.id), message.channel):
             return
-        channel_info = await get_channel_config(str(message.guild.id), str(message.channel.id))
-        language = channel_info.get("language", "english") if channel_info else "english"
-        tone = channel_info.get("tone", "professional") if channel_info else "professional"
         prv_messages = await get_user_message_from_channel(message.channel.id)
         start_time = time.time()
         async with message.channel.typing():
-            answer = await get_answer(str(message.guild.id), str(message.channel.id), message.content, language, tone, prv_messages)
+            answer = await get_answer(str(message.guild.id), str(message.channel.id), message.content, prv_messages)
         latency_ms = round((time.time() - start_time) * 1000, 2)
         await send_answer_with_feedback(message.channel, message.author, str(message.guild.id), message.content, answer)
         if is_no_kb_response(answer):
@@ -318,13 +322,11 @@ async def ask(ctx, *, question: str = None):
         await ctx.send("No question provided. Usage: `-ask <your question>`")
         return
     channel_info = await get_channel_config(str(ctx.guild.id), str(ctx.channel.id))
-    language = channel_info.get("language", "english") if channel_info else "english"
-    tone = channel_info.get("tone", "professional") if channel_info else "professional"
     prv_messages = await get_user_message_from_channel(ctx.channel.id)
     print(f"[ask] {ctx.author.name} asked: {question[:60]}")
     start_time = time.time()
     async with ctx.typing():
-        answer = await get_answer(str(ctx.guild.id), str(ctx.channel.id), question, language, tone, prv_messages)
+        answer = await get_answer(str(ctx.guild.id), str(ctx.channel.id), question, prv_messages)
     latency_ms = round((time.time() - start_time) * 1000, 2)
     await send_answer_with_feedback(ctx.channel, ctx.author, str(ctx.guild.id), question, answer)
     if is_no_kb_response(answer):
