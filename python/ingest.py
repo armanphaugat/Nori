@@ -177,29 +177,35 @@ async def add_word_graphlit(server_id: str, file):
         print(f"[{server_id}] Failed: {e}")
         return 0
 
-async def add_image_graphlit(server_id: str, file_path: str):
+async def add_image_graphlit(server_id: str, file,ext:str="jpg"):
     try:
-        import base64
-        
-        with open(file_path, "rb") as f:
-            file_data = base64.b64encode(f.read()).decode("utf-8")
-        
-        ext = file_path.split(".")[-1].lower()
+        if isinstance(file, BytesIO):
+            file.seek(0)
+            file = file.read()
+        elif isinstance(file, str):
+            ext = file.split(".")[-1].lower()
+            with open(file, "rb") as f:
+                file = f.read()
+        file_data = base64.b64encode(file).decode("utf-8")
         mime_types = {
             "jpg": "image/jpeg",
             "jpeg": "image/jpeg",
             "png": "image/png",
             "gif": "image/gif",
-            "webp": "image/webp"
+            "webp": "image/webp",
+            "tiff": "image/tiff",
+            "bmp": "image/bmp",
         }
-        mime_type = mime_types.get(ext, "image/jpeg")
-        
+        mime_type = mime_types.get(ext.lower(), "image/jpeg")
         response = await graphlit.client.ingest_encoded_file(
-            name=file_path,
+            name=f"{server_id}_upload.{ext}",
             data=file_data,
             mime_type=mime_type,
             is_synchronous=True
         )
+        if not response:
+            print("No ingestion Done")
+            return 0
         content_id = response.ingest_encoded_file.id
         await add_content_id(server_id, str(content_id))
         print(f"[{server_id}] Image ingested → {content_id}")
