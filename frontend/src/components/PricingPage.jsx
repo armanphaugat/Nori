@@ -798,7 +798,7 @@ export default function PricingPage({
               <Icon name="mail" size={16} fill={1} /> Talk to Sales
             </a>
           </div>
-          <p style={{ marginTop:22,fontSize:12,color:"rgba(255,255,255,0.28)" }}>Free tier available forever. Paid plans from $9/mo billed annually.</p>
+          <p style={{ marginTop:22,fontSize:12,color:"rgba(255,255,255,0.28)" }}>Free tier available forever. Paid plans from $25/mo.</p>
         </div>
       </section>
 

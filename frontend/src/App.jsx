@@ -438,6 +438,10 @@ export default function App() {
     if (page && validViews.includes(page)) {
       return page;
     }
+    const path = window.location.pathname.replace(/^\/|\/$/g, "");
+    if (validViews.includes(path)) {
+      return path;
+    }
     return null;
   };
 
@@ -472,6 +476,11 @@ export default function App() {
       if (activeGuildId) {
         url.searchParams.set("guild_id", activeGuildId);
       }
+    }
+    const validViews = ["landing", "pricing", "servers", "dashboard", "privacy", "terms"];
+    const path = url.pathname.replace(/^\/|\/$/g, "");
+    if (validViews.includes(path)) {
+      url.pathname = "/";
     }
     window.history.pushState({}, "", url.pathname + url.search + url.hash);
   };
@@ -587,16 +596,20 @@ export default function App() {
           if (activated && redirectedGuildId) {
             localStorage.removeItem("pending_guild_redirect");
             handleActivateServer(redirectedGuildId);
-          } else if (activeGuildId) {
-            setView("dashboard");
           } else {
-            setView("servers");
+            const urlView = getViewFromUrl();
+            if (urlView) {
+              setView(urlView);
+            } else {
+              setView("landing");
+            }
           }
         } catch (_) {
-          if (activeGuildId) {
-            setView("dashboard");
+          const urlView = getViewFromUrl();
+          if (urlView) {
+            setView(urlView);
           } else {
-            setView("servers");
+            setView("landing");
           }
         }
         setBooting(false);
@@ -623,10 +636,11 @@ export default function App() {
             return;
           }
 
-          if (activeGuildId) {
-            setView("dashboard");
+          const urlView = getViewFromUrl();
+          if (urlView) {
+            setView(urlView);
           } else {
-            setView("servers");
+            setView("landing");
           }
         } catch (_) {
           setToken(null);
@@ -647,10 +661,11 @@ export default function App() {
           return;
         }
 
-        if (activeGuildId) {
-          setView("dashboard");
+        const urlView = getViewFromUrl();
+        if (urlView) {
+          setView(urlView);
         } else {
-          setView("servers");
+          setView("landing");
         }
       }
       setBooting(false);
@@ -672,6 +687,11 @@ export default function App() {
     } else {
       url.searchParams.delete("tab");
       url.searchParams.delete("guild_id");
+    }
+    const validViews = ["landing", "pricing", "servers", "dashboard", "privacy", "terms"];
+    const path = url.pathname.replace(/^\/|\/$/g, "");
+    if (validViews.includes(path)) {
+      url.pathname = "/";
     }
     window.history.replaceState({}, "", url.pathname + url.search + url.hash);
   }, [view, activeGuildId]);

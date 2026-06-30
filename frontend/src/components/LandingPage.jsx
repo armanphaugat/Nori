@@ -136,7 +136,8 @@ const CSS = `
   .step-wrap:hover .step-icon{border-color:var(--border2)!important;box-shadow:0 0 22px var(--accent-glow)!important;}
   .use-card:hover{border-color:var(--border2)!important;transform:translateY(-3px);box-shadow:0 16px 32px rgba(43,45,66,0.1);}
   .nav-link:hover{color:var(--navy);background:rgba(43,45,66,0.06);}
-  .btn-primary:hover{opacity:0.9;transform:translateY(-1px);box-shadow:0 0 36px var(--accent-glow)!important;}
+  .btn-primary:hover{opacity:0.9;transform:translateY(-1px);box-shadow:0 0 36px rgba(239, 35, 60, 0.45) !important;}
+  .btn-ghost-dark:hover{background:rgba(255,255,255,0.12)!important;color:#ffffff!important;border-color:rgba(255,255,255,0.35)!important;}
   .btn-ghost:hover{background:rgba(43,45,66,0.06)!important;color:var(--navy)!important;}
   .btn-sm:hover{background:var(--navy)!important;color:white!important;box-shadow:0 0 22px var(--slate-glow)!important;}
 
@@ -1032,13 +1033,13 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
               <button onClick={onInvite} className="btn-primary glow-accent" style={{ display:"flex",alignItems:"center",gap:10,padding:"16px 32px",borderRadius:14,fontSize:16,fontWeight:600,background:"#EF233C",color:"white",border:"none",cursor:"pointer",boxShadow:"0 0 28px rgba(239, 35, 60, 0.25)",transition:"all var(--tr)" }}>
                 <DiscordIcon size={18} /> Add Nori to Discord
               </button>
-              <a href="https://discord.gg/YMsuKFQjUu" target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"16px 26px",borderRadius:14,fontSize:16,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",textDecoration:"none",transition:"all var(--tr)" }}>
+              <a href="https://discord.gg/YMsuKFQjUu" target="_blank" rel="noopener noreferrer" className="btn-ghost-dark" style={{ display:"flex",alignItems:"center",gap:8,padding:"16px 26px",borderRadius:14,fontSize:16,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",textDecoration:"none",transition:"all var(--tr)" }}>
                 <DiscordIcon size={18} /> Come to Discord
               </a>
-              <button onClick={onShowPricing} className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"16px 26px",borderRadius:14,fontSize:16,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",cursor:"pointer",transition:"all var(--tr)" }}>
+              <button onClick={onShowPricing} className="btn-ghost-dark" style={{ display:"flex",alignItems:"center",gap:8,padding:"16px 26px",borderRadius:14,fontSize:16,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",cursor:"pointer",transition:"all var(--tr)" }}>
                 <Icon name="payments" size={18} /> View Pricing Plans
               </button>
-              <a href="#features" className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"16px 26px",borderRadius:14,fontSize:16,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",textDecoration:"none",transition:"all var(--tr)" }}>
+              <a href="#features" className="btn-ghost-dark" style={{ display:"flex",alignItems:"center",gap:8,padding:"16px 26px",borderRadius:14,fontSize:16,fontWeight:500,background:"rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",textDecoration:"none",transition:"all var(--tr)" }}>
                 See All Features →
               </a>
             </div>
