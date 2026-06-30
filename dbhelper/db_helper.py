@@ -760,13 +760,6 @@ async def remove_feed_id(server_id: str, feed_id: str) -> bool:
         await s.commit()
         return result.rowcount > 0
 
-
-
-
-
-
-
-
 async def get_channel_config(guild_id: str, channel_id: str) -> Optional[dict]:
     async with AsyncDB() as s:
         row = (
