@@ -34,3 +34,4 @@ graphlit-client
 # ─── Discord ──────────────────────────────────────────────────────────────────
 discord.py
 groq
+playwright
