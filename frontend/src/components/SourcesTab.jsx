@@ -24,6 +24,7 @@ const getDomain = (urlStr) => {
 const typeIcon = t => ({
   pdf: "picture_as_pdf", url: "language",
   faq: "quiz", text: "forum", github: "code",
+  image: "image", video: "movie", docx: "description", xlsx: "table_chart",
 }[t] ?? "description");
 
 const FaviconContainer = ({ item }) => {
@@ -150,7 +151,16 @@ export default function SourcesTab({ guildId, onGoToOverview, user, onTab }) {
     if (scope === "this-server-mine" && u.uploaded_by !== user?.discord_id) return false;
     const name = (u.name || u.url || u.filename || u.source || "").toLowerCase();
     if (!name.includes(searchQuery.toLowerCase())) return false;
-    if (filterType !== "all" && (u.type || "url").toLowerCase() !== filterType) return false;
+    
+    const currentType = (u.type || "url").toLowerCase();
+    if (filterType !== "all") {
+      if (filterType === "files") {
+        const fileTypes = ["pdf", "docx", "xlsx", "image", "video", "contacts"];
+        if (!fileTypes.includes(currentType)) return false;
+      } else {
+        if (currentType !== filterType) return false;
+      }
+    }
     return true;
   });
 
@@ -321,7 +331,7 @@ export default function SourcesTab({ guildId, onGoToOverview, user, onTab }) {
           {/* Type filters */}
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginRight: 4 }}>Type:</span>
-            {["all", "pdf", "url", "faq", "text", "github"].map(t => (
+            {["all", "files", "url", "faq", "text", "github"].map(t => (
               <button key={t} onClick={() => setFilterType(t)} style={pillStyle(filterType === t)}>
                 {t === "all" ? "All" : t === "github" ? "GitHub" : t.toUpperCase()}
               </button>

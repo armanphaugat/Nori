@@ -41,7 +41,14 @@ export default function UtilsTab({ guildId, onGoToOverview, user }) {
     setDeleting(false);
   };
 
-  const typeIcon = (t) => t === "pdf" ? "picture_as_pdf" : t === "url" ? "language" : t === "faq" ? "quiz" : t === "text" ? "forum" : "description";
+  const typeIcon = (t) => {
+    const icons = {
+      pdf: "picture_as_pdf", url: "language",
+      faq: "quiz", text: "forum", github: "code",
+      image: "image", video: "movie", docx: "description", xlsx: "table_chart",
+    };
+    return icons[t] ?? "description";
+  };
 
   if (!guildId) return (
     <div>
@@ -105,7 +112,7 @@ export default function UtilsTab({ guildId, onGoToOverview, user }) {
               </button>
             ))}
             <span style={{ width: 1, height: 16, background: "var(--border2)" }} />
-            {["all", "pdf", "url", "faq", "text"].map(t => (
+            {["all", "files", "url", "faq", "text", "github"].map(t => (
               <button key={t} onClick={() => setFilterType(t)} style={{
                 padding: "5px 12px", borderRadius: 99,
                 border: `1.5px solid ${filterType === t ? "var(--accent)" : "var(--border2)"}`,
@@ -136,8 +143,18 @@ export default function UtilsTab({ guildId, onGoToOverview, user }) {
                 const filtered = uploads.filter(u => {
                   if (scope === "this-server-mine" && u.uploaded_by !== user?.discord_id) return false;
                   const name = u.name || u.url || u.filename || u.source || "";
-                  return name.toLowerCase().includes(searchQuery.toLowerCase())
-                    && (filterType === "all" || (u.type || "url").toLowerCase() === filterType);
+                  if (!name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+                  
+                  const currentType = (u.type || "url").toLowerCase();
+                  if (filterType !== "all") {
+                    if (filterType === "files") {
+                      const fileTypes = ["pdf", "docx", "xlsx", "image", "video", "contacts"];
+                      if (!fileTypes.includes(currentType)) return false;
+                    } else {
+                      if (currentType !== filterType) return false;
+                    }
+                  }
+                  return true;
                 });
                 if (filtered.length === 0) return (
                   <tr><td colSpan={4} style={{ textAlign: "center", padding: "28px", color: "var(--muted)" }}>No matching sources found</td></tr>

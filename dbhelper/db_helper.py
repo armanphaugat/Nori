@@ -250,7 +250,10 @@ async def get_uploads_count_by_type(server_id: str) -> dict:
         ).fetchall()
         counts = {"url": 0, "file": 0}
         for row in rows:
-            counts[row[0]] = row[1]
+            t = row[0]
+            counts[t] = row[1]
+            if t in {"pdf", "docx", "xlsx", "image", "video", "contacts"}:
+                counts["file"] = counts.get("file", 0) + row[1]
         return counts
 
 async def log_question_event(

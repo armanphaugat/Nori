@@ -198,9 +198,13 @@ async def handle_upload_file(
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Uploaded file is empty")
     if ext in {".xlsx", ".xls"}:
-        kind = "pdf"
+        kind = "xlsx"
     elif ext == ".docx":
-        kind = "pdf"
+        kind = "docx"
+    elif ext in {".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".webp"}:
+        kind = "image"
+    elif ext in {".mp4", ".mp3", ".wav", ".m4a"}:
+        kind = "video"
     else:
         kind = "pdf"
     try:
@@ -223,7 +227,7 @@ async def handle_upload_file(
                 guild_id=guild_id,
                 user_id=user["discord_id"],
                 username=user["username"],
-                kind="pdf",
+                kind=kind,
                 name=file.filename,
                 status="failed",
                 error="Graphlit ingestion returned no content_id (see backend logs for the underlying error)",
@@ -234,7 +238,7 @@ async def handle_upload_file(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
-            kind="pdf",
+            kind=kind,
             name=file.filename,
             content_id=content_id,
             status="ok",
@@ -248,7 +252,7 @@ async def handle_upload_file(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
-            kind="pdf",
+            kind=kind,
             name=file.filename,
             status="failed",
             error=str(e),
@@ -276,7 +280,7 @@ async def handle_upload_faq(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
-            kind="pdf",
+            kind="faq",
             name=faq_text[:80],
             content_id=content_id,
             status="ok",
@@ -289,7 +293,7 @@ async def handle_upload_faq(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
-            kind="text",
+            kind="faq",
             name=faq_text[:80],
             status="failed",
             error=str(e),
@@ -454,6 +458,15 @@ async def handle_add_github_repo(repo_url: str = Form(...), guild_id: str = Form
             raise HTTPException(status_code=400, detail="'repo_url' must start with http:// or https://")
         feed_id = await add_github_repo_graphlit(guild_id, repo_url, personal_access_token)
         if not feed_id:
+            await log_upload(
+                guild_id=guild_id,
+                user_id=user["discord_id"],
+                username=user["username"],
+                kind="github",
+                name=repo_url,
+                status="failed",
+                error="Failed to create GitHub crawl feed in Graphlit",
+            )
             raise HTTPException(status_code=502, detail="Failed to ingest GitHub repository into knowledge base")
         await log_upload(
             guild_id=guild_id,

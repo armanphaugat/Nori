@@ -223,8 +223,25 @@ async def add_github_repo_graphlit(server_id: str, repo_url: str, personal_acces
     try:
         parts = repo_url.rstrip("/").split("/")
         repo_name = parts[-1]
+        if repo_name.endswith(".git"):
+            repo_name = repo_name[:-4]
         repo_owner = parts[-2]
-        token = personal_access_token or os.environ.get("GITHUB_PERSONAL_ACCESS_TOKEN")
+        # Clean and normalize token (handle empty string, whitespace, and 'null'/'undefined' string values)
+        token_str = (personal_access_token or "").strip()
+        if token_str.lower() in {"", "null", "undefined"}:
+            token_str = ""
+        env_token = (os.environ.get("GITHUB_PERSONAL_ACCESS_TOKEN") or "").strip()
+        
+        token = token_str or env_token or None
+        
+        github_kwargs = {
+            "repository_owner": repo_owner,
+            "repository_name": repo_name,
+        }
+        if token:
+            github_kwargs["authentication_type"] = GitHubAuthenticationTypes.PERSONAL_ACCESS_TOKEN
+            github_kwargs["personal_access_token"] = token
+            
         response = await graphlit.client.create_feed(
             feed=FeedInput(
                 name=f"f{repo_name}-{server_id}",
@@ -232,24 +249,12 @@ async def add_github_repo_graphlit(server_id: str, repo_url: str, personal_acces
                 site=SiteFeedPropertiesInput(
                     type=FeedServiceTypes.GIT_HUB,
                     is_recursive=True,
-                    github=GitHubFeedPropertiesInput(
-                        authentication_type=GitHubAuthenticationTypes.PERSONAL_ACCESS_TOKEN if token else None,
-                        repository_owner=repo_owner,
-                        repository_name=repo_name,
-                        personal_access_token=token,
-                    ),
+                    github=GitHubFeedPropertiesInput(**github_kwargs),
                 ),
             )
         )
         result = response.create_feed
         feed_id = result.id
-        while True:
-            response = await graphlit.client.is_feed_done(id=feed_id)
-            result = response.is_feed_done
-            if result.result:
-                break
-            await asyncio.sleep(2)
-
         await add_feed_id(server_id, feed_id)
         return feed_id
 

@@ -470,7 +470,7 @@ export default function UploadTab({ guildId, onGoToOverview }) {
                 placeholder="https://github.com/owner/repo" style={{ height: 40 }} />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 6 }}>Personal Access Token <span style={{ fontWeight: 400, color: "var(--muted2)" }}>(optional)</span></label>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 6 }}>Personal Access Token </label>
               <input type="password" className="kb-input" value={pat} onChange={e => setPat(e.target.value)}
                 placeholder="ghp_xxxxxxxxxxxxxxxx" style={{ height: 40 }} />
             </div>
