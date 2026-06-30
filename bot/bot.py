@@ -120,8 +120,8 @@ def get_confidence_score(answered: bool, answer: str) -> float:
 
 async def get_answer(guild_id: str, channel_id: str, question: str, prv_messages: str) -> str:
     print(f"[get_answer] Querying KB for: {question[:60]}")
+    channel_info = await get_channel_config(guild_id, channel_id)
     try:
-        channel_info = await get_channel_config(guild_id,channel_id)
         if channel_info:
             print("Channel info found, using language and tone settings")
             language = channel_info.get("language", "english") if channel_info else "english"
@@ -142,6 +142,8 @@ async def get_answer(guild_id: str, channel_id: str, question: str, prv_messages
         if not web_search_info:
             return "I don't Have Information in Current Knowledge Base & Web Search is Paused By Admin"
         try:
+            language = channel_info.get("language", "english") if channel_info else "english"
+            tone = channel_info.get("tone", "professional") if channel_info else "professional"
             answer = await asyncio.wait_for(query_graphlit_web(guild_id, question=question, language=language, tone=tone, prv_messages=prv_messages), timeout=30.0)
         except asyncio.TimeoutError:
             return "Web search timed out. Please try again."
