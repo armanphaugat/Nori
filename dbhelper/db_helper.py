@@ -609,19 +609,15 @@ async def get_user_servers_with_config_status(discord_id: str) -> list[dict]:
                 text("""
                     SELECT
                         s.server_id, s.server_name, s.prefix, s.max_tokens,
-                        s.mod_channel, s.kb_spec_id, s.web_spec_id,
+                        s.mod_channel,
                         s.added_at, s.updated_at, s.is_paused,
                         COUNT(DISTINCT c.channel_id)::integer        AS channel_count,
                         (COUNT(DISTINCT c.channel_id) > 0)::boolean  AS has_channels,
                         (s.mod_channel IS NOT NULL)::boolean          AS has_mod_channel,
-                        (s.kb_spec_id IS NOT NULL)::boolean           AS has_kb,
-                        (s.web_spec_id IS NOT NULL)::boolean          AS has_web,
                         CASE
                             WHEN s.mod_channel IS NOT NULL
-                                 AND s.kb_spec_id IS NOT NULL
                                  AND COUNT(DISTINCT c.channel_id) > 0 THEN 'configured'
                             WHEN s.mod_channel IS NOT NULL
-                                 OR s.kb_spec_id IS NOT NULL
                                  OR COUNT(DISTINCT c.channel_id) > 0  THEN 'partial'
                             ELSE 'unconfigured'
                         END AS config_status
@@ -630,8 +626,7 @@ async def get_user_servers_with_config_status(discord_id: str) -> list[dict]:
                     LEFT JOIN channels c ON s.server_id = c.server_id
                     WHERE ga.discord_id=:discord_id
                     GROUP BY s.server_id, s.server_name, s.prefix, s.max_tokens,
-                             s.mod_channel, s.kb_spec_id, s.web_spec_id,
-                             s.added_at, s.updated_at, s.is_paused
+                             s.mod_channel, s.added_at, s.updated_at, s.is_paused
                     ORDER BY s.added_at DESC
                 """),
                 {"discord_id": discord_id},
@@ -645,14 +640,10 @@ async def get_user_servers_with_config_status(discord_id: str) -> list[dict]:
                 "prefix":          row["prefix"],
                 "max_tokens":      row["max_tokens"],
                 "mod_channel":     row["mod_channel"],
-                "kb_spec_id":      row["kb_spec_id"],
-                "web_spec_id":     row["web_spec_id"],
                 "is_paused":       row["is_paused"],
                 "config_status":   row["config_status"],
                 "has_channels":    row["has_channels"],
                 "has_mod_channel": row["has_mod_channel"],
-                "has_kb":          row["has_kb"],
-                "has_web":         row["has_web"],
                 "channel_count":   row["channel_count"],
                 "added_at":        row["added_at"].isoformat() if row.get("added_at") else None,
                 "updated_at":      row["updated_at"].isoformat() if row.get("updated_at") else None,
@@ -668,27 +659,22 @@ async def get_all_servers_with_config_status() -> list[dict]:
                 text("""
                     SELECT
                         s.server_id, s.server_name, s.prefix, s.max_tokens,
-                        s.mod_channel, s.kb_spec_id, s.web_spec_id,
+                        s.mod_channel,
                         s.added_at, s.updated_at, s.is_paused,
                         COUNT(DISTINCT c.channel_id)::integer        AS channel_count,
                         (COUNT(DISTINCT c.channel_id) > 0)::boolean  AS has_channels,
                         (s.mod_channel IS NOT NULL)::boolean          AS has_mod_channel,
-                        (s.kb_spec_id IS NOT NULL)::boolean           AS has_kb,
-                        (s.web_spec_id IS NOT NULL)::boolean          AS has_web,
                         CASE
                             WHEN s.mod_channel IS NOT NULL
-                                 AND s.kb_spec_id IS NOT NULL
                                  AND COUNT(DISTINCT c.channel_id) > 0 THEN 'configured'
                             WHEN s.mod_channel IS NOT NULL
-                                 OR s.kb_spec_id IS NOT NULL
                                  OR COUNT(DISTINCT c.channel_id) > 0  THEN 'partial'
                             ELSE 'unconfigured'
                         END AS config_status
                     FROM servers s
                     LEFT JOIN channels c ON s.server_id = c.server_id
                     GROUP BY s.server_id, s.server_name, s.prefix, s.max_tokens,
-                             s.mod_channel, s.kb_spec_id, s.web_spec_id,
-                             s.added_at, s.updated_at, s.is_paused
+                             s.mod_channel, s.added_at, s.updated_at, s.is_paused
                     ORDER BY s.added_at DESC
                 """),
             )
@@ -701,14 +687,10 @@ async def get_all_servers_with_config_status() -> list[dict]:
                 "prefix":          row["prefix"],
                 "max_tokens":      row["max_tokens"],
                 "mod_channel":     row["mod_channel"],
-                "kb_spec_id":      row["kb_spec_id"],
-                "web_spec_id":     row["web_spec_id"],
                 "is_paused":       row["is_paused"],
                 "config_status":   row["config_status"],
                 "has_channels":    row["has_channels"],
                 "has_mod_channel": row["has_mod_channel"],
-                "has_kb":          row["has_kb"],
-                "has_web":         row["has_web"],
                 "channel_count":   row["channel_count"],
                 "added_at":        row["added_at"].isoformat() if row.get("added_at") else None,
                 "updated_at":      row["updated_at"].isoformat() if row.get("updated_at") else None,
@@ -775,54 +757,12 @@ async def remove_feed_id(server_id: str, feed_id: str) -> bool:
         await s.commit()
         return result.rowcount > 0
 
-async def get_kb_spec_id(guild_id: str) -> Optional[str]:
-    async with AsyncDB() as s:
-        row = (
-            await s.execute(
-                text("SELECT kb_spec_id FROM servers WHERE server_id=:id"),
-                {"id": str(guild_id)},
-            )
-        ).mappings().first()
-        return row["kb_spec_id"] if row else None
 
 
-async def get_web_spec_id(guild_id: str) -> Optional[str]:
-    async with AsyncDB() as s:
-        row = (
-            await s.execute(
-                text("SELECT web_spec_id FROM servers WHERE server_id=:id"),
-                {"id": str(guild_id)},
-            )
-        ).mappings().first()
-        return row["web_spec_id"] if row else None
 
 
-async def get_spec_id(server_id: str, spec_type: str) -> Optional[str]:
-    allowed = {"kb": "kb_spec_id", "web": "web_spec_id"}
-    col = allowed.get(spec_type)
-    if not col:
-        raise ValueError(f"Invalid spec_type: {spec_type!r}")
-    async with AsyncDB() as s:
-        result = (
-            await s.execute(
-                text(f"SELECT {col} FROM servers WHERE server_id=:server_id"),
-                {"server_id": server_id},
-            )
-        ).fetchone()
-        return result[0] if result and result[0] else None
 
 
-async def save_spec_id(server_id: str, spec_type: str, spec_id: Optional[str]) -> None:
-    allowed = {"kb": "kb_spec_id", "web": "web_spec_id"}
-    col = allowed.get(spec_type)
-    if not col:
-        raise ValueError(f"Invalid spec_type: {spec_type!r}")
-    async with AsyncDB() as s:
-        await s.execute(
-            text(f"UPDATE servers SET {col}=:spec_id WHERE server_id=:server_id"),
-            {"spec_id": spec_id, "server_id": server_id},
-        )
-        await s.commit()
 
 async def get_channel_config(guild_id: str, channel_id: str) -> Optional[dict]:
     async with AsyncDB() as s:
@@ -1006,25 +946,6 @@ async def update_server_plan_status(
         await s.commit()
         return result.rowcount
     
-async def delete_spec_id(server_id: str, spec_type: str) -> int:
-    async with AsyncDB() as s:
-        if spec_type == "kb":
-            result = await s.execute(
-                text("UPDATE servers SET kb_spec_id = NULL WHERE server_id = :server_id"),
-                {"server_id": server_id},
-            )
-        elif spec_type == "web":
-            result = await s.execute(
-                text("UPDATE servers SET web_spec_id = NULL WHERE server_id = :server_id"),
-                {"server_id": server_id},
-            )
-        else:
-            result = await s.execute(
-                text("UPDATE servers SET kb_spec_id = NULL, web_spec_id = NULL WHERE server_id = :server_id"),
-                {"server_id": server_id},
-            )
-        await s.commit()
-        return result.rowcount
 
 async def save_conversation_id(server_id: str, conversation_id: str, question: str = "", answer: str = "") -> int:
     async with AsyncDB() as s:
@@ -1168,36 +1089,6 @@ async def get_github_ingested_count(guild_id: str) -> int:
         )
         return result.scalar() or 0
     
-async def get_channel_spec(guild_id: str, channel_id: str) -> dict | None:
-    async with AsyncDB() as s:
-        row = (await s.execute(
-            text("SELECT * FROM channel_config WHERE guild_id=:guild_id AND channel_id=:channel_id"),
-            {"guild_id": guild_id, "channel_id": channel_id}
-        )).mappings().first()
-        return dict(row) if row else None
-
-async def save_channel_spec(guild_id: str, channel_id: str, spec_type: str, spec_id: str):
-    col = "kb_spec_id" if spec_type == "kb" else "web_spec_id"
-    async with AsyncDB() as s:
-        await s.execute(
-            text(f"""
-                INSERT INTO channel_config (guild_id, channel_id, {col})
-                VALUES (:guild_id, :channel_id, :spec_id)
-                ON CONFLICT (guild_id, channel_id)
-                DO UPDATE SET {col} = :spec_id
-            """),
-            {"spec_id": spec_id, "guild_id": guild_id, "channel_id": channel_id}
-        )
-        await s.commit()
-
-async def clear_channel_specs(guild_id: str, channel_id: str):
-    async with AsyncDB() as s:
-        await s.execute(
-            text("UPDATE channel_config SET kb_spec_id=NULL, web_spec_id=NULL WHERE guild_id=:guild_id AND channel_id=:channel_id"),
-            {"guild_id": guild_id, "channel_id": channel_id}
-        )
-        await s.commit()
-
 async def delete_mod_channel(guild_id: str,channel_id: str) -> int:
     async with AsyncDB() as s:
         await s.execute(
