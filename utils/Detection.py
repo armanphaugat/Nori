@@ -67,6 +67,3 @@ def detect_question(user_input: str, retries: int = 3) -> int:
     except Exception as e:
         print(f"[detect] error: {e}")
         return 0   
-
-print(detect_question("wie kann ich ein giveaway erstellen"))  # Expected output: 1
-print(detect_question("how to create a giveaway"))  # Expected output: 1
