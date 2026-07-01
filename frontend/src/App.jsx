@@ -465,6 +465,11 @@ export default function App() {
 
   const navigateTo = (newView) => {
     setView(newView);
+    if (newView === "landing") {
+      // Landing page = clean root URL, no query params
+      window.history.pushState({}, "", "/");
+      return;
+    }
     const url = new URL(window.location.href);
     url.searchParams.set("page", newView);
     url.searchParams.delete("tab");
@@ -662,6 +667,11 @@ export default function App() {
   useEffect(() => {
     if (view === "dashboard" && !activeGuildId) {
       setView("servers");
+      return;
+    }
+    if (view === "landing") {
+      // Landing page = clean root URL, no query params
+      window.history.replaceState({}, "", "/");
       return;
     }
     const url = new URL(window.location.href);
