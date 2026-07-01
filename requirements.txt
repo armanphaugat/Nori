@@ -24,7 +24,6 @@ pytesseract
 Pillow
 beautifulsoup4
 requests
-openai-whisper
 
 # ─── AI / Search services ─────────────────────────────────────────────────────
 tavily-python

@@ -5,9 +5,7 @@ from io import BytesIO
 import docx2txt
 from PIL import Image
 import pytesseract
-import whisper
 import asyncio
-import tempfile
 from graphlit import Graphlit
 from dbhelper.db_helper import *
 import base64
@@ -24,7 +22,6 @@ graphlit = Graphlit(
     jwt_secret=jwt_secret,
 )
 
-whisper_model = whisper.load_model("base")
 def read_word(file):
     try:
         if isinstance(file, BytesIO):
@@ -65,33 +62,6 @@ def read_ocr(file):
 async def read_ocr_async(file):
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, read_ocr, file)
-
-def read_video(file):
-    tmp_path = None
-    try:
-        if isinstance(file, str):
-            if not os.path.exists(file):
-                raise ValueError(f"File not found: {file}")
-            tmp_path = file
-        elif isinstance(file, BytesIO):
-            file.seek(0)
-            with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
-                tmp.write(file.read())
-                tmp_path = tmp.name
-        else:
-            raise ValueError("file must be a file path or BytesIO object")
-        result = whisper_model.transcribe(tmp_path)
-        text = result["text"]
-        if not text or not text.strip():
-            raise ValueError("No text transcribed -> video may have no audio")
-        return text.lower()
-    except ValueError:
-        raise
-    except Exception as e:
-        raise ValueError(f"Failed to transcribe video: {e}")
-    finally:
-        if tmp_path and isinstance(file, BytesIO) and os.path.exists(tmp_path):
-            os.remove(tmp_path)
 
 async def add_url_graphlit(server_id: str, url: str):
     try:
@@ -215,14 +185,47 @@ async def add_image_graphlit(server_id: str, file,ext:str="jpg"):
         print(f"[{server_id}] Failed: {e}")
         return 0
 
-async def add_video_graphlit(server_id: str, file):
+async def add_video_graphlit(server_id: str, file, filename: str = "upload"):
+    """
+    Ingest an audio/video file into Graphlit using their native cloud transcription.
+    Supports: .mp4, .mp3, .wav, .m4a
+    No local CPU processing — file is base64-encoded and sent to Graphlit's API.
+    """
+    MIME_TYPES = {
+        "mp4": "video/mp4",
+        "mp3": "audio/mpeg",
+        "wav": "audio/wav",
+        "m4a": "audio/mp4",
+    }
     try:
-        text = read_video(file)
-        response = await graphlit.client.ingest_text(text=text, is_synchronous=True)
-        await add_content_id(server_id, str(response.ingest_text.id))
-        return response.ingest_text.id
+        if isinstance(file, BytesIO):
+            file.seek(0)
+            file_bytes = file.read()
+        elif isinstance(file, (str, os.PathLike)):
+            with open(file, "rb") as f:
+                file_bytes = f.read()
+        else:
+            raise ValueError("file must be a file path or BytesIO object")
+
+        ext = os.path.splitext(filename)[1].lstrip(".").lower() or "mp4"
+        mime_type = MIME_TYPES.get(ext, "video/mp4")
+
+        base64_data = base64.b64encode(file_bytes).decode("utf-8")
+        response = await graphlit.client.ingest_encoded_file(
+            name=f"{server_id}_{filename}",
+            data=base64_data,
+            mime_type=mime_type,
+            is_synchronous=True,
+        )
+        if not response:
+            print(f"[{server_id}] Graphlit returned no response for {filename}")
+            return 0
+        content_id = response.ingest_encoded_file.id
+        await add_content_id(server_id, str(content_id))
+        print(f"[{server_id}] Audio/video ingested → {content_id}")
+        return content_id
     except Exception as e:
-        print(f"[{server_id}] Failed: {e}")
+        print(f"[{server_id}] Failed to ingest {filename}: {e}")
         return 0
 
 async def add_github_repo_graphlit(server_id: str, repo_url: str, personal_access_token: str | None = None):

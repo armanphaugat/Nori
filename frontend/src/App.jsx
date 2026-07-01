@@ -99,9 +99,7 @@ function Dashboard({
     const url = new URL(window.location.href);
     url.searchParams.set("tab", t);
     url.searchParams.set("page", "dashboard");
-    if (activeGuildId) {
-      url.searchParams.set("guild_id", activeGuildId);
-    }
+    url.searchParams.delete("guild_id"); // never expose guild_id in URL
     window.history.pushState({}, "", url.pathname + url.search + url.hash);
   };
 
@@ -469,14 +467,8 @@ export default function App() {
     setView(newView);
     const url = new URL(window.location.href);
     url.searchParams.set("page", newView);
-    if (newView !== "dashboard") {
-      url.searchParams.delete("tab");
-      url.searchParams.delete("guild_id");
-    } else {
-      if (activeGuildId) {
-        url.searchParams.set("guild_id", activeGuildId);
-      }
-    }
+    url.searchParams.delete("tab");
+    url.searchParams.delete("guild_id"); // never add guild_id to URL
     const validViews = ["landing", "pricing", "servers", "dashboard", "privacy", "terms"];
     const path = url.pathname.replace(/^\/|\/$/g, "");
     if (validViews.includes(path)) {
@@ -490,9 +482,7 @@ export default function App() {
   const [discordGuilds, setDiscordGuilds] = useState([]);
   const [booting, setBooting] = useState(true);
   const [activeGuildId, setActiveGuildId] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    const urlGuildId = params.get("guild_id");
-    if (urlGuildId) return urlGuildId;
+    // Read active guild only from localStorage — never expose guild_id in URL
     return LS.str("wb_active_guild") || null;
   });
 
@@ -502,11 +492,7 @@ export default function App() {
       if (urlView) {
         setView(urlView);
       }
-      const params = new URLSearchParams(window.location.search);
-      const urlGuildId = params.get("guild_id");
-      if (urlGuildId) {
-        setActiveGuildId(urlGuildId);
-      }
+      // guild_id is never in the URL; always read from localStorage
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
@@ -680,13 +666,10 @@ export default function App() {
     }
     const url = new URL(window.location.href);
     url.searchParams.set("page", view);
-    if (view === "dashboard") {
-      if (activeGuildId) {
-        url.searchParams.set("guild_id", activeGuildId);
-      }
-    } else {
+    // Never put guild_id in the URL — kept only in localStorage
+    url.searchParams.delete("guild_id");
+    if (view !== "dashboard") {
       url.searchParams.delete("tab");
-      url.searchParams.delete("guild_id");
     }
     const validViews = ["landing", "pricing", "servers", "dashboard", "privacy", "terms"];
     const path = url.pathname.replace(/^\/|\/$/g, "");

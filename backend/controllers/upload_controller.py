@@ -220,7 +220,7 @@ async def handle_upload_file(
             content_id = await add_image_graphlit(guild_id, BytesIO(file_bytes))
 
         elif ext in {".mp4", ".mp3", ".wav", ".m4a"}:
-            content_id = await add_video_graphlit(guild_id, BytesIO(file_bytes))
+            content_id = await add_video_graphlit(guild_id, BytesIO(file_bytes), filename=file.filename or f"upload{ext}")
 
         if not content_id:
             await log_upload(
