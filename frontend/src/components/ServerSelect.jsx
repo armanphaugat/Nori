@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { API, API_BASE } from "../utils/api.js";
-import { Spinner, StatusBadge, Btn, Icon, DiscordIcon } from "./Common.jsx";
+import { Spinner, StatusBadge, Btn, Icon, DiscordIcon, useTheme } from "./Common.jsx";
 
 export default function ServerSelect({ user, guilds, discordGuilds, onActivate, onAdd, onLogout }) {
+  const { dark, setDark } = useTheme();
   const [search, setSearch]                   = useState("");
   const [loading, setLoading]                 = useState(false);
   const [configuredServers, setConfiguredServers] = useState(guilds || []);
@@ -29,6 +30,18 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
     setLoading(false);
   }
 };
+
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+
+  useEffect(() => {
+    const handleOutside = (e) => {
+      if (!e.target.closest('[data-dropdown="profile-select"]')) {
+        setShowProfileDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
 
   useEffect(() => { loadStatuses(); }, []);
 
@@ -66,7 +79,7 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
     .vb-server-avatar.configured {
       border: 3px solid var(--accent);
       box-shadow: 0 0 0 4px var(--accent-dim), 0 4px 16px rgba(43,45,66,0.1);
-      background: var(--navy);
+      background: var(--brand-dark);
     }
     .vb-server-avatar.addable {
       border: 2px dashed var(--border2);
@@ -137,7 +150,7 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
       {/* ── Top Nav ── */}
       <nav style={{
         width: "100%", borderBottom: "1px solid var(--border)",
-        background: "rgba(237,242,244,0.92)",
+        background: "var(--surface)",
         backdropFilter: "blur(20px)",
         padding: "16px 48px",
         display: "flex", justifyContent: "space-between", alignItems: "center",
@@ -166,37 +179,78 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
         {user && (
           <div style={{
             display: "flex", alignItems: "center", gap: 10,
-            background: "var(--surface)", border: "1px solid var(--border2)",
-            borderRadius: 99, padding: "5px 6px 5px 14px",
           }}>
-            {getAvatarUrl(user) ? (
-              <img src={getAvatarUrl(user)} alt={user.username}
-                style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", border: "1.5px solid var(--border2)" }} />
-            ) : (
-              <div style={{
-                width: 28, height: 28, borderRadius: "50%", background: "var(--navy)",
+            {/* Dark mode toggle */}
+            <button
+              onClick={() => {
+                const next = !dark;
+                setDark(next);
+                localStorage.setItem("nori_dark_mode", String(next));
+              }}
+              title={dark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              style={{
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 11, fontWeight: 700, color: "#fff",
-              }}>
-                {user.username.slice(0, 2).toUpperCase()}
-              </div>
-            )}
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--navy)", marginRight: 4 }}>
-              {user.username}
-            </span>
-            <span style={{ width: 1, height: 16, background: "var(--border2)" }} />
-            <button onClick={onLogout} style={{
-              background: "transparent", border: "none",
-              color: "var(--muted)", padding: "6px 12px 6px 8px",
-              borderRadius: 99, fontSize: 12, fontWeight: 600,
-              cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
-              transition: "all var(--tr)", fontFamily: "'Plus Jakarta Sans', sans-serif",
-            }}
-              onMouseEnter={e => { e.currentTarget.style.color = "var(--accent-deep)"; e.currentTarget.style.background = "var(--accent-dim)"; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "var(--muted)"; e.currentTarget.style.background = "transparent"; }}
+                width: 36, height: 36, borderRadius: "var(--r-md)",
+                border: "1.5px solid var(--border2)",
+                background: dark ? "var(--surface-3)" : "var(--surface-2)",
+                cursor: "pointer", transition: "all var(--tr)",
+                flexShrink: 0,
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-dim)"; e.currentTarget.style.borderColor = "var(--accent-border)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = dark ? "var(--surface-3)" : "var(--surface-2)"; e.currentTarget.style.borderColor = "var(--border2)"; }}
             >
-              <Icon name="logout" size={14} /> Sign Out
+              <Icon name={dark ? "light_mode" : "dark_mode"} size={17} style={{ color: dark ? "#F59E0B" : "var(--navy)" }} />
             </button>
+
+            {/* User Avatar & Dropdown */}
+            <div style={{ position: "relative" }} data-dropdown="profile-select">
+              <div
+                onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 8, borderLeft: "1px solid var(--border)", paddingLeft: 16,
+                  cursor: "pointer", userSelect: "none", paddingTop: 4, paddingBottom: 4
+                }}
+                onMouseEnter={e => { e.currentTarget.style.opacity = 0.85; }}
+                onMouseLeave={e => { e.currentTarget.style.opacity = 1; }}
+              >
+                {getAvatarUrl(user) ? (
+                  <img src={getAvatarUrl(user)} alt={user.username} style={{ width: 28, height: 28, borderRadius: "50%", border: "2px solid var(--border2)", objectFit: "cover" }} />
+                ) : (
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--brand-dark)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff" }}>
+                    {(user.username || "U").slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--navy)" }}>
+                  {user.username}
+                </span>
+                <Icon name="expand_more" size={14} style={{ color: "var(--navy)", marginLeft: 2, transform: showProfileDropdown ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+              </div>
+
+              {showProfileDropdown && (
+                <div style={{
+                  position: "absolute", top: "100%", right: 0, marginTop: 8,
+                  width: 200, background: "var(--surface)",
+                  border: "1px solid var(--border2)",
+                  borderRadius: "var(--r-md)",
+                  boxShadow: "var(--shadow-lg)", zIndex: 200,
+                  overflow: "hidden", display: "flex", flexDirection: "column",
+                }}>
+                  <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)", fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>
+                    Logged in as <strong style={{ color: "var(--navy)" }}>{user.username}</strong>
+                  </div>
+                  
+                  <div
+                    onClick={() => { onLogout(); setShowProfileDropdown(false); }}
+                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", cursor: "pointer", fontSize: 12.5, fontWeight: 600, color: "var(--accent-deep)", transition: "background 0.2s" }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = "var(--accent-dim)"}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
+                  >
+                    <Icon name="logout" size={16} style={{ color: "var(--accent)" }} />
+                    <span>Sign Out</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </nav>
@@ -218,7 +272,7 @@ export default function ServerSelect({ user, guilds, discordGuilds, onActivate, 
         }}>
           {/* Card header strip */}
           <div style={{
-            background: "var(--navy)", padding: "14px 28px",
+            background: "var(--brand-dark)", padding: "14px 28px",
             display: "flex", alignItems: "center", gap: 10,
           }}>
             <Icon name="dns" size={16} style={{ color: "rgba(255,255,255,0.4)" }} />

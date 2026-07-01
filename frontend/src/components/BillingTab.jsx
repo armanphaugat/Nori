@@ -119,13 +119,13 @@ export default function BillingTab({ guildId, onGoToOverview, user }) {
 
       {status && <div style={{ marginBottom: 16 }}><StatusBadge {...status} /></div>}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "stretch", marginBottom: 32, flexWrap: "wrap" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24, alignItems: "stretch", marginBottom: 32 }}>
         {/* Current Plan Card */}
         <Card style={{
           position: "relative",
           overflow: "hidden",
           border: `1.5px solid ${activePlan.color}35`,
-          background: "white",
+          background: "var(--surface)",
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
@@ -179,7 +179,7 @@ export default function BillingTab({ guildId, onGoToOverview, user }) {
         </Card>
 
         {/* Message Limit Meter */}
-        <Card style={{ padding: 24, display: "flex", flexDirection: "column", justifyContent: "space-between", background: "white" }}>
+        <Card style={{ padding: 24, display: "flex", flexDirection: "column", justifyContent: "space-between", background: "var(--surface)" }}>
           <div>
             <h4 style={{ fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--navy)", marginBottom: 4 }}>
               Questions Asked
@@ -195,7 +195,7 @@ export default function BillingTab({ guildId, onGoToOverview, user }) {
                   <path
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                     fill="none"
-                    stroke="var(--surface3)"
+                    stroke="var(--surface-3)"
                     strokeWidth="3.5"
                   />
                   <path
@@ -233,7 +233,7 @@ export default function BillingTab({ guildId, onGoToOverview, user }) {
             </div>
           </div>
 
-          <div style={{ background: "rgba(43,45,66,0.04)", border: "1px solid var(--border)", padding: "10px 14px", borderRadius: 10, fontSize: 12, color: "var(--muted)" }}>
+          <div style={{ background: "var(--surface-2)", border: "1px solid var(--border2)", padding: "10px 14px", borderRadius: 10, fontSize: 12, color: "var(--muted)" }}>
             <span style={{ fontWeight: 600, color: "var(--navy)" }}>Note:</span> Linking your Patreon account automatically links the subscription. Make sure to connect your Discord account in Patreon settings to enable instant plan activation.
           </div>
         </Card>
@@ -255,7 +255,7 @@ export default function BillingTab({ guildId, onGoToOverview, user }) {
               flexDirection: "column",
               justifyContent: "space-between",
               border: isCurrent ? `2px solid ${tier.color}` : "1.5px solid var(--border2)",
-              background: "white",
+              background: "var(--surface)",
               padding: 24,
             }}>
               <div>

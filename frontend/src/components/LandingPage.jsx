@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useTheme } from "./Common.jsx";
 
 function Icon({ name, size = 20, fill = 0, style = {} }) {
   return (
@@ -253,7 +254,75 @@ const CSS = `
     .hide600{display:none!important;}
     .show600{display:inline!important;}
   }
+  /* ────── DARK MODE OVERRIDES ────── */
+  [data-theme="dark"] {
+    --navy:     #E2E8F0;
+    --navy-mid: #CBD5E1;
+    --slate:    #94A3B8;
+    --light:    #1E293B;
+    --bg:       #0F172A;
+    --surface1: #1E293B;
+    --surface2: #263347;
+    --surface3: #2D3D55;
+    --surface4: #354560;
+    --border:   rgba(226,232,240,0.10);
+    --border2:  rgba(226,232,240,0.20);
+    --text:     #E2E8F0;
+    --muted:    #94A3B8;
+    --muted2:   rgba(148,163,184,0.65);
+    --accent:   #3B82F6;
+    --accent-deep: #60A5FA;
+    --accent-dim:  rgba(59,130,246,0.15);
+    --accent-glow: rgba(59,130,246,0.25);
+  }
+  [data-theme="dark"] body {
+    background: #0F172A;
+    color: #E2E8F0;
+  }
+  [data-theme="dark"] .glass {
+    background: rgba(30,41,59,0.80);
+    border-color: rgba(226,232,240,0.10);
+  }
+  [data-theme="dark"] .glass-hover:hover {
+    background: rgba(30,41,59,0.96) !important;
+    border-color: rgba(226,232,240,0.20) !important;
+  }
+  [data-theme="dark"] .feat-card:hover {
+    background: rgba(38,51,71,0.98) !important;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+    border-color: rgba(226,232,240,0.20) !important;
+  }
+  [data-theme="dark"] .nav-link:hover {
+    color: var(--navy);
+    background: rgba(226,232,240,0.08);
+  }
+  [data-theme="dark"] .btn-sm:hover {
+    background: #E2E8F0 !important;
+    color: #0F172A !important;
+  }
+  [data-theme="dark"] .btn-ghost:hover {
+    background: rgba(226,232,240,0.08) !important;
+    color: #E2E8F0 !important;
+  }
+  [data-theme="dark"] .water-bg {
+    opacity: 0.025;
+    background-image:
+      linear-gradient(rgba(226,232,240,0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(226,232,240,0.07) 1px, transparent 1px);
+  }
+  [data-theme="dark"] .bloom {
+    background: radial-gradient(circle, rgba(59,130,246,0.07) 0%, transparent 70%);
+  }
+  [data-theme="dark"] .bloom-slate {
+    background: radial-gradient(circle, rgba(148,163,184,0.07) 0%, transparent 70%);
+  }
 `;
+
+// Landing page uses its own dark-mode-aware nav bg helper
+const navBg = (scrolled, dark) => {
+  if (dark) return scrolled ? "rgba(15,23,42,0.97)" : "rgba(15,23,42,0.85)";
+  return scrolled ? "rgba(237,242,244,0.97)" : "rgba(237,242,244,0.82)";
+};
 
 const FEATS = [
   { icon:"robot_2",        fill:1, color:"red",   title:"Your Own AI Discord Bot",      desc:"Stop answering the same questions over and over. Your bot handles them 24/7 so you don't have to." },
@@ -542,8 +611,22 @@ function Tick({ v }) {
 }
 
 export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, onShowPricing, onShowPrivacy, onShowTerms }) {
+  const { dark, setDark } = useTheme();
   const [faq, setFaq] = useState(null);
   const [scrolled, setScrolled] = useState(false);
+  const colorMap = {
+    red: { 
+      bg: dark ? "rgba(59,130,246,0.15)" : "rgba(30,58,138,0.08)", 
+      border: dark ? "rgba(59,130,246,0.3)" : "rgba(30,58,138,0.25)", 
+      text: dark ? "#60A5FA" : "#1E3A8A" 
+    },
+    slate: { 
+      bg: dark ? "rgba(148,163,184,0.15)" : "rgba(141,153,174,0.14)", 
+      border: dark ? "rgba(148,163,184,0.3)" : "rgba(141,153,174,0.32)", 
+      text: dark ? "#94A3B8" : "#5a6480" 
+    },
+  };
+
   const pageRef = useReveal();
 
   useEffect(() => {
@@ -562,9 +645,9 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
         position:"fixed",top:0,left:0,right:0,zIndex:200,height:64,
         display:"flex",alignItems:"center",justifyContent:"space-between",
         padding:"0 64px",
-        background: scrolled ? "rgba(237,242,244,0.97)" : "rgba(237,242,244,0.82)",
+        background: navBg(scrolled, dark),
         backdropFilter:"blur(20px)",
-        borderBottom:`1px solid ${scrolled ? "rgba(43,45,66,0.15)" : "var(--border)"}`,
+        borderBottom:`1px solid ${scrolled ? (dark ? "rgba(226,232,240,0.12)" : "rgba(43,45,66,0.15)") : "var(--border)"}`,
         transition:"all 0.3s ease",
       }}>
         <a href="#" style={{ textDecoration:"none",display:"flex",alignItems:"center",gap:12 }}>
@@ -577,7 +660,29 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
           </div>
           <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>Nori</span>
         </a>
-        <div style={{ display:"flex",alignItems:"center",gap:12 }}>
+        <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+          {/* Dark mode toggle */}
+          <button
+            onClick={() => {
+              const next = !dark;
+              setDark(next);
+              localStorage.setItem("nori_dark_mode", String(next));
+            }}
+            title={dark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            style={{
+              display:"flex", alignItems:"center", justifyContent:"center",
+              width:36, height:36, borderRadius:8,
+              border:"1.5px solid var(--border2)",
+              background: dark ? "rgba(226,232,240,0.08)" : "rgba(43,45,66,0.06)",
+              cursor:"pointer", transition:"all var(--tr)",
+              flexShrink:0,
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize:18, color: dark ? "#F59E0B" : "var(--navy)", lineHeight:1, display:"inline-flex" }}>
+              {dark ? "light_mode" : "dark_mode"}
+            </span>
+          </button>
+
           {/* Menu links - hidden below 900px */}
           <div className="hide900" style={{ display:"flex",alignItems:"center",gap:2 }}>
             {[["Features","#features"],["How it Works","#howitworks"]].map(([l,h],i) => (
@@ -639,13 +744,13 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
                   <Icon name="arrow_forward" size={18} />
                 </button>
               )}
-              <button onClick={onInvite} className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"14px 22px",borderRadius:10,fontSize:15,fontWeight:500,background:"white",color:"var(--muted)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
+              <button onClick={onInvite} className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"14px 22px",borderRadius:10,fontSize:15,fontWeight:500,background:"var(--surface1)",color:"var(--muted)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
                 <DiscordIcon size={18} /> Add to Your Server
               </button>
-              <button onClick={() => document.getElementById("playground")?.scrollIntoView({ behavior:"smooth" })} className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"14px 22px",borderRadius:10,fontSize:15,fontWeight:500,background:"white",color:"var(--muted)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
+              <button onClick={() => document.getElementById("playground")?.scrollIntoView({ behavior:"smooth" })} className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"14px 22px",borderRadius:10,fontSize:15,fontWeight:500,background:"var(--surface1)",color:"var(--muted)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
                 See It in Action
               </button>
-              <button onClick={onShowPricing} className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"14px 22px",borderRadius:10,fontSize:15,fontWeight:500,background:"white",color:"var(--muted)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
+              <button onClick={onShowPricing} className="btn-ghost" style={{ display:"flex",alignItems:"center",gap:8,padding:"14px 22px",borderRadius:10,fontSize:15,fontWeight:500,background:"var(--surface1)",color:"var(--muted)",border:"1px solid var(--border2)",cursor:"pointer",transition:"all var(--tr)" }}>
                 <Icon name="payments" size={18} style={{ color: "var(--accent)" }} /> View Pricing
               </button>
             </div>
@@ -785,7 +890,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
                        padding:"14px 18px",
                        borderRadius:12,
                        border:"1px solid var(--border2)",
-                       background:"white",
+                       background:"var(--surface1)",
                        boxShadow:"0 2px 8px rgba(43,45,66,0.03)",
                        transition:"all 0.25s ease",
                      }}
@@ -823,7 +928,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
       </section>
 
       {/* MARQUEE */}
-      <div style={{ overflow:"hidden",borderTop:"1px solid var(--border)",borderBottom:"1px solid var(--border)",padding:"16px 0",background:"white" }}>
+      <div style={{ overflow:"hidden",borderTop:"1px solid var(--border)",borderBottom:"1px solid var(--border)",padding:"16px 0",background:"var(--surface1)" }}>
         <div className="mq" style={{ display:"flex",gap:44,alignItems:"center",whiteSpace:"nowrap" }}>
           {[...MQ_ITEMS,...MQ_ITEMS].map((m,i) => (
             <div key={i} style={{ display:"flex",alignItems:"center",gap:10,fontSize:13,fontWeight:500,color:"var(--muted)",flexShrink:0 }}>
@@ -837,7 +942,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
       </div>
 
       {/* STATS */}
-      <div style={{ borderBottom:"1px solid var(--border)",background:"var(--navy)" }}>
+      <div style={{ borderBottom:"1px solid var(--border)",background:"var(--brand-dark)" }}>
         <div className="stats-grid" style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",maxWidth:1100,margin:"0 auto" }}>
           {[
             { val:"9",  suf:"+", label:"Ways to Search Your Content", col:"white" },
@@ -869,9 +974,9 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
             const c = colorMap[s.color];
             return (
               <div key={i} className="rv step-wrap" style={{ padding:"0 20px",display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",position:"relative",zIndex:1,transitionDelay:`${i*0.08}s` }}>
-                <div className="step-icon" style={{ width:88,height:88,borderRadius:20,background:"white",border:"1px solid var(--border2)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:20,position:"relative",transition:"all 0.3s ease",color:c.text,boxShadow:"0 4px 16px rgba(43,45,66,0.08)" }}>
+                <div className="step-icon" style={{ width:88,height:88,borderRadius:20,background:"var(--surface1)",border:"1px solid var(--border2)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:20,position:"relative",transition:"all 0.3s ease",color:c.text,boxShadow:"0 4px 16px rgba(43,45,66,0.08)" }}>
                   <Icon name={s.icon} size={34} fill={s.fill} />
-                  <span style={{ position:"absolute",top:-10,right:-10,width:26,height:26,borderRadius:"50%",background:s.color==="red"?"var(--navy)":c.bg,border:`1px solid ${c.border}`,color:s.color==="red"?"white":c.text,fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Plus Jakarta Sans', sans-serif" }}>{s.n}</span>
+                  <span style={{ position:"absolute",top:-10,right:-10,width:26,height:26,borderRadius:"50%",background:s.color==="red"?"var(--brand-dark)":c.bg,border:`1px solid ${c.border}`,color:s.color==="red"?"white":c.text,fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Plus Jakarta Sans', sans-serif" }}>{s.n}</span>
                 </div>
                 {i < 3 && <span style={{ position:"absolute",right:-8,top:30,color:"var(--muted2)",fontSize:20 }}>→</span>}
                 <div style={{ fontSize:14,fontWeight:600,color:"var(--navy)",marginBottom:8,fontFamily:"'Plus Jakarta Sans', sans-serif" }}>{s.title}</div>
@@ -889,7 +994,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
           <div className="rv"><H2>Everything Included, Nothing Extra to Buy</H2></div>
           <p className="rv" style={{ fontSize:17,color:"var(--muted)",lineHeight:1.8,maxWidth:580,marginBottom:52,fontWeight:300 }}>Every plan includes the full feature set. No add-ons, no paywalls on core functionality, no nasty surprises.</p>
 
-          <div className="rv feat-card" style={{ borderRadius:16,padding:"32px",marginBottom:20,display:"flex",flexDirection:"column",gap:20,position:"relative",overflow:"hidden",border:"1px solid var(--border2)",background:"white",boxShadow:"0 4px 24px rgba(43,45,66,0.08)" }}>
+          <div className="rv feat-card" style={{ borderRadius:16,padding:"32px",marginBottom:20,display:"flex",flexDirection:"column",gap:20,position:"relative",overflow:"hidden",border:"1px solid var(--border2)",background:"var(--surface1)",boxShadow:"0 4px 24px rgba(43,45,66,0.08)" }}>
             <div className="feat-icon" style={{ width:52,height:52,borderRadius:14,background:"rgba(30,58,138,0.08)",border:"1px solid rgba(30,58,138,0.22)",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent-deep)",transition:"all 0.3s ease" }}>
               <Icon name="dashboard_customize" size={26} fill={1} />
             </div>
@@ -909,7 +1014,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
             {FEATS.map((f,i) => {
               const c = colorMap[f.color];
               return (
-                <div key={i} className="rv feat-card" style={{ background:"white",padding:24,transitionDelay:`${(i%3)*0.04}s` }}>
+                <div key={i} className="rv feat-card" style={{ background:"var(--surface1)",padding:24,transitionDelay:`${(i%3)*0.04}s` }}>
                   <div className="feat-icon" style={{ width:46,height:46,borderRadius:12,background:c.bg,border:`1px solid ${c.border}`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16,transition:"all 0.3s ease",color:c.text }}>
                     <Icon name={f.icon} size={22} fill={f.fill} />
                   </div>
@@ -950,7 +1055,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
               ["Reach everyone", "It auto-detects language and responds in kind, no extra setup."]
             ].map(([title, desc], idx) => (
               <div key={idx} className="rv" style={{
-                background: "white",
+                background: "var(--surface1)",
                 padding: 24,
                 borderRadius: 16,
                 border: "1px solid var(--border2)",
@@ -975,7 +1080,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
           <div className="rv" style={{ borderRadius:16, overflow:"hidden", border:"1px solid var(--border2)", boxShadow:"0 4px 24px rgba(43,45,66,0.08)" }}>
             <table style={{ width:"100%", borderCollapse:"collapse", fontSize:14 }}>
               <thead>
-                <tr style={{ background:"var(--navy)" }}>
+                <tr style={{ background:"var(--brand-dark)" }}>
                   <th style={{ padding:"16px 24px", fontWeight:600, fontSize:11, letterSpacing:"0.06em", textTransform:"uppercase", color:"rgba(255,255,255,0.45)", borderBottom:"1px solid rgba(255,255,255,0.1)", textAlign:"left" }}>Capability</th>
                   {["Nori","Other Bots","What's Missing"].map((h,i) => (
                     <th key={i} style={{ padding:"16px 24px", fontWeight:700, fontSize:11, letterSpacing:"0.06em", textTransform:"uppercase", borderBottom:i===0?"2px solid var(--accent)":"1px solid rgba(255,255,255,0.1)", textAlign:i===2?"left":"center", color:i===0?"var(--accent)":"rgba(255,255,255,0.45)", background:i===0?"rgba(30,58,138,0.1)":"transparent" }}>{h}</th>
@@ -984,7 +1089,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
               </thead>
               <tbody>
                 {COMP.map((row,i) => (
-                  <tr key={i} style={{ borderBottom:"1px solid var(--border)", background:i%2===0?"white":"var(--surface2)" }}>
+                  <tr key={i} style={{ borderBottom:"1px solid var(--border)", background:i%2===0?"var(--surface1)":"var(--surface2)" }}>
                     <td style={{ padding:"14px 24px", color:"var(--navy)", fontWeight:500, fontSize:14 }}>{row[0]}</td>
                     <td style={{ padding:"14px 24px", textAlign:"center", background:"rgba(30,58,138,0.03)" }}><Tick v={row[1]} /></td>
                     <td style={{ padding:"14px 24px", textAlign:"center" }}><Tick v={row[2]} /></td>
@@ -1004,7 +1109,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
           <div className="rv"><H2>Things People Usually Ask First</H2></div>
           <div style={{ display:"flex",flexDirection:"column",gap:10,marginTop:44,textAlign:"left" }}>
             {FAQS.map((f,i) => (
-              <div key={i} className="rv" onClick={() => setFaq(faq===i?null:i)} style={{ background:"white",border:`1px solid ${faq===i?"rgba(30,58,138,0.3)":"var(--border2)"}`,borderRadius:13,overflow:"hidden",cursor:"pointer",transition:"border-color var(--tr)",transitionDelay:`${i*0.04}s`,boxShadow:faq===i?"0 4px 16px rgba(30,58,138,0.08)":"0 2px 8px rgba(43,45,66,0.05)" }}>
+              <div key={i} className="rv" onClick={() => setFaq(faq===i?null:i)} style={{ background:"var(--surface1)",border:`1px solid ${faq===i?"rgba(30,58,138,0.3)":"var(--border2)"}`,borderRadius:13,overflow:"hidden",cursor:"pointer",transition:"border-color var(--tr)",transitionDelay:`${i*0.04}s`,boxShadow:faq===i?"0 4px 16px rgba(30,58,138,0.08)":"0 2px 8px rgba(43,45,66,0.05)" }}>
                 <div style={{ padding:"18px 22px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,fontSize:15,fontWeight:600,color:faq===i?"var(--accent-deep)":"var(--navy)",fontFamily:"'Plus Jakarta Sans', sans-serif" }}>
                   {f.q}
                   <span style={{ width:28,height:28,borderRadius:8,background:faq===i?"rgba(30,58,138,0.08)":"rgba(43,45,66,0.05)",display:"flex",alignItems:"center",justifyContent:"center",color:faq===i?"var(--accent)":"var(--muted2)",flexShrink:0,transition:"transform var(--tr),background var(--tr)",transform:faq===i?"rotate(180deg)":"none" }}>
@@ -1021,7 +1126,7 @@ export default function LandingPage({ user, onLogin, onInvite, onShowDashboard, 
       </section>
 
       {/* CTA */}
-      <section style={{ padding:"110px 64px",textAlign:"center",position:"relative",overflow:"hidden",background:"var(--navy)" }}>
+      <section style={{ padding:"110px 64px",textAlign:"center",position:"relative",overflow:"hidden",background:"var(--brand-dark)" }}>
         <div style={{ position:"absolute",top:-80,left:"25%",width:800,height:700,background:"radial-gradient(circle, rgba(30,58,138,0.12) 0%, transparent 70%)",pointerEvents:"none",zIndex:0 }} />
         <div style={{ position:"absolute",bottom:"10%",right:"-5%",width:500,height:500,background:"radial-gradient(circle, rgba(141,153,174,0.08) 0%, transparent 70%)",pointerEvents:"none",zIndex:0 }} />
         <div style={{ position:"relative",zIndex:1 }}>

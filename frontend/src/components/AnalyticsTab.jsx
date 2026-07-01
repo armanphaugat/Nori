@@ -498,7 +498,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>Query Trends</h3>
-              <p style={{ fontSize: 12, color: "var(--text-s)" }}>Daily query volume over the last 30 days</p>
+              <p style={{ fontSize: 12, color: "var(--muted)" }}>Daily query volume over the last 30 days</p>
             </div>
             <Btn onClick={() => loadAnalytics(guildId)} variant="ghost" style={{ padding: 6, minHeight: 30, minWidth: 30 }}>
               <Icon name="refresh" size={14} />
@@ -508,66 +508,129 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
           <div style={{ width: "100%", height: 240 }}>
             {history.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={history} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                <AreaChart data={history} margin={{ top: 12, right: 12, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.2}/>
-                      <stop offset="95%" stopColor="var(--accent)" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.35}/>
+                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="colorAnswered" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--success)" stopOpacity={0.2}/>
-                      <stop offset="95%" stopColor="var(--success)" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#22c55e" stopOpacity={0.25}/>
+                      <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(15,15,15,0.04)" />
-                  <XAxis dataKey="day" tick={{ fontSize: 10.5, fill: "var(--text-s)" }} stroke="rgba(15,15,15,0.1)" />
-                  <YAxis tick={{ fontSize: 10.5, fill: "var(--text-s)" }} stroke="rgba(15,15,15,0.1)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={1} />
+                  <XAxis
+                    dataKey="day"
+                    tick={{ fontSize: 10, fill: "var(--muted)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                    axisLine={{ stroke: "var(--border2)" }}
+                    tickLine={{ stroke: "var(--border)" }}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: "var(--muted)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                    axisLine={{ stroke: "var(--border2)" }}
+                    tickLine={{ stroke: "var(--border)" }}
+                    allowDecimals={false}
+                  />
                   <ChartTooltip
                     contentStyle={{
-                      background: "var(--bg)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "var(--r-md)",
+                      background: "var(--surface)",
+                      border: "1px solid var(--border2)",
+                      borderRadius: 10,
                       fontSize: 12.5,
                       fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+                      color: "var(--text)",
                     }}
+                    labelStyle={{ fontWeight: 700, marginBottom: 4 }}
+                    itemStyle={{ color: "var(--muted)" }}
                   />
-                  <Area type="monotone" name="Total Queries" dataKey="total" stroke="var(--accent)" strokeWidth={2} fillOpacity={1} fill="url(#colorTotal)" />
-                  <Area type="monotone" name="Answered Queries" dataKey="answered" stroke="var(--success)" strokeWidth={1.5} fillOpacity={1} fill="url(#colorAnswered)" />
+                  <Area
+                    type="monotone"
+                    name="Total Queries"
+                    dataKey="total"
+                    stroke="#3B82F6"
+                    strokeWidth={2.5}
+                    fillOpacity={1}
+                    fill="url(#colorTotal)"
+                    dot={false}
+                    activeDot={{ r: 5, fill: "#3B82F6", stroke: "var(--surface)", strokeWidth: 2 }}
+                  />
+                  <Area
+                    type="monotone"
+                    name="Answered"
+                    dataKey="answered"
+                    stroke="#22c55e"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorAnswered)"
+                    dot={false}
+                    activeDot={{ r: 4, fill: "#22c55e", stroke: "var(--surface)", strokeWidth: 2 }}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--text-s)", fontSize: 13 }}>
-                Insufficient trend logs to render graph.
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 10 }}>
+                <Icon name="show_chart" size={28} style={{ color: "var(--muted)", opacity: 0.4 }} />
+                <span style={{ color: "var(--muted)", fontSize: 13 }}>Insufficient trend data to render graph</span>
               </div>
             )}
           </div>
+
+          {/* Legend */}
+          {history.length > 0 && (
+            <div style={{ display: "flex", gap: 18, justifyContent: "center", fontSize: 11.5, color: "var(--muted)", fontWeight: 500 }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ width: 10, height: 10, borderRadius: 3, background: "#3B82F6", display: "inline-block" }} />
+                Total Queries
+              </span>
+              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ width: 10, height: 10, borderRadius: 3, background: "#22c55e", display: "inline-block" }} />
+                Answered
+              </span>
+            </div>
+          )}
         </Card>
 
         {/* Heatmap Grid Card */}
-        <Card style={{ padding: 24, display: "flex", flexDirection: "column", gap: 18 }}>
+        <Card style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
           <div>
             <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", fontFamily: "'Outfit', sans-serif" }}>Query Heatmap</h3>
-            <p style={{ fontSize: 12, color: "var(--text-s)" }}>Analysis of query volume by weekday and hour of day</p>
+            <p style={{ fontSize: 12, color: "var(--muted)" }}>Analysis of query volume by weekday and hour of day</p>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 14, flex: 1, justifyContent: "center" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, flex: 1 }}>
             {/* Heatmap Matrix Grid */}
-            <div style={{ display: "flex", gap: 8, width: "100%" }}>
+            <div style={{ display: "flex", gap: 6, width: "100%", alignItems: "flex-start" }}>
               {/* Day Labels Column */}
-              <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", height: 136, fontSize: 10.5, color: "var(--text-s)", fontWeight: 500, paddingRight: 4, width: 32 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 3, fontSize: 11, color: "var(--muted)", fontWeight: 600, paddingRight: 6, width: 30, flexShrink: 0 }}>
                 {WEEKDAYS_SHORT.map((day, i) => (
-                  <div key={i} style={{ height: 16, display: "flex", alignItems: "center" }}>{day}</div>
+                  <div key={i} style={{ height: 20, display: "flex", alignItems: "center", letterSpacing: "0.02em" }}>{day}</div>
                 ))}
               </div>
 
               {/* Heatmap Grid Array */}
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 3 }}>
                 {heatmapMatrix.map((row, d) => (
-                  <div key={d} style={{ display: "flex", gap: 4, height: 16 }}>
+                  <div key={d} style={{ display: "flex", gap: 2, height: 20 }}>
                     {row.map((count, h) => {
-                      const opacity = heatmapMax > 0 ? (count / heatmapMax) * 0.9 + (count > 0 ? 0.1 : 0) : 0;
+                      const isHovered = hoveredCell?.day === d && hoveredCell?.hour === h;
+                      const intensity = heatmapMax > 0 ? count / heatmapMax : 0;
                       const hasCount = count > 0;
+
+                      // Color: empty=surface-2, has data=accent with intensity
+                      let bg;
+                      if (!hasCount) {
+                        bg = "var(--surface-2)";
+                      } else if (intensity < 0.33) {
+                        bg = "rgba(59,130,246,0.25)";
+                      } else if (intensity < 0.66) {
+                        bg = "rgba(59,130,246,0.55)";
+                      } else {
+                        bg = "rgba(59,130,246,0.85)";
+                      }
+
                       return (
                         <div
                           key={h}
@@ -576,13 +639,14 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
                           style={{
                             flex: 1,
                             borderRadius: 3,
-                            background: hasCount ? `rgba(30,58,138, ${opacity})` : "rgba(15,15,15,0.03)",
-                            border: `1px solid ${hasCount ? "rgba(30,58,138,0.15)" : "transparent"}`,
+                            background: bg,
+                            border: isHovered ? "1px solid rgba(59,130,246,0.7)" : (hasCount ? "1px solid rgba(59,130,246,0.2)" : "1px solid transparent"),
                             cursor: "pointer",
                             transition: "all 0.1s ease",
-                            transform: hoveredCell?.day === d && hoveredCell?.hour === h ? "scale(1.25)" : "none",
-                            boxShadow: hoveredCell?.day === d && hoveredCell?.hour === h ? "0 0 6px rgba(30,58,138,0.3)" : "none",
-                            zIndex: hoveredCell?.day === d && hoveredCell?.hour === h ? 5 : 1,
+                            transform: isHovered ? "scaleY(1.3)" : "none",
+                            boxShadow: isHovered && hasCount ? "0 0 8px rgba(59,130,246,0.5)" : "none",
+                            zIndex: isHovered ? 5 : 1,
+                            position: "relative",
                           }}
                         />
                       );
@@ -593,7 +657,7 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
             </div>
 
             {/* Time Labels Row */}
-            <div style={{ display: "flex", fontSize: 9.5, color: "var(--text-m)", fontWeight: 700, paddingLeft: 40, justifyContent: "space-between", letterSpacing: "0.03em" }}>
+            <div style={{ display: "flex", fontSize: 10, color: "var(--muted)", fontWeight: 600, paddingLeft: 36, justifyContent: "space-between", letterSpacing: "0.02em" }}>
               <span>12 AM</span>
               <span>6 AM</span>
               <span>12 PM</span>
@@ -601,21 +665,33 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
               <span>11 PM</span>
             </div>
 
+            {/* Intensity Legend */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, paddingLeft: 36, fontSize: 10, color: "var(--muted)", fontWeight: 500 }}>
+              <span>Less</span>
+              {[0, 0.2, 0.4, 0.65, 0.9].map((op, i) => (
+                <div key={i} style={{
+                  width: 12, height: 12, borderRadius: 2,
+                  background: op === 0 ? "var(--surface-2)" : `rgba(59,130,246,${op})`,
+                  border: op === 0 ? "1px solid var(--border2)" : "none",
+                }} />
+              ))}
+              <span>More</span>
+            </div>
+
             {/* Dynamic Cell Inspector Bar */}
             <div style={{
-              background: "var(--bg-s)",
+              background: "var(--surface-2)",
               padding: "10px 14px",
               borderRadius: "var(--r-sm)",
               border: "1px solid var(--border)",
-              marginTop: 6,
               minHeight: 38,
               display: "flex",
-              alignItems: "center"
+              alignItems: "center",
             }}>
               <div style={{
                 minHeight: 20,
                 fontSize: 12.5,
-                color: "var(--text-s)",
+                color: "var(--muted)",
                 fontStyle: hoveredCell ? "normal" : "italic",
                 display: "flex",
                 alignItems: "center",
@@ -624,14 +700,14 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
               }}>
                 {hoveredCell ? (
                   <>
-                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: hoveredCell.count > 0 ? "var(--accent)" : "var(--text-m)", display: "inline-block" }} />
+                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: hoveredCell.count > 0 ? "#3B82F6" : "var(--muted)", display: "inline-block", flexShrink: 0 }} />
                     <span style={{ color: "var(--text)" }}>
-                      <strong>{WEEKDAYS[hoveredCell.day]}s</strong> at <strong>{formatHour(hoveredCell.hour)}</strong>: <strong>{hoveredCell.count} query{hoveredCell.count === 1 ? "" : "ies"}</strong> logged.
+                      <strong>{WEEKDAYS[hoveredCell.day]}s</strong> at <strong>{formatHour(hoveredCell.hour)}</strong>: <strong style={{ color: hoveredCell.count > 0 ? "#3B82F6" : "var(--muted)" }}>{hoveredCell.count} {hoveredCell.count === 1 ? "query" : "queries"}</strong> logged
                     </span>
                   </>
                 ) : (
                   <>
-                    <Icon name="info" size={13} style={{ color: "var(--text-m)" }} />
+                    <Icon name="info" size={13} style={{ color: "var(--muted)", opacity: 0.6 }} />
                     <span>Hover over cells in the grid to analyze hourly search metrics.</span>
                   </>
                 )}
@@ -640,32 +716,29 @@ export default function AnalyticsTab({ guildId, onGoToOverview }) {
 
             {/* Recommended Sync Window Callout */}
             <div style={{
-              background: "rgba(26, 122, 74, 0.05)",
-              border: "1px solid rgba(26, 122, 74, 0.15)",
+              background: "rgba(34,197,94,0.06)",
+              border: "1px solid rgba(34,197,94,0.20)",
               padding: "12px 14px",
               borderRadius: "var(--r-sm)",
               display: "flex",
               alignItems: "flex-start",
               gap: 10,
-              marginTop: 10
             }}>
               <div style={{
-                width: 24,
-                height: 24,
-                borderRadius: "50%",
-                background: "rgba(26, 122, 74, 0.12)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-                marginTop: 1
+                width: 26, height: 26, borderRadius: "50%",
+                background: "rgba(34,197,94,0.15)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0, marginTop: 1,
               }}>
-                <Icon name="schedule" size={13} style={{ color: "var(--success)" }} />
+                <Icon name="schedule" size={14} style={{ color: "#22c55e" }} />
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--success)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 3 }}>Recommended Sync Window</div>
-                <div style={{ fontSize: 12.5, color: "var(--text-s)", lineHeight: 1.5, fontWeight: 300 }}>
-                  Based on member search activity, your server is quietest between <strong style={{ color: "var(--text)", fontWeight: 600 }}>{startHourStr}</strong> and <strong style={{ color: "var(--text)", fontWeight: 600 }}>{endHourStr}</strong> (local time). We recommend scheduling document uploads, crawls, or sync updates during this window to minimize user impact.
+                <div style={{ fontSize: 11.5, fontWeight: 700, color: "#22c55e", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Recommended Sync Window</div>
+                <div style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.55, fontWeight: 400 }}>
+                  Based on member search activity, your server is quietest between{" "}
+                  <strong style={{ color: "var(--text)", fontWeight: 700 }}>{startHourStr}</strong> and{" "}
+                  <strong style={{ color: "var(--text)", fontWeight: 700 }}>{endHourStr}</strong>{" "}
+                  (local time). We recommend scheduling document uploads, crawls, or sync updates during this window to minimize user impact.
                 </div>
               </div>
             </div>

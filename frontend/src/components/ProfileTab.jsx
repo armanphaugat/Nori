@@ -105,7 +105,7 @@ export default function ProfileTab({
       100% { transform: scale(1); opacity: 1; }
     }
     .profile-card {
-      background: white;
+      background: var(--surface);
       border: 1px solid var(--border2);
       border-radius: var(--r-lg);
       padding: 32px;
@@ -158,7 +158,7 @@ export default function ProfileTab({
       gap: 6px;
     }
     .profile-server-card {
-      background: white;
+      background: var(--surface);
       border: 1.5px solid var(--border);
       border-radius: var(--r-md);
       padding: 16px;
@@ -200,8 +200,8 @@ export default function ProfileTab({
     }
     .profile-server-icon.configured {
       border: 2px solid var(--accent);
-      background: var(--navy);
-      color: white;
+      background: var(--brand-dark);
+      color: #fff;
     }
   `;
 
@@ -229,7 +229,7 @@ export default function ProfileTab({
               />
             ) : (
               <div style={{
-                width: "100%", height: "100%", background: "var(--navy)",
+                width: "100%", height: "100%", background: "var(--brand-dark)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 32, fontWeight: 800, color: "#fff", fontFamily: "'Outfit', sans-serif"
               }}>
@@ -341,7 +341,7 @@ export default function ProfileTab({
                           </div>
                           <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 4 }}>
                             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e" }} />
-                            <span style={{ fontSize: 11.5, color: "#16a34a", fontWeight: 650 }}>Bot Configured</span>
+                            <span style={{ fontSize: 11.5, color: "#22c55e", fontWeight: 650 }}>Bot Configured</span>
                           </div>
                         </div>
                         <Icon name="chevron_right" size={16} style={{ color: "var(--slate)" }} />

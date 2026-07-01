@@ -182,6 +182,7 @@ const SearchableChannelSelect = ({ value, onChange, placeholder, list, style }) 
 
 export default function ChannelsTab({
   guildId, guildName: initialGuildName = "",
+  guildIcon: initialGuildIcon = null,
   onGoToOverview, isPaused, togglingPause, onTogglePause,
 }) {
   const [channels, setChannels]               = useState([]);
@@ -197,9 +198,15 @@ export default function ChannelsTab({
   const [selectedChansToAdd, setSelectedChansToAdd] = useState([]);
   const [selectedModChanToAdd, setSelectedModChanToAdd] = useState(null);
   const [guildName, setGuildName]             = useState(initialGuildName || "Discord Server");
+  const [guildIcon, setGuildIcon]             = useState(initialGuildIcon);
   const [creatingCategory, setCreatingCategory] = useState(false);
   const [supportSetupMode, setSupportSetupMode] = useState("new");
   const [selectedSupportChan, setSelectedSupportChan] = useState("");
+
+  const getServerIconUrl = (id, icon) => {
+    if (!id || !icon) return null;
+    return icon.startsWith("http") ? icon : `https://cdn.discordapp.com/icons/${id}/${icon}.png`;
+  };
 
   // ── Web Search State ──
   const [webSearchEnabled, setWebSearchEnabled]   = useState(false);
@@ -280,6 +287,7 @@ export default function ChannelsTab({
     setLoaded(false); setChannels([]); setDiscordChannels([]); setModChannel(null); setStatus(null);
     setSupportSetupMode("new"); setSelectedSupportChan("");
     setGuildName(initialGuildName || "Discord Server");
+    setGuildIcon(initialGuildIcon);
     setChannelConfigs([]); setConfigStatus(null); setShowAddConfig(false);
     setWebSearchEnabled(false);
     if (guildId) { load(guildId); loadChannelConfigs(guildId); }
@@ -289,7 +297,10 @@ export default function ChannelsTab({
     if (initialGuildName) {
       setGuildName(initialGuildName);
     }
-  }, [initialGuildName]);
+    if (initialGuildIcon !== undefined) {
+      setGuildIcon(initialGuildIcon);
+    }
+  }, [initialGuildName, initialGuildIcon]);
 
   useEffect(() => {
     const h = (e) => {
@@ -522,22 +533,39 @@ export default function ChannelsTab({
       {/* ── Server info banner ── */}
       {guildId && loaded && (
         <div style={{
-          display: "flex", alignItems: "center", gap: 14,
-          padding: "14px 20px",
+          display: "flex", alignItems: "center", gap: 16,
+          padding: "16px 20px",
           background: "var(--surface)", border: "1px solid var(--border2)",
           borderRadius: "var(--r-lg)", marginBottom: 20,
           boxShadow: "var(--shadow-sm)",
         }}>
-          <div style={{
-            width: 42, height: 42, borderRadius: "50%",
-            background: "var(--navy)",
-            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-          }}>
-            <Icon name="tag" size={20} style={{ color: "#fff" }} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--navy)", marginBottom: 2 }}>{guildName}</div>
-            <div style={{ fontSize: 12, color: "var(--muted)" }}>Server ID: {guildId}</div>
+          {/* Server image */}
+          {getServerIconUrl(guildId, guildIcon) ? (
+            <img
+              src={getServerIconUrl(guildId, guildIcon)}
+              alt={guildName}
+              style={{
+                width: 48, height: 48, borderRadius: "30%",
+                objectFit: "cover", flexShrink: 0,
+                border: "2px solid var(--border2)",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.10)",
+              }}
+            />
+          ) : (
+            <div style={{
+              width: 48, height: 48, borderRadius: "30%",
+              background: "linear-gradient(135deg, var(--accent-deep) 0%, var(--accent) 100%)",
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+              fontSize: 18, fontWeight: 700, color: "#fff",
+              fontFamily: "'Outfit', sans-serif",
+              boxShadow: "0 2px 8px var(--accent-glow)",
+            }}>
+              {(guildName || "S").slice(0, 1).toUpperCase()}
+            </div>
+          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "var(--navy)", marginBottom: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{guildName}</div>
+            <div style={{ fontSize: 11.5, color: "var(--muted)", fontFamily: "'DM Mono', monospace", letterSpacing: "0.02em" }}>ID: {guildId}</div>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <Tag variant={isPaused ? "warn" : "success"}>
@@ -674,7 +702,7 @@ export default function ChannelsTab({
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 <div style={{
                   width: 46, height: 46, borderRadius: 12,
-                  background: "var(--navy)",
+                  background: "var(--brand-dark)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   boxShadow: "0 4px 14px rgba(43,45,66,0.2)", flexShrink: 0,
                 }}>
@@ -691,7 +719,7 @@ export default function ChannelsTab({
               </div>
 
               <div style={{
-                padding: "18px 20px", background: "rgba(255,255,255,0.55)",
+                padding: "18px 20px", background: "var(--surface-2)",
                 border: "1px solid var(--border)", borderRadius: "var(--r-md)",
                 display: "flex", flexDirection: "column", gap: 14,
               }}>

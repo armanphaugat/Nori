@@ -11,7 +11,7 @@ function BotAvatar({ size = 32, showStatus = true }) {
       flexShrink: 0,
       borderRadius: "50%",
       border: "1.5px solid var(--accent)",
-      background: "#ffffff",
+      background: "var(--surface)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
@@ -37,7 +37,7 @@ function BotAvatar({ size = 32, showStatus = true }) {
           height: Math.max(8, size * 0.28),
           borderRadius: "50%",
           background: "#22c55e",
-          border: "2px solid #fff",
+          border: "2px solid var(--surface)",
           boxShadow: "0 0 8px rgba(34,197,94,0.6)",
           animation: "pulse-dot 2.5s infinite"
         }} />
@@ -445,7 +445,7 @@ export default function ChatWidget({ guildId, guildName }) {
           <div style={{
             flex: 1, overflowY: "auto", padding: "22px 20px",
             display: "flex", flexDirection: "column", gap: 18,
-            background: "linear-gradient(to bottom, #f8fafd 0%, #f4f6fa 100%)",
+            background: "var(--bg)",
           }}>
             
 
@@ -474,8 +474,8 @@ export default function ChatWidget({ guildId, guildName }) {
                     <BotAvatar size={32} showStatus={false} />
                     <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
                       <div style={{
-                        background: msg.error ? "rgba(239,35,60,0.04)" : "#ffffff",
-                        border: msg.error ? "1px solid rgba(239,35,60,0.2)" : "1px solid rgba(43,45,66,0.08)",
+                        background: msg.error ? "rgba(239,35,60,0.04)" : "var(--surface)",
+                        border: msg.error ? "1px solid rgba(239,35,60,0.2)" : "1px solid var(--border)",
                         borderRadius: "4px 18px 18px 18px",
                         padding: "12px 18px",
                         fontSize: 13.5,
@@ -539,7 +539,7 @@ export default function ChatWidget({ guildId, guildName }) {
                 <BotAvatar size={32} showStatus={false} />
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   <div style={{
-                    background: "#ffffff", border: "1px solid rgba(43,45,66,0.08)",
+                    background: "var(--surface)", border: "1px solid var(--border)",
                     borderRadius: "4px 18px 18px 18px",
                     padding: "12px 18px", display: "flex", gap: 4, alignItems: "center",
                     boxShadow: "0 3px 12px rgba(43,45,66,0.03)",
@@ -562,7 +562,7 @@ export default function ChatWidget({ guildId, guildName }) {
           <div style={{
             padding: "14px 20px 18px",
             borderTop: "1px solid rgba(43,45,66,0.08)",
-            background: "#ffffff",
+            background: "var(--surface)",
             flexShrink: 0,
           }}>
             <div style={{
@@ -576,10 +576,10 @@ export default function ChatWidget({ guildId, guildName }) {
               onFocusCapture={e => {
                 e.currentTarget.style.borderColor = "var(--accent)";
                 e.currentTarget.style.boxShadow = "0 0 0 4px var(--accent-dim)";
-                e.currentTarget.style.background = "#ffffff";
+                e.currentTarget.style.background = "var(--surface)";
               }}
               onBlurCapture={e => {
-                e.currentTarget.style.borderColor = "rgba(43,45,66,0.08)";
+                e.currentTarget.style.borderColor = "var(--border)";
                 e.currentTarget.style.boxShadow = "none";
                 e.currentTarget.style.background = "var(--surface-2)";
               }}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { API_BASE } from "../utils/api.js";
+import { useTheme } from "./Common.jsx";
 
 function Icon({ name, size = 20, fill = 0, style = {} }) {
   return (
@@ -122,6 +123,72 @@ const CSS = `
   }
   .ripple-dot { position: relative; }
 
+  /* ────── DARK MODE OVERRIDES ────── */
+  [data-theme="dark"] {
+    --navy:     #E2E8F0;
+    --navy-mid: #CBD5E1;
+    --slate:    #94A3B8;
+    --light:    #1E293B;
+    --bg:       #0F172A;
+    --surface1: #1E293B;
+    --surface2: #263347;
+    --surface3: #2D3D55;
+    --surface4: #354560;
+    --border:   rgba(226,232,240,0.10);
+    --border2:  rgba(226,232,240,0.20);
+    --text:     #E2E8F0;
+    --muted:    #94A3B8;
+    --muted2:   rgba(148,163,184,0.65);
+    --accent:   #3B82F6;
+    --accent-deep: #60A5FA;
+    --accent-dim:  rgba(59,130,246,0.15);
+    --accent-glow: rgba(59,130,246,0.25);
+  }
+  [data-theme="dark"] body {
+    background: #0F172A;
+    color: #E2E8F0;
+  }
+  [data-theme="dark"] .tier-card {
+    background: var(--surface1);
+  }
+  [data-theme="dark"] .toggle-pill {
+    background: var(--surface2);
+    border-color: var(--border2);
+  }
+  [data-theme="dark"] .toggle-pill button.active {
+    background: var(--brand-dark);
+  }
+  [data-theme="dark"] .nav-link:hover {
+    color: var(--navy);
+    background: rgba(226,232,240,0.08);
+  }
+  [data-theme="dark"] .btn-sm:hover {
+    background: #E2E8F0 !important;
+    color: #0F172A !important;
+  }
+  [data-theme="dark"] .btn-ghost:hover {
+    background: rgba(226,232,240,0.08) !important;
+    color: #E2E8F0 !important;
+  }
+  [data-theme="dark"] .water-bg {
+    opacity: 0.025;
+    background-image:
+      linear-gradient(rgba(226,232,240,0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(226,232,240,0.07) 1px, transparent 1px);
+  }
+  [data-theme="dark"] .bloom {
+    background: radial-gradient(circle, rgba(59,130,246,0.07) 0%, transparent 70%);
+  }
+  [data-theme="dark"] .bloom-slate {
+    background: radial-gradient(circle, rgba(148,163,184,0.07) 0%, transparent 70%);
+  }
+  [data-theme="dark"] .faq-item {
+    background: var(--surface1);
+  }
+  [data-theme="dark"] .compare-row:hover td {
+    background: rgba(226,232,240,0.04) !important;
+  }
+
   .nav-link:hover { color: var(--navy); background: rgba(43,45,66,0.06); }
   .btn-sm:hover { background: var(--navy) !important; color: white !important; box-shadow: 0 0 22px var(--slate-glow) !important; }
   .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 0 36px var(--accent-glow) !important; }
@@ -130,7 +197,7 @@ const CSS = `
   .tier-card {
     border-radius: 16px;
     border: 1px solid var(--border2);
-    background: white;
+    background: var(--surface1);
     display: flex;
     flex-direction: column;
     transition: all 0.3s ease;
@@ -152,7 +219,7 @@ const CSS = `
   .toggle-pill {
     display: flex;
     align-items: center;
-    background: white;
+    background: var(--surface1);
     border: 1px solid var(--border2);
     border-radius: 99px;
     padding: 4px;
@@ -209,7 +276,7 @@ const CSS = `
   }
 
   .faq-item {
-    background: white;
+    background: var(--surface1);
     border: 1px solid var(--border2);
     border-radius: 13px;
     overflow: hidden;
@@ -415,27 +482,48 @@ export default function PricingPage({
   onShowPrivacy,
   onShowTerms
 }) {
-  const [annual, setAnnual] = useState(false);
+  const { dark, setDark } = useTheme();
   const [faq, setFaq] = useState(null);
+  const [billingCycle, setBillingCycle] = useState("annual");
   const [scrolled, setScrolled] = useState(false);
+
+  const colorMap = {
+    red: { 
+      bg: dark ? "rgba(59,130,246,0.15)" : "rgba(30,58,138,0.08)", 
+      border: dark ? "rgba(59,130,246,0.3)" : "rgba(30,58,138,0.25)", 
+      text: dark ? "#60A5FA" : "#1E3A8A",
+      icon: dark ? "#60A5FA" : "#1E3A8A"
+    },
+    slate: { 
+      bg: dark ? "rgba(148,163,184,0.15)" : "rgba(141,153,174,0.14)", 
+      border: dark ? "rgba(148,163,184,0.3)" : "rgba(141,153,174,0.32)", 
+      text: dark ? "#94A3B8" : "#5a6480",
+      icon: dark ? "#94A3B8" : "#5a6480"
+    },
+    blue: { 
+      bg: dark ? "rgba(59,130,246,0.15)" : "rgba(56,133,220,0.09)", 
+      border: dark ? "rgba(59,130,246,0.3)" : "rgba(56,133,220,0.28)", 
+      text: dark ? "#3B82F6" : "#1a5fab",
+      icon: dark ? "#3B82F6" : "#1a5fab"
+    },
+    navy: { 
+      bg: dark ? "rgba(148,163,184,0.15)" : "rgba(43,45,66,0.07)", 
+      border: dark ? "rgba(148,163,184,0.3)" : "rgba(43,45,66,0.22)", 
+      text: dark ? "#E2E8F0" : "#2B2D42",
+      icon: dark ? "#E2E8F0" : "#2B2D42"
+    },
+  };
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
-    const fn = () => setScrolled(window.scrollY > 50);
+    const fn = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", fn);
     return () => window.removeEventListener("scroll", fn);
   }, []);
 
-  const getPrice = (tier) => {
-    if (tier.enterprise) return null;
-    if (tier.monthlyPrice === 0) return 0;
-    return annual ? tier.yearlyPrice : tier.monthlyPrice;
-  };
-
-  const getSavings = (tier) => {
-    if (!tier.monthlyPrice || tier.enterprise) return null;
-    const saved = (tier.monthlyPrice - tier.yearlyPrice) * 12;
-    return saved > 0 ? saved : null;
+  const navBg = (scrolled, dark) => {
+    if (dark) return scrolled ? "rgba(15,23,42,0.97)" : "rgba(15,23,42,0.85)";
+    return scrolled ? "rgba(237,242,244,0.97)" : "rgba(237,242,244,0.82)";
   };
 
   return (
@@ -448,9 +536,9 @@ export default function PricingPage({
         position:"fixed",top:0,left:0,right:0,zIndex:200,height:64,
         display:"flex",alignItems:"center",justifyContent:"space-between",
         padding:"0 64px",
-        background: scrolled ? "rgba(237,242,244,0.97)" : "rgba(237,242,244,0.82)",
+        background: navBg(scrolled, dark),
         backdropFilter:"blur(20px)",
-        borderBottom:`1px solid ${scrolled ? "rgba(43,45,66,0.15)" : "var(--border)"}`,
+        borderBottom:`1px solid ${scrolled ? (dark ? "rgba(226,232,240,0.12)" : "rgba(43,45,66,0.15)") : "var(--border)"}`,
         transition:"all 0.3s ease",
       }}>
         <div onClick={onBack} style={{ textDecoration:"none",display:"flex",alignItems:"center",gap:12,cursor:"pointer" }}>
@@ -461,7 +549,29 @@ export default function PricingPage({
   />
   <span style={{ fontFamily:"'Outfit', sans-serif",fontWeight:600,fontSize:22,color:"var(--navy)",letterSpacing:"0.01em" }}>Nori</span>
 </div>
-        <div style={{ display:"flex",alignItems:"center",gap:12 }}>
+        <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+          {/* Dark mode toggle */}
+          <button
+            onClick={() => {
+              const next = !dark;
+              setDark(next);
+              localStorage.setItem("nori_dark_mode", String(next));
+            }}
+            title={dark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            style={{
+              display:"flex", alignItems:"center", justifyContent:"center",
+              width:36, height:36, borderRadius:8,
+              border:"1.5px solid var(--border2)",
+              background: dark ? "rgba(226,232,240,0.08)" : "rgba(43,45,66,0.06)",
+              cursor:"pointer", transition:"all var(--tr)",
+              flexShrink:0,
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize:18, color: dark ? "#F59E0B" : "var(--navy)", lineHeight:1, display:"inline-flex" }}>
+              {dark ? "light_mode" : "dark_mode"}
+            </span>
+          </button>
+
           {/* Menu links - hidden below 900px */}
           <div className="hide900" style={{ display:"flex",alignItems:"center",gap:2 }}>
             <button
@@ -508,10 +618,10 @@ export default function PricingPage({
           {/* Billing toggle */}
           <div className="a3" style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:14,marginBottom:16 }}>
             <div className="toggle-pill">
-              <button className={!annual ? "active" : ""} onClick={() => setAnnual(false)}>Monthly</button>
-              <button className={annual ? "active" : ""} onClick={() => setAnnual(true)}>Annual</button>
+              <button className={billingCycle !== "annual" ? "active" : ""} onClick={() => setBillingCycle("monthly")}>Monthly</button>
+              <button className={billingCycle === "annual" ? "active" : ""} onClick={() => setBillingCycle("annual")}>Annual</button>
             </div>
-            {annual && (
+            {billingCycle === "annual" && (
               <span style={{ display:"inline-flex",alignItems:"center",gap:6,background:"rgba(30,58,138,0.08)",border:"1px solid rgba(30,58,138,0.22)",padding:"5px 12px",borderRadius:99,fontSize:12,fontWeight:700,color:"var(--accent-deep)" }}>
                 <Icon name="local_offer" size={13} fill={1} /> Save up to 25%
               </span>
@@ -526,8 +636,8 @@ export default function PricingPage({
         <div style={{ maxWidth:1300,margin:"0 auto" }}>
           <div className="tiers-grid" style={{ display:"grid",gridTemplateColumns:`repeat(${TIERS.length},1fr)`,gap:16,alignItems:"stretch" }}>
             {TIERS.map((tier, i) => {
-              const price = getPrice(tier);
-              const savings = getSavings(tier);
+              const price = billingCycle === "annual" ? tier.yearlyPrice : tier.monthlyPrice;
+              const savings = tier.monthlyPrice && tier.yearlyPrice ? (tier.monthlyPrice - tier.yearlyPrice) * 12 : null;
               const c = colorMap[tier.color] || colorMap.navy;
               const isFeatured = tier.featured;
               const isEnterprise = tier.enterprise;
@@ -557,7 +667,7 @@ export default function PricingPage({
                         fontWeight:800,
                         letterSpacing:"0.06em",
                         textTransform:"uppercase",
-                        background: isFeatured ? "var(--accent)" : isEnterprise ? "var(--navy)" : c.bg,
+                        background: isFeatured ? "var(--accent)" : isEnterprise ? "var(--brand-dark)" : c.bg,
                         color: (isFeatured || isEnterprise) ? "white" : c.text,
                         border: (isFeatured || isEnterprise) ? "none" : `1px solid ${c.border}`,
                       }}>
@@ -599,8 +709,8 @@ export default function PricingPage({
                             <span style={{ fontSize:13,color:"var(--muted2)",marginBottom:5 }}>/mo</span>
                           </div>
                           <div style={{ fontSize:11.5,color:"var(--muted2)",marginTop:5 }}>
-                            {annual ? `Billed $${price * 12}/yr` : "Billed monthly"}
-                            {annual && savings && (
+                            {billingCycle === "annual" ? `Billed $${price * 12}/yr` : "Billed monthly"}
+                            {billingCycle === "annual" && savings && (
                               <span style={{ marginLeft:6,color:"var(--accent-deep)",fontWeight:700 }}>· Save ${savings}</span>
                             )}
                           </div>
@@ -649,14 +759,10 @@ export default function PricingPage({
                           : () => {
                               if (!user) {
                                 localStorage.setItem("pending_checkout_plan", tier.id);
-                                if (activeGuildId) {
-                                  localStorage.setItem("pending_checkout_guild_id", activeGuildId);
-                                }
                                 onLogin();
                                 return;
                               }
                               const qs = new URLSearchParams();
-                              if (activeGuildId) qs.append("guild_id", activeGuildId);
                               qs.append("plan", tier.id);
                               window.location.href = `${API_BASE}/patreon/checkout?${qs.toString()}`;
                             }
@@ -675,8 +781,8 @@ export default function PricingPage({
                         ...(tier.ctaStyle === "primary"
                           ? { background:"var(--accent)",color:"white",border:"none",boxShadow:"0 4px 18px rgba(30,58,138,0.3)" }
                           : tier.ctaStyle === "dark"
-                          ? { background:"var(--navy)",color:"white",border:"none",boxShadow:"0 4px 14px rgba(43,45,66,0.2)" }
-                          : { background:"white",color:"var(--navy)",border:"1px solid var(--border2)" }
+                          ? { background:"var(--brand-dark)",color:"white",border:"none",boxShadow:"0 4px 14px rgba(43,45,66,0.2)" }
+                          : { background:"var(--surface1)",color:"var(--navy)",border:"1px solid var(--border2)" }
                         )
                       }}
                     >
@@ -731,7 +837,7 @@ export default function PricingPage({
           <div style={{ borderRadius:16,overflow:"auto",border:"1px solid var(--border2)",boxShadow:"0 4px 24px rgba(43,45,66,0.08)" }}>
             <table style={{ width:"100%",minWidth:720,borderCollapse:"collapse",fontSize:13.5 }}>
               <thead>
-                <tr style={{ background:"var(--navy)" }}>
+                <tr style={{ background:"var(--brand-dark)" }}>
                   <th style={{ padding:"16px 20px",textAlign:"left",fontWeight:600,fontSize:11,letterSpacing:"0.06em",textTransform:"uppercase",color:"rgba(255,255,255,0.45)",borderBottom:"1px solid rgba(255,255,255,0.1)",width:"28%" }}>Feature</th>
                   {["Free","Starter","Pro","Enterprise"].map((h, i) => (
                     <th key={i} style={{ padding:"16px 10px",fontWeight:700,fontSize:11,letterSpacing:"0.05em",textTransform:"uppercase",textAlign:"center",color: h === "Pro" ? "var(--accent)" : "rgba(255,255,255,0.6)",borderBottom: h === "Pro" ? "2px solid var(--accent)" : "1px solid rgba(255,255,255,0.1)",background: h === "Pro" ? "rgba(30,58,138,0.1)" : "transparent" }}>{h}</th>
@@ -741,9 +847,9 @@ export default function PricingPage({
               <tbody>
                 {COMPARE_FEATURES.map((row, i) => (
                   <tr key={i} className="compare-row" style={{ borderBottom:"1px solid var(--border)" }}>
-                    <td style={{ padding:"13px 20px",color:"var(--navy)",fontWeight:500,background: i%2===0 ? "white" : "var(--surface2)" }}>{row.label}</td>
+                    <td style={{ padding:"13px 20px",color:"var(--navy)",fontWeight:500,background: i%2===0 ? "var(--surface1)" : "var(--surface2)" }}>{row.label}</td>
                     {["free","starter","pro","enterprise"].map((plan, j) => (
-                      <td key={j} style={{ padding:"13px 10px",textAlign:"center",background: plan==="pro" ? "rgba(30,58,138,0.02)" : i%2===0 ? "white" : "var(--surface2)" }}>
+                      <td key={j} style={{ padding:"13px 10px",textAlign:"center",background: plan==="pro" ? "rgba(30,58,138,0.02)" : i%2===0 ? "var(--surface1)" : "var(--surface2)" }}>
                         <CellVal v={row[plan]} />
                       </td>
                     ))}
@@ -783,7 +889,7 @@ export default function PricingPage({
       </section>
 
       {/* CTA */}
-      <section style={{ padding:"100px 64px",textAlign:"center",position:"relative",overflow:"hidden",background:"var(--navy)" }}>
+      <section style={{ padding:"100px 64px",textAlign:"center",position:"relative",overflow:"hidden",background:"var(--brand-dark)" }}>
         <div style={{ position:"absolute",top:-80,left:"25%",width:900,height:700,background:"radial-gradient(circle, rgba(30,58,138,0.12) 0%, transparent 70%)",pointerEvents:"none",zIndex:0 }} />
         <div style={{ position:"relative",zIndex:1,maxWidth:760,margin:"0 auto" }}>
           <SectionLabel text="Get Started Free" />

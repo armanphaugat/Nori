@@ -1,4 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState, createContext, useContext } from "react";
+
+// ─── THEME CONTEXT ────────────────────────────────────────────────────────────
+export const ThemeContext = createContext({ dark: false, setDark: () => {} });
+export function useTheme() { return useContext(ThemeContext); }
 
 // ─── GLOBAL STYLES ────────────────────────────────────────────────────────────
 export const GLOBAL_CSS = `
@@ -68,7 +72,76 @@ export const GLOBAL_CSS = `
     --shadow-sm: 0 1px 3px rgba(43,45,66,0.03), 0 1px 2px rgba(43,45,66,0.02);
     --shadow-md: 0 4px 20px -2px rgba(43,45,66,0.05), 0 2px 8px -1px rgba(43,45,66,0.03);
     --shadow-lg: 0 20px 48px -6px rgba(43,45,66,0.08), 0 10px 20px -4px rgba(43,45,66,0.04);
+    /* ── Always-dark brand color (for icon containers, accent strips) ── */
+    --brand-dark:    #2B2D42;
+    --brand-dark-2:  #1a1c2e;
   }
+
+  /* ── Dark Mode ── */
+  [data-theme="dark"] {
+    --navy:          #E2E8F0;
+    --navy-mid:      #CBD5E1;
+    --navy-light:    rgba(226,232,240,0.07);
+    --slate:         #94A3B8;
+    --slate-dim:     rgba(148,163,184,0.18);
+    --light:         #1E293B;
+    --danger:           #F87171;
+    --danger-deep:      #FCA5A5;
+    --danger-dim:       rgba(248,113,113,0.12);
+    --danger-glow:      rgba(248,113,113,0.20);
+    --danger-border:    rgba(248,113,113,0.30);
+
+    --bg:            #0F172A;
+    --surface:       #1E293B;
+    --surface-2:     #263347;
+    --surface-3:     #2D3D55;
+    --surface-4:     #354560;
+
+    --text:          #E2E8F0;
+    --muted:         #94A3B8;
+    --muted2:        rgba(148,163,184,0.65);
+
+    --border:        rgba(226,232,240,0.08);
+    --border2:       rgba(226,232,240,0.16);
+
+    --accent:        #3B82F6;
+    --accent-deep:   #60A5FA;
+    --accent-dim:    rgba(59,130,246,0.15);
+    --accent-glow:   rgba(59,130,246,0.25);
+    --accent-border: rgba(59,130,246,0.30);
+
+    --primary:       #3B82F6;
+    --blue:          #94A3B8;
+    --on-surface-variant: #94A3B8;
+    --outline-variant:    rgba(226,232,240,0.14);
+
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.20), 0 1px 2px rgba(0,0,0,0.15);
+    --shadow-md: 0 4px 20px -2px rgba(0,0,0,0.30), 0 2px 8px -1px rgba(0,0,0,0.20);
+    --shadow-lg: 0 20px 48px -6px rgba(0,0,0,0.40), 0 10px 20px -4px rgba(0,0,0,0.25);
+    /* brand-dark adapts to dark mode — cold premium dark navy */
+    --brand-dark:    #131926;
+    --brand-dark-2:  #0D111A;
+  }
+
+  [data-theme="dark"] body {
+    background: #0F172A;
+    color: #E2E8F0;
+  }
+
+  [data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.25); }
+  [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.45); }
+
+  [data-theme="dark"] .kb-input {
+    background: var(--surface-2);
+    color: var(--text);
+  }
+  [data-theme="dark"] .kb-input option { background: #1E293B; color: var(--text); }
+
+  [data-theme="dark"] .nav-item:hover { background: rgba(59,130,246,0.10); color: var(--accent-deep); }
+  [data-theme="dark"] .nav-item.active { background: var(--accent-dim); color: var(--accent-deep); }
+
+  [data-theme="dark"] .data-table th { background: var(--surface-2); }
+  [data-theme="dark"] .data-table tr:hover td { background: var(--surface-3); color: var(--text); }
 
   /* ── Material Symbols ── */
   .ms {
@@ -200,13 +273,27 @@ export const GLOBAL_CSS = `
   }
 `;
 
-export function GlobalStyles() {
+export function GlobalStyles({ dark }) {
   useEffect(() => {
     const el = document.createElement("style");
     el.textContent = GLOBAL_CSS;
     document.head.appendChild(el);
     return () => document.head.removeChild(el);
   }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (dark) {
+      root.setAttribute("data-theme", "dark");
+      document.body.style.background = "#0F172A";
+      document.body.style.color = "#E2E8F0";
+    } else {
+      root.removeAttribute("data-theme");
+      document.body.style.background = "";
+      document.body.style.color = "";
+    }
+  }, [dark]);
+
   return null;
 }
 

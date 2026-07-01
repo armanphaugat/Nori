@@ -10,7 +10,8 @@ import {
   GlobalStyles, 
   Icon, 
   OnlineDot, 
-  Spinner 
+  Spinner,
+  ThemeContext
 } from "./components/Common.jsx";
 
 import LandingPage from "./components/LandingPage.jsx";
@@ -71,7 +72,9 @@ function Dashboard({
   onLogout,
   onGuildsChange,
   onShowPricing,
-  onShowHome
+  onShowHome,
+  dark,
+  onToggleDark
 }) {
   const getTabFromUrl = () => {
     const params = new URLSearchParams(window.location.search);
@@ -192,7 +195,7 @@ function Dashboard({
   };
 
   return (
-    <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "var(--bg)" }}>
+    <div style={{ display: "flex", height: "100vh", width: "100vw", maxWidth: "100vw", overflow: "hidden", background: "var(--bg)" }}>
       <Sidebar
         tab={tab}
         onTab={changeTab}
@@ -264,6 +267,24 @@ function Dashboard({
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {/* Dark mode toggle */}
+            <button
+              id="dark-mode-toggle"
+              onClick={onToggleDark}
+              title={dark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                width: 36, height: 36, borderRadius: "var(--r-md)",
+                border: "1.5px solid var(--border2)",
+                background: dark ? "var(--surface-3)" : "var(--surface-2)",
+                cursor: "pointer", transition: "all var(--tr)",
+                flexShrink: 0,
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-dim)"; e.currentTarget.style.borderColor = "var(--accent-border)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = dark ? "var(--surface-3)" : "var(--surface-2)"; e.currentTarget.style.borderColor = "var(--border2)"; }}
+            >
+              <Icon name={dark ? "light_mode" : "dark_mode"} size={17} style={{ color: dark ? "#F59E0B" : "var(--navy)" }} />
+            </button>
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
               {/* User Avatar & Dropdown */}
               {user && (
@@ -280,7 +301,7 @@ function Dashboard({
                     {getAvatarUrl(user) ? (
                       <img src={getAvatarUrl(user)} alt={user.username} style={{ width: 28, height: 28, borderRadius: "50%", border: "2px solid var(--border2)", objectFit: "cover" }} />
                     ) : (
-                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--navy)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff" }}>
+                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--brand-dark)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff" }}>
                         {(user.username || "U").slice(0, 2).toUpperCase()}
                       </div>
                     )}
@@ -337,6 +358,7 @@ function Dashboard({
               <ChannelsTab
                 guildId={activeGuildId}
                 guildName={activeGuild?.name}
+                guildIcon={activeGuild?.icon || null}
                 onGoToOverview={onSwitchServer}
                 isPaused={activeGuild?.is_paused}
                 togglingPause={togglingPause}
@@ -462,6 +484,18 @@ export default function App() {
     if (urlView) return urlView;
     return "landing";
   });
+
+  const [dark, setDark] = useState(() => {
+    return localStorage.getItem("nori_dark_mode") === "true";
+  });
+
+  const toggleDark = () => {
+    setDark(d => {
+      const next = !d;
+      localStorage.setItem("nori_dark_mode", String(next));
+      return next;
+    });
+  };
 
   const navigateTo = (newView) => {
     setView(newView);
@@ -759,16 +793,16 @@ export default function App() {
 
   if (booting) {
     return (
-      <>
-        <GlobalStyles />
+      <ThemeContext.Provider value={{ dark, setDark }}>
+        <GlobalStyles dark={dark} />
         <BootScreen />
-      </>
+      </ThemeContext.Provider>
     );
   }
 
   return (
-    <>
-      <GlobalStyles />
+    <ThemeContext.Provider value={{ dark, setDark }}>
+      <GlobalStyles dark={dark} />
       {view === "landing" && (
         <LandingPage
           user={user}
@@ -827,6 +861,8 @@ export default function App() {
           onGuildsChange={handleGuildsChange}
           onShowPricing={() => navigateTo("pricing")}
           onShowHome={() => navigateTo("landing")}
+          dark={dark}
+          onToggleDark={toggleDark}
         />
       )}
       {(view === "privacy" || view === "terms") && (
@@ -835,6 +871,6 @@ export default function App() {
           onBack={() => navigateTo("landing")}
         />
       )}
-    </>
+    </ThemeContext.Provider>
   );
 }
