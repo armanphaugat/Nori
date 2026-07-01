@@ -362,7 +362,7 @@ export default function DocsTab({ guildId, onGoToOverview }) {
                 borderRadius: "var(--r-md)",
                 boxShadow: "var(--shadow-sm)"
               }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, textAlign: "left", background: "white" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, textAlign: "left", background: "var(--surface)" }}>
                   <thead>
                     <tr style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border2)", color: "var(--navy)" }}>
                       <th style={{ padding: "12px 16px", fontWeight: 700 }}>Tier</th>
@@ -382,7 +382,7 @@ export default function DocsTab({ guildId, onGoToOverview }) {
                       <tr key={idx} style={{ 
                         borderBottom: idx === 4 ? "none" : "1px solid var(--border)", 
                         color: "var(--muted)",
-                        background: idx % 2 === 1 ? "var(--surface-2)" : "white"
+                        background: idx % 2 === 1 ? "var(--surface-2)" : "var(--surface)"
                       }}>
                         <td style={{ padding: "12px 16px", fontWeight: 600, color: "var(--navy)" }}>{item.name}</td>
                         <td style={{ padding: "12px 16px", fontWeight: 500, color: "var(--accent-deep)" }}>{item.price}</td>
