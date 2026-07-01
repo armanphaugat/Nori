@@ -245,6 +245,9 @@ async def on_message(message):
     channels = await get_channels(str(message.guild.id))
     watch_ids = [c["channel_id"] for c in channels]
     if str(message.channel.id) in watch_ids or str(message.channel.id) in watched_threads:
+        if message.content.startswith(bot.command_prefix):
+            await bot.process_commands(message)
+            return
         if not detect_question(message.content):
             print(f"[on_message] Message in watched channel '{message.channel.name}' from {message.author.name} is not a question")
             return

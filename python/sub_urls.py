@@ -39,6 +39,7 @@ async def get_sub_urls(url: str) -> dict:
             else route.continue_(),
         )
         response = await page.goto(url, wait_until="domcontentloaded", timeout=15000)
+        await page.wait_for_timeout(3000)
         if response is None or not response.ok:
             status = response.status if response else "no response"
             result["error"] = f"HTTP error {status} for: {url}"
