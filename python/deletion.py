@@ -1,15 +1,8 @@
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-from io import BytesIO
-import docx2txt
-from PIL import Image
-import pytesseract
-import whisper
-import tempfile
 from graphlit import Graphlit
 from dbhelper.db_helper import *
-import base64
 import pandas as pd
 from dotenv import load_dotenv
 from graphlit_api import FeedTypes, WebFeedPropertiesInput, FeedSchedulePolicyInput, TimedPolicyRecurrenceTypes,FeedInput

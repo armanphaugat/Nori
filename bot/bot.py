@@ -117,6 +117,11 @@ def get_confidence_score(answered: bool, answer: str) -> float:
     val = sum(ord(c) for c in answer[:100]) % 17
     return 0.82 + (val / 100.0)
 
+def make_embed(title: str, url: str = None, description: str = None) -> discord.Embed:
+    embed = discord.Embed(title=title, url=url, description=description, color=discord.Color.blue())
+    embed.set_footer(text="Nori")
+    return embed
+
 
 async def get_answer(guild_id: str, channel_id: str, question: str, prv_messages: str) -> str:
     print(f"[get_answer] Querying KB for: {question[:60]}")
@@ -234,11 +239,12 @@ async def on_message(message):
     if message.guild is None:
         return
     info = await get_server(str(message.guild.id))
+    if info is None:
+        embed = make_embed("Please configure the bot", url="https://noribot.dev/dashboard", description="The bot is not configured for this server. Please visit the dashboard to set it up.")
+        await message.channel.send(embed=embed)
+        return
     if info and info.get("is_paused"):
         await message.channel.send("The Bot is Paused By The Admin/Owner Of The Servers")
-        return
-    if info is None:
-        await message.channel.send("Please configure the bot on the dashboard.")
         return
     if not message.content or not message.content.strip():
         return
@@ -326,7 +332,6 @@ async def ask(ctx, *, question: str = None):
     if not question:
         await ctx.send("No question provided. Usage: `-ask <your question>`")
         return
-    channel_info = await get_channel_config(str(ctx.guild.id), str(ctx.channel.id))
     prv_messages = await get_user_message_from_channel(ctx.channel.id)
     print(f"[ask] {ctx.author.name} asked: {question[:60]}")
     start_time = time.time()
