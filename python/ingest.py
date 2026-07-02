@@ -3,8 +3,6 @@ import os
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from io import BytesIO
 import docx2txt
-from PIL import Image
-import asyncio
 from graphlit import Graphlit
 from dbhelper.db_helper import *
 import base64
@@ -37,29 +35,7 @@ def read_word(file):
     except Exception as e:
         raise ValueError(f"Failed to read Word file: {e}")
 
-def read_ocr(file):
-    try:
-        if isinstance(file, BytesIO):
-            file.seek(0)
-            image = Image.open(file)
-        elif isinstance(file, str):
-            image = Image.open(file)
-        else:
-            raise ValueError("file must be a file path or BytesIO object")
-        if image.mode not in ("RGB", "L"):
-            image = image.convert("RGB")
-        text = pytesseract.image_to_string(image)
-        if not text or not text.strip():
-            raise ValueError("No text extracted — image may be blank or unreadable")
-        return text.lower()
-    except ValueError:
-        raise
-    except Exception as e:
-        raise ValueError(f"Failed to read image via OCR: {e}")
-    
-async def read_ocr_async(file):
-    loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(None, read_ocr, file)
+
 
 async def add_url_graphlit(server_id: str, url: str):
     try:

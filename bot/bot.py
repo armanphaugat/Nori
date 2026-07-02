@@ -11,9 +11,8 @@ import time
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from utils.Detection import detect_question
-from dbhelper.db_helper import get_channels, get_server, get_mod_channel, log_question_event, get_channel_config, get_web_search,get_total_questions,get_server_plan,get_questions_since,get_watched_threads,remove_watched_thread,add_watched_thread
+from dbhelper.db_helper import get_channels, update_web_search,get_server, get_mod_channel, log_question_event, get_channel_config, get_web_search,get_total_questions,get_server_plan,get_questions_since,get_watched_threads,remove_watched_thread,add_watched_thread
 from python.query import query_graphlit, query_graphlit_web,query_graphlit_without_language
-from python.ingest import read_ocr_async
 
 load_dotenv()
 
@@ -326,9 +325,6 @@ async def ask(ctx, *, question: str = None):
         if mb_size > 10:
             await ctx.send("Please upload an image smaller than 10 MB.")
             return
-        if attachment.content_type and attachment.content_type.startswith("image"):
-            image_bytes = BytesIO(await attachment.read())
-            question = (question or "") + await read_ocr_async(image_bytes)
     if not question:
         await ctx.send("No question provided. Usage: `-ask <your question>`")
         return
@@ -345,6 +341,23 @@ async def ask(ctx, *, question: str = None):
     else:
         await log_question_event(str(ctx.guild.id), str(ctx.author.name), True, latency_ms, ctx.message.jump_url)
 
+@bot.command()
+@commands.has_permissions(administrator=True)
+async def websearch(ctx,action:str):
+    action=action.lower()
+    if action not in ["enable","disable"]:
+        await ctx.send("Invalid action. Use `enable` or `disable`.")
+        return
+    if action=="enable":
+        await update_web_search(str(ctx.guild.id),True)
+        await ctx.send(embed=make_embed("✅ Web Search Enabled", description="Web search has been enabled for this server."))
+        return
+    elif action=="disable":
+        await update_web_search(str(ctx.guild.id),False)
+        await ctx.send(embed=make_embed("❌ Web Search Disabled", description="Web search has been disabled for this server."))
+        return
+    
+    
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -355,6 +368,8 @@ async def on_command_error(ctx, error):
         await ctx.send("Missing argument. Use `-ask <question>`.")
     elif isinstance(error, commands.CommandNotFound):
         return
+    elif isinstance(error, commands.MissingPermissions):
+        await ctx.send("You don't have permission to use this command.")
     else:
         print(f"[on_command_error] {type(error).__name__}: {error}")
 
