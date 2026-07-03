@@ -23,8 +23,8 @@ async def handle_query(request: Request) -> dict:
         raise HTTPException(status_code=400, detail="'server' is required")
 
     try:
-        answer = await query_graphlit(server,question,None,None,None)
-        return {"answer": answer}
+        answer,citations = await query_graphlit(server,question,None,None,None)
+        return {"answer": answer, "citations": citations}
     except Exception as e:
         print(f"[handle_query] Error: {e}")
         raise HTTPException(status_code=500, detail="Failed to process query")
