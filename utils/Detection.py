@@ -23,13 +23,20 @@ GATE 1 — REJECT IF ANY MATCH
 ═══════════════════════════
 GATE 2 — MUST HAVE BOTH
 ═══════════════════════════
-A) TRIGGER: what is|what are|how does|how do|how can|why does|why is|explain [NOUN]|define [NOUN]|describe [NOUN]|tell me about [NOUN]|difference between
+A) TRIGGER — an information-seeking cue in ANY language:
+   English:  what is|what are|how does|how do|how can|why does|why is|explain|define|describe|tell me about|difference between
+   Hindi/Hinglish (Roman or Devanagari): kya hai|kya hota hai|kaise|kyun|kyu|batao|samjhao|kya matlab|kaun|kitna|क्या है|कैसे|क्यों|बताओ|समझाओ|कौन|कितना
+   Punjabi (Roman or Gurmukhi): ki hai|kive|kyu|dasso|samjhao|ਕੀ ਹੈ|ਕਿਵੇਂ|ਕਿਉਂ|ਦੱਸੋ|ਸਮਝਾਓ
+   A trailing "?" with a named subject also counts as a trigger.
 B) SUBJECT: a real named topic (not a pronoun)
+
+LANGUAGE NOTE: The 1-3 word GATE 1 reject is about English filler only.
+A short non-English question with a real subject (e.g. "Python kya hai?", "ਪਾਈਥਨ ਕੀ ਹੈ?") is a genuine question → 1.
 
 MENTION RULE: strip <@id> first, evaluate remainder.
 
-1→ "What is Python?" "How does JWT work?" "Explain recursion." "<@123> what is Docker?"
-0→ "explain" "how" "done" "ok thanks" "how does it work" "explain this" "<@123>" "/help" "#general" "processing..." "connected" "huh" "tell me"
+1→ "What is Python?" "How does JWT work?" "Explain recursion." "<@123> what is Docker?" "Python kya hai?" "JWT kaise kaam karta hai?" "Docker ki hai?" "ਪਾਈਥਨ ਕੀ ਹੈ?" "recursion samjhao"
+0→ "explain" "how" "done" "ok thanks" "how does it work" "explain this" "<@123>" "/help" "#general" "processing..." "connected" "huh" "tell me" "kya" "haan" "theek hai" "ਹਾਂ"
 
 OUTPUT ONLY 0 OR 1."""
 
