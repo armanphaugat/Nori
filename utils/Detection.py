@@ -41,7 +41,7 @@ MENTION RULE: strip <@id> first, evaluate remainder.
 OUTPUT ONLY 0 OR 1."""
 
 def detect_question(user_input: str, retries: int = 3) -> int:
-    print(f"[detect] sending to Groq")
+    print(f"[detect] input={user_input!r}")
     groq_api_key = get_key()
     client = Groq(api_key=groq_api_key)
 
@@ -54,17 +54,26 @@ def detect_question(user_input: str, retries: int = 3) -> int:
                     {"role": "user", "content": user_input},
                 ],
                 temperature=0,
-                max_tokens=1,
+                # 8 tokens (not 1) so a leading space/newline doesn't truncate the
+                # answer to an empty/whitespace string that then parses as "not a question".
+                max_tokens=8,
             )
 
-            result = response.choices[0].message.content.strip()
-            print(f"[detect] Groq → {result}")
+            raw = response.choices[0].message.content or ""
+            print(f"[detect] Groq raw={raw!r}")
 
-            if result not in ("0", "1"):
-                print(f"[detect] unexpected output: {repr(result)}")
+            # Lenient parse: find the first 0 or 1 anywhere in the output.
+            if "1" in raw:
+                return 1
+            if "0" in raw:
                 return 0
 
-            return int(result)
+            # Model returned something unparseable. Don't silently swallow the
+            # message — fail OPEN (treat as a question) so the user still gets an
+            # answer. A false positive costs one KB lookup; a false negative is
+            # total silence, which is what we're fixing.
+            print(f"[detect] unparseable output {raw!r} — failing open (treating as question)")
+            return 1
 
         except RateLimitError:
             wait = 20 * (attempt + 1)
@@ -72,8 +81,10 @@ def detect_question(user_input: str, retries: int = 3) -> int:
             time.sleep(wait)
 
         except Exception as e:
-            print(f"[detect] Groq error: {e}")
-            return 0
+            # API/key/network error — fail OPEN rather than going silent.
+            print(f"[detect] Groq error: {e} — failing open (treating as question)")
+            return 1
 
-    print("[detect] all retries exhausted")
-    return 0
+    # Retries exhausted (persistent rate limiting) — fail open.
+    print("[detect] all retries exhausted — failing open (treating as question)")
+    return 1
