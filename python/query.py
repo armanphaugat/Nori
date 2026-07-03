@@ -6,7 +6,7 @@ load_dotenv(override=True)
 from graphlit import Graphlit
 import asyncio
 from dbhelper.db_helper import (
-    get_content_ids, get_feed_ids,
+    get_content_ids, get_feed_ids,get_channel_knowledge_sources
 )
 from graphlit_api import (
     SpecificationInput, SpecificationTypes, ModelServiceTypes,
@@ -164,6 +164,7 @@ def build_or_filter(content_ids: list, feed_ids: list) -> list | None:
 
 async def query_graphlit(
     server_id: str,
+    channel_id: str,
     question: str,
     language: str = "english",
     tone: str = "professional",
@@ -173,8 +174,13 @@ async def query_graphlit(
     if is_small_talk(question):
         return "Hello! How can I help you today?",[]
     try:
-        content_ids = await get_content_ids(server_id)
-        feed_ids    = await get_feed_ids(server_id)
+        result=await get_channel_knowledge_sources(server_id,channel_id)
+        if result:
+            content_ids = [row["content_id"] for row in result if row.get("content_id")]
+            feed_ids    = [row["feed_id"] for row in result if row.get("feed_id")]
+        else:
+            content_ids = await get_content_ids(server_id)
+            feed_ids    = await get_feed_ids(server_id)
     except Exception as e:
         print(f"[WARN] DB fetch content/feed ids failed: {e}")
         content_ids, feed_ids = [], []
@@ -226,6 +232,7 @@ async def query_graphlit(
 
 async def query_graphlit_without_language(
     server_id: str,
+    channel_id: str,
     question: str,
     prv_messages: str = "",
 ) -> str:
@@ -233,8 +240,13 @@ async def query_graphlit_without_language(
     if is_small_talk(question):
         return "Hello! How can I help you today?",[]
     try:
-        content_ids = await get_content_ids(server_id)
-        feed_ids    = await get_feed_ids(server_id)
+        result=await get_channel_knowledge_sources(server_id,channel_id)
+        if result:
+            content_ids = [row["content_id"] for row in result if row.get("content_id")]
+            feed_ids    = [row["feed_id"] for row in result if row.get("feed_id")]
+        else:
+            content_ids = await get_content_ids(server_id)
+            feed_ids    = await get_feed_ids(server_id)
     except Exception as e:
         print(f"[WARN] DB fetch content/feed ids failed: {e}")
         content_ids, feed_ids = [], []

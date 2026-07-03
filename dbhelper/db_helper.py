@@ -1093,3 +1093,68 @@ async def delete_mod_channel(guild_id: str,channel_id: str) -> int:
         )
         await s.commit()
         return 1
+    
+async def insert_channel_knowledge_source(
+    server_id: str,
+    channel_id: str,
+    content_id: str = None,
+    feed_id: str = None,
+) -> str:
+    async with AsyncDB() as s:
+        result = await s.execute(
+            text("""
+                INSERT INTO channel_knowledge_sources (server_id, channel_id, content_id, feed_id)
+                VALUES (:server_id, :channel_id, :content_id, :feed_id)
+                RETURNING id
+            """),
+            {
+                "server_id": server_id,
+                "channel_id": channel_id,
+                "content_id": content_id,
+                "feed_id": feed_id,
+            },
+        )
+        await s.commit()
+        return result.scalar()
+
+
+async def get_channel_knowledge_sources(server_id: str, channel_id: str) -> list:
+    async with AsyncDB() as s:
+        result = await s.execute(
+            text("""
+                SELECT id, server_id, channel_id, content_id, feed_id, added_at
+                FROM channel_knowledge_sources
+                WHERE server_id = :server_id AND channel_id = :channel_id
+            """),
+            {"server_id": server_id, "channel_id": channel_id},
+        )
+        rows = result.mappings().all()
+        return [dict(row) for row in rows]
+
+
+async def update_channel_knowledge_source(
+    source_id: str,
+    content_id: str = None,
+    feed_id: str = None,
+) -> int:
+    async with AsyncDB() as s:
+        result = await s.execute(
+            text("""
+                UPDATE channel_knowledge_sources
+                SET content_id = :content_id, feed_id = :feed_id
+                WHERE id = :source_id
+            """),
+            {"source_id": source_id, "content_id": content_id, "feed_id": feed_id},
+        )
+        await s.commit()
+        return result.rowcount
+
+
+async def delete_channel_knowledge_source(source_id: str) -> int:
+    async with AsyncDB() as s:
+        result = await s.execute(
+            text("DELETE FROM channel_knowledge_sources WHERE id = :source_id"),
+            {"source_id": source_id},
+        )
+        await s.commit()
+        return result.rowcount
