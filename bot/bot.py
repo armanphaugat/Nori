@@ -12,7 +12,7 @@ import time
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from utils.Detection import detect_question
 from dbhelper.db_helper import get_channels, update_web_search,get_server, get_mod_channel, log_question_event, get_channel_config, get_web_search,get_total_questions,get_server_plan,get_questions_since,get_watched_threads,remove_watched_thread,add_watched_thread
-from python.query import query_graphlit, query_graphlit_web,query_graphlit_without_language
+from python.query import query_graphlit, query_graphlit_web,query_graphlit_without_language, NO_ANSWER_SENTINEL
 
 load_dotenv()
 
@@ -64,57 +64,54 @@ async def check_plan_limit(guild_id: str, channel) -> bool:
         return True
     return False
 
+# Exact system-level failure strings this module produces in get_answer().
+# These are safe to match verbatim (we generate them ourselves); unlike the old
+# fuzzy phrase list, they never collide with a real answer's wording.
+_SYSTEM_FAILURE_PREFIXES = (
+    "no knowledge base found",
+    "query timed out",
+    "web search timed out",
+    "error querying knowledge base",
+    "error during web search",
+    "sorry, web search is temporarily unavailable",
+    "i don't have information in current knowledge base",
+    "i don't have this information",  # friendly text strip_no_answer_sentinel() emits
+)
+
+
 def is_no_kb_response(answer: str) -> bool:
-    if not answer or len(answer.strip()) < 10:
+    """True only when the KB genuinely produced no usable answer.
+
+    Detection is based on the NO_ANSWER_SENTINEL token the model emits, plus the
+    exact system-failure strings get_answer() returns. It does NOT fuzzy-match
+    natural-language phrases — that was discarding correct answers that merely
+    contained words like "not available" or "no results".
+    """
+    if not answer or not answer.strip():
         return True
-    answer_lower = answer.lower().strip()
-    no_answer_phrases = [
-        "i don't have this information",
-        "i don't have that information",
-        "this information is not available",
-        "that information is not available",
-        "i cannot find",
-        "i can't find",
-        "no information",
-        "no data",
-        "not found in knowledge base",
-        "outside my knowledge",
-        "outside of my knowledge",
-        "unable to answer",
-        "cannot answer",
-        "can't answer",
-        "not in my knowledge",
-        "no relevant",
-        "no matching",
-        "couldn't find",
-        "not available",
-        "beyond my scope",
-        "outside my expertise",
-        "don't have access",
-        "no results",
-        "no knowledge base found",
-        "web search is paused",
-        "query timed out",
-        "web search timed out",
-        "error querying knowledge base",
-        "error during web search",
-        "web search is temporarily unavailable",
-        "i don't know",
-        "i don't have information",
-    ]
-    for phrase in no_answer_phrases:
-        if phrase in answer_lower:
-            return True
-    if len(answer_lower) < 10 and any(word in answer_lower for word in ["no", "cannot", "can't", "don't"]):
+    a = answer.strip()
+    if NO_ANSWER_SENTINEL in a:
         return True
-    return False
+    a_lower = a.lower()
+    return any(a_lower.startswith(p) for p in _SYSTEM_FAILURE_PREFIXES)
+
+
+def strip_no_answer_sentinel(answer: str) -> str:
+    """Replace a bare sentinel with a friendly, user-facing message."""
+    if answer and NO_ANSWER_SENTINEL in answer:
+        return "I don't have this information."
+    return answer
 
 
 def get_confidence_score(answered: bool, answer: str) -> float:
-    if not answered:
-        return 0.0
-    val = sum(ord(c) for c in answer[:100]) % 17
-    return 0.82 + (val / 100.0)
+    """Coarse confidence signal.
+
+    NOTE: This is intentionally simple — 0.0 for a non-answer, a fixed high value
+    for a real answer. The previous implementation hashed the answer's characters,
+    which produced meaningless pseudo-random scores. A true confidence signal would
+    need Graphlit's per-chunk relevance scores (not currently surfaced by the SDK).
+    """
+    return 0.9 if answered else 0.0
 
 def make_embed(title: str, url: str = None, description: str = None) -> discord.Embed:
     embed = discord.Embed(title=title, url=url, description=description, color=discord.Color.blue())
@@ -126,13 +123,14 @@ async def get_answer(guild_id: str, channel_id: str, question: str, prv_messages
     print(f"[get_answer] Querying KB for: {question[:60]}")
     channel_info = await get_channel_config(guild_id, channel_id)
     try:
-        if channel_info:
-            print("Channel info found, using language and tone settings")
-            language = channel_info.get("language", "english") if channel_info else "english"
-            tone = channel_info.get("tone", "professional") if channel_info else "professional"
-            answer = await asyncio.wait_for(query_graphlit(guild_id,question=question, language=language, tone=tone, prv_messages=prv_messages), timeout=30.0)
-        else:
-            answer = await asyncio.wait_for(query_graphlit_without_language(guild_id,question=question,prv_messages=prv_messages), timeout=30.0)
+        # Always auto-detect the user's language from their message so Hindi /
+        # Hinglish / Punjabi / mixed queries are answered in the same language,
+        # even when the channel is configured with a default language. Forcing the
+        # configured language was the main reason non-English queries answered poorly.
+        answer = await asyncio.wait_for(
+            query_graphlit_without_language(guild_id, question=question, prv_messages=prv_messages),
+            timeout=30.0,
+        )
     except asyncio.TimeoutError:
         print("[get_answer] KB query timed out")
         return "Query timed out. Please try again."
@@ -156,7 +154,7 @@ async def get_answer(guild_id: str, channel_id: str, question: str, prv_messages
     else:
         print("[get_answer] KB returned a valid answer")
 
-    return answer
+    return strip_no_answer_sentinel(answer)
 
 
 async def send_answer_with_feedback(channel, user, guild_id: str, question: str, answer: str):
