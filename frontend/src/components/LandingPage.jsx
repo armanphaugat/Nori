@@ -256,71 +256,71 @@ const CSS = `
   }
   /* ────── DARK MODE OVERRIDES ────── */
   [data-theme="dark"] {
-    --navy:     #E2E8F0;
-    --navy-mid: #CBD5E1;
-    --slate:    #94A3B8;
-    --light:    #1E293B;
-    --bg:       #0F172A;
-    --surface1: #1E293B;
-    --surface2: #263347;
-    --surface3: #2D3D55;
-    --surface4: #354560;
-    --border:   rgba(226,232,240,0.10);
-    --border2:  rgba(226,232,240,0.20);
-    --text:     #E2E8F0;
-    --muted:    #94A3B8;
-    --muted2:   rgba(148,163,184,0.65);
+    --navy:     #FFFFFF;
+    --navy-mid: #93C5FD;
+    --slate:    #60A5FA;
+    --light:    #0D111A;
+    --bg:       #000000;
+    --surface1: #000000;
+    --surface2: #08090C;
+    --surface3: #0F121A;
+    --surface4: #181C26;
+    --border:   rgba(59, 130, 246, 0.20);
+    --border2:  rgba(59, 130, 246, 0.40);
+    --text:     #FFFFFF;
+    --muted:    #93C5FD;
+    --muted2:   rgba(147,197,253,0.65);
     --accent:   #3B82F6;
     --accent-deep: #60A5FA;
     --accent-dim:  rgba(59,130,246,0.15);
-    --accent-glow: rgba(59,130,246,0.25);
+    --accent-glow: rgba(59,130,246,0.35);
   }
   [data-theme="dark"] body {
-    background: #0F172A;
-    color: #E2E8F0;
+    background: #000000;
+    color: #FFFFFF;
   }
   [data-theme="dark"] .glass {
-    background: rgba(30,41,59,0.80);
-    border-color: rgba(226,232,240,0.10);
+    background: rgba(0, 0, 0, 0.85);
+    border-color: rgba(59, 130, 246, 0.20);
   }
   [data-theme="dark"] .glass-hover:hover {
-    background: rgba(30,41,59,0.96) !important;
-    border-color: rgba(226,232,240,0.20) !important;
+    background: rgba(8, 9, 12, 0.96) !important;
+    border-color: rgba(59, 130, 246, 0.40) !important;
   }
   [data-theme="dark"] .feat-card:hover {
-    background: rgba(38,51,71,0.98) !important;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.35);
-    border-color: rgba(226,232,240,0.20) !important;
+    background: rgba(8, 9, 12, 0.98) !important;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.70);
+    border-color: rgba(59, 130, 246, 0.40) !important;
   }
   [data-theme="dark"] .nav-link:hover {
     color: var(--navy);
-    background: rgba(226,232,240,0.08);
+    background: rgba(59, 130, 246, 0.10);
   }
   [data-theme="dark"] .btn-sm:hover {
-    background: #E2E8F0 !important;
-    color: #0F172A !important;
+    background: #FFFFFF !important;
+    color: #000000 !important;
   }
   [data-theme="dark"] .btn-ghost:hover {
-    background: rgba(226,232,240,0.08) !important;
-    color: #E2E8F0 !important;
+    background: rgba(59, 130, 246, 0.10) !important;
+    color: #FFFFFF !important;
   }
   [data-theme="dark"] .water-bg {
     opacity: 0.025;
     background-image:
-      linear-gradient(rgba(226,232,240,0.07) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(226,232,240,0.07) 1px, transparent 1px);
+      linear-gradient(rgba(59, 130, 246, 0.12) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59, 130, 246, 0.12) 1px, transparent 1px);
   }
   [data-theme="dark"] .bloom {
-    background: radial-gradient(circle, rgba(59,130,246,0.07) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
   }
   [data-theme="dark"] .bloom-slate {
-    background: radial-gradient(circle, rgba(148,163,184,0.07) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(147,197,253,0.12) 0%, transparent 70%);
   }
 `;
 
 // Landing page uses its own dark-mode-aware nav bg helper
 const navBg = (scrolled, dark) => {
-  if (dark) return scrolled ? "rgba(15,23,42,0.97)" : "rgba(15,23,42,0.85)";
+  if (dark) return scrolled ? "rgba(0,0,0,0.97)" : "rgba(0,0,0,0.85)";
   return scrolled ? "rgba(237,242,244,0.97)" : "rgba(237,242,244,0.82)";
 };
 

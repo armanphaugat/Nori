@@ -79,53 +79,53 @@ export const GLOBAL_CSS = `
 
   /* ── Dark Mode ── */
   [data-theme="dark"] {
-    --navy:          #E2E8F0;
-    --navy-mid:      #CBD5E1;
-    --navy-light:    rgba(226,232,240,0.07);
-    --slate:         #94A3B8;
-    --slate-dim:     rgba(148,163,184,0.18);
-    --light:         #1E293B;
+    --navy:          #FFFFFF;
+    --navy-mid:      #93C5FD;
+    --navy-light:    rgba(59,130,246,0.07);
+    --slate:         #60A5FA;
+    --slate-dim:     rgba(59,130,246,0.18);
+    --light:         #0D111A;
     --danger:           #F87171;
     --danger-deep:      #FCA5A5;
     --danger-dim:       rgba(248,113,113,0.12);
     --danger-glow:      rgba(248,113,113,0.20);
     --danger-border:    rgba(248,113,113,0.30);
 
-    --bg:            #0F172A;
-    --surface:       #1E293B;
-    --surface-2:     #263347;
-    --surface-3:     #2D3D55;
-    --surface-4:     #354560;
+    --bg:            #000000;
+    --surface:       #000000;
+    --surface-2:     #08090C;
+    --surface-3:     #0F121A;
+    --surface-4:     #181C26;
 
-    --text:          #E2E8F0;
-    --muted:         #94A3B8;
-    --muted2:        rgba(148,163,184,0.65);
+    --text:          #FFFFFF;
+    --muted:         #93C5FD;
+    --muted2:        rgba(147,197,253,0.65);
 
-    --border:        rgba(226,232,240,0.08);
-    --border2:       rgba(226,232,240,0.16);
+    --border:        rgba(59,130,246,0.20);
+    --border2:       rgba(59,130,246,0.40);
 
     --accent:        #3B82F6;
-    --accent-deep:   #60A5FA;
+    --accent-deep:   #2563EB;
     --accent-dim:    rgba(59,130,246,0.15);
-    --accent-glow:   rgba(59,130,246,0.25);
-    --accent-border: rgba(59,130,246,0.30);
+    --accent-glow:   rgba(59,130,246,0.35);
+    --accent-border: rgba(59,130,246,0.50);
 
     --primary:       #3B82F6;
-    --blue:          #94A3B8;
-    --on-surface-variant: #94A3B8;
-    --outline-variant:    rgba(226,232,240,0.14);
+    --blue:          #93C5FD;
+    --on-surface-variant: #93C5FD;
+    --outline-variant:    rgba(59,130,246,0.25);
 
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.20), 0 1px 2px rgba(0,0,0,0.15);
-    --shadow-md: 0 4px 20px -2px rgba(0,0,0,0.30), 0 2px 8px -1px rgba(0,0,0,0.20);
-    --shadow-lg: 0 20px 48px -6px rgba(0,0,0,0.40), 0 10px 20px -4px rgba(0,0,0,0.25);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.40), 0 1px 2px rgba(0,0,0,0.30);
+    --shadow-md: 0 4px 20px -2px rgba(0,0,0,0.60), 0 2px 8px -1px rgba(0,0,0,0.40);
+    --shadow-lg: 0 20px 48px -6px rgba(0,0,0,0.70), 0 10px 20px -4px rgba(0,0,0,0.55);
     /* brand-dark adapts to dark mode — cold premium dark navy */
-    --brand-dark:    #131926;
-    --brand-dark-2:  #0D111A;
+    --brand-dark:    #000000;
+    --brand-dark-2:  #000000;
   }
 
   [data-theme="dark"] body {
-    background: #0F172A;
-    color: #E2E8F0;
+    background: #000000;
+    color: #FFFFFF;
   }
 
   [data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.25); }
@@ -285,8 +285,8 @@ export function GlobalStyles({ dark }) {
     const root = document.documentElement;
     if (dark) {
       root.setAttribute("data-theme", "dark");
-      document.body.style.background = "#0F172A";
-      document.body.style.color = "#E2E8F0";
+      document.body.style.background = "#000000";
+      document.body.style.color = "#FFFFFF";
     } else {
       root.removeAttribute("data-theme");
       document.body.style.background = "";

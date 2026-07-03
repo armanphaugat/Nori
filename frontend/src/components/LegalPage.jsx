@@ -1,7 +1,9 @@
 import { useEffect } from "react";
-import { Card, Icon, Btn } from "./Common.jsx";
+import { Card, Icon, Btn, useTheme } from "./Common.jsx";
 
 export default function LegalPage({ type, onBack }) {
+  const { dark } = useTheme();
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [type]);
@@ -29,7 +31,7 @@ export default function LegalPage({ type, onBack }) {
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 200, height: 64,
         display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "0 64px",
-        background: "rgba(237,242,244,0.97)",
+        background: dark ? "rgba(0,0,0,0.85)" : "rgba(237,242,244,0.97)",
         backdropFilter: "blur(20px)",
         borderBottom: "1px solid var(--border)",
       }}>

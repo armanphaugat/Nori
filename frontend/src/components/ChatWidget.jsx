@@ -400,7 +400,7 @@ export default function ChatWidget({ guildId, guildName }) {
               padding: "18px 22px",
               borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
               display: "flex", alignItems: "center", gap: 14,
-              background: "linear-gradient(135deg, var(--accent-deep) 0%, #0f172a 100%)",
+              background: "linear-gradient(135deg, var(--accent-deep) 0%, var(--bg) 100%)",
               flexShrink: 0,
               cursor: isDragging ? "grabbing" : "grab",
               userSelect: "none",
@@ -664,7 +664,7 @@ export default function ChatWidget({ guildId, guildName }) {
             transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
             border: "none",
             // Dynamic background overrides when open
-            background: open ? "linear-gradient(135deg, var(--accent-deep) 0%, #0f172a 100%)" : undefined,
+            background: open ? "linear-gradient(135deg, var(--accent-deep) 0%, var(--bg) 100%)" : undefined,
             boxShadow: open ? "0 8px 24px rgba(43,45,66,0.18)" : undefined,
           }}
         >
