@@ -171,7 +171,7 @@ async def query_graphlit(
 ) -> str:
     print(f"Query Graphlit Called WITH Language: {language}, Tone: {tone}")
     if is_small_talk(question):
-        return "Hello! How can I help you today?"
+        return "Hello! How can I help you today?",[]
     try:
         content_ids = await get_content_ids(server_id)
         feed_ids    = await get_feed_ids(server_id)
@@ -180,7 +180,7 @@ async def query_graphlit(
         content_ids, feed_ids = [], []
 
     if not content_ids and not feed_ids:
-        return "No knowledge base found for this server."
+        return "No knowledge base found for this server.",[]
     spec_id=await get_kb_spec()
     print(f"[query_graphlit_kb] content_ids={content_ids}")
     print(f"[query_graphlit_kb] feed_ids={feed_ids}")
@@ -215,8 +215,8 @@ async def query_graphlit(
         )
         result = response.prompt_conversation
         if result is None or result.message is None or result.message.message is None:
-            return "I don't know"
-        return result.message.message[:1800]
+            return "I don't know",[]
+        return result.message.message[:1800],result.message.citations if result.message.citations else []
     finally:
         try:
             if conversation_id:
@@ -231,7 +231,7 @@ async def query_graphlit_without_language(
 ) -> str:
     print("Query_Graphlit_Called_Without_Language")
     if is_small_talk(question):
-        return "Hello! How can I help you today?"
+        return "Hello! How can I help you today?",[]
     try:
         content_ids = await get_content_ids(server_id)
         feed_ids    = await get_feed_ids(server_id)
@@ -240,7 +240,7 @@ async def query_graphlit_without_language(
         content_ids, feed_ids = [], []
 
     if not content_ids and not feed_ids:
-        return "No knowledge base found for this server."
+        return "No knowledge base found for this server.",[]
     spec_id=await get_kb_spec()
     print(f"[query_graphlit_kb] content_ids={content_ids}")
     print(f"[query_graphlit_kb] feed_ids={feed_ids}")
@@ -275,8 +275,8 @@ async def query_graphlit_without_language(
         )
         result = response.prompt_conversation
         if result is None or result.message is None or result.message.message is None:
-            return "I don't know"
-        return result.message.message[:1800]
+            return "I don't know", []
+        return result.message.message[:1800],result.message.citations if result.message.citations else []
     finally:
         try:
             if conversation_id:
@@ -295,7 +295,7 @@ async def query_graphlit_web(
     print("Query Graphlit Web Called")
 
     if is_small_talk(question):
-        return "Hello! How can I help you today?"
+        return "Hello! How can I help you today?", []
 
     conversation_id = None
     try:
@@ -306,7 +306,7 @@ async def query_graphlit_web(
             result = response.search_web
 
         if not result or not result.results:
-            return "I don't have this information"
+            return "I don't have this information", []
 
         context = ""
         for i, r in enumerate(result.results, 1):
@@ -345,12 +345,12 @@ async def query_graphlit_web(
         )
         result_msg = answer_response.prompt_conversation
         if result_msg is None or result_msg.message is None or result_msg.message.message is None:
-            return "I don't know"
-        return result_msg.message.message[:1800]
+            return "I don't know", []
+        return result_msg.message.message[:1800], result_msg.message.citations if result_msg.message.citations else []
 
     except Exception as exc:
         print(f"[ERROR] query_graphlit_web: {exc}")
-        return "Sorry, web search is temporarily unavailable. Please try again."
+        return "Sorry, web search is temporarily unavailable. Please try again.", []
 
     finally:
         try:

@@ -64,6 +64,31 @@ async def check_plan_limit(guild_id: str, channel) -> bool:
         return True
     return False
 
+def format_citations(citations) -> str:
+    if not citations:
+        return ""
+    lines = []
+    seen = set()
+    for i, citation in enumerate(citations, 1):
+        content = getattr(citation, "content", None)
+        name = getattr(content, "name", None) if content else None
+        if not name:
+            continue
+        if name in seen:
+            continue
+        seen.add(name)
+        page = getattr(citation, "startPage", None)
+        score = getattr(citation, "score", None)
+        line = f"- {name}"
+        if page:
+            line += f" (page {page})"
+        if score is not None:
+            line += f" — {score * 100:.0f}% relevant"
+        lines.append(line)
+    if not lines:
+        return ""
+    return "\n\n**Sources:**\n" + "\n".join(lines)
+
 def is_no_kb_response(answer: str) -> bool:
     if not answer or len(answer.strip()) < 10:
         return True
@@ -130,9 +155,9 @@ async def get_answer(guild_id: str, channel_id: str, question: str, prv_messages
             print("Channel info found, using language and tone settings")
             language = channel_info.get("language", "english") if channel_info else "english"
             tone = channel_info.get("tone", "professional") if channel_info else "professional"
-            answer = await asyncio.wait_for(query_graphlit(guild_id,question=question, language=language, tone=tone, prv_messages=prv_messages), timeout=30.0)
+            answer,citations = await asyncio.wait_for(query_graphlit(guild_id,question=question, language=language, tone=tone, prv_messages=prv_messages), timeout=30.0)
         else:
-            answer = await asyncio.wait_for(query_graphlit_without_language(guild_id,question=question,prv_messages=prv_messages), timeout=30.0)
+            answer,citations = await asyncio.wait_for(query_graphlit_without_language(guild_id,question=question,prv_messages=prv_messages), timeout=30.0)
     except asyncio.TimeoutError:
         print("[get_answer] KB query timed out")
         return "Query timed out. Please try again."
@@ -148,7 +173,7 @@ async def get_answer(guild_id: str, channel_id: str, question: str, prv_messages
         try:
             language = channel_info.get("language", "english") if channel_info else "english"
             tone = channel_info.get("tone", "professional") if channel_info else "professional"
-            answer = await asyncio.wait_for(query_graphlit_web(guild_id, question=question, language=language, tone=tone, prv_messages=prv_messages), timeout=30.0)
+            answer,citations = await asyncio.wait_for(query_graphlit_web(guild_id, question=question, language=language, tone=tone, prv_messages=prv_messages), timeout=30.0)
         except asyncio.TimeoutError:
             return "Web search timed out. Please try again."
         except Exception as e:
@@ -156,7 +181,7 @@ async def get_answer(guild_id: str, channel_id: str, question: str, prv_messages
     else:
         print("[get_answer] KB returned a valid answer")
 
-    return answer
+    return answer+format_citations(citations)
 
 
 async def send_answer_with_feedback(channel, user, guild_id: str, question: str, answer: str):
