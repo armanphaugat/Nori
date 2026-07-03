@@ -29,7 +29,9 @@ def read_word(file):
             raise ValueError("file must be a file path or BytesIO object")
         if not text or not text.strip():
             raise ValueError("No text extracted from Word document")
-        return text.lower()
+        # Preserve original casing: lowercasing strips signal from acronyms and
+        # proper nouns (esp. Roman-script Hinglish) and hurts retrieval quality.
+        return text.strip()
     except ValueError:
         raise
     except Exception as e:
