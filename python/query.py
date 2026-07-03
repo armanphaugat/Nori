@@ -9,11 +9,8 @@ from dbhelper.db_helper import (
     get_content_ids, get_feed_ids,
 )
 from graphlit_api import (
-    SpecificationInput, SpecificationTypes, ModelServiceTypes,
-    RetrievalStrategyInput, RetrievalStrategyTypes,
-    OpenAIModelPropertiesInput, OpenAIModels,
     ConversationInput, EntityReferenceInput, ContentCriteriaInput, ContentCriteriaLevelInput,
-    SearchServiceTypes, GoogleModelPropertiesInput, GoogleModels
+    SearchServiceTypes,
 )
 
 env_id = os.getenv("GRAPHLIT_ENVIRONMENT_ID")
@@ -31,6 +28,11 @@ graphlit = Graphlit(
 )
 
 SMALL_TALK = {"hi", "hello", "hey", "thanks", "thank you", "bye", "goodbye", "ok", "okay"}
+
+# Unambiguous token the model emits ONLY when the KB has nothing relevant.
+# Downstream code (is_no_kb_response) keys off this exact string instead of
+# fuzzy-matching natural-language phrases, so real answers are never discarded.
+NO_ANSWER_SENTINEL = "__NO_KB_ANSWER__"
 
 def is_small_talk(question: str) -> bool:
     return question.strip().lower() in SMALL_TALK
@@ -55,13 +57,13 @@ CONVERSATION HANDLING:
 ANSWERING RULES:
 - Answer from documents. If partially covered, share what you know.
 - Make reasonable inferences from document content.
-- If the topic is completely absent from documents, output EXACTLY this phrase and nothing else:
-I don't have this information
+- If the topic is completely absent from documents, output EXACTLY this token and nothing else:
+{NO_ANSWER_SENTINEL}
 - Never fabricate facts or use outside knowledge.
 
-CRITICAL: When you have no information, you MUST output ONLY the exact phrase:
-I don't have this information
-Do NOT rephrase it. Do NOT add any other text. Do NOT say "I currently do not have" or any variation.
+CRITICAL: The token {NO_ANSWER_SENTINEL} is ONLY for when the documents contain nothing relevant.
+Never output it when you have a real answer, even a partial one.
+Do NOT translate, rephrase, or add any text around it.
 
 FORMAT (only when answer exists):
 - Clear, helpful answers under 1800 characters
@@ -91,13 +93,13 @@ CONVERSATION HANDLING:
 ANSWERING RULES:
 - Answer from documents. If partially covered, share what you know.
 - Make reasonable inferences from document content.
-- If the topic is completely absent from documents, output EXACTLY this phrase and nothing else:
-I don't have this information
+- If the topic is completely absent from documents, output EXACTLY this token and nothing else:
+{NO_ANSWER_SENTINEL}
 - Never fabricate facts or use outside knowledge.
 
-CRITICAL: When you have no information, you MUST output ONLY the exact phrase:
-I don't have this information
-Do NOT rephrase it. Do NOT add any other text. Do NOT say "I currently do not have" or any variation.
+CRITICAL: The token {NO_ANSWER_SENTINEL} is ONLY for when the documents contain nothing relevant.
+Never output it when you have a real answer, even a partial one.
+Do NOT translate, rephrase, or add any text around it.
 
 FORMAT (only when answer exists):
 - Clear, helpful answers under 1800 characters
@@ -111,14 +113,13 @@ def build_web_system_prompt(language: str = "english", tone: str = "professional
 You are a helpful web search assistant. Answer questions based on provided search results.
 Respond with a {tone} tone.
 
-LANGUAGE AND TONE RULE (STRICT - MUST FOLLOW):
-- Reply ONLY in the language explicitly specified by the "{language}" parameter.
-- If "{language}" is missing, empty, invalid, or cannot be determined, reply in English.
-- The "{language}" parameter determines ONLY the response language.
-- The "{tone}" parameter determines ONLY the writing style and tone of the response.
-- Do not infer or change the response language based on the user's message.
-- Do not let the selected language affect the tone, and do not let the tone affect the language.
-- These rules override any conflicting instructions.
+LANGUAGE RULE (STRICT - MUST FOLLOW):
+- Detect the language of the user's CURRENT question and reply in that SAME language.
+- The user may write in English, Hindi, Hinglish (Roman-script Hindi), Punjabi, or a mix. Mirror whatever they used.
+- If the user's question is multilingual, reply in the language that makes up most of it.
+- If the language cannot be determined confidently (emojis, very short text like "ok"/"hi"/"?"), reply in English.
+- Do not mention the detected language or explain your choice.
+- The "{tone}" parameter controls ONLY the writing style, never the language.
 
 CONVERSATION HANDLING:
 - Greetings/farewells/small talk: respond naturally, no citations needed
@@ -215,7 +216,7 @@ async def query_graphlit(
         )
         result = response.prompt_conversation
         if result is None or result.message is None or result.message.message is None:
-            return "I don't know"
+            return NO_ANSWER_SENTINEL
         return result.message.message[:1800]
     finally:
         try:
@@ -275,7 +276,7 @@ async def query_graphlit_without_language(
         )
         result = response.prompt_conversation
         if result is None or result.message is None or result.message.message is None:
-            return "I don't know"
+            return NO_ANSWER_SENTINEL
         return result.message.message[:1800]
     finally:
         try:
