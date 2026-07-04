@@ -55,14 +55,14 @@ async def handle_upload_website(
         raise HTTPException(status_code=400, detail="'guild_id' cannot be empty")
     server_plan = await get_server_plan(str(guild_id))
     plan = server_plan.get("plan", "free")
-    counts=await get_uploads_count_by_type(guild_id)
-    total_url_count=counts.get("url",0)
-    if plan=="starter" and total_url_count>=10:
-        raise HTTPException(status_code=403,detail="Starter plan limit reached: you've used all 10 URL slots. Upgrade to Pro or higher to add more.")
-    if plan=="pro" and total_url_count>=50:
-        raise HTTPException(status_code=403,detail="Pro plan limit reached: you've used all 50 URL slots. Contact us if you need more capacity.")
-    if plan=="free" and total_url_count>=5:
-        raise HTTPException(status_code=403,detail="Free plan limit reached: you've used all 5 URL slots. Upgrade to Starter or higher to add more.")
+    counts = await get_uploads_count_by_type(guild_id)
+    total_url_count = counts.get("url", 0)
+    if plan == "starter" and total_url_count >= 10:
+        raise HTTPException(status_code=403, detail="Starter plan limit reached: you've used all 10 URL slots. Upgrade to Pro or higher to add more.")
+    if plan == "pro" and total_url_count >= 50:
+        raise HTTPException(status_code=403, detail="Pro plan limit reached: you've used all 50 URL slots. Contact us if you need more capacity.")
+    if plan == "free" and total_url_count >= 5:
+        raise HTTPException(status_code=403, detail="Free plan limit reached: you've used all 5 URL slots. Upgrade to Starter or higher to add more.")
     url = url.strip()
     if not re.match(r"https?://", url):
         raise HTTPException(status_code=400, detail="'url' must start with http:// or https://")
@@ -79,13 +79,14 @@ async def handle_upload_website(
                 error="Graphlit ingestion returned no feed_id (see backend logs for the underlying error)",
             )
             raise HTTPException(status_code=502, detail="Failed to create website feed in knowledge base")
+        internal_feed_id = await add_feed_id(guild_id, feed_id)
         await log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
             kind="url",
             name=url,
-            feed_id=feed_id,
+            feed_id=internal_feed_id,
             content_id=None,
             status="ok",
         )
@@ -117,14 +118,14 @@ async def handle_upload_url(
     url = url.strip()
     server_plan = await get_server_plan(str(guild_id))
     plan = server_plan.get("plan", "free")
-    counts=await get_uploads_count_by_type(guild_id)
-    total_url_count=counts.get("url",0)
-    if plan=="starter" and total_url_count>=10:
-        raise HTTPException(status_code=403,detail="Starter plan limit reached: you've used all 10 URL slots. Upgrade to Pro or higher to add more.")
-    if plan=="pro" and total_url_count>=50:
-        raise HTTPException(status_code=403,detail="Pro plan limit reached: you've used all 50 URL slots. Contact us if you need more capacity.")
-    if plan=="free" and total_url_count>=5:
-        raise HTTPException(status_code=403,detail="Free plan limit reached: you've used all 5 URL slots. Upgrade to Starter or higher to add more.")
+    counts = await get_uploads_count_by_type(guild_id)
+    total_url_count = counts.get("url", 0)
+    if plan == "starter" and total_url_count >= 10:
+        raise HTTPException(status_code=403, detail="Starter plan limit reached: you've used all 10 URL slots. Upgrade to Pro or higher to add more.")
+    if plan == "pro" and total_url_count >= 50:
+        raise HTTPException(status_code=403, detail="Pro plan limit reached: you've used all 50 URL slots. Contact us if you need more capacity.")
+    if plan == "free" and total_url_count >= 5:
+        raise HTTPException(status_code=403, detail="Free plan limit reached: you've used all 5 URL slots. Upgrade to Starter or higher to add more.")
     try:
         content_id = await add_url_graphlit(guild_id, url)
         if not content_id:
@@ -138,13 +139,14 @@ async def handle_upload_url(
                 error="Graphlit ingestion returned no content_id (see backend logs for the underlying error)",
             )
             raise HTTPException(status_code=502, detail="Failed to ingest URL into knowledge base")
+        internal_content_id = await add_content_id(guild_id, content_id)
         await log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
             kind="url",
             name=url,
-            content_id=content_id,
+            content_id=internal_content_id,
             status="ok",
         )
         return {"status": "success", "message": "URL ingested"}
@@ -174,14 +176,14 @@ async def handle_upload_file(
         raise HTTPException(status_code=400, detail="'guild_id' cannot be empty")
     server_plan = await get_server_plan(str(guild_id))
     plan = server_plan.get("plan", "free")
-    counts=await get_uploads_count_by_type(guild_id)
-    total_file_count=counts.get("file",0)
-    if plan=="starter" and total_file_count>=10:
-        raise HTTPException(status_code=403,detail="Starter plan limit reached: you've used all 10 file slots. Upgrade to Pro or higher to add more.")
-    if plan=="pro" and total_file_count>=50:
-        raise HTTPException(status_code=403,detail="Pro plan limit reached: you've used all 50 file slots. Contact us if you need more capacity.")
-    if plan=="free" and total_file_count>=3:
-        raise HTTPException(status_code=403,detail="Free plan limit reached: you've used all 3 file slots. Upgrade to Starter or higher to add more.")
+    counts = await get_uploads_count_by_type(guild_id)
+    total_file_count = counts.get("file", 0)
+    if plan == "starter" and total_file_count >= 10:
+        raise HTTPException(status_code=403, detail="Starter plan limit reached: you've used all 10 file slots. Upgrade to Pro or higher to add more.")
+    if plan == "pro" and total_file_count >= 50:
+        raise HTTPException(status_code=403, detail="Pro plan limit reached: you've used all 50 file slots. Contact us if you need more capacity.")
+    if plan == "free" and total_file_count >= 3:
+        raise HTTPException(status_code=403, detail="Free plan limit reached: you've used all 3 file slots. Upgrade to Starter or higher to add more.")
     ext = os.path.splitext(file.filename or "")[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -233,14 +235,14 @@ async def handle_upload_file(
                 error="Graphlit ingestion returned no content_id (see backend logs for the underlying error)",
             )
             raise HTTPException(status_code=502, detail=f"Failed to ingest {ext} into knowledge base")
-
+        internal_content_id = await add_content_id(guild_id, content_id)
         await log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
             kind=kind,
             name=file.filename,
-            content_id=content_id,
+            content_id=internal_content_id,
             status="ok",
         )
         return {"status": "success", "message": f"{ext} ingested", "type": ext.lstrip(".")}
@@ -276,13 +278,14 @@ async def handle_upload_faq(
         content_id = await add_text_graphlit(guild_id, faq_text)
         if not content_id:
             raise HTTPException(status_code=500, detail="Failed to store FAQ text")
+        internal_content_id = await add_content_id(guild_id, content_id)
         await log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
             kind="faq",
             name=faq_text[:80],
-            content_id=content_id,
+            content_id=internal_content_id,
             status="ok",
         )
         return {"status": "success", "message": "FAQ ingested"}
@@ -302,7 +305,6 @@ async def handle_upload_faq(
         raise HTTPException(status_code=500, detail="Failed to ingest FAQ")
 
 
-
 async def handle_delete_upload(
     upload_id: str,
     guild_id: str = Query(...),
@@ -312,25 +314,25 @@ async def handle_delete_upload(
         row = await get_upload_by_id(upload_id, guild_id)
         if not row:
             raise HTTPException(status_code=404, detail="Upload not found")
-
-        feed_id = row.get("feed_id")
-        content_id = row.get("content_id")
-
-        if feed_id:
-            success = await delete_feed_graphlit(feed_id)
-            if not success:
-                raise HTTPException(status_code=502, detail="Failed to delete feed from Graphlit")
-            await remove_feed_id(guild_id, feed_id)
-        elif content_id:
-            success = await delete_content_graphlit(content_id)
-            if not success:
-                raise HTTPException(status_code=502, detail="Failed to delete content from Graphlit")
-            await remove_content_id(guild_id, content_id)
-
+        internal_feed_id = row.get("feed_id")
+        internal_content_id = row.get("content_id")
+        if internal_feed_id:
+            raw_feed_id = await get_feed_raw_id(internal_feed_id)
+            if raw_feed_id:
+                success = await delete_feed_graphlit(raw_feed_id)
+                if not success:
+                    raise HTTPException(status_code=502, detail="Failed to delete feed from Graphlit")
+            await remove_feed_id(internal_feed_id)
+        elif internal_content_id:
+            raw_content_id = await get_content_raw_id(internal_content_id)
+            if raw_content_id:
+                success = await delete_content_graphlit(raw_content_id)
+                if not success:
+                    raise HTTPException(status_code=502, detail="Failed to delete content from Graphlit")
+            await remove_content_id(internal_content_id)
         deleted = await remove_upload(upload_id, guild_id)
         if not deleted:
             raise HTTPException(status_code=404, detail="Upload not found in DB")
-
         return {"status": "success", "deleted_id": upload_id}
 
     except HTTPException:
@@ -360,7 +362,6 @@ async def handle_upload_contacts(
     if file.file.tell() > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="File must be smaller than 10 MB")
     file.file.seek(0)
-
     file_bytes = await file.read()
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Uploaded file is empty")
@@ -370,7 +371,6 @@ async def handle_upload_contacts(
         res = ingest_contacts_to_vectorstore(BytesIO(file_bytes), guild_id)
         if res["status"] == "error":
             raise Exception(res["error"])
-
         await log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
@@ -393,26 +393,28 @@ async def handle_upload_contacts(
         )
         print(f"[handle_upload_contacts] {file.filename} failed: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to process contacts: {e}")
-    
-async def handle_upload_channel_messages(guild_id:str=Form(...),channel_id:str=Form(...),time:int=Form(...),user: dict=Depends(require_guild_admin),):
+
+async def handle_upload_channel_messages(guild_id: str = Form(...), channel_id: str = Form(...), time: int = Form(...), user: dict = Depends(require_guild_admin)):
     try:
-        server_id_int=int(guild_id)
-        channel_id_int=int(channel_id)
-        messages=await get_message_from_channel(server_id_int,channel_id_int,time)
+        server_id_int = int(guild_id)
+        channel_id_int = int(channel_id)
+        messages = await get_message_from_channel(server_id_int, channel_id_int, time)
         for m in messages:
-            content_id=await add_text_graphlit(guild_id,m)
+            content_id = await add_text_graphlit(guild_id, m)
+            internal_content_id = await add_content_id(guild_id, content_id) if content_id else None
             await log_upload(
-            guild_id=guild_id,
-            user_id=user["discord_id"],
-            username=user["username"],
-            kind="text",
-            name=m[:80],
-            content_id=content_id,
-            status="ok",
-        )
+                guild_id=guild_id,
+                user_id=user["discord_id"],
+                username=user["username"],
+                kind="text",
+                name=m[:80],
+                content_id=internal_content_id,
+                status="ok",
+            )
         return {"status": "success", "message": "Messages ingested"}
     except Exception as e:
-        raise HTTPException(status_code=500,detail=f"Failed to process Messages From Channel: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to process Messages From Channel: {e}")
+
 
 async def handle_get_my_uploads(
     user: dict = Depends(verify_access_token),
@@ -431,7 +433,6 @@ async def handle_get_my_uploads(
                     {"uid": user["discord_id"]},
                 )
             ).mappings().all()
-
             result = []
             for r in rows:
                 row_dict = dict(r)
@@ -446,13 +447,13 @@ async def handle_get_my_uploads(
     except Exception as e:
         print(f"[handle_get_my_uploads] Error: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch user uploads")
-    
 
-async def handle_add_github_repo(repo_url: str = Form(...), guild_id: str = Form(...),personal_access_token: str = Form(default=None),user: dict = Depends(require_guild_admin)) -> dict:
+
+async def handle_add_github_repo(repo_url: str = Form(...), guild_id: str = Form(...), personal_access_token: str = Form(default=None), user: dict = Depends(require_guild_admin)) -> dict:
     try:
-        total_number_of_feeds=await get_github_ingested_count(guild_id)
-        if total_number_of_feeds>=1:
-            raise HTTPException(status_code=403,detail="You can only add one GitHub repository per server. Please delete the existing one before adding a new one.")
+        total_number_of_feeds = await get_github_ingested_count(guild_id)
+        if total_number_of_feeds >= 1:
+            raise HTTPException(status_code=403, detail="You can only add one GitHub repository per server. Please delete the existing one before adding a new one.")
         repo_url = repo_url.strip()
         if not re.match(r"https?://", repo_url):
             raise HTTPException(status_code=400, detail="'repo_url' must start with http:// or https://")
@@ -468,13 +469,14 @@ async def handle_add_github_repo(repo_url: str = Form(...), guild_id: str = Form
                 error="Failed to create GitHub crawl feed in Graphlit",
             )
             raise HTTPException(status_code=502, detail="Failed to ingest GitHub repository into knowledge base")
+        internal_feed_id = await add_feed_id(guild_id, feed_id)
         await log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
             username=user["username"],
             kind="github",
             name=repo_url,
-            feed_id=feed_id,
+            feed_id=internal_feed_id,
             content_id=None,
             status="ok",
         )

@@ -172,14 +172,26 @@ async def remove_mod_channel(guild_id: str) -> None:
         )
         await s.commit()
 
-async def log_upload(
-    guild_id, user_id, username, kind, name,
-    content_id=None,
-    feed_id=None,
-    status="ok",
-    error=None,
-) -> None:
+async def log_upload(guild_id, user_id, username, kind, name,
+                      content_id=None, feed_id=None, status="ok", error=None) -> None:
     async with AsyncDB() as s:
+        resolved_content_id = None
+        resolved_feed_id = None
+
+        if content_id:
+            row = (await s.execute(
+                text("SELECT id FROM server_uploads WHERE server_id=:sid AND content_id=:cid"),
+                {"sid": str(guild_id), "cid": content_id},
+            )).first()
+            resolved_content_id = str(row[0]) if row else content_id  # fallback
+
+        if feed_id:
+            row = (await s.execute(
+                text("SELECT id FROM server_feeds WHERE server_id=:sid AND feed_id=:fid"),
+                {"sid": str(guild_id), "fid": feed_id},
+            )).first()
+            resolved_feed_id = str(row[0]) if row else feed_id  # fallback
+
         await s.execute(
             text("""
                 INSERT INTO uploads
@@ -190,7 +202,7 @@ async def log_upload(
             {
                 "sid": str(guild_id), "uid": str(user_id), "uname": username,
                 "type": kind, "name": name,
-                "cid": content_id, "fid": feed_id,
+                "cid": resolved_content_id, "fid": resolved_feed_id,
                 "status": status, "error": error,
             },
         )
@@ -202,9 +214,14 @@ async def get_uploads(guild_id: str, limit: int = 100, offset: int = 0) -> list[
         rows = (
             await s.execute(
                 text("""
-                    SELECT * FROM uploads
-                    WHERE server_id=:id
-                    ORDER BY uploaded_at DESC
+                    SELECT u.*,
+                           su.content_id AS raw_content_id,
+                           sf.feed_id    AS raw_feed_id
+                    FROM uploads u
+                    LEFT JOIN server_uploads su ON u.content_id = su.id::text
+                    LEFT JOIN server_feeds   sf ON u.feed_id    = sf.id::text
+                    WHERE u.server_id=:id
+                    ORDER BY u.uploaded_at DESC
                     LIMIT :limit OFFSET :offset
                 """),
                 {"id": str(guild_id), "limit": limit, "offset": offset},
@@ -701,22 +718,24 @@ async def get_all_servers_with_config_status() -> list[dict]:
             for row in rows
         ]
 
-async def add_content_id(server_id: str, content_id: str) -> None:
+async def add_content_id(server_id: str, content_id: str) -> str:
     async with AsyncDB() as s:
-        await s.execute(
-            text("INSERT INTO server_uploads (server_id, content_id) VALUES (:server_id, :content_id)"),
+        result = await s.execute(
+            text("INSERT INTO server_uploads (server_id, content_id) VALUES (:server_id, :content_id) RETURNING id"),
             {"server_id": server_id, "content_id": content_id},
         )
         await s.commit()
+        return str(result.scalar())
 
 
-async def add_feed_id(server_id: str, feed_id: str) -> None:
+async def add_feed_id(server_id: str, feed_id: str) -> str:
     async with AsyncDB() as s:
-        await s.execute(
-            text("INSERT INTO server_feeds (server_id, feed_id) VALUES (:server_id, :feed_id)"),
+        result = await s.execute(
+            text("INSERT INTO server_feeds (server_id, feed_id) VALUES (:server_id, :feed_id) RETURNING id"),
             {"server_id": server_id, "feed_id": feed_id},
         )
         await s.commit()
+        return str(result.scalar())
 
 
 async def get_content_ids(server_id: str) -> list[str]:
@@ -741,21 +760,21 @@ async def get_feed_ids(server_id: str) -> list[str]:
         return [row[0] for row in rows]
 
 
-async def remove_content_id(server_id: str, content_id: str) -> bool:
+async def remove_content_id(id: str) -> bool:
     async with AsyncDB() as s:
         result = await s.execute(
-            text("DELETE FROM server_uploads WHERE server_id=:server_id AND content_id=:content_id"),
-            {"server_id": server_id, "content_id": content_id},
+            text("DELETE FROM server_uploads WHERE id=:id"),
+            {"id": id},
         )
         await s.commit()
         return result.rowcount > 0
 
 
-async def remove_feed_id(server_id: str, feed_id: str) -> bool:
+async def remove_feed_id(id: str) -> bool:
     async with AsyncDB() as s:
         result = await s.execute(
-            text("DELETE FROM server_feeds WHERE server_id=:server_id AND feed_id=:feed_id"),
-            {"server_id": server_id, "feed_id": feed_id},
+            text("DELETE FROM server_feeds WHERE id=:id"),
+            {"id": id},
         )
         await s.commit()
         return result.rowcount > 0
@@ -1158,3 +1177,13 @@ async def delete_channel_knowledge_source(source_id: str) -> int:
         )
         await s.commit()
         return result.rowcount
+    
+async def get_feed_raw_id(id: str) -> Optional[str]:
+    async with AsyncDB() as s:
+        row = (await s.execute(text("SELECT feed_id FROM server_feeds WHERE id=:id"), {"id": id})).first()
+        return row[0] if row else None
+
+async def get_content_raw_id(id: str) -> Optional[str]:
+    async with AsyncDB() as s:
+        row = (await s.execute(text("SELECT content_id FROM server_uploads WHERE id=:id"), {"id": id})).first()
+        return row[0] if row else None
