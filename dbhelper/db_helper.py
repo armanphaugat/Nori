@@ -175,23 +175,6 @@ async def remove_mod_channel(guild_id: str) -> None:
 async def log_upload(guild_id, user_id, username, kind, name,
                       content_id=None, feed_id=None, status="ok", error=None) -> None:
     async with AsyncDB() as s:
-        resolved_content_id = None
-        resolved_feed_id = None
-
-        if content_id:
-            row = (await s.execute(
-                text("SELECT id FROM server_uploads WHERE server_id=:sid AND content_id=:cid"),
-                {"sid": str(guild_id), "cid": content_id},
-            )).first()
-            resolved_content_id = str(row[0]) if row else content_id  # fallback
-
-        if feed_id:
-            row = (await s.execute(
-                text("SELECT id FROM server_feeds WHERE server_id=:sid AND feed_id=:fid"),
-                {"sid": str(guild_id), "fid": feed_id},
-            )).first()
-            resolved_feed_id = str(row[0]) if row else feed_id  # fallback
-
         await s.execute(
             text("""
                 INSERT INTO uploads
@@ -202,7 +185,7 @@ async def log_upload(guild_id, user_id, username, kind, name,
             {
                 "sid": str(guild_id), "uid": str(user_id), "uname": username,
                 "type": kind, "name": name,
-                "cid": resolved_content_id, "fid": resolved_feed_id,
+                "cid": content_id, "fid": feed_id,
                 "status": status, "error": error,
             },
         )
