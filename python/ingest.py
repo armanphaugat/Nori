@@ -139,7 +139,7 @@ async def add_github_repo_graphlit(server_id: str, repo_url: str, personal_acces
             })
             ids.append(res.id)
         print(f"[{server_id}] GitHub repo ingested -> {len(ids)} files")
-        return ids  # list, not single id — see note below
+        return ids 
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
         return []
