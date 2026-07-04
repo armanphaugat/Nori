@@ -36,15 +36,16 @@ def read_word(file):
         raise ValueError(f"Failed to read Word file: {e}")
 
 
-
 async def add_url_graphlit(server_id: str, url: str):
     try:
         response = await graphlit.client.ingest_uri(url, is_synchronous=True)
-        await add_content_id(server_id, response.ingest_uri.id)
-        print("Url Addded")
-        return response.ingest_uri.id
+        content_id = response.ingest_uri.id
+        print(f"[{server_id}] URL ingested -> {content_id}")
+        return content_id
     except Exception as e:
         print(f"[{server_id}] Failed to ingest {url}: {e}")
+        return 0
+
 
 async def add_pdf_graphlit(server_id: str, pdf):
     try:
@@ -61,11 +62,13 @@ async def add_pdf_graphlit(server_id: str, pdf):
         if not response:
             print("No ingestion Done")
             return 0
-        await add_content_id(server_id, response.ingest_encoded_file.id)
-        return response.ingest_encoded_file.id
+        content_id = response.ingest_encoded_file.id
+        print(f"[{server_id}] PDF ingested -> {content_id}")
+        return content_id
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
         return 0
+
 
 async def add_text_graphlit(server_id: str, faq_text: str):
     try:
@@ -73,11 +76,13 @@ async def add_text_graphlit(server_id: str, faq_text: str):
         if not response:
             print("Not Able To Add Text To Graphlit")
             return 0
-        await add_content_id(server_id, str(response.ingest_text.id))
-        return response.ingest_text.id
+        content_id = str(response.ingest_text.id)
+        print(f"[{server_id}] Text ingested -> {content_id}")
+        return content_id
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
         return 0
+
 
 async def add_website_graphlit(server_id: str, url: str):
     try:
@@ -94,10 +99,11 @@ async def add_website_graphlit(server_id: str, url: str):
         )
         feed_id = response.create_feed.id
         print(f"[DEBUG] Feed created: {feed_id} for server: {server_id}")
-        await add_feed_id(server_id, str(feed_id))
         return feed_id
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
+        return 0
+
 
 async def add_word_graphlit(server_id: str, file):
     try:
@@ -114,14 +120,15 @@ async def add_word_graphlit(server_id: str, file):
         if not response:
             print("No ingestion Done")
             return 0
-        await add_content_id(server_id, str(response.ingest_encoded_file.id))
-        return response.ingest_encoded_file.id
-
+        content_id = str(response.ingest_encoded_file.id)
+        print(f"[{server_id}] Word doc ingested -> {content_id}")
+        return content_id
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
         return 0
 
-async def add_image_graphlit(server_id: str, file,ext:str="jpg"):
+
+async def add_image_graphlit(server_id: str, file, ext: str = "jpg"):
     try:
         if isinstance(file, BytesIO):
             file.seek(0)
@@ -151,19 +158,18 @@ async def add_image_graphlit(server_id: str, file,ext:str="jpg"):
             print("No ingestion Done")
             return 0
         content_id = response.ingest_encoded_file.id
-        await add_content_id(server_id, str(content_id))
-        print(f"[{server_id}] Image ingested → {content_id}")
+        print(f"[{server_id}] Image ingested -> {content_id}")
         return content_id
-
     except Exception as e:
         print(f"[{server_id}] Failed: {e}")
         return 0
+
 
 async def add_video_graphlit(server_id: str, file, filename: str = "upload"):
     """
     Ingest an audio/video file into Graphlit using their native cloud transcription.
     Supports: .mp4, .mp3, .wav, .m4a
-    No local CPU processing — file is base64-encoded and sent to Graphlit's API.
+    No local CPU processing -- file is base64-encoded and sent to Graphlit's API.
     """
     MIME_TYPES = {
         "mp4": "video/mp4",
@@ -195,12 +201,12 @@ async def add_video_graphlit(server_id: str, file, filename: str = "upload"):
             print(f"[{server_id}] Graphlit returned no response for {filename}")
             return 0
         content_id = response.ingest_encoded_file.id
-        await add_content_id(server_id, str(content_id))
-        print(f"[{server_id}] Audio/video ingested → {content_id}")
+        print(f"[{server_id}] Audio/video ingested -> {content_id}")
         return content_id
     except Exception as e:
         print(f"[{server_id}] Failed to ingest {filename}: {e}")
         return 0
+
 
 async def add_github_repo_graphlit(server_id: str, repo_url: str, personal_access_token: str | None = None):
     try:
@@ -209,14 +215,11 @@ async def add_github_repo_graphlit(server_id: str, repo_url: str, personal_acces
         if repo_name.endswith(".git"):
             repo_name = repo_name[:-4]
         repo_owner = parts[-2]
-        # Clean and normalize token (handle empty string, whitespace, and 'null'/'undefined' string values)
         token_str = (personal_access_token or "").strip()
         if token_str.lower() in {"", "null", "undefined"}:
             token_str = ""
         env_token = (os.environ.get("GITHUB_PERSONAL_ACCESS_TOKEN") or "").strip()
-        
         token = token_str or env_token or None
-        
         github_kwargs = {
             "repository_owner": repo_owner,
             "repository_name": repo_name,
@@ -224,7 +227,7 @@ async def add_github_repo_graphlit(server_id: str, repo_url: str, personal_acces
         if token:
             github_kwargs["authentication_type"] = GitHubAuthenticationTypes.PERSONAL_ACCESS_TOKEN
             github_kwargs["personal_access_token"] = token
-            
+
         response = await graphlit.client.create_feed(
             feed=FeedInput(
                 name=f"f{repo_name}-{server_id}",
@@ -238,7 +241,6 @@ async def add_github_repo_graphlit(server_id: str, repo_url: str, personal_acces
         )
         result = response.create_feed
         feed_id = result.id
-        await add_feed_id(server_id, feed_id)
         return feed_id
 
     except Exception as e:
