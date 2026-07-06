@@ -1119,6 +1119,21 @@ async def insert_channel_knowledge_source(
         await s.commit()
         return result.scalar()
 
+async def get_all_channel_knowledge_sources(server_id: str) -> list:
+    """Returns every channel_knowledge_sources row for the whole guild,
+    not just one channel — used for the overview table."""
+    async with AsyncDB() as s:
+        result = await s.execute(
+            text("""
+                SELECT id, server_id, channel_id, content_id, feed_id, added_at
+                FROM channel_knowledge_sources
+                WHERE server_id = :server_id
+                ORDER BY channel_id, added_at DESC
+            """),
+            {"server_id": server_id},
+        )
+        rows = result.mappings().all()
+        return [dict(row) for row in rows]
 
 async def get_channel_knowledge_sources(server_id: str, channel_id: str) -> list:
     async with AsyncDB() as s:

@@ -236,6 +236,22 @@ export default function ChannelsTab({
   const [kbStatus, setKbStatus]                   = useState(null);
   const [searchKbSourceQuery, setSearchKbSourceQuery] = useState("");
 
+  // ── KB Overview (all channels) State ──
+  const [allChannelKbSources, setAllChannelKbSources] = useState([]);
+  const [overviewLoading, setOverviewLoading]         = useState(false);
+
+  const loadAllChannelKbSources = useCallback(async (id) => {
+    if (!id) return;
+    setOverviewLoading(true);
+    try {
+      const res = await API.getAllChannelKnowledgeBase(id);
+      if (res.status === "success") setAllChannelKbSources(res.data || []);
+    } catch (e) {
+      console.error("Failed to load KB overview:", e);
+    }
+    setOverviewLoading(false);
+  }, []);
+
   const handleCreateSupportCategory = async () => {
     if (!guildId) return;
     if (supportSetupMode === "existing" && !selectedSupportChan) {
@@ -336,11 +352,13 @@ export default function ChannelsTab({
     setChannelKbSources([]);
     setLocalCheckedUuids([]);
     setKbStatus(null);
+    setAllChannelKbSources([]);
 
     if (guildId) { 
       load(guildId); 
       loadChannelConfigs(guildId); 
       loadAllUploads(guildId);
+      loadAllChannelKbSources(guildId);
     }
   }, [guildId]);
 
@@ -536,6 +554,7 @@ export default function ChannelsTab({
 
       setKbStatus({ ok: true, msg: "Channel knowledge base saved successfully" });
       await loadChannelKbSources(guildId, selectedKbChanId);
+      await loadAllChannelKbSources(guildId);
     } catch (e) {
       setKbStatus({ ok: false, msg: e.message || "Failed to save channel knowledge base" });
     }
@@ -558,6 +577,14 @@ export default function ChannelsTab({
       <NoServerSelected onGoToOverview={onGoToOverview} />
     </div>
   );
+
+  // ── Group KB overview rows by channel_id, resolve names via allUploads ──
+  const kbOverviewGrouped = {};
+  allChannelKbSources.forEach(row => {
+    if (!kbOverviewGrouped[row.channel_id]) kbOverviewGrouped[row.channel_id] = [];
+    kbOverviewGrouped[row.channel_id].push(row);
+  });
+  const kbOverviewChannelIds = Object.keys(kbOverviewGrouped);
 
   return (
     <div>
@@ -1087,6 +1114,63 @@ export default function ChannelsTab({
             <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 16, lineHeight: 1.5, fontWeight: 300 }}>
               Assign specific knowledge documents, websites, and data sources to individual channels. If configured, Nori will search only the selected sources for queries in that channel.
             </p>
+
+            {/* ── Overview: which channels already have sources assigned ── */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)" }}>Configured Channels</span>
+                {kbOverviewChannelIds.length > 0 && (
+                  <Tag variant="info">{kbOverviewChannelIds.length}</Tag>
+                )}
+              </div>
+
+              {overviewLoading ? (
+                <div style={{ display: "flex", gap: 10, alignItems: "center", color: "var(--muted)", fontSize: 13, padding: "10px 0" }}>
+                  <Spinner size={14} /> Loading overview…
+                </div>
+              ) : kbOverviewChannelIds.length === 0 ? (
+                <div style={{ fontSize: 13, color: "var(--muted)", padding: "12px 0" }}>
+                  No channels have knowledge sources assigned yet. Select a channel below to get started.
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {kbOverviewChannelIds.map(cid => {
+                    const rows = kbOverviewGrouped[cid];
+                    const names = rows.map(r => {
+                      const uuid = r.content_id || r.feed_id;
+                      const up = allUploads.find(u => u.raw_content_id === uuid || u.raw_feed_id === uuid);
+                      return up ? up.name : uuid;
+                    });
+                    return (
+                      <div
+                        key={cid}
+                        onClick={() => setSelectedKbChanId(cid)}
+                        style={{
+                          display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
+                          background: selectedKbChanId === cid ? "var(--accent-dim)" : "var(--surface-2)",
+                          border: `1px solid ${selectedKbChanId === cid ? "var(--accent-border)" : "var(--border)"}`,
+                          borderRadius: "var(--r-md)", cursor: "pointer",
+                          transition: "all var(--tr)",
+                        }}
+                      >
+                        <Icon name="tag" size={14} style={{ color: "var(--accent)", flexShrink: 0 }} />
+                        <span style={{ fontSize: 13, fontWeight: 500, color: "var(--navy)", minWidth: 120, flexShrink: 0 }}>
+                          {chanName(cid)}
+                        </span>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flex: 1, overflow: "hidden" }}>
+                          {names.map((n, i) => (
+                            <Tag key={i} variant="success" style={{ fontSize: 11 }}>{n}</Tag>
+                          ))}
+                        </div>
+                        <Btn variant="outline" style={{ fontSize: 11, padding: "3px 10px", minHeight: 26, flexShrink: 0 }}>
+                          Edit
+                        </Btn>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 5 }}>Select Channel</div>

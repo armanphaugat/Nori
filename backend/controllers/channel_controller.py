@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from fastapi import Form, HTTPException
 from backend.middleware.auth import *
-from dbhelper.db_helper import delete_channel_knowledge_source, delete_mod_channel,delete_channel_config, get_channel_knowledge_sources, insert_channel_knowledge_source,update_channel_config,insert_mod_channel,get_channel_config, remove_channel, set_channel,insert_channel_config,get_all_channel_configs
+from dbhelper.db_helper import delete_channel_knowledge_source, delete_mod_channel,delete_channel_config, get_all_channel_knowledge_sources, get_channel_knowledge_sources, insert_channel_knowledge_source,update_channel_config,insert_mod_channel,get_channel_config, remove_channel, set_channel,insert_channel_config,get_all_channel_configs
 
 
 async def handle_add_channel(
@@ -274,3 +274,13 @@ async def handle_delete_channel_specific_knowledge_base(
         return {"status": "success", "message": "Channel knowledge source deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete channel knowledge source: {e}")
+    
+async def handle_list_all_channel_knowledge_base(
+    guild_id: str = Query(...),
+    user: dict = Depends(require_guild_admin_query),
+):
+    try:
+        rows = await get_all_channel_knowledge_sources(server_id=guild_id)
+        return {"status": "success", "data": rows}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list channel knowledge sources: {e}")

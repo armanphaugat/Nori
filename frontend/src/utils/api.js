@@ -165,4 +165,5 @@ export const API = {
     }
     return apiFetch("/upload/add-github-repo", { method: "POST", body: f, isForm: true });
   },
+  getAllChannelKnowledgeBase: (gid) => apiFetch(`/channel/list-all-channel-knowledge-base?guild_id=${encodeURIComponent(gid)}`),
 };
