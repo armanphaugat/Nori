@@ -226,6 +226,16 @@ export default function ChannelsTab({
   const [editTone, setEditTone]                   = useState("");
   const [deletingConfigId, setDeletingConfigId]   = useState(null);
 
+  // ── Channel Specific KB State ──
+  const [selectedKbChanId, setSelectedKbChanId]   = useState("");
+  const [allUploads, setAllUploads]               = useState([]);
+  const [channelKbSources, setChannelKbSources]   = useState([]);
+  const [localCheckedUuids, setLocalCheckedUuids] = useState([]);
+  const [kbLoading, setKbLoading]                 = useState(false);
+  const [savingKb, setSavingKb]                   = useState(false);
+  const [kbStatus, setKbStatus]                   = useState(null);
+  const [searchKbSourceQuery, setSearchKbSourceQuery] = useState("");
+
   const handleCreateSupportCategory = async () => {
     if (!guildId) return;
     if (supportSetupMode === "existing" && !selectedSupportChan) {
@@ -283,6 +293,35 @@ export default function ChannelsTab({
     setConfigLoading(false);
   }, []);
 
+  const loadAllUploads = useCallback(async (id) => {
+    if (!id) return;
+    try {
+      const data = await API.getAllUploads(id);
+      setAllUploads(data || []);
+    } catch (e) {
+      console.error("Failed to load uploads for KB mapping:", e);
+    }
+  }, []);
+
+  const loadChannelKbSources = useCallback(async (gid, cid) => {
+    if (!gid || !cid) {
+      setChannelKbSources([]);
+      return;
+    }
+    setKbLoading(true); setKbStatus(null);
+    try {
+      const res = await API.getChannelKnowledgeBase(gid, cid);
+      if (res.status === "success") {
+        setChannelKbSources(res.data || []);
+      } else {
+        setKbStatus({ ok: false, msg: res.message || "Failed to load channel knowledge base" });
+      }
+    } catch (e) {
+      setKbStatus({ ok: false, msg: e.message });
+    }
+    setKbLoading(false);
+  }, []);
+
   useEffect(() => {
     setLoaded(false); setChannels([]); setDiscordChannels([]); setModChannel(null); setStatus(null);
     setSupportSetupMode("new"); setSelectedSupportChan("");
@@ -290,8 +329,29 @@ export default function ChannelsTab({
     setGuildIcon(initialGuildIcon);
     setChannelConfigs([]); setConfigStatus(null); setShowAddConfig(false);
     setWebSearchEnabled(false);
-    if (guildId) { load(guildId); loadChannelConfigs(guildId); }
+
+    // Reset KB state
+    setSelectedKbChanId("");
+    setSearchKbSourceQuery("");
+    setChannelKbSources([]);
+    setLocalCheckedUuids([]);
+    setKbStatus(null);
+
+    if (guildId) { 
+      load(guildId); 
+      loadChannelConfigs(guildId); 
+      loadAllUploads(guildId);
+    }
   }, [guildId]);
+
+  useEffect(() => {
+    loadChannelKbSources(guildId, selectedKbChanId);
+  }, [guildId, selectedKbChanId, loadChannelKbSources]);
+
+  useEffect(() => {
+    const uuids = channelKbSources.map(s => s.content_id || s.feed_id).filter(Boolean);
+    setLocalCheckedUuids(uuids);
+  }, [channelKbSources]);
 
   useEffect(() => {
     if (initialGuildName) {
@@ -428,6 +488,58 @@ export default function ChannelsTab({
       } else { setConfigStatus({ ok: false, msg: res.message || "Failed to delete config" }); }
     } catch (e) { setConfigStatus({ ok: false, msg: e.message }); }
     setDeletingConfigId(null);
+  };
+
+  const handleToggleSource = (uuid) => {
+    setLocalCheckedUuids(prev => 
+      prev.includes(uuid) ? prev.filter(x => x !== uuid) : [...prev, uuid]
+    );
+  };
+
+  const handleSaveKb = async () => {
+    if (!guildId || !selectedKbChanId) return;
+    setSavingKb(true); setKbStatus(null);
+    try {
+      const initialMap = {};
+      channelKbSources.forEach(s => {
+        const uuid = s.content_id || s.feed_id;
+        if (uuid) initialMap[uuid] = s.id;
+      });
+
+      const toAddContent = [];
+      const toAddFeed = [];
+      const toDeleteSourceIds = [];
+
+      localCheckedUuids.forEach(uuid => {
+        if (!initialMap[uuid]) {
+          const upload = allUploads.find(up => up.raw_content_id === uuid || up.raw_feed_id === uuid);
+          if (upload) {
+            if (upload.raw_content_id) toAddContent.push(upload.raw_content_id);
+            else if (upload.raw_feed_id) toAddFeed.push(upload.raw_feed_id);
+          }
+        }
+      });
+
+      Object.keys(initialMap).forEach(uuid => {
+        if (!localCheckedUuids.includes(uuid)) {
+          toDeleteSourceIds.push(initialMap[uuid]);
+        }
+      });
+
+      for (const srcId of toDeleteSourceIds) {
+        await API.deleteChannelKnowledgeBase(guildId, selectedKbChanId, srcId);
+      }
+
+      if (toAddContent.length > 0 || toAddFeed.length > 0) {
+        await API.addChannelKnowledgeBase(guildId, selectedKbChanId, toAddContent, toAddFeed);
+      }
+
+      setKbStatus({ ok: true, msg: "Channel knowledge base saved successfully" });
+      await loadChannelKbSources(guildId, selectedKbChanId);
+    } catch (e) {
+      setKbStatus({ ok: false, msg: e.message || "Failed to save channel knowledge base" });
+    }
+    setSavingKb(false);
   };
 
   const SelectStyle = {
@@ -963,6 +1075,156 @@ export default function ChannelsTab({
             )}
 
             {configStatus && <div style={{ marginTop: 12 }}><StatusBadge {...configStatus} /></div>}
+          </Card>
+
+          {/* ── Channel Specific Knowledge Base Config ── */}
+          <Card style={{ marginTop: 16 }}>
+            {/* Card Header */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <Icon name="hub" size={17} style={{ color: "var(--accent)" }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--navy)" }}>Channel Specific Knowledge Base</span>
+            </div>
+            <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 16, lineHeight: 1.5, fontWeight: 300 }}>
+              Assign specific knowledge documents, websites, and data sources to individual channels. If configured, Nori will search only the selected sources for queries in that channel.
+            </p>
+
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 5 }}>Select Channel</div>
+              <SearchableChannelSelect
+                value={selectedKbChanId}
+                onChange={setSelectedKbChanId}
+                placeholder="-- Select Channel --"
+                list={discordChannels}
+                style={{ maxWidth: 360, height: 40 }}
+              />
+            </div>
+
+            {selectedKbChanId && (
+              <div style={{
+                padding: "16px",
+                background: "var(--surface-2)", border: "1px solid var(--border)",
+                borderRadius: "var(--r-md)",
+                display: "flex", flexDirection: "column", gap: 12,
+              }}>
+                {kbLoading ? (
+                  <div style={{ display: "flex", gap: 10, alignItems: "center", color: "var(--muted)", fontSize: 13, padding: "10px 0" }}>
+                    <Spinner size={14} /> Loading channel sources…
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)" }}>Select Knowledge Sources</span>
+                      <span style={{ fontSize: 12, color: "var(--muted)" }}>
+                        {localCheckedUuids.length} selected
+                      </span>
+                    </div>
+
+                    <input
+                      type="text"
+                      className="kb-input"
+                      placeholder="Search knowledge sources..."
+                      value={searchKbSourceQuery}
+                      onChange={e => setSearchKbSourceQuery(e.target.value)}
+                      style={{ height: 36, fontSize: 12.5 }}
+                    />
+
+                    <div style={{
+                      maxHeight: 240, overflowY: "auto",
+                      border: "1.5px solid var(--border2)", borderRadius: "var(--r-md)",
+                      background: "var(--surface)",
+                      display: "flex", flexDirection: "column",
+                    }}>
+                      {allUploads.filter(up => up.raw_content_id || up.raw_feed_id).filter(up => {
+                        const name = up.name || "";
+                        return name.toLowerCase().includes(searchKbSourceQuery.toLowerCase());
+                      }).length === 0 ? (
+                        <div style={{ padding: "16px", fontSize: 12.5, color: "var(--muted)", textAlign: "center" }}>
+                          {allUploads.filter(up => up.raw_content_id || up.raw_feed_id).length === 0
+                            ? "No knowledge sources found. Upload files/URLs first."
+                            : "No matching knowledge sources."}
+                        </div>
+                      ) : (
+                        allUploads.filter(up => up.raw_content_id || up.raw_feed_id).filter(up => {
+                          const name = up.name || "";
+                          return name.toLowerCase().includes(searchKbSourceQuery.toLowerCase());
+                        }).map(up => {
+                          const uuid = up.raw_content_id || up.raw_feed_id;
+                          const isChecked = localCheckedUuids.includes(uuid);
+                          let iconName = "description";
+                          if (up.kind === "url" || up.kind === "website") iconName = "link";
+                          else if (up.kind === "github") iconName = "terminal";
+                          else if (up.kind === "faq") iconName = "quiz";
+
+                          return (
+                            <div
+                              key={up.id}
+                              onClick={() => handleToggleSource(uuid)}
+                              style={{
+                                display: "flex", alignItems: "center", gap: 10,
+                                padding: "10px 14px", borderBottom: "1px solid var(--border)",
+                                cursor: "pointer",
+                                background: isChecked ? "var(--accent-dim)" : "transparent",
+                                transition: "background var(--tr)",
+                              }}
+                              onMouseEnter={e => { if (!isChecked) e.currentTarget.style.background = "var(--surface-2)"; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = isChecked ? "var(--accent-dim)" : "transparent"; }}
+                            >
+                              <div style={{
+                                width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                                border: `1.5px solid ${isChecked ? "var(--accent)" : "var(--border2)"}`,
+                                background: isChecked ? "var(--accent)" : "transparent",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                              }}>
+                                {isChecked && <Icon name="check" size={11} style={{ color: "#fff" }} />}
+                              </div>
+                              <Icon name={iconName} size={15} style={{ color: "var(--muted)", flexShrink: 0 }} />
+                              <span style={{
+                                fontSize: 13, color: "var(--navy)", fontWeight: 500,
+                                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                                flex: 1,
+                              }}>
+                                {up.name}
+                              </span>
+                              <Tag variant={up.kind === "file" ? "info" : up.kind === "github" ? "warn" : "success"} style={{ fontSize: 11 }}>
+                                {up.kind}
+                              </Tag>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+                      <Btn
+                        variant="primary"
+                        onClick={handleSaveKb}
+                        disabled={savingKb}
+                        style={{ minHeight: 36, padding: "0 16px" }}
+                      >
+                        {savingKb ? (
+                          <><Spinner size={13} color="#fff" /><span>Saving…</span></>
+                        ) : (
+                          <><Icon name="save" size={15} /><span>Save Changes</span></>
+                        )}
+                      </Btn>
+                      <Btn
+                        variant="outline"
+                        onClick={() => {
+                          const uuids = channelKbSources.map(s => s.content_id || s.feed_id).filter(Boolean);
+                          setLocalCheckedUuids(uuids);
+                          setKbStatus(null);
+                        }}
+                        disabled={savingKb}
+                        style={{ minHeight: 36, padding: "0 16px" }}
+                      >
+                        Reset
+                      </Btn>
+                    </div>
+                  </>
+                )}
+                {kbStatus && <div style={{ marginTop: 8 }}><StatusBadge {...kbStatus} /></div>}
+              </div>
+            )}
           </Card>
         </>
       )}

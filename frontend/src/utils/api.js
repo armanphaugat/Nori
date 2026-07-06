@@ -82,6 +82,24 @@ export const API = {
   updateChannelConfig:      (gid, cid, language, tone) => apiFetch("/channel/update-channel-config", { method: "PATCH",  body: fd({ guild_id: gid, channel_id: cid, language, tone }), isForm: true }),
   deleteChannelConfig:      (gid, cid)               => apiFetch("/channel/delete-channel-config", { method: "DELETE", body: fd({ guild_id: gid, channel_id: cid }),               isForm: true }),
   listAllChannelConfigs:    (gid)                     => apiFetch(`/channel/list-all-channel-config?guild_id=${encodeURIComponent(gid)}`),
+  addChannelKnowledgeBase:  (gid, cid, contentIds, feedIds) => {
+    const f = new FormData();
+    f.append("guild_id", gid);
+    f.append("channel_id", cid);
+    if (contentIds.length === 0) f.append("content_id", "");
+    else contentIds.forEach(id => f.append("content_id", id));
+    if (feedIds.length === 0) f.append("feed_id", "");
+    else feedIds.forEach(id => f.append("feed_id", id));
+    return apiFetch("/channel/add-channel-knowledge-base", { method: "POST", body: f, isForm: true });
+  },
+  getChannelKnowledgeBase:  (gid, cid) => apiFetch(`/channel/get-channel-knowledge-base?guild_id=${encodeURIComponent(gid)}&channel_id=${encodeURIComponent(cid)}`),
+  deleteChannelKnowledgeBase: (gid, cid, sourceId) => {
+    const f = new FormData();
+    f.append("guild_id", gid);
+    f.append("channel_id", cid);
+    f.append("source_id", sourceId);
+    return apiFetch("/channel/delete-channel-knowledge-base", { method: "DELETE", body: f, isForm: true });
+  },
   upload: (gid, files, urls) => {
     const f = new FormData();
     f.append("guild_id", gid);
@@ -123,7 +141,7 @@ export const API = {
   getMyUploads:          ()            => apiFetch("/upload/my-uploads"),
   deleteUpload:          (gid, uid)    => apiFetch(`/upload/delete-content/${encodeURIComponent(uid)}?guild_id=${encodeURIComponent(gid)}`, { method: "DELETE" }),
   getSubUrls:            (url)         => apiFetch(`/upload/sub-urls?url=${encodeURIComponent(url)}`),
-  query:                 (question, server) => apiFetch("/query/", { method: "POST", body: { question, server } }),
+  query:                 (question, server, channelId = "") => apiFetch("/query/", { method: "POST", body: { question, server, channel_id: channelId } }),
   getAnalytics:          (gid)         => apiFetch(`/analytics/summary?guild_id=${encodeURIComponent(gid)}`),
   getRecentAnalytics:    (gid, limit = 50) => apiFetch(`/analytics/recent-analytics?guild_id=${encodeURIComponent(gid)}&limit=${limit}`),
   getAllAnalytics:        (gid, limit = 30) => apiFetch(`/analytics/all-analytics?guild_id=${encodeURIComponent(gid)}&limit=${limit}`),
