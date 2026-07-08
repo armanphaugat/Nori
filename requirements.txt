@@ -34,3 +34,6 @@ graphlit-client
 discord.py
 groq
 playwright
+onnxruntime
+tokenizers
+numpy

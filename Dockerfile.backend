@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
+COPY scripts/download_model.py ./scripts/
+RUN PYTHONPATH=. python scripts/download_model.py
+
 
 # ─── Stage 2: Runtime ─────────────────────────────────────────────────────────
 FROM python:3.12-slim
@@ -25,6 +28,7 @@ ENV UVICORN_WORKERS=1
 
 COPY --from=builder /install /usr/local
 RUN playwright install --with-deps chromium
+COPY --from=builder /build/utils/model_onnx/ ./utils/model_onnx/
 COPY backend/   ./backend/
 COPY bot/       ./bot/
 COPY python/    ./python/
