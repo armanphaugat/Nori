@@ -100,6 +100,12 @@ export const API = {
     f.append("source_id", sourceId);
     return apiFetch("/channel/delete-channel-knowledge-base", { method: "DELETE", body: f, isForm: true });
   },
+  deleteAllChannelKnowledgeBase: (gid, cid) => {
+    const f = new FormData();
+    f.append("guild_id", gid);
+    f.append("channel_id", cid);
+    return apiFetch("/channel/delete-all-channel-knowledge-base", { method: "DELETE", body: f, isForm: true });
+  },
   upload: (gid, files, urls) => {
     const f = new FormData();
     f.append("guild_id", gid);

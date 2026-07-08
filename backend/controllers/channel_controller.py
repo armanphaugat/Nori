@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from fastapi import Form, HTTPException
 from backend.middleware.auth import *
-from dbhelper.db_helper import delete_channel_knowledge_source, delete_mod_channel,delete_channel_config, get_all_channel_knowledge_sources, get_channel_knowledge_sources, insert_channel_knowledge_source,update_channel_config,insert_mod_channel,get_channel_config, remove_channel, set_channel,insert_channel_config,get_all_channel_configs
+from dbhelper.db_helper import delete_channel_knowledge_source, delete_all_channel_knowledge_sources, delete_mod_channel,delete_channel_config, get_all_channel_knowledge_sources, get_channel_knowledge_sources, insert_channel_knowledge_source,update_channel_config,insert_mod_channel,get_channel_config, remove_channel, set_channel,insert_channel_config,get_all_channel_configs
 
 
 async def handle_add_channel(
@@ -274,7 +274,19 @@ async def handle_delete_channel_specific_knowledge_base(
         return {"status": "success", "message": "Channel knowledge source deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete channel knowledge source: {e}")
+
+async def handle_delete_all_channel_specific_knowledge_base(
+    guild_id: str = Form(...),
+    channel_id: str = Form(...),
+    user: dict = Depends(require_guild_admin),
+):
+    try:
+        rowcount = await delete_all_channel_knowledge_sources(guild_id, channel_id)
+        return {"status": "success", "message": "All channel knowledge sources deleted successfully", "deleted": rowcount}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete all channel knowledge sources: {e}")
     
+
 async def handle_list_all_channel_knowledge_base(
     guild_id: str = Query(...),
     user: dict = Depends(require_guild_admin_query),

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { API } from "../utils/api.js";
 import {
   Spinner, StatusBadge, Tag, Btn, Icon,
-  Card, SectionHeader, NoServerSelected,
+  Card, SectionHeader, NoServerSelected, Modal, ModalHeader,
 } from "./Common.jsx";
 
 const LANGUAGES = [
@@ -233,6 +233,8 @@ export default function ChannelsTab({
   const [localCheckedUuids, setLocalCheckedUuids] = useState([]);
   const [kbLoading, setKbLoading]                 = useState(false);
   const [savingKb, setSavingKb]                   = useState(false);
+  const [deletingAllKb, setDeletingAllKb]         = useState(false);
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
   const [kbStatus, setKbStatus]                   = useState(null);
   const [searchKbSourceQuery, setSearchKbSourceQuery] = useState("");
 
@@ -559,6 +561,21 @@ export default function ChannelsTab({
       setKbStatus({ ok: false, msg: e.message || "Failed to save channel knowledge base" });
     }
     setSavingKb(false);
+  };
+
+  const handleDeleteAllKb = async () => {
+    if (!guildId || !selectedKbChanId) return;
+    setDeletingAllKb(true); setKbStatus(null);
+    try {
+      await API.deleteAllChannelKnowledgeBase(guildId, selectedKbChanId);
+      setKbStatus({ ok: true, msg: "Successfully cleared all knowledge sources for this channel" });
+      setShowDeleteAllConfirm(false);
+      await loadChannelKbSources(guildId, selectedKbChanId);
+      await loadAllChannelKbSources(guildId);
+    } catch (e) {
+      setKbStatus({ ok: false, msg: e.message || "Failed to clear channel knowledge base" });
+    }
+    setDeletingAllKb(false);
   };
 
   const SelectStyle = {
@@ -1303,6 +1320,17 @@ export default function ChannelsTab({
                       >
                         Reset
                       </Btn>
+                      {channelKbSources.length > 0 && (
+                        <Btn
+                          variant="danger"
+                          onClick={() => setShowDeleteAllConfirm(true)}
+                          disabled={savingKb || deletingAllKb}
+                          style={{ minHeight: 36, padding: "0 16px", marginLeft: "auto" }}
+                        >
+                          <Icon name="delete" size={15} />
+                          <span>Delete All</span>
+                        </Btn>
+                      )}
                     </div>
                   </>
                 )}
@@ -1311,6 +1339,52 @@ export default function ChannelsTab({
             )}
           </Card>
         </>
+      )}
+
+      {showDeleteAllConfirm && (
+        <Modal onClose={() => !deletingAllKb && setShowDeleteAllConfirm(false)} danger>
+          <ModalHeader
+            icon="warning"
+            title="Confirm Deletion"
+            onClose={() => !deletingAllKb && setShowDeleteAllConfirm(false)}
+            danger
+          />
+          <div style={{ padding: 24 }}>
+            <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.7, marginBottom: 16 }}>
+              You are about to permanently clear all knowledge sources mapped to the channel{" "}
+              <strong style={{ color: "var(--navy)", fontWeight: 600 }}>
+                #{discordChannels.find(c => c.id === selectedKbChanId)?.name || selectedKbChanId}
+              </strong>.
+            </p>
+
+            <div style={{
+              background: "rgba(30,58,138,0.04)", padding: 14,
+              borderRadius: "var(--r-md)", border: "1px solid var(--accent-border)", marginBottom: 24,
+            }}>
+              <div style={{
+                fontSize: 11, color: "var(--accent-deep)", fontWeight: 700,
+                textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6,
+              }}>
+                Permanent Consequence
+              </div>
+              <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.65, fontWeight: 300 }}>
+                Nori will immediately stop using these knowledge sources for answering queries in this channel. This action cannot be undone.
+              </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+              <Btn onClick={() => setShowDeleteAllConfirm(false)} disabled={deletingAllKb} variant="ghost">
+                Cancel
+              </Btn>
+              <Btn onClick={handleDeleteAllKb} disabled={deletingAllKb} variant="accent">
+                {deletingAllKb
+                  ? <><Spinner size={13} color="#fff" /> Deleting…</>
+                  : <><Icon name="delete" size={15} /> Delete All</>
+                }
+              </Btn>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );

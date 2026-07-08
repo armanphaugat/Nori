@@ -517,3 +517,71 @@ export function NoServerSelected({ onGoToOverview }) {
     </div>
   );
 }
+
+export function Modal({ children, onClose, danger = false }) {
+  return (
+    <div
+      onClick={e => { if (e.target === e.currentTarget) onClose?.(); }}
+      style={{
+        position: "fixed", inset: 0,
+        background: "rgba(43,45,66,0.45)",
+        backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        zIndex: 999, padding: 24,
+        animation: "fadeIn .15s ease",
+      }}
+    >
+      <div style={{
+        width: "100%", maxWidth: danger ? 480 : 540,
+        borderRadius: "var(--r-xl)",
+        background: "var(--surface)",
+        border: `1px solid ${danger ? "var(--accent-border)" : "var(--border2)"}`,
+        boxShadow: "var(--shadow-lg)",
+        overflow: "hidden",
+        animation: "fadeUp .2s cubic-bezier(0.16,1,0.3,1) both",
+      }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export function ModalHeader({ icon, title, onClose, danger = false }) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "16px 20px",
+      borderBottom: `1px solid ${danger ? "var(--accent-border)" : "var(--border)"}`,
+      background: danger ? "rgba(30,58,138,0.03)" : "var(--surface-2)",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+        <div style={{
+          width: 30, height: 30, borderRadius: "var(--r-sm)",
+          background: danger ? "var(--accent-dim)" : "var(--surface-3)",
+          border: `1px solid ${danger ? "var(--accent-border)" : "var(--border2)"}`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <Icon name={icon} size={15} fill style={{ color: danger ? "var(--accent-deep)" : "var(--muted)" }} />
+        </div>
+        <h3 style={{
+          margin: 0, fontSize: 15, fontWeight: 600,
+          color: danger ? "var(--accent-deep)" : "var(--navy)",
+          fontFamily: "'Outfit', sans-serif",
+        }}>{title}</h3>
+      </div>
+      <button
+        onClick={onClose}
+        style={{
+          background: "var(--surface-3)", border: "1px solid var(--border2)",
+          borderRadius: "var(--r-sm)", width: 28, height: 28,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          cursor: "pointer", color: "var(--muted)", transition: "all var(--tr)",
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = "var(--surface-4)"; e.currentTarget.style.color = "var(--navy)"; }}
+        onMouseLeave={e => { e.currentTarget.style.background = "var(--surface-3)"; e.currentTarget.style.color = "var(--muted)"; }}
+      >
+        <Icon name="close" size={14} />
+      </button>
+    </div>
+  );
+}

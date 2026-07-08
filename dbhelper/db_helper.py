@@ -1175,7 +1175,20 @@ async def delete_channel_knowledge_source(source_id: str) -> int:
         )
         await s.commit()
         return result.rowcount
+
+async def delete_all_channel_knowledge_sources(server_id: str, channel_id: str) -> int:
+    async with AsyncDB() as s:
+        result = await s.execute(
+            text("""
+                DELETE FROM channel_knowledge_sources 
+                WHERE server_id = :server_id AND channel_id = :channel_id
+            """),
+            {"server_id": server_id, "channel_id": channel_id},
+        )
+        await s.commit()
+        return result.rowcount
     
+
 async def get_feed_raw_id(id: str) -> Optional[str]:
     async with AsyncDB() as s:
         row = (await s.execute(text("SELECT feed_id FROM server_feeds WHERE id=:id"), {"id": id})).first()

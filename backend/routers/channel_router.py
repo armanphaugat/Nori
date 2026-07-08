@@ -17,4 +17,6 @@ channel_router.add_api_route("/delete-channel-config",handle_delete_channel_conf
 channel_router.add_api_route("/add-channel-knowledge-base",handle_add_channel_specific_knowledge_base,methods=["POST"],dependencies=[Depends(require_guild_admin)],)
 channel_router.add_api_route("/get-channel-knowledge-base",handle_get_channel_specific_knowledge_base,methods=["GET"],dependencies=[Depends(require_guild_admin_query)],)
 channel_router.add_api_route("/delete-channel-knowledge-base",handle_delete_channel_specific_knowledge_base,methods=["DELETE"],dependencies=[Depends(require_guild_admin)],)
+channel_router.add_api_route("/delete-all-channel-knowledge-base",handle_delete_all_channel_specific_knowledge_base,methods=["DELETE"],dependencies=[Depends(require_guild_admin)],)
 channel_router.add_api_route("/list-all-channel-knowledge-base",handle_list_all_channel_knowledge_base,methods=["GET"],dependencies=[Depends(require_guild_admin_query)],)
+
