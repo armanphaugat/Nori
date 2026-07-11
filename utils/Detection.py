@@ -89,7 +89,7 @@ def detect_via_groq(user_input: str, retries: int = 3) -> int:
     for attempt in range(retries):
         try:
             response = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+                model="llama-3.1-8b-versatile",
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": user_input},
