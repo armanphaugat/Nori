@@ -29,9 +29,9 @@ export const GLOBAL_CSS = `
     --light:         #EDF2F4;
     --danger:           #EF233C;
     --danger-deep:      #D90429;
-    --danger-dim:       rgba(30,58,138,0.10);
-    --danger-glow:      rgba(30,58,138,0.20);
-    --danger-border:    rgba(30,58,138,0.25);
+    --danger-dim:       rgba(239,35,60,0.10);
+    --danger-glow:      rgba(239,35,60,0.20);
+    --danger-border:    rgba(239,35,60,0.25);
 
     /* ── Surface layers ── */
     --bg:            #EDF2F4;
@@ -337,7 +337,13 @@ export function StatusBadge({ msg, ok }) {
       border: `1px solid ${ok ? "rgba(34,197,94,0.2)" : "var(--danger-border)"}`,
       color: ok ? "#16a34a" : "var(--danger-deep)",
       fontFamily: "'Plus Jakarta Sans', sans-serif",
-    }}>{msg}</div>
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+    }}>
+      <Icon name={ok ? "check_circle" : "error"} size={16} style={{ flexShrink: 0, color: ok ? "#16a34a" : "var(--danger-deep)" }} />
+      <span style={{ flex: 1, whiteSpace: "pre-line" }}>{msg}</span>
+    </div>
   );
 }
 

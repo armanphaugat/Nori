@@ -21,13 +21,18 @@ const LANGUAGES = [
 
 const ToggleSwitch = ({ checked, onChange, disabled }) => {
   return (
-    <label style={{
-      position: "relative",
-      display: "inline-flex",
-      alignItems: "center",
-      cursor: disabled ? "not-allowed" : "pointer",
-      userSelect: "none",
-    }}>
+    <label 
+      style={{
+        position: "relative",
+        display: "inline-flex",
+        alignItems: "center",
+        cursor: disabled ? "not-allowed" : "pointer",
+        userSelect: "none",
+        transition: "transform 0.15s ease",
+      }}
+      onMouseEnter={e => { if (!disabled) e.currentTarget.style.transform = "scale(1.08)"; }}
+      onMouseLeave={e => { if (!disabled) e.currentTarget.style.transform = "none"; }}
+    >
       <input
         type="checkbox"
         checked={checked}
