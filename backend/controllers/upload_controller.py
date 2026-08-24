@@ -5,8 +5,7 @@ import os
 from io import BytesIO
 from typing import List, Optional
 from bot.bot import get_message_from_channel
-import threading
-lock = threading.Lock()
+lock = asyncio.Lock()
 from dbhelper.db_helper import *
 URL_PATTERN = r"(https?://[^\s]+)"
 MAX_FILE_SIZE = 10 * 1024 * 1024
@@ -54,7 +53,7 @@ async def handle_upload_website(
     user: dict = Depends(require_guild_admin),
 ) -> dict:
     if idempotent_key:
-        with lock:
+        async with lock:
             if idempotent_key in idempotent_keys:
                 return {"status": "success", "message": "Duplicate request ignored"}
     guild_id = guild_id.strip()
@@ -88,7 +87,7 @@ async def handle_upload_website(
             raise HTTPException(status_code=502, detail="Failed to create website feed in knowledge base")
         internal_feed_id = await add_feed_id(guild_id, feed_id)
         if idempotent_key:
-            with lock:
+            async with lock:
                 idempotent_keys[idempotent_key] = True
         await log_upload(
             guild_id=guild_id,
@@ -124,7 +123,7 @@ async def handle_upload_url(
     user: dict = Depends(require_guild_admin),
 ) -> dict:
     if idempotent_key:
-        with lock:
+        async with lock:
             if idempotent_key in idempotent_keys:
                 return {"status": "success", "message": "Duplicate request ignored"}
     guild_id = guild_id.strip()
@@ -156,7 +155,7 @@ async def handle_upload_url(
             raise HTTPException(status_code=502, detail="Failed to ingest URL into knowledge base")
         internal_content_id = await add_content_id(guild_id, content_id)
         if idempotent_key:
-            with lock:
+            async with lock:
                 idempotent_keys[idempotent_key] = True
         await log_upload(
             guild_id=guild_id,
@@ -304,7 +303,7 @@ async def handle_upload_faq(
             raise HTTPException(status_code=500, detail="Failed to store FAQ text")
         internal_content_id = await add_content_id(guild_id, content_id)
         if idempotent_key:
-            with lock:
+            async with lock:
                 idempotent_keys[idempotent_key] = True
 
         await log_upload(
