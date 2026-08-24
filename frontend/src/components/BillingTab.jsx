@@ -201,7 +201,7 @@ export default function BillingTab({ guildId, onGoToOverview, user }) {
                   <path
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                     fill="none"
-                    stroke={usagePercent >= 90 ? "var(--accent)" : "var(--accent-deep)"}
+                    stroke={usagePercent >= 90 ? "var(--danger)" : usagePercent >= 75 ? "var(--warning)" : "var(--accent-deep)"}
                     strokeWidth="3.5"
                     strokeDasharray={`${usagePercent}, 100`}
                     strokeLinecap="round"
@@ -226,7 +226,7 @@ export default function BillingTab({ guildId, onGoToOverview, user }) {
                   ) : maxQuestions - questionsAsked > 0 ? (
                     <span><strong>{(maxQuestions - questionsAsked).toLocaleString()}</strong> questions left in cycle</span>
                   ) : (
-                    <span style={{ color: "var(--accent-deep)", fontWeight: 750 }}>Limit Exceeded!</span>
+                    <span style={{ color: "var(--danger)", fontWeight: 750 }}>Limit Exceeded!</span>
                   )}
                 </div>
               </div>
