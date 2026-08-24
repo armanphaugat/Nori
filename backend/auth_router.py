@@ -109,10 +109,7 @@ async def discord_callback(
     state: str,
     request: Request,
 ) -> RedirectResponse:
-    # 1. CSRF check
     _verify_and_consume_state(state)
-
-    # 2. Exchange authorization code for Discord tokens
     async with httpx.AsyncClient() as client:
         token_resp = await client.post(
             DISCORD_TOKEN_URL,
@@ -126,25 +123,17 @@ async def discord_callback(
             headers={"Content-Type": "application/x-www-form-urlencoded"},
             timeout=10,
         )
-
     if token_resp.status_code != 200:
         raise HTTPException(status_code=400, detail="Failed to exchange Discord code")
-
     discord_tokens = token_resp.json()
     d_access = discord_tokens["access_token"]
     d_refresh = discord_tokens["refresh_token"]
     d_expires_in = discord_tokens["expires_in"]
     d_expiry = datetime.now(timezone.utc) + timedelta(seconds=d_expires_in)
-
-    # 3. Fetch user info from Discord
     me = await _discord_api_get("/users/@me", d_access)
     guilds = await _discord_api_get("/users/@me/guilds", d_access)
     guild_ids = [g["id"] for g in guilds]
-
-    # Build username once for reuse
     username = f"{me['username']}#{me.get('discriminator', '0')}"
-
-    # 4. Upsert admin_users row
     await upsert_admin_user(
         discord_id=me["id"],
         username=username,
@@ -154,8 +143,6 @@ async def discord_callback(
         discord_refresh_token=d_refresh,      # TODO: encrypt before storing
         discord_token_expiry=d_expiry,
     )
-
-    # 5. Create session — store only the hash
     raw_refresh = secrets.token_urlsafe(32)
     await create_session(
         discord_id=me["id"],

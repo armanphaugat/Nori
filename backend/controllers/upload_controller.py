@@ -5,6 +5,8 @@ import os
 from io import BytesIO
 from typing import List, Optional
 from bot.bot import get_message_from_channel
+import threading
+lock = threading.Lock()
 from dbhelper.db_helper import *
 URL_PATTERN = r"(https?://[^\s]+)"
 MAX_FILE_SIZE = 10 * 1024 * 1024
@@ -16,7 +18,7 @@ ALLOWED_EXTENSIONS = {
 }
 
 from fastapi import File, Form, HTTPException, Query, UploadFile, Depends
-
+idempotent_keys={}
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 from python.ingest import *
 from python.sub_urls import *
@@ -48,8 +50,13 @@ async def handle_get_sub_urls(
 async def handle_upload_website(
     guild_id: str = Form(...),
     url: str = Form(...),
+    idempotent_key: Optional[str] = Form(None),
     user: dict = Depends(require_guild_admin),
 ) -> dict:
+    if idempotent_key:
+        with lock:
+            if idempotent_key in idempotent_keys:
+                return {"status": "success", "message": "Duplicate request ignored"}
     guild_id = guild_id.strip()
     if not guild_id:
         raise HTTPException(status_code=400, detail="'guild_id' cannot be empty")
@@ -80,6 +87,9 @@ async def handle_upload_website(
             )
             raise HTTPException(status_code=502, detail="Failed to create website feed in knowledge base")
         internal_feed_id = await add_feed_id(guild_id, feed_id)
+        if idempotent_key:
+            with lock:
+                idempotent_keys[idempotent_key] = True
         await log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
@@ -110,8 +120,13 @@ async def handle_upload_website(
 async def handle_upload_url(
     guild_id: str = Form(...),
     url: str = Form(...),
+    idempotent_key: Optional[str] = Form(None),
     user: dict = Depends(require_guild_admin),
 ) -> dict:
+    if idempotent_key:
+        with lock:
+            if idempotent_key in idempotent_keys:
+                return {"status": "success", "message": "Duplicate request ignored"}
     guild_id = guild_id.strip()
     if not guild_id:
         raise HTTPException(status_code=400, detail="'guild_id' cannot be empty")
@@ -140,6 +155,9 @@ async def handle_upload_url(
             )
             raise HTTPException(status_code=502, detail="Failed to ingest URL into knowledge base")
         internal_content_id = await add_content_id(guild_id, content_id)
+        if idempotent_key:
+            with lock:
+                idempotent_keys[idempotent_key] = True
         await log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
@@ -170,6 +188,7 @@ async def handle_upload_file(
     guild_id: str = Form(...),
     file: UploadFile = File(...),
     user: dict = Depends(require_guild_admin),
+    idempotent_key: Optional[str] = Form(None),
 ) -> dict:
     guild_id = guild_id.strip()
     if not guild_id:
@@ -266,8 +285,13 @@ async def handle_upload_file(
 async def handle_upload_faq(
     guild_id: str = Form(...),
     faq_text: str = Form(...),
+    idempotent_key: Optional[str] = Form(None),
     user: dict = Depends(require_guild_admin),
 ) -> dict:
+    if idempotent_key:
+        with lock:
+            if idempotent_key in idempotent_keys:
+                return {"status": "success", "message": "Duplicate request ignored"}
     guild_id = guild_id.strip()
     if not guild_id:
         raise HTTPException(status_code=400, detail="'guild_id' cannot be empty")
@@ -279,6 +303,10 @@ async def handle_upload_faq(
         if not content_id:
             raise HTTPException(status_code=500, detail="Failed to store FAQ text")
         internal_content_id = await add_content_id(guild_id, content_id)
+        if idempotent_key:
+            with lock:
+                idempotent_keys[idempotent_key] = True
+
         await log_upload(
             guild_id=guild_id,
             user_id=user["discord_id"],
@@ -345,6 +373,7 @@ async def handle_delete_upload(
 async def handle_upload_contacts(
     guild_id: str = Form(...),
     file: UploadFile = File(...),
+    idempotent_key: Optional[str] = Form(None),
     user: dict = Depends(require_guild_admin),
 ) -> dict:
     guild_id = guild_id.strip()
